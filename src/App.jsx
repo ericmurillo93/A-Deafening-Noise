@@ -1085,7 +1085,7 @@ export default function App() {
               </div>
 
               <div className="mt-4 space-y-3">
-                {(isNext ? [item.date] : item.shows).map((show) => {
+                {(isNext ? [item.date] : [...item.shows].sort((a, b) => parseDate(parseShow(b, "history").date) - parseDate(parseShow(a, "history").date))).map((show) => {
                   const { venue, date } = parseShow(show, mode);
                   return (
                     <div key={`${item.artist}-${show}`} className="rounded-2xl bg-zinc-950 p-4">
