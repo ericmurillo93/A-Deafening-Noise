@@ -1,63 +1,13 @@
 <!doctype html>
 <html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>A Deafening Noise</title>
-  <meta name="description" content="Concert history and upcoming concerts." />
-  <link rel="stylesheet" href="styles.css" />
-</head>
-<body>
-  <header class="site-header">
-    <a class="brand" href="#home">A Deafening Noise</a>
-    <nav>
-      <a href="#history">Concert history</a>
-      <a href="#next">Next concerts</a>
-      <a href="https://www.discogs.com/" target="_blank" rel="noopener">Album collection</a>
-      <a href="https://open.spotify.com/" target="_blank" rel="noopener">Spotify</a>
-    </nav>
-  </header>
-
-  <main id="home">
-    <section class="hero">
-      <p class="eyebrow">Personal live music archive</p>
-      <h1>A Deafening Noise</h1>
-      <p>Search concerts by artist, venue, festival, city or date.</p>
-    </section>
-
-    <section id="next" class="panel">
-      <div class="section-title">
-        <h2>Next concerts</h2>
-        <p id="nextCount"></p>
-      </div>
-      <div id="upcomingList" class="grid compact"></div>
-    </section>
-
-    <section id="history" class="panel">
-      <div class="section-title stacked">
-        <h2>Concert history</h2>
-        <p id="historyCount"></p>
-      </div>
-
-      <div class="toolbar">
-        <input id="searchInput" type="search" placeholder="Search artist, venue, festival, city or date..." autocomplete="off" />
-        <select id="sortSelect" aria-label="Sort concerts">
-          <option value="artist">Sort by artist</option>
-          <option value="count">Sort by number of concerts</option>
-          <option value="recent">Sort by most recent</option>
-        </select>
-      </div>
-
-      <div id="concertList" class="grid"></div>
-      <p id="emptyState" class="empty" hidden>No concerts found.</p>
-    </section>
-  </main>
-
-  <footer>
-    <p>Built as a standalone static site.</p>
-  </footer>
-
-  <script src="data.js"></script>
-  <script src="app.js"></script>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="A Deafening Noise concert archive, upcoming concerts, album collection and Spotify profile." />
+    <title>A Deafening Noise</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
 </html>
