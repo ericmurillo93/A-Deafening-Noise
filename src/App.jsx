@@ -1,109 +1,690 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 
-const concertHistory = [
-  { artist: "ADELE", shows: ["PALAU SANT JORDI - 24/05/2016"] },
-  { artist: "AGENT FRESCO", shows: ["SALA BIKINI - 10/11/2017"] },
-  { artist: "ALCEST", shows: ["RESURRECTION FEST - 28/06/2023"] },
-  { artist: "ANATHEMA", shows: ["BE PROG! MY FRIEND - 31/06/2017"] },
-  { artist: "ANIMALS AS LEADERS", shows: ["BE PROG! MY FRIEND - 30/06/2017"] },
-  { artist: "ARCHITECTS", shows: ["DOWNLOAD FESTIVAL MADRID - 30/06/2019", "RESURRECTION FEST - 01/07/2023"] },
-  { artist: "AVATAR", shows: ["PALAU OLÍMPIC - 25/11/2013", "DOWNLOAD FESTIVAL MADRID - 24/06/2017", "SALA BIKINI - 25/03/2018", "Riyadh Air Metropolitano - 05/07/2025", "SALA RAZZMATAZZ - 04/02/2026"] },
-  { artist: "AVENGED SEVENFOLD", shows: ["SANT JORDI CLUB - 20/10/2010", "PALAU OLÍMPIC - 25/11/2013", "ST. JAKOBSHALLE BASEL - 11/06/2024", "RESURRECTION FEST - 29/06/2024"] },
-  { artist: "A PERFECT CIRCLE", shows: ["BE PROG! MY FRIEND - 29/06/2018"] },
-  { artist: "BARONESS", shows: ["BE PROG! MY FRIEND - 29/06/2018"] },
-  { artist: "BEHEMOTH", shows: ["RESURRECTION FEST - 28/06/2023"] },
-  { artist: "BETWEEN THE BURIED AND ME", shows: ["SALA RAZZMATAZZ - 04/02/2017"] },
-  { artist: "BLACK PUMAS", shows: ["MONTREUX JAZZ FESTIVAL - 06/07/2022"] },
-  { artist: "BLEED FROM WITHIN", shows: ["HALLENSTADION ZÜRICH - 11/12/2024"] },
-  { artist: "BORN OF OSIRIS", shows: ["RESURRECTION FEST - 09/06/2023"] },
-  { artist: "BRING ME THE HORIZON", shows: ["O2 ARENA - 30/10/2016", "RESURRECTION FEST - 03/07/2022", "RESURRECTION FEST - 27/06/2024"] },
-  { artist: "CALIGULA'S HORSE", shows: ["BE PROG! MY FRIEND - 30/06/2017"] },
-  { artist: "CODE ORANGE", shows: ["DOWNLOAD FESTIVAL MADRID - 22/06/2017"] },
-  { artist: "DESAKATO", shows: ["RESURRECTION FEST - 01/07/2023"] },
-  { artist: "DEVIN TOWNSEND", shows: ["SALA RAZZMATAZZ - 04/02/2017", "BE PROG! MY FRIEND - 31/06/2017"] },
-  { artist: "DREAM THEATER", shows: ["CLUB SANT JORDI - 24/02/2012", "SALA RAZZMATAZZ - 28/04/2017", "SAMSUNG HALL, ZÚRICH - 14/02/2020"] },
-  { artist: "ENTER SHIKARI", shows: ["SALA APOLO - 20/03/2016", "O2 ARENA - 30/10/2016", "RAZZMATAZZ - 06/11/2025"] },
-  { artist: "ESTOPA", shows: ["GIRONA - 03/06/2022", "ESTADI LLUIS COMPANYS - 10/07/2024", "MALEDUCATS 2025 - 17/05/2025"] },
-  { artist: "FEVER 333", shows: ["RESURRECTION FEST - 29/06/2023"] },
-  { artist: "GUITARRICADELAFUENTE", shows: ["POBLE ESPANYOL - 02/07/2025"] },
-  { artist: "HAKEN", shows: ["BE PROG MY FRIEND - 26/09/2024"] },
-  { artist: "HEAVEN SHALL BURN", shows: ["RESURRECTION FEST - 03/07/2022"] },
-  { artist: "GAZPACHO", shows: ["BE PROG! MY FRIEND - 30/06/2018"] },
-  { artist: "GHOST", shows: ["RESURRECTION FEST - 28/06/2023"] },
-  { artist: "GOJIRA", shows: ["DOWNLOAD FESTIVAL MADRID - 22/06/2017", "RESURRECTION FEST - 02/07/2022"] },
-  { artist: "GUNS N' ROSES", shows: ["ESTADI OLÍMPIC LLUÍS COMPANYS - 01/07/2018"] },
-  { artist: "IN FLAMES", shows: ["DOWNLOAD FESTIVAL MADRID - 24/06/2017"] },
-  { artist: "INTERVALS", shows: ["RAZZMATAZZ 3 - 22/11/2017"] },
-  { artist: "IRON MAIDEN", shows: ["RIYADH AIR METROPOLITANO - 05/07/2025"] },
-  { artist: "JARDIN DE LA CROIX", shows: ["DOWNLOAD FESTIVAL MADRID - 22/06/2017", "BE PROG! MY FRIEND - 31/06/2017"] },
-  { artist: "JETHRO TULL", shows: ["BE PROG! MY FRIEND - 31/06/2017", "SALLE MÉTROPOLE LAUSANNE - 11/03/2023"] },
-  { artist: "JINJER", shows: ["RESURRECTION FEST - 01/07/2022", "GENEVE ARENA - 01/08/2022"] },
-  { artist: "KVELERTAK", shows: ["DOWNLOAD FESTIVAL MADRID - 24/06/2017", "RAZZMATAZZ - 15/02/2019"] },
-  { artist: "LA MARAVILLOSA ORQUESTA DEL ALCOHOL", shows: ["LA RIVIERA - 26/02/2022", "GRANADA SOUND - 15/09/2023", "SALA RAZZMATAZZ - 13/02/2026"] },
-  { artist: "LEPROUS", shows: ["SALA RAZZMATAZZ - 04/02/2017", "BE PROG! MY FRIEND - 31/06/2017", "SALA BIKINI - 10/11/2017", "DOWNLOAD FESTIVAL MADRID - 29/06/2019", "SALA APOLO - 16/11/2019", "FRI-SON, FRIBOURG - 11/02/2020", "SALA APOLO - 20 ANNIVERSARY TOUR - 10/12/2021", "LES DOCKS - LAUSANNE - 26/02/2023"] },
-  { artist: "LINKIN PARK", shows: ["DOWNLOAD FESTIVAL MADRID - 22/06/2017"] },
-  { artist: "MACHINE HEAD", shows: ["RESURRECTION FEST - 26/06/2024"] },
-  { artist: "MARILLION", shows: ["BE PROG! MY FRIEND - 30/06/2017"] },
-  { artist: "MASTODON", shows: ["DOWNLOAD FESTIVAL MADRID - 23/06/2017", "RAZZMATAZZ - 15/02/2019", "RESURRECTION FEST - 02/07/2022"] },
-  { artist: "MASSIVE ATTACK", shows: ["MONTREUX JAZZ FESTIVAL - 15/07/2024"] },
-  { artist: "MEGADETH", shows: ["RESURRECTION FEST - 29/06/2024"] },
-  { artist: "MESHUGGAH", shows: ["RESURRECTION FEST - 30/06/2023", "SALE MÉTROPOLE - 21/03/2024"] },
-  { artist: "MICHAEL KIWANUKA", shows: ["MONTREUX JAZZ FESTIVAL - 06/07/2022", "MONTREUX JAZZ FESTIVAL - 19/07/2024"] },
-  { artist: "MIKE PORTNOY - SHATTERED FORTRESS", shows: ["BE PROG! MY FRIEND - 31/06/2017"] },
-  { artist: "MORCHEEBA", shows: ["LES NITS DE BARCELONA 2025 - JARDINS DEL PALAU DE PEDRALBES - 07/07/2025"] },
-  { artist: "MORGAN", shows: ["PALAU DE LA MÚSICA CATALANA - 25/04/2025"] },
-  { artist: "MUSE", shows: ["BERN - 12/07/2023"] },
-  { artist: "NATHY PELUSO", shows: ["SÓNAR 2025 - 14/06/2025", "PALAU SANT JORDI - 14/02/2026"] },
-  { artist: "NICK JOHNSTON", shows: ["RAZZMATAZZ 3 - 22/11/2017"] },
-  { artist: "OPETH", shows: ["DOWNLOAD FESTIVAL MADRID - 23/06/2017"] },
-  { artist: "PAIN OF SALVATION", shows: ["SALA BIKINI - 8/04/2017", "BE PROG! MY FRIEND - 29/06/2018", "BE PROG MY FRIEND - 27/09/2024"] },
-  { artist: "PANTERA", shows: ["RESURRECTION FEST - 29/06/2023"] },
-  { artist: "PAPA ROACH", shows: ["RESURRECTION FEST - 30/06/2023"] },
-  { artist: "PARKWAY DRIVE", shows: ["RESURRECTION FEST - 01/07/2023"] },
-  { artist: "PLINI", shows: ["BE PROG! MY FRIEND - 30/06/2018", "LES DOCKS - 12/06/2024"] },
-  { artist: "POLYPHIA", shows: ["RAZZMATAZZ 3 - 22/11/2017", "KOMPLEX 457 ZURICH - 24/05/2023", "LES DOCKS - 12/06/2024"] },
-  { artist: "PORCUPINE TREE", shows: ["HALLE 622 ZURICH - 09/11/2022"] },
-  { artist: "RESIDENTE", shows: ["POBLE ESPANYOL - 19/07/2018", "PALAU SANT JORDI - 14/09/2024", "POBLE ESPANYOL - 14/07/2025"] },
-  { artist: "RISE AGAINST", shows: ["RESURRECTION FEST - 01/07/2022"] },
-  { artist: "RIVERSIDE", shows: ["SALAMANDRA - 13/05/2017", "SALAMANDRA - 05/11/2018"] },
-  { artist: "ROGER WATERS", shows: ["PALAU SANT JORDI - 13/04/2018"] },
-  { artist: "ROSALIA", shows: ["BRAGA - 25/11/2022", "PALAU SANT JORDI - 18/04/2026"] },
-  { artist: "SOEN", shows: ["Z7 - PRATTELN - 20/04/2023"] },
-  { artist: "SÓLSTAFIR", shows: ["DOWNLOAD FESTIVAL MADRID - 24/06/2017", "RAZZMATAZZ 2 - 25/11/2017"] },
-  { artist: "SONS OF APOLLO", shows: ["BE PROG! MY FRIEND - 30/06/2018"] },
-  { artist: "SOULFLY", shows: ["RESURRECTION FEST - 01/07/2023"] },
-  { artist: "STEVE HACKETT", shows: ["BE PROG! MY FRIEND - 30/06/2018"] },
-  { artist: "STEVEN WILSON", shows: ["Sala Paral·lel 62 - 13/06/2025"] },
-  { artist: "SLEEP TOKEN", shows: ["HALLE 622 ZÜRICH - 06/11/2024"] },
-  { artist: "SLIPKNOT", shows: ["DOWNLOAD FESTIVAL MADRID - 29/06/2019", "GENEVE ARENA - 01/08/2022", "RESURRECTION FEST - 30/06/2023", "HALLENSTADION ZÜRICH - 11/12/2024"] },
-  { artist: "SNARKY PUPPY", shows: ["L'AUDITORI - 09/02/2026"] },
-  { artist: "SYSTEM OF A DOWN", shows: ["DOWNLOAD FESTIVAL MADRID - 23/06/2017"] },
-  { artist: "SUM41", shows: ["RESURRECTION FEST - 26/06/2024"] },
-  { artist: "TESSERACT", shows: ["SALA APOLO - 20/01/2024", "Les Docks Lausanne - 11/01/2025", "BE PROG! MY FRIEND - 26/09/2025"] },
-  { artist: "THE GHOST INSIDE", shows: ["RESURRECTION FEST - 28/06/2023"] },
-  { artist: "TIGRAN HAMASYAN", shows: ["THÉÂTRE BENNO BESSON, YVERDON-LES-BAINS - 29/01/2022"] },
-  { artist: "TOOL", shows: ["DOWNLOAD FESTIVAL MADRID - 30/06/2019"] },
-  { artist: "TRIVIUM", shows: ["RAZZMATAZZ 2 - 08/04/2018"] },
-  { artist: "VETUSTA MORLA", shows: ["GRANADA SOUND - 16/09/2023"] },
-  { artist: "WHILE SHE SLEEPS", shows: ["RAZZMATAZZ 2 - 18/01/2018"] },
-  { artist: "YERAI CORTÉS", shows: ["PALAU DE LA MÚSICA CATALANA - 09/12/2025"] }
+const fallbackConcertHistory = [
+  {
+    "artist": "ADELE",
+    "shows": [
+      "PALAU SANT JORDI - 24/05/2016"
+    ]
+  },
+  {
+    "artist": "AGENT FRESCO",
+    "shows": [
+      "SALA BIKINI - 10/11/2017"
+    ]
+  },
+  {
+    "artist": "ALCEST",
+    "shows": [
+      "RESURRECTION FEST - 28/06/2023"
+    ]
+  },
+  {
+    "artist": "ANATHEMA",
+    "shows": [
+      "BE PROG! MY FRIEND - 31/06/2017"
+    ]
+  },
+  {
+    "artist": "ANIMALS AS LEADERS",
+    "shows": [
+      "BE PROG! MY FRIEND - 30/06/2017"
+    ]
+  },
+  {
+    "artist": "ARCHITECTS",
+    "shows": [
+      "DOWNLOAD FESTIVAL MADRID - 30/06/2019",
+      "RESURRECTION FEST - 01/07/2023"
+    ]
+  },
+  {
+    "artist": "AVATAR",
+    "shows": [
+      "PALAU OLÍMPIC - 25/11/2013",
+      "DOWNLOAD FESTIVAL MADRID - 24/06/2017",
+      "SALA BIKINI - 25/03/2018",
+      "Riyadh Air Metropolitano - 05/07/2025",
+      "SALA RAZZMATAZZ - 04/02/2026"
+    ]
+  },
+  {
+    "artist": "AVENGED SEVENFOLD",
+    "shows": [
+      "SANT JORDI CLUB - 20/10/2010",
+      "PALAU OLÍMPIC - 25/11/2013",
+      "ST. JAKOBSHALLE BASEL - 11/06/2024",
+      "RESURRECTION FEST - 29/06/2024"
+    ]
+  },
+  {
+    "artist": "A PERFECT CIRCLE",
+    "shows": [
+      "BE PROG! MY FRIEND - 29/06/2018"
+    ]
+  },
+  {
+    "artist": "BARONESS",
+    "shows": [
+      "BE PROG! MY FRIEND - 29/06/2018"
+    ]
+  },
+  {
+    "artist": "BEHEMOTH",
+    "shows": [
+      "RESURRECTION FEST - 28/06/2023"
+    ]
+  },
+  {
+    "artist": "BETWEEN THE BURIED AND ME",
+    "shows": [
+      "SALA RAZZMATAZZ - 04/02/2017"
+    ]
+  },
+  {
+    "artist": "BLACK PUMAS",
+    "shows": [
+      "MONTREUX JAZZ FESTIVAL - 06/07/2022"
+    ]
+  },
+  {
+    "artist": "BLEED FROM WITHIN",
+    "shows": [
+      "HALLENSTADION ZÜRICH - 11/12/2024"
+    ]
+  },
+  {
+    "artist": "BORN OF OSIRIS",
+    "shows": [
+      "RESURRECTION FEST - 09/06/2023"
+    ]
+  },
+  {
+    "artist": "BRING ME THE HORIZON",
+    "shows": [
+      "O2 ARENA - 30/10/2016",
+      "RESURRECTION FEST - 03/07/2022",
+      "RESURRECTION FEST - 27/06/2024"
+    ]
+  },
+  {
+    "artist": "CALIGULA'S HORSE",
+    "shows": [
+      "BE PROG! MY FRIEND - 30/06/2017"
+    ]
+  },
+  {
+    "artist": "CODE ORANGE",
+    "shows": [
+      "DOWNLOAD FESTIVAL MADRID - 22/06/2017"
+    ]
+  },
+  {
+    "artist": "DESAKATO",
+    "shows": [
+      "RESURRECTION FEST - 01/07/2023"
+    ]
+  },
+  {
+    "artist": "DEVIN TOWNSEND",
+    "shows": [
+      "SALA RAZZMATAZZ - 04/02/2017",
+      "BE PROG! MY FRIEND - 31/06/2017"
+    ]
+  },
+  {
+    "artist": "DREAM THEATER",
+    "shows": [
+      "CLUB SANT JORDI - 24/02/2012",
+      "SALA RAZZMATAZZ - 28/04/2017",
+      "SAMSUNG HALL, ZÚRICH - 14/02/2020"
+    ]
+  },
+  {
+    "artist": "ENTER SHIKARI",
+    "shows": [
+      "SALA APOLO - 20/03/2016",
+      "O2 ARENA - 30/10/2016",
+      "RAZZMATAZZ - 06/11/2025"
+    ]
+  },
+  {
+    "artist": "ESTOPA",
+    "shows": [
+      "GIRONA - 03/06/2022",
+      "ESTADI LLUIS COMPANYS - 10/07/2024",
+      "MALEDUCATS 2025 - 17/05/2025"
+    ]
+  },
+  {
+    "artist": "FEVER 333",
+    "shows": [
+      "RESURRECTION FEST - 29/06/2023"
+    ]
+  },
+  {
+    "artist": "GUITARRICADELAFUENTE",
+    "shows": [
+      "POBLE ESPANYOL - 02/07/2025"
+    ]
+  },
+  {
+    "artist": "HAKEN",
+    "shows": [
+      "BE PROG MY FRIEND - 26/09/2024"
+    ]
+  },
+  {
+    "artist": "HEAVEN SHALL BURN",
+    "shows": [
+      "RESURRECTION FEST - 03/07/2022"
+    ]
+  },
+  {
+    "artist": "GAZPACHO",
+    "shows": [
+      "BE PROG! MY FRIEND - 30/06/2018"
+    ]
+  },
+  {
+    "artist": "GHOST",
+    "shows": [
+      "RESURRECTION FEST - 28/06/2023"
+    ]
+  },
+  {
+    "artist": "GOJIRA",
+    "shows": [
+      "DOWNLOAD FESTIVAL MADRID - 22/06/2017",
+      "RESURRECTION FEST - 02/07/2022"
+    ]
+  },
+  {
+    "artist": "GUNS N' ROSES",
+    "shows": [
+      "ESTADI OLÍMPIC LLUÍS COMPANYS - 01/07/2018"
+    ]
+  },
+  {
+    "artist": "IN FLAMES",
+    "shows": [
+      "DOWNLOAD FESTIVAL MADRID - 24/06/2017"
+    ]
+  },
+  {
+    "artist": "INTERVALS",
+    "shows": [
+      "RAZZMATAZZ 3 - 22/11/2017"
+    ]
+  },
+  {
+    "artist": "IRON MAIDEN",
+    "shows": [
+      "RIYADH AIR METROPOLITANO - 05/07/2025"
+    ]
+  },
+  {
+    "artist": "JARDIN DE LA CROIX",
+    "shows": [
+      "DOWNLOAD FESTIVAL MADRID - 22/06/2017",
+      "BE PROG! MY FRIEND - 31/06/2017"
+    ]
+  },
+  {
+    "artist": "JETHRO TULL",
+    "shows": [
+      "BE PROG! MY FRIEND - 31/06/2017",
+      "SALLE MÉTROPOLE LAUSANNE - 11/03/2023"
+    ]
+  },
+  {
+    "artist": "JINJER",
+    "shows": [
+      "RESURRECTION FEST - 01/07/2022",
+      "GENEVE ARENA - 01/08/2022"
+    ]
+  },
+  {
+    "artist": "KVELERTAK",
+    "shows": [
+      "DOWNLOAD FESTIVAL MADRID - 24/06/2017",
+      "RAZZMATAZZ - 15/02/2019"
+    ]
+  },
+  {
+    "artist": "LA MARAVILLOSA ORQUESTA DEL ALCOHOL",
+    "shows": [
+      "LA RIVIERA - 26/02/2022",
+      "GRANADA SOUND - 15/09/2023",
+      "SALA RAZZMATAZZ - 13/02/2026"
+    ]
+  },
+  {
+    "artist": "LEPROUS",
+    "shows": [
+      "SALA RAZZMATAZZ - 04/02/2017",
+      "BE PROG! MY FRIEND - 31/06/2017",
+      "SALA BIKINI - 10/11/2017",
+      "DOWNLOAD FESTIVAL MADRID - 29/06/2019",
+      "SALA APOLO - 16/11/2019",
+      "FRI-SON, FRIBOURG - 11/02/2020",
+      "SALA APOLO - 20 ANNIVERSARY TOUR - 10/12/2021",
+      "LES DOCKS - LAUSANNE - 26/02/2023"
+    ]
+  },
+  {
+    "artist": "LINKIN PARK",
+    "shows": [
+      "DOWNLOAD FESTIVAL MADRID - 22/06/2017"
+    ]
+  },
+  {
+    "artist": "MACHINE HEAD",
+    "shows": [
+      "RESURRECTION FEST - 26/06/2024"
+    ]
+  },
+  {
+    "artist": "MARILLION",
+    "shows": [
+      "BE PROG! MY FRIEND - 30/06/2017"
+    ]
+  },
+  {
+    "artist": "MASTODON",
+    "shows": [
+      "DOWNLOAD FESTIVAL MADRID - 23/06/2017",
+      "RAZZMATAZZ - 15/02/2019",
+      "RESURRECTION FEST - 02/07/2022"
+    ]
+  },
+  {
+    "artist": "MASSIVE ATTACK",
+    "shows": [
+      "MONTREUX JAZZ FESTIVAL - 15/07/2024"
+    ]
+  },
+  {
+    "artist": "MEGADETH",
+    "shows": [
+      "RESURRECTION FEST - 29/06/2024"
+    ]
+  },
+  {
+    "artist": "MESHUGGAH",
+    "shows": [
+      "RESURRECTION FEST - 30/06/2023",
+      "SALE MÉTROPOLE - 21/03/2024"
+    ]
+  },
+  {
+    "artist": "MICHAEL KIWANUKA",
+    "shows": [
+      "MONTREUX JAZZ FESTIVAL - 06/07/2022",
+      "MONTREUX JAZZ FESTIVAL - 19/07/2024"
+    ]
+  },
+  {
+    "artist": "MIKE PORTNOY - SHATTERED FORTRESS",
+    "shows": [
+      "BE PROG! MY FRIEND - 31/06/2017"
+    ]
+  },
+  {
+    "artist": "MORCHEEBA",
+    "shows": [
+      "LES NITS DE BARCELONA 2025 - JARDINS DEL PALAU DE PEDRALBES - 07/07/2025"
+    ]
+  },
+  {
+    "artist": "MORGAN",
+    "shows": [
+      "PALAU DE LA MÚSICA CATALANA - 25/04/2025"
+    ]
+  },
+  {
+    "artist": "MUSE",
+    "shows": [
+      "BERN - 12/07/2023"
+    ]
+  },
+  {
+    "artist": "NATHY PELUSO",
+    "shows": [
+      "SÓNAR 2025 - 14/06/2025",
+      "PALAU SANT JORDI - 14/02/2026"
+    ]
+  },
+  {
+    "artist": "NICK JOHNSTON",
+    "shows": [
+      "RAZZMATAZZ 3 - 22/11/2017"
+    ]
+  },
+  {
+    "artist": "OPETH",
+    "shows": [
+      "DOWNLOAD FESTIVAL MADRID - 23/06/2017"
+    ]
+  },
+  {
+    "artist": "PAIN OF SALVATION",
+    "shows": [
+      "SALA BIKINI - 8/04/2017",
+      "BE PROG! MY FRIEND - 29/06/2018",
+      "BE PROG MY FRIEND - 27/09/2024"
+    ]
+  },
+  {
+    "artist": "PANTERA",
+    "shows": [
+      "RESURRECTION FEST - 29/06/2023"
+    ]
+  },
+  {
+    "artist": "PAPA ROACH",
+    "shows": [
+      "RESURRECTION FEST - 30/06/2023"
+    ]
+  },
+  {
+    "artist": "PARKWAY DRIVE",
+    "shows": [
+      "RESURRECTION FEST - 01/07/2023"
+    ]
+  },
+  {
+    "artist": "PLINI",
+    "shows": [
+      "BE PROG! MY FRIEND - 30/06/2018",
+      "LES DOCKS - 12/06/2024"
+    ]
+  },
+  {
+    "artist": "POLYPHIA",
+    "shows": [
+      "RAZZMATAZZ 3 - 22/11/2017",
+      "KOMPLEX 457 ZURICH - 24/05/2023",
+      "LES DOCKS - 12/06/2024"
+    ]
+  },
+  {
+    "artist": "PORCUPINE TREE",
+    "shows": [
+      "HALLE 622 ZURICH - 09/11/2022"
+    ]
+  },
+  {
+    "artist": "RESIDENTE",
+    "shows": [
+      "POBLE ESPANYOL - 19/07/2018",
+      "PALAU SANT JORDI - 14/09/2024",
+      "POBLE ESPANYOL - 14/07/2025"
+    ]
+  },
+  {
+    "artist": "RISE AGAINST",
+    "shows": [
+      "RESURRECTION FEST - 01/07/2022"
+    ]
+  },
+  {
+    "artist": "RIVERSIDE",
+    "shows": [
+      "SALAMANDRA - 13/05/2017",
+      "SALAMANDRA - 05/11/2018"
+    ]
+  },
+  {
+    "artist": "ROGER WATERS",
+    "shows": [
+      "PALAU SANT JORDI - 13/04/2018"
+    ]
+  },
+  {
+    "artist": "ROSALIA",
+    "shows": [
+      "BRAGA - 25/11/2022",
+      "PALAU SANT JORDI - 18/04/2026"
+    ]
+  },
+  {
+    "artist": "SOEN",
+    "shows": [
+      "Z7 - PRATTELN - 20/04/2023"
+    ]
+  },
+  {
+    "artist": "SÓLSTAFIR",
+    "shows": [
+      "DOWNLOAD FESTIVAL MADRID - 24/06/2017",
+      "RAZZMATAZZ 2 - 25/11/2017"
+    ]
+  },
+  {
+    "artist": "SONS OF APOLLO",
+    "shows": [
+      "BE PROG! MY FRIEND - 30/06/2018"
+    ]
+  },
+  {
+    "artist": "SOULFLY",
+    "shows": [
+      "RESURRECTION FEST - 01/07/2023"
+    ]
+  },
+  {
+    "artist": "STEVE HACKETT",
+    "shows": [
+      "BE PROG! MY FRIEND - 30/06/2018"
+    ]
+  },
+  {
+    "artist": "STEVEN WILSON",
+    "shows": [
+      "Sala Paral·lel 62 - 13/06/2025"
+    ]
+  },
+  {
+    "artist": "SLEEP TOKEN",
+    "shows": [
+      "HALLE 622 ZÜRICH - 06/11/2024"
+    ]
+  },
+  {
+    "artist": "SLIPKNOT",
+    "shows": [
+      "DOWNLOAD FESTIVAL MADRID - 29/06/2019",
+      "GENEVE ARENA - 01/08/2022",
+      "RESURRECTION FEST - 30/06/2023",
+      "HALLENSTADION ZÜRICH - 11/12/2024"
+    ]
+  },
+  {
+    "artist": "SNARKY PUPPY",
+    "shows": [
+      "L'AUDITORI - 09/02/2026"
+    ]
+  },
+  {
+    "artist": "SYSTEM OF A DOWN",
+    "shows": [
+      "DOWNLOAD FESTIVAL MADRID - 23/06/2017"
+    ]
+  },
+  {
+    "artist": "SUM41",
+    "shows": [
+      "RESURRECTION FEST - 26/06/2024"
+    ]
+  },
+  {
+    "artist": "TESSERACT",
+    "shows": [
+      "SALA APOLO - 20/01/2024",
+      "Les Docks Lausanne - 11/01/2025",
+      "BE PROG! MY FRIEND - 26/09/2025"
+    ]
+  },
+  {
+    "artist": "THE GHOST INSIDE",
+    "shows": [
+      "RESURRECTION FEST - 28/06/2023"
+    ]
+  },
+  {
+    "artist": "TIGRAN HAMASYAN",
+    "shows": [
+      "THÉÂTRE BENNO BESSON, YVERDON-LES-BAINS - 29/01/2022"
+    ]
+  },
+  {
+    "artist": "TOOL",
+    "shows": [
+      "DOWNLOAD FESTIVAL MADRID - 30/06/2019"
+    ]
+  },
+  {
+    "artist": "TRIVIUM",
+    "shows": [
+      "RAZZMATAZZ 2 - 08/04/2018"
+    ]
+  },
+  {
+    "artist": "VETUSTA MORLA",
+    "shows": [
+      "GRANADA SOUND - 16/09/2023"
+    ]
+  },
+  {
+    "artist": "WHILE SHE SLEEPS",
+    "shows": [
+      "RAZZMATAZZ 2 - 18/01/2018"
+    ]
+  },
+  {
+    "artist": "YERAI CORTÉS",
+    "shows": [
+      "PALAU DE LA MÚSICA CATALANA - 09/12/2025"
+    ]
+  }
 ];
 
-const nextConcerts = [
-  { artist: "PLINI", date: "16/05/2026", bought: false },
-  { artist: "The Aristocrats", date: "20/05/2026", bought: false },
-  { artist: "RIGOBERTA BANDINI", date: "05/06/2026", bought: true },
-  { artist: "BAD BUNNY", date: "06/06/2026", bought: true },
-  { artist: "HELLFEST", date: "18/06/2026 - 21/06/2026", bought: true },
-  { artist: "BE PROG MY FRIEND", date: "25/09/2026 - 26/09/2026", bought: true },
-  { artist: "AMARAL", date: "18/12/2026", bought: false },
-  { artist: "Amaia", date: "20/12/2026", bought: false }
+const fallbackNextConcerts = [
+  {
+    "artist": "PLINI",
+    "date": "16/05/2026",
+    "bought": false
+  },
+  {
+    "artist": "The Aristocrats",
+    "date": "20/05/2026",
+    "bought": false
+  },
+  {
+    "artist": "RIGOBERTA BANDINI",
+    "date": "05/06/2026",
+    "bought": true
+  },
+  {
+    "artist": "BAD BUNNY",
+    "date": "06/06/2026",
+    "bought": true
+  },
+  {
+    "artist": "HELLFEST",
+    "date": "18/06/2026 - 21/06/2026",
+    "bought": true
+  },
+  {
+    "artist": "BE PROG MY FRIEND",
+    "date": "25/09/2026 - 26/09/2026",
+    "bought": true
+  },
+  {
+    "artist": "AMARAL",
+    "date": "18/12/2026",
+    "bought": false
+  },
+  {
+    "artist": "Amaia",
+    "date": "20/12/2026",
+    "bought": false
+  }
 ];
 
 const externalLinks = {
   albums: "https://www.discogs.com/es/user/eric.murillo93/collection",
   spotify: "https://open.spotify.com/user/ericmurillospotify?si=47fbb5f4096a4be8&nd=1&dlsi=b38e7009347e48a4"
 };
+
+const GOOGLE_SHEET_API_URL = "https://script.google.com/macros/s/AKfycbxZ2iAFTWkjYeQRcvesTO7Rzc3OSPR78jEFsbWV6vUEsi0FmHEGYOgQ_j28Dj4zAn5pow/exec";
+
+function formatSheetDate(value) {
+  if (!value) return "";
+  if (typeof value === "string" && value.includes("/")) return value;
+
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return String(value);
+
+  const day = String(parsed.getDate()).padStart(2, "0");
+  const month = String(parsed.getMonth() + 1).padStart(2, "0");
+  const year = parsed.getFullYear();
+  return `${day}/${month}/${year}`;
+}
+
+function normalizeBought(value) {
+  if (typeof value === "boolean") return value;
+  return String(value).toLowerCase() === "true";
+}
+
+function groupHistoryRows(rows) {
+  const grouped = rows.reduce((acc, row) => {
+    const artist = String(row.artist || "").trim();
+    const venue = String(row.venue || "").trim();
+    const date = formatSheetDate(row.date);
+
+    if (!artist || !venue || !date) return acc;
+    if (!acc[artist]) acc[artist] = [];
+    acc[artist].push(`${venue} - ${date}`);
+    return acc;
+  }, {});
+
+  return Object.entries(grouped).map(([artist, shows]) => ({ artist, shows }));
+}
+
+function mapNextRows(rows) {
+  return rows
+    .map((row) => ({
+      artist: String(row.artist || "").trim(),
+      date: formatSheetDate(row.date),
+      bought: normalizeBought(row.bought)
+    }))
+    .filter((item) => item.artist && item.date);
+}
+
+async function fetchSheetData() {
+  const response = await fetch(GOOGLE_SHEET_API_URL);
+  if (!response.ok) throw new Error("Could not load Google Sheet data");
+
+  const data = await response.json();
+  return {
+    history: groupHistoryRows(data.history || []),
+    next: mapNextRows(data.next || [])
+  };
+}
+
+async function postConcertToSheet(payload) {
+  const response = await fetch(GOOGLE_SHEET_API_URL, {
+    method: "POST",
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
+    body: JSON.stringify(payload)
+  });
+
+  const result = await response.json();
+  if (!result.ok) throw new Error(result.error || "Could not save concert");
+  return result;
+}
 
 function Icon({ type }) {
   const common = {
@@ -163,6 +744,7 @@ function normalize(value) {
 function parseDate(date) {
   const match = String(date).match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
   if (!match) return 0;
+
   const [, day, month, year] = match;
   return new Date(Number(year), Number(month) - 1, Number(day)).getTime();
 }
@@ -201,19 +783,108 @@ function getVisibleNextConcerts(items, ticketFilter) {
   return items;
 }
 
+function addHistoryConcert(items, artist, venue, date) {
+  const cleanedArtist = artist.trim();
+  const cleanedVenue = venue.trim();
+  const cleanedDate = date.trim();
+  const show = `${cleanedVenue} - ${cleanedDate}`;
+  const existingIndex = items.findIndex((item) => normalize(item.artist) === normalize(cleanedArtist));
+
+  if (existingIndex >= 0) {
+    return items.map((item, index) => (index === existingIndex ? { ...item, shows: [...item.shows, show] } : item));
+  }
+
+  return [...items, { artist: cleanedArtist, shows: [show] }];
+}
+
+function addNextConcert(items, artist, date, bought) {
+  return [...items, { artist: artist.trim(), date: date.trim(), bought }];
+}
+
+function AddConcertModal({ isOpen, mode, onClose, onSave, isSaving, saveError }) {
+  const [artist, setArtist] = useState("");
+  const [venue, setVenue] = useState("");
+  const [date, setDate] = useState("");
+  const [bought, setBought] = useState(false);
+  const [token, setToken] = useState("");
+
+  if (!isOpen) return null;
+
+  const isNextMode = mode === "next";
+
+  function submit(event) {
+    event.preventDefault();
+    if (!artist.trim() || !date.trim() || (!isNextMode && !venue.trim())) return;
+    onSave({ artist, venue, date, bought, token });
+  }
+
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 px-4">
+      <form onSubmit={submit} className="w-full max-w-lg rounded-3xl border border-zinc-700 bg-zinc-950 p-6 shadow-2xl">
+        <div className="mb-6 flex items-start justify-between gap-4">
+          <div>
+            <h2 className="text-2xl font-black uppercase tracking-tight">Add concert</h2>
+            <p className="mt-1 text-sm text-zinc-500">{isNextMode ? "Add an upcoming concert." : "Add a concert to the archive."}</p>
+          </div>
+          <button type="button" onClick={onClose} className="rounded-full border border-zinc-700 px-3 py-1 text-sm text-zinc-300 hover:border-zinc-500">Close</button>
+        </div>
+
+        <div className="space-y-4">
+          <label className="block">
+            <span className="mb-2 block text-xs font-bold uppercase tracking-widest text-zinc-500">Artist</span>
+            <input value={artist} onChange={(event) => setArtist(event.target.value)} className="w-full rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-zinc-100 outline-none focus:border-zinc-400" placeholder="Artist name" />
+          </label>
+
+          {!isNextMode && (
+            <label className="block">
+              <span className="mb-2 block text-xs font-bold uppercase tracking-widest text-zinc-500">Location / Venue</span>
+              <input value={venue} onChange={(event) => setVenue(event.target.value)} className="w-full rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-zinc-100 outline-none focus:border-zinc-400" placeholder="Venue or festival" />
+            </label>
+          )}
+
+          <label className="block">
+            <span className="mb-2 block text-xs font-bold uppercase tracking-widest text-zinc-500">Date</span>
+            <input value={date} onChange={(event) => setDate(event.target.value)} className="w-full rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-zinc-100 outline-none focus:border-zinc-400" placeholder="DD/MM/YYYY" />
+          </label>
+
+          {isNextMode && (
+            <label className="flex items-center gap-3 rounded-2xl border border-zinc-800 bg-zinc-900 px-4 py-3 text-sm text-zinc-300">
+              <input type="checkbox" checked={bought} onChange={(event) => setBought(event.target.checked)} />
+              <span>💰 Ticket bought</span>
+            </label>
+          )}
+
+          <label className="block">
+            <span className="mb-2 block text-xs font-bold uppercase tracking-widest text-zinc-500">Admin password</span>
+            <input type="password" value={token} onChange={(event) => setToken(event.target.value)} className="w-full rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-zinc-100 outline-none focus:border-zinc-400" placeholder="Password" />
+          </label>
+        </div>
+
+        {saveError && <div className="mt-4 rounded-2xl border border-red-900 bg-red-950/40 px-4 py-3 text-sm text-red-200">{saveError}</div>}
+
+        <button type="submit" disabled={isSaving} className="mt-6 w-full rounded-2xl bg-zinc-100 px-5 py-3 font-black text-zinc-950 transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-50">{isSaving ? "Saving..." : "Add concert"}</button>
+        <p className="mt-4 text-xs leading-relaxed text-zinc-500">This writes directly to your Google Sheet through your Apps Script web app.</p>
+      </form>
+    </div>
+  );
+}
+
 function runTests() {
   console.assert(parseShow("SANT JORDI CLUB - 20/10/2010", "history").venue === "SANT JORDI CLUB", "parseShow should extract venue");
   console.assert(parseShow("LES DOCKS - LAUSANNE - 26/02/2023", "history").venue === "LES DOCKS - LAUSANNE", "parseShow should support venue names containing hyphens");
   console.assert(parseShow("16/05/2026", "next").date === "16/05/2026", "next concerts should support date-only items");
-  console.assert(filterConcerts(concertHistory, "avenged sevenfold").length === 1, "search should find Avenged Sevenfold");
-  console.assert(filterConcerts(concertHistory, "zurich").length >= 1, "search should be accent-insensitive for Zürich/Zurich");
-  console.assert(filterConcerts(concertHistory, "not-a-real-band").length === 0, "search should return no results for unknown terms");
-  console.assert(sortConcerts(concertHistory, "artist", "history")[0].artist === "ADELE", "artist sort should be alphabetical");
-  console.assert(sortConcerts(concertHistory, "concerts", "history")[0].artist === "LEPROUS", "concert count sort should place Leprous first");
-  console.assert(sortConcerts(nextConcerts, "recent", "next")[0].artist === "Amaia", "next concerts should default to newest date first");
-  console.assert(nextConcerts.filter((item) => item.bought).length === 4, "next concerts should track bought ticket items");
-  console.assert(getVisibleNextConcerts(nextConcerts, "bought").every((item) => item.bought), "bought filter should only show bought items");
-  console.assert(getVisibleNextConcerts(nextConcerts, "pending").every((item) => !item.bought), "pending filter should only show not bought items");
+  console.assert(filterConcerts(fallbackConcertHistory, "avenged sevenfold").length === 1, "search should find Avenged Sevenfold");
+  console.assert(filterConcerts(fallbackConcertHistory, "zurich").length >= 1, "search should be accent-insensitive for Zürich/Zurich");
+  console.assert(filterConcerts(fallbackConcertHistory, "not-a-real-band").length === 0, "search should return no results for unknown terms");
+  console.assert(sortConcerts(fallbackConcertHistory, "artist", "history")[0].artist === "ADELE", "artist sort should be alphabetical");
+  console.assert(sortConcerts(fallbackNextConcerts, "recent", "next")[0].artist === "Amaia", "next concerts should default to newest date first");
+  console.assert(fallbackNextConcerts.filter((item) => item.bought).length === 4, "next concerts should track bought ticket items");
+  console.assert(getVisibleNextConcerts(fallbackNextConcerts, "bought").every((item) => item.bought), "bought filter should only show bought items");
+  console.assert(getVisibleNextConcerts(fallbackNextConcerts, "pending").every((item) => !item.bought), "pending filter should only show not bought items");
+  console.assert(addHistoryConcert([{ artist: "TEST", shows: [] }], "TEST", "VENUE", "01/01/2026")[0].shows.length === 1, "history add should append to existing artists");
+  console.assert(addNextConcert([], "TEST", "01/01/2026", true)[0].bought === true, "next add should store bought status");
+  console.assert(groupHistoryRows([{ artist: "A", venue: "V", date: "01/01/2026" }])[0].shows[0] === "V - 01/01/2026", "sheet history rows should map to grouped concerts");
+  console.assert(mapNextRows([{ artist: "A", date: "01/01/2026", bought: "TRUE" }])[0].bought === true, "sheet next rows should map bought TRUE to boolean true");
 }
 
 runTests();
@@ -224,9 +895,39 @@ export default function App() {
   const [ticketFilter, setTicketFilter] = useState("all");
   const [activePage, setActivePage] = useState("history");
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [isLoadingData, setIsLoadingData] = useState(true);
+  const [loadError, setLoadError] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
+  const [historyItems, setHistoryItems] = useState(fallbackConcertHistory);
+  const [nextItems, setNextItems] = useState(fallbackNextConcerts);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    fetchSheetData()
+      .then((data) => {
+        if (!isMounted) return;
+        setHistoryItems(data.history.length ? data.history : fallbackConcertHistory);
+        setNextItems(data.next.length ? data.next : fallbackNextConcerts);
+        setLoadError("");
+      })
+      .catch(() => {
+        if (!isMounted) return;
+        setLoadError("Could not load Google Sheet data. Showing embedded fallback data.");
+      })
+      .finally(() => {
+        if (isMounted) setIsLoadingData(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const isNext = activePage === "next";
-  const currentItems = isNext ? nextConcerts : concertHistory;
+  const currentItems = isNext ? nextItems : historyItems;
   const mode = isNext ? "next" : "history";
   const title = isNext ? "Next Concerts" : "Concert Archive";
   const description = isNext ? "Upcoming shows, festivals and planned concerts." : "A searchable lifetime lineup of artists, venues and dates.";
@@ -244,6 +945,31 @@ export default function App() {
     setSortMode("artist");
     setTicketFilter("all");
     setSidebarOpen(false);
+  }
+
+  async function handleAddConcert(data) {
+    setIsSaving(true);
+    setSaveError("");
+
+    const payload = isNext
+      ? { type: "next", token: data.token, artist: data.artist.trim(), date: data.date.trim(), bought: data.bought }
+      : { type: "history", token: data.token, artist: data.artist.trim(), venue: data.venue.trim(), date: data.date.trim() };
+
+    try {
+      await postConcertToSheet(payload);
+
+      if (isNext) {
+        setNextItems((items) => sortConcerts(addNextConcert(items, data.artist, data.date, data.bought), "recent", "next"));
+      } else {
+        setHistoryItems((items) => addHistoryConcert(items, data.artist, data.venue, data.date));
+      }
+
+      setModalOpen(false);
+    } catch (error) {
+      setSaveError(error.message || "Could not save concert");
+    } finally {
+      setIsSaving(false);
+    }
   }
 
   return (
@@ -285,6 +1011,14 @@ export default function App() {
           <p className="mb-3 text-xs font-semibold uppercase tracking-[0.45em] text-zinc-400">A Deafening Noise</p>
           <h1 className="text-5xl font-black uppercase tracking-tight md:text-8xl">{title}</h1>
           <p className="mx-auto mt-5 max-w-2xl text-base text-zinc-400 md:text-lg">{description}</p>
+          {isLoadingData && <p className="mt-3 text-sm text-zinc-500">Loading Google Sheet data...</p>}
+          {loadError && <p className="mt-3 text-sm text-red-300">{loadError}</p>}
+          <button
+            onClick={() => setModalOpen(true)}
+            className="mt-6 rounded-full border border-zinc-700 bg-zinc-900 px-5 py-3 text-sm font-black text-zinc-100 shadow-2xl transition hover:border-zinc-500"
+          >
+            + Add concert
+          </button>
         </header>
 
         <div className="sticky top-0 z-10 mb-8 border-y border-zinc-800 bg-zinc-950/90 py-4 backdrop-blur">
@@ -377,6 +1111,8 @@ export default function App() {
           <div className="mt-16 text-center text-zinc-500">No concerts found.</div>
         )}
       </section>
+
+      <AddConcertModal isOpen={modalOpen} mode={mode} onClose={() => setModalOpen(false)} onSave={handleAddConcert} isSaving={isSaving} saveError={saveError} />
     </main>
   );
 }
