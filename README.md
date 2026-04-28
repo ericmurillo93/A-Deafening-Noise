@@ -1,26 +1,69 @@
 # A Deafening Noise
 
-React/Vite site configured for Netlify and GitHub.
+A personal concert archive built with React, Vite and Tailwind CSS.
 
-## Netlify settings
+## Features
 
-Build command:
+- Searchable concert history
+- Upcoming concerts view
+- Ticket status filter for upcoming concerts
+- Add concert modal
+- Hidden sidebar menu
+- External links to Discogs and Spotify
+- Netlify-ready deployment configuration
+
+## Local development
+
+```bash
+npm install
+npm run dev
+```
+
+## Production build
 
 ```bash
 npm run build
 ```
 
-Publish directory:
+The production output is generated in:
 
-```bash
+```text
 dist
 ```
 
-## Google Sheet tabs
+## Netlify setup
 
-The site expects an Apps Script Web App returning two tabs:
+Use these settings in Netlify:
 
-- `history`: artist | venue | date
-- `next`: artist | date | bought
+```text
+Build command: npm run build
+Publish directory: dist
+```
 
-The Add Concert form writes to the same Apps Script endpoint using the admin password/token checked server-side.
+The repository includes `netlify.toml`, so Netlify should detect the correct settings automatically.
+
+## Project structure
+
+```text
+.
+├── index.html
+├── netlify.toml
+├── package.json
+├── postcss.config.js
+├── tailwind.config.js
+├── vite.config.js
+└── src
+    ├── App.jsx
+    ├── index.css
+    └── main.jsx
+```
+
+## Updating content
+
+Most site logic and UI lives in:
+
+```text
+src/App.jsx
+```
+
+The site currently reads remote concert data through the configured API URL in `App.jsx` and keeps fallback data in the same file.
