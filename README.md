@@ -25,7 +25,7 @@ Built with **React 18**, **Vite 5** and **Tailwind CSS 3**. Deployed on **Netlif
 | UI       | React 18, Tailwind CSS 3               |
 | Build    | Vite 5, PostCSS, Autoprefixer          |
 | Hosting  | Netlify (SPA redirects, header rules)  |
-| Data     | Google Apps Script + Sheets backend    |
+| Data     | `data/concerts.json` in the GitHub repository  |
 
 ## Getting started
 
@@ -93,7 +93,9 @@ The config also wires up:
 
 ## Updating content
 
-The site reads concert data from a Google Apps Script endpoint configured in `src/App.jsx` and falls back to embedded sample data if the request fails. New entries can be added directly through the in-app **Add concert** modal (admin password required).
+Concert data lives in `data/concerts.json` in this repository. The app fetches it at runtime from the GitHub raw URL. To add or edit concerts, update that file and push to the `main` branch — the live site will reflect the changes on the next page load.
+
+The in-app **Add concert** modal adds entries to the local session view only; to persist changes, edit `data/concerts.json` directly in the repository.
 
 ## License
 

@@ -1,31 +1,14 @@
 import React, { useEffect, useMemo, useState } from "react";
 
-const fallbackConcertHistory = [
-  { artist: "ADELE", shows: ["PALAU SANT JORDI - 24/05/2016"] },
-  { artist: "AVENGED SEVENFOLD", shows: ["SANT JORDI CLUB - 20/10/2010", "PALAU OLÍMPIC - 25/11/2013", "ST. JAKOBSHALLE BASEL - 11/06/2024", "RESURRECTION FEST - 29/06/2024"] },
-  { artist: "LEPROUS", shows: ["SALA RAZZMATAZZ - 04/02/2017", "BE PROG! MY FRIEND - 31/06/2017", "SALA BIKINI - 10/11/2017", "DOWNLOAD FESTIVAL MADRID - 29/06/2019", "SALA APOLO - 16/11/2019", "FRI-SON, FRIBOURG - 11/02/2020", "SALA APOLO - 20 ANNIVERSARY TOUR - 10/12/2021", "LES DOCKS - LAUSANNE - 26/02/2023"] },
-  { artist: "POLYPHIA", shows: ["RAZZMATAZZ 3 - 22/11/2017", "KOMPLEX 457 ZURICH - 24/05/2023", "LES DOCKS - 12/06/2024"] }
-];
-
-const fallbackNextConcerts = [
-  { artist: "PLINI", date: "16/05/2026", bought: false },
-  { artist: "The Aristocrats", date: "20/05/2026", bought: false },
-  { artist: "RIGOBERTA BANDINI", date: "05/06/2026", bought: true },
-  { artist: "BAD BUNNY", date: "06/06/2026", bought: true },
-  { artist: "HELLFEST", date: "18/06/2026 - 21/06/2026", bought: true },
-  { artist: "BE PROG MY FRIEND", date: "25/09/2026 - 26/09/2026", bought: true },
-  { artist: "AMARAL", date: "18/12/2026", bought: false },
-  { artist: "Amaia", date: "20/12/2026", bought: false }
-];
-
 const externalLinks = {
   albums: "https://www.discogs.com/es/user/eric.murillo93/collection",
   spotify: "https://open.spotify.com/user/ericmurillospotify?si=47fbb5f4096a4be8&nd=1&dlsi=b38e7009347e48a4"
 };
 
-const GOOGLE_SHEET_API_URL = "https://script.google.com/macros/s/AKfycbxZ2iAFTWkjYeQRcvesTO7Rzc3OSPR78jEFsbWV6vUEsi0FmHEGYOgQ_j28Dj4zAn5pow/exec";
+const DATA_URL = "https://raw.githubusercontent.com/ericmurillo93/A-Deafening-Noise/main/data/concerts.json";
+const GITHUB_TOKEN = import.meta.env.VITE_GITHUB_TOKEN;
 
-function formatSheetDate(value) {
+function formatDate(value) {
   if (!value) return "";
   if (typeof value === "string" && value.includes("/")) return value;
 
@@ -47,7 +30,7 @@ function groupHistoryRows(rows) {
   const grouped = rows.reduce((acc, row) => {
     const artist = String(row.artist || "").trim();
     const venue = String(row.venue || "").trim();
-    const date = formatSheetDate(row.date);
+    const date = formatDate(row.date);
 
     if (!artist || !venue || !date) return acc;
     if (!acc[artist]) acc[artist] = [];
@@ -62,33 +45,24 @@ function mapNextRows(rows) {
   return rows
     .map((row) => ({
       artist: String(row.artist || "").trim(),
-      date: formatSheetDate(row.date),
+      date: formatDate(row.date),
       bought: normalizeBought(row.bought)
     }))
     .filter((item) => item.artist && item.date);
 }
 
-async function fetchSheetData() {
-  const response = await fetch(GOOGLE_SHEET_API_URL);
-  if (!response.ok) throw new Error("Could not load Google Sheet data");
+async function fetchConcertData() {
+  const headers = {};
+  if (GITHUB_TOKEN) headers["Authorization"] = `token ${GITHUB_TOKEN}`;
+
+  const response = await fetch(DATA_URL, { headers });
+  if (!response.ok) throw new Error("Could not load concert data");
 
   const data = await response.json();
   return {
     history: groupHistoryRows(data.history || []),
     next: mapNextRows(data.next || [])
   };
-}
-
-async function postConcertToSheet(payload) {
-  const response = await fetch(GOOGLE_SHEET_API_URL, {
-    method: "POST",
-    headers: { "Content-Type": "text/plain;charset=utf-8" },
-    body: JSON.stringify(payload)
-  });
-
-  const result = await response.json();
-  if (!result.ok) throw new Error(result.error || "Could not save concert");
-  return result;
 }
 
 function Icon({ type }) {
@@ -211,7 +185,6 @@ function AddConcertModal({ isOpen, mode, onClose, onSave, isSaving, saveError })
   const [venue, setVenue] = useState("");
   const [date, setDate] = useState("");
   const [bought, setBought] = useState(false);
-  const [token, setToken] = useState("");
 
   if (!isOpen) return null;
 
@@ -220,7 +193,7 @@ function AddConcertModal({ isOpen, mode, onClose, onSave, isSaving, saveError })
   function submit(event) {
     event.preventDefault();
     if (!artist.trim() || !date.trim() || (!isNextMode && !venue.trim())) return;
-    onSave({ artist, venue, date, bought, token });
+    onSave({ artist, venue, date, bought });
   }
 
   return (
@@ -258,11 +231,6 @@ function AddConcertModal({ isOpen, mode, onClose, onSave, isSaving, saveError })
               <span>💰 Ticket bought</span>
             </label>
           )}
-
-          <label className="block">
-            <span className="mb-2 block text-xs font-bold uppercase tracking-widest text-zinc-500">Admin password</span>
-            <input type="password" value={token} onChange={(event) => setToken(event.target.value)} className="w-full rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-zinc-100 outline-none focus:border-zinc-400" placeholder="Password" />
-          </label>
         </div>
 
         {saveError && <div className="mt-4 rounded-2xl border border-red-900 bg-red-950/40 px-4 py-3 text-sm text-red-200">{saveError}</div>}
@@ -274,22 +242,31 @@ function AddConcertModal({ isOpen, mode, onClose, onSave, isSaving, saveError })
 }
 
 function runTests() {
+  const testHistory = [
+    { artist: "ADELE", shows: ["PALAU SANT JORDI - 24/05/2016"] },
+    { artist: "AVENGED SEVENFOLD", shows: ["SANT JORDI CLUB - 20/10/2010", "RESURRECTION FEST - 29/06/2024"] },
+    { artist: "LEPROUS", shows: ["SALA RAZZMATAZZ - 04/02/2017", "SALA BIKINI - 10/11/2017", "SALA APOLO - 16/11/2019"] }
+  ];
+  const testNext = [
+    { artist: "PLINI", date: "16/05/2026", bought: false },
+    { artist: "HELLFEST", date: "18/06/2026 - 21/06/2026", bought: true },
+    { artist: "Amaia", date: "20/12/2026", bought: false }
+  ];
+
   console.assert(parseShow("SANT JORDI CLUB - 20/10/2010", "history").venue === "SANT JORDI CLUB", "parseShow should extract venue");
   console.assert(parseShow("LES DOCKS - LAUSANNE - 26/02/2023", "history").venue === "LES DOCKS - LAUSANNE", "parseShow should support venue names containing hyphens");
   console.assert(parseShow("16/05/2026", "next").date === "16/05/2026", "next concerts should support date-only items");
-  console.assert(filterConcerts(fallbackConcertHistory, "avenged sevenfold").length === 1, "search should find Avenged Sevenfold");
-  console.assert(filterConcerts(fallbackConcertHistory, "zurich").length >= 1, "search should be accent-insensitive for Zürich/Zurich");
-  console.assert(filterConcerts(fallbackConcertHistory, "not-a-real-band").length === 0, "search should return no results for unknown terms");
-  console.assert(sortConcerts(fallbackConcertHistory, "artist", "history")[0].artist === "ADELE", "artist sort should be alphabetical");
-  console.assert(sortConcerts(fallbackConcertHistory, "concerts", "history")[0].artist === "LEPROUS", "concert count sort should place Leprous first");
-  console.assert(sortConcerts(fallbackNextConcerts, "recent", "next")[0].artist === "Amaia", "next concerts should default to newest date first");
-  console.assert(fallbackNextConcerts.filter((item) => item.bought).length === 4, "next concerts should track bought ticket items");
-  console.assert(getVisibleNextConcerts(fallbackNextConcerts, "bought").every((item) => item.bought), "bought filter should only show bought items");
-  console.assert(getVisibleNextConcerts(fallbackNextConcerts, "pending").every((item) => !item.bought), "pending filter should only show not bought items");
+  console.assert(filterConcerts(testHistory, "avenged sevenfold").length === 1, "search should find Avenged Sevenfold");
+  console.assert(filterConcerts(testHistory, "not-a-real-band").length === 0, "search should return no results for unknown terms");
+  console.assert(sortConcerts(testHistory, "artist", "history")[0].artist === "ADELE", "artist sort should be alphabetical");
+  console.assert(sortConcerts(testHistory, "concerts", "history")[0].artist === "LEPROUS", "concert count sort should place Leprous first");
+  console.assert(sortConcerts(testNext, "recent", "next")[0].artist === "Amaia", "next concerts should default to newest date first");
+  console.assert(getVisibleNextConcerts(testNext, "bought").every((item) => item.bought), "bought filter should only show bought items");
+  console.assert(getVisibleNextConcerts(testNext, "pending").every((item) => !item.bought), "pending filter should only show not bought items");
   console.assert(addHistoryConcert([{ artist: "TEST", shows: [] }], "TEST", "VENUE", "01/01/2026")[0].shows.length === 1, "history add should append to existing artists");
   console.assert(addNextConcert([], "TEST", "01/01/2026", true)[0].bought === true, "next add should store bought status");
-  console.assert(groupHistoryRows([{ artist: "A", venue: "V", date: "01/01/2026" }])[0].shows[0] === "V - 01/01/2026", "sheet history rows should map to grouped concerts");
-  console.assert(mapNextRows([{ artist: "A", date: "01/01/2026", bought: "TRUE" }])[0].bought === true, "sheet next rows should map bought TRUE to boolean true");
+  console.assert(groupHistoryRows([{ artist: "A", venue: "V", date: "01/01/2026" }])[0].shows[0] === "V - 01/01/2026", "history rows should map to grouped concerts");
+  console.assert(mapNextRows([{ artist: "A", date: "01/01/2026", bought: "TRUE" }])[0].bought === true, "next rows should map bought TRUE to boolean true");
 }
 
 runTests();
@@ -305,22 +282,22 @@ export default function App() {
   const [loadError, setLoadError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
-  const [historyItems, setHistoryItems] = useState(fallbackConcertHistory);
-  const [nextItems, setNextItems] = useState(fallbackNextConcerts);
+  const [historyItems, setHistoryItems] = useState([]);
+  const [nextItems, setNextItems] = useState([]);
 
   useEffect(() => {
     let isMounted = true;
 
-    fetchSheetData()
+    fetchConcertData()
       .then((data) => {
         if (!isMounted) return;
-        setHistoryItems(data.history.length ? data.history : fallbackConcertHistory);
-        setNextItems(data.next.length ? data.next : fallbackNextConcerts);
+        setHistoryItems(data.history);
+        setNextItems(data.next);
         setLoadError("");
       })
       .catch(() => {
         if (!isMounted) return;
-        setLoadError("Could not load Google Sheet data. Showing embedded fallback data.");
+        setLoadError("Could not load concert data.");
       })
       .finally(() => {
         if (isMounted) setIsLoadingData(false);
@@ -356,13 +333,7 @@ export default function App() {
     setIsSaving(true);
     setSaveError("");
 
-    const payload = isNext
-      ? { type: "next", token: data.token, artist: data.artist.trim(), date: data.date.trim(), bought: data.bought }
-      : { type: "history", token: data.token, artist: data.artist.trim(), venue: data.venue.trim(), date: data.date.trim() };
-
     try {
-      await postConcertToSheet(payload);
-
       if (isNext) {
         setNextItems((items) => sortConcerts(addNextConcert(items, data.artist, data.date, data.bought), "recent", "next"));
       } else {
@@ -416,7 +387,7 @@ export default function App() {
           <p className="mb-3 text-xs font-semibold uppercase tracking-[0.45em] text-zinc-400">A Deafening Noise</p>
           <h1 className="text-5xl font-black uppercase tracking-tight md:text-8xl">{title}</h1>
           <p className="mx-auto mt-5 max-w-2xl text-base text-zinc-400 md:text-lg">{description}</p>
-          {isLoadingData && <p className="mt-3 text-sm text-zinc-500">Loading Google Sheet data...</p>}
+          {isLoadingData && <p className="mt-3 text-sm text-zinc-500">Loading concert data...</p>}
           {loadError && <p className="mt-3 text-sm text-red-300">{loadError}</p>}
         </header>
 
