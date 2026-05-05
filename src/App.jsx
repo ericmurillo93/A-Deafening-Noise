@@ -13,25 +13,18 @@ function groupHistoryFromJson(rows) {
 const fallbackConcertHistory = groupHistoryFromJson(concertsData.history);
 const fallbackNextConcerts = concertsData.next;
 
-const GITHUB_TOKEN = import.meta.env.VITE_GITHUB_TOKEN;
 const APP_PASSWORD = import.meta.env.VITE_APP_PASSWORD;
-const GITHUB_API_URL = "https://api.github.com/repos/ericmurillo93/A-Deafening-Noise/contents/data/concerts.json";
 
 async function saveToGitHub(updatedData, commitMessage = "Update concerts via web") {
-  const getRes = await fetch(GITHUB_API_URL, {
-    headers: { Authorization: `Bearer ${GITHUB_TOKEN}`, Accept: "application/vnd.github+json" }
+  const res = await fetch("/.netlify/functions/save-concerts", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ data: updatedData, commitMessage, password: APP_PASSWORD })
   });
-  if (!getRes.ok) throw new Error("Could not fetch concerts.json from GitHub");
-  const { sha } = await getRes.json();
-
-  const content = btoa(unescape(encodeURIComponent(JSON.stringify(updatedData, null, 2))));
-
-  const putRes = await fetch(GITHUB_API_URL, {
-    method: "PUT",
-    headers: { Authorization: `Bearer ${GITHUB_TOKEN}`, Accept: "application/vnd.github+json", "Content-Type": "application/json" },
-    body: JSON.stringify({ message: commitMessage, content, sha })
-  });
-  if (!putRes.ok) throw new Error("Could not save concerts.json to GitHub");
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(text || `Save failed (${res.status})`);
+  }
 }
 
 
@@ -107,7 +100,24 @@ function getMostRecentShowDate(item, mode) {
 function filterConcerts(items, query) {
   const q = normalize(query.trim());
   if (!q) return items;
-  return items.filter((item) => normalize(`${item.artist} ${item.shows ? item.shows.join(" ") : item.date}`).includes(q));
+
+  return items
+    .map((item) => {
+      const artistMatches = normalize(item.artist).includes(q);
+
+      // Next-mode item: no shows array, just date (and optional venue).
+      if (!item.shows) {
+        const haystack = normalize(`${item.artist} ${item.date} ${item.venue || ""}`);
+        return haystack.includes(q) ? item : null;
+      }
+
+      // History-mode item: filter the shows array down to matching shows.
+      if (artistMatches) return item;
+      const matchingShows = item.shows.filter((show) => normalize(show).includes(q));
+      if (matchingShows.length === 0) return null;
+      return { ...item, shows: matchingShows };
+    })
+    .filter(Boolean);
 }
 
 function sortConcerts(items, sortMode, mode) {
@@ -816,10 +826,12 @@ export default function App() {
 
   function openContextMenu(event, target) {
     event.preventDefault();
+    if (isSaving) return;
     setContextMenu({ open: true, x: event.clientX, y: event.clientY, target });
   }
 
   function openContextMenuAt(x, y, target) {
+    if (isSaving) return;
     setContextMenu({ open: true, x, y, target });
   }
 
@@ -1076,6 +1088,13 @@ export default function App() {
         </>
         )}
       </section>
+
+      {isSaving && (
+        <div className="pointer-events-none fixed bottom-6 right-6 z-[80] flex items-center gap-3 rounded-full border border-zinc-700 bg-zinc-900/95 px-5 py-3 shadow-2xl backdrop-blur">
+          <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-zinc-500 border-t-zinc-100" />
+          <span className="text-sm font-bold text-zinc-100">Saving…</span>
+        </div>
+      )}
 
       <AddConcertModal isOpen={modalOpen} mode={mode} onClose={() => setModalOpen(false)} onSave={handleAddConcert} isSaving={isSaving} saveError={saveError} artistSuggestions={artistSuggestions} venueSuggestions={venueSuggestions} />
 
