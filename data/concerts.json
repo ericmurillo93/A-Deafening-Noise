@@ -684,6 +684,11 @@
       "artist": "YERAI CORTÉS",
       "venue": "PALAU DE LA MÚSICA CATALANA",
       "date": "09/12/2025"
+    },
+    {
+      "artist": "Test",
+      "venue": "Test",
+      "date": "10/09/2026"
     }
   ],
   "next": [
