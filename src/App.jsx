@@ -1,95 +1,45 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
+import concertsData from "../data/concerts.json";
 
-const fallbackConcertHistory = [
-  { artist: "ADELE", shows: ["PALAU SANT JORDI - 24/05/2016"] },
-  { artist: "AVENGED SEVENFOLD", shows: ["SANT JORDI CLUB - 20/10/2010", "PALAU OLÍMPIC - 25/11/2013", "ST. JAKOBSHALLE BASEL - 11/06/2024", "RESURRECTION FEST - 29/06/2024"] },
-  { artist: "LEPROUS", shows: ["SALA RAZZMATAZZ - 04/02/2017", "BE PROG! MY FRIEND - 31/06/2017", "SALA BIKINI - 10/11/2017", "DOWNLOAD FESTIVAL MADRID - 29/06/2019", "SALA APOLO - 16/11/2019", "FRI-SON, FRIBOURG - 11/02/2020", "SALA APOLO - 20 ANNIVERSARY TOUR - 10/12/2021", "LES DOCKS - LAUSANNE - 26/02/2023"] },
-  { artist: "POLYPHIA", shows: ["RAZZMATAZZ 3 - 22/11/2017", "KOMPLEX 457 ZURICH - 24/05/2023", "LES DOCKS - 12/06/2024"] }
-];
+function groupHistoryFromJson(rows) {
+  const grouped = rows.reduce((acc, { artist, venue, date }) => {
+    if (!acc[artist]) acc[artist] = [];
+    acc[artist].push(`${venue} - ${date}`);
+    return acc;
+  }, {});
+  return Object.entries(grouped).map(([artist, shows]) => ({ artist, shows }));
+}
 
-const fallbackNextConcerts = [
-  { artist: "PLINI", date: "16/05/2026", bought: false },
-  { artist: "The Aristocrats", date: "20/05/2026", bought: false },
-  { artist: "RIGOBERTA BANDINI", date: "05/06/2026", bought: true },
-  { artist: "BAD BUNNY", date: "06/06/2026", bought: true },
-  { artist: "HELLFEST", date: "18/06/2026 - 21/06/2026", bought: true },
-  { artist: "BE PROG MY FRIEND", date: "25/09/2026 - 26/09/2026", bought: true },
-  { artist: "AMARAL", date: "18/12/2026", bought: false },
-  { artist: "Amaia", date: "20/12/2026", bought: false }
-];
+const fallbackConcertHistory = groupHistoryFromJson(concertsData.history);
+const fallbackNextConcerts = concertsData.next;
+
+const GITHUB_TOKEN = import.meta.env.VITE_GITHUB_TOKEN;
+const APP_PASSWORD = import.meta.env.VITE_APP_PASSWORD;
+const GITHUB_API_URL = "https://api.github.com/repos/ericmurillo93/A-Deafening-Noise/contents/data/concerts.json";
+
+async function saveToGitHub(updatedData) {
+  const getRes = await fetch(GITHUB_API_URL, {
+    headers: { Authorization: `Bearer ${GITHUB_TOKEN}`, Accept: "application/vnd.github+json" }
+  });
+  if (!getRes.ok) throw new Error("Could not fetch concerts.json from GitHub");
+  const { sha } = await getRes.json();
+
+  const content = btoa(unescape(encodeURIComponent(JSON.stringify(updatedData, null, 2))));
+
+  const putRes = await fetch(GITHUB_API_URL, {
+    method: "PUT",
+    headers: { Authorization: `Bearer ${GITHUB_TOKEN}`, Accept: "application/vnd.github+json", "Content-Type": "application/json" },
+    body: JSON.stringify({ message: "Add concert via web", content, sha })
+  });
+  if (!putRes.ok) throw new Error("Could not save concerts.json to GitHub");
+}
 
 const externalLinks = {
   albums: "https://www.discogs.com/es/user/eric.murillo93/collection",
   spotify: "https://open.spotify.com/user/ericmurillospotify?si=47fbb5f4096a4be8&nd=1&dlsi=b38e7009347e48a4"
 };
 
-const GOOGLE_SHEET_API_URL = "https://script.google.com/macros/s/AKfycbxZ2iAFTWkjYeQRcvesTO7Rzc3OSPR78jEFsbWV6vUEsi0FmHEGYOgQ_j28Dj4zAn5pow/exec";
 
-function formatSheetDate(value) {
-  if (!value) return "";
-  if (typeof value === "string" && value.includes("/")) return value;
-
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return String(value);
-
-  const day = String(parsed.getDate()).padStart(2, "0");
-  const month = String(parsed.getMonth() + 1).padStart(2, "0");
-  const year = parsed.getFullYear();
-  return `${day}/${month}/${year}`;
-}
-
-function normalizeBought(value) {
-  if (typeof value === "boolean") return value;
-  return String(value).toLowerCase() === "true";
-}
-
-function groupHistoryRows(rows) {
-  const grouped = rows.reduce((acc, row) => {
-    const artist = String(row.artist || "").trim();
-    const venue = String(row.venue || "").trim();
-    const date = formatSheetDate(row.date);
-
-    if (!artist || !venue || !date) return acc;
-    if (!acc[artist]) acc[artist] = [];
-    acc[artist].push(`${venue} - ${date}`);
-    return acc;
-  }, {});
-
-  return Object.entries(grouped).map(([artist, shows]) => ({ artist, shows }));
-}
-
-function mapNextRows(rows) {
-  return rows
-    .map((row) => ({
-      artist: String(row.artist || "").trim(),
-      date: formatSheetDate(row.date),
-      bought: normalizeBought(row.bought)
-    }))
-    .filter((item) => item.artist && item.date);
-}
-
-async function fetchSheetData() {
-  const response = await fetch(GOOGLE_SHEET_API_URL);
-  if (!response.ok) throw new Error("Could not load Google Sheet data");
-
-  const data = await response.json();
-  return {
-    history: groupHistoryRows(data.history || []),
-    next: mapNextRows(data.next || [])
-  };
-}
-
-async function postConcertToSheet(payload) {
-  const response = await fetch(GOOGLE_SHEET_API_URL, {
-    method: "POST",
-    headers: { "Content-Type": "text/plain;charset=utf-8" },
-    body: JSON.stringify(payload)
-  });
-
-  const result = await response.json();
-  if (!result.ok) throw new Error(result.error || "Could not save concert");
-  return result;
-}
 
 function Icon({ type }) {
   const common = {
@@ -168,7 +118,7 @@ function sortConcerts(items, sortMode, mode) {
   const sorted = [...items];
 
   if (mode === "next") {
-    return sorted.sort((a, b) => parseDate(b.date) - parseDate(a.date) || a.artist.localeCompare(b.artist));
+    return sorted.sort((a, b) => parseDate(a.date) - parseDate(b.date) || a.artist.localeCompare(b.artist));
   }
 
   if (sortMode === "concerts") {
@@ -211,7 +161,6 @@ function AddConcertModal({ isOpen, mode, onClose, onSave, isSaving, saveError })
   const [venue, setVenue] = useState("");
   const [date, setDate] = useState("");
   const [bought, setBought] = useState(false);
-  const [token, setToken] = useState("");
 
   if (!isOpen) return null;
 
@@ -220,7 +169,7 @@ function AddConcertModal({ isOpen, mode, onClose, onSave, isSaving, saveError })
   function submit(event) {
     event.preventDefault();
     if (!artist.trim() || !date.trim() || (!isNextMode && !venue.trim())) return;
-    onSave({ artist, venue, date, bought, token });
+    onSave({ artist, venue, date, bought });
   }
 
   return (
@@ -258,16 +207,10 @@ function AddConcertModal({ isOpen, mode, onClose, onSave, isSaving, saveError })
               <span>💰 Ticket bought</span>
             </label>
           )}
-
-          <label className="block">
-            <span className="mb-2 block text-xs font-bold uppercase tracking-widest text-zinc-500">Admin password</span>
-            <input type="password" value={token} onChange={(event) => setToken(event.target.value)} className="w-full rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-zinc-100 outline-none focus:border-zinc-400" placeholder="Password" />
-          </label>
         </div>
 
-        {saveError && <div className="mt-4 rounded-2xl border border-red-900 bg-red-950/40 px-4 py-3 text-sm text-red-200">{saveError}</div>}
-
         <button type="submit" disabled={isSaving} className="mt-6 w-full rounded-2xl bg-zinc-100 px-5 py-3 font-black text-zinc-950 transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-50">{isSaving ? "Saving..." : "Add concert"}</button>
+        {saveError && <div className="mt-3 rounded-2xl border border-red-900 bg-red-950/40 px-4 py-3 text-sm text-red-200">{saveError}</div>}
       </form>
     </div>
   );
@@ -288,48 +231,68 @@ function runTests() {
   console.assert(getVisibleNextConcerts(fallbackNextConcerts, "pending").every((item) => !item.bought), "pending filter should only show not bought items");
   console.assert(addHistoryConcert([{ artist: "TEST", shows: [] }], "TEST", "VENUE", "01/01/2026")[0].shows.length === 1, "history add should append to existing artists");
   console.assert(addNextConcert([], "TEST", "01/01/2026", true)[0].bought === true, "next add should store bought status");
-  console.assert(groupHistoryRows([{ artist: "A", venue: "V", date: "01/01/2026" }])[0].shows[0] === "V - 01/01/2026", "sheet history rows should map to grouped concerts");
-  console.assert(mapNextRows([{ artist: "A", date: "01/01/2026", bought: "TRUE" }])[0].bought === true, "sheet next rows should map bought TRUE to boolean true");
 }
 
 runTests();
 
+function LoginGate({ onUnlock }) {
+  const [input, setInput] = useState("");
+  const [error, setError] = useState(false);
+  const [shake, setShake] = useState(false);
+
+  function attempt(event) {
+    event.preventDefault();
+    if (input === APP_PASSWORD) {
+      onUnlock();
+    } else {
+      setError(true);
+      setShake(true);
+      setInput("");
+      setTimeout(() => setShake(false), 500);
+    }
+  }
+
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-zinc-950 px-4">
+      <div className={`w-full max-w-sm ${shake ? "animate-shake" : ""}`}>
+        <div className="mb-10 text-center">
+          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.45em] text-zinc-500">A Deafening Noise</p>
+          <h1 className="text-4xl font-black uppercase tracking-tight text-zinc-100">Private Archive</h1>
+          <p className="mt-3 text-sm text-zinc-500">Enter the password to continue.</p>
+        </div>
+        <form onSubmit={attempt} className="space-y-4">
+          <input
+            type="password"
+            value={input}
+            onChange={(e) => { setInput(e.target.value); setError(false); }}
+            placeholder="Password"
+            autoFocus
+            className={`w-full rounded-2xl border px-5 py-4 text-center text-lg tracking-widest bg-zinc-900 text-zinc-100 outline-none transition placeholder:tracking-normal placeholder:text-zinc-600 ${error ? "border-red-700 text-red-300" : "border-zinc-700 focus:border-zinc-400"}`}
+          />
+          {error && <p className="text-center text-sm text-red-400">Incorrect password.</p>}
+          <button type="submit" className="w-full rounded-2xl bg-zinc-100 py-4 font-black uppercase tracking-widest text-zinc-950 transition hover:bg-white">
+            Unlock
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
+  const [unlocked, setUnlocked] = useState(false);
+
+  if (!unlocked) return <LoginGate onUnlock={() => setUnlocked(true)} />;
   const [query, setQuery] = useState("");
   const [sortMode, setSortMode] = useState("artist");
   const [ticketFilter, setTicketFilter] = useState("all");
   const [activePage, setActivePage] = useState("history");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
-  const [isLoadingData, setIsLoadingData] = useState(true);
-  const [loadError, setLoadError] = useState("");
-  const [isSaving, setIsSaving] = useState(false);
-  const [saveError, setSaveError] = useState("");
   const [historyItems, setHistoryItems] = useState(fallbackConcertHistory);
   const [nextItems, setNextItems] = useState(fallbackNextConcerts);
-
-  useEffect(() => {
-    let isMounted = true;
-
-    fetchSheetData()
-      .then((data) => {
-        if (!isMounted) return;
-        setHistoryItems(data.history.length ? data.history : fallbackConcertHistory);
-        setNextItems(data.next.length ? data.next : fallbackNextConcerts);
-        setLoadError("");
-      })
-      .catch(() => {
-        if (!isMounted) return;
-        setLoadError("Could not load Google Sheet data. Showing embedded fallback data.");
-      })
-      .finally(() => {
-        if (isMounted) setIsLoadingData(false);
-      });
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
 
   const isNext = activePage === "next";
   const currentItems = isNext ? nextItems : historyItems;
@@ -355,19 +318,29 @@ export default function App() {
   async function handleAddConcert(data) {
     setIsSaving(true);
     setSaveError("");
-
-    const payload = isNext
-      ? { type: "next", token: data.token, artist: data.artist.trim(), date: data.date.trim(), bought: data.bought }
-      : { type: "history", token: data.token, artist: data.artist.trim(), venue: data.venue.trim(), date: data.date.trim() };
-
     try {
-      await postConcertToSheet(payload);
+      let updatedHistory = historyItems;
+      let updatedNext = nextItems;
 
       if (isNext) {
-        setNextItems((items) => sortConcerts(addNextConcert(items, data.artist, data.date, data.bought), "recent", "next"));
+        updatedNext = sortConcerts(addNextConcert(nextItems, data.artist, data.date, data.bought), "next", "next");
       } else {
-        setHistoryItems((items) => addHistoryConcert(items, data.artist, data.venue, data.date));
+        updatedHistory = addHistoryConcert(historyItems, data.artist, data.venue, data.date);
       }
+
+      const flatHistory = updatedHistory.flatMap(({ artist, shows }) =>
+        shows.map((show) => {
+          const parts = show.split(" - ");
+          const date = parts[parts.length - 1];
+          const venue = parts.slice(0, -1).join(" - ");
+          return { artist, venue, date };
+        })
+      );
+
+      await saveToGitHub({ history: flatHistory, next: updatedNext });
+
+      if (isNext) setNextItems(updatedNext);
+      else setHistoryItems(updatedHistory);
 
       setModalOpen(false);
     } catch (error) {
@@ -416,8 +389,6 @@ export default function App() {
           <p className="mb-3 text-xs font-semibold uppercase tracking-[0.45em] text-zinc-400">A Deafening Noise</p>
           <h1 className="text-5xl font-black uppercase tracking-tight md:text-8xl">{title}</h1>
           <p className="mx-auto mt-5 max-w-2xl text-base text-zinc-400 md:text-lg">{description}</p>
-          {isLoadingData && <p className="mt-3 text-sm text-zinc-500">Loading Google Sheet data...</p>}
-          {loadError && <p className="mt-3 text-sm text-red-300">{loadError}</p>}
         </header>
 
         <div className="sticky top-0 z-10 mb-8 border-y border-zinc-800 bg-zinc-950/90 py-4 backdrop-blur">
@@ -491,7 +462,7 @@ export default function App() {
               </div>
 
               <div className="mt-4 space-y-3">
-                {(isNext ? [item.date] : item.shows).map((show) => {
+                {(isNext ? [item.date] : [...item.shows].sort((a, b) => parseDate(parseShow(b, mode).date) - parseDate(parseShow(a, mode).date))).map((show) => {
                   const { venue, date } = parseShow(show, mode);
                   return (
                     <div key={`${item.artist}-${show}`} className="rounded-2xl bg-zinc-950 p-4">
