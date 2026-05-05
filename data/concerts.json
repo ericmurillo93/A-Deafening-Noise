@@ -68,7 +68,7 @@
     {
       "artist": "AVENGED SEVENFOLD",
       "venue": "PALAU OLÍMPIC",
-      "date": "25/11/2013"
+      "date": "25/11/2014"
     },
     {
       "artist": "AVENGED SEVENFOLD",
@@ -731,7 +731,8 @@
     {
       "artist": "Amaia",
       "date": "20/12/2026",
-      "bought": false
+      "bought": false,
+      "venue": "PALAU SANT JORDI"
     }
   ]
 }
