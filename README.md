@@ -1,102 +1,69 @@
 # A Deafening Noise
 
-A personal, searchable concert archive — every past show, every upcoming gig, the full album collection and the Spotify profile, all in one fast static site.
-
-Built with **React 18**, **Vite 5** and **Tailwind CSS 3**. Deployed on **Netlify**.
-
-[![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start)
-
----
+A personal concert archive built with React, Vite and Tailwind CSS.
 
 ## Features
 
-- Searchable concert history (artist, venue, festival, city, date) — accent-insensitive
-- Upcoming concerts view with ticket-status filter (all / bought / pending)
-- Sort by artist, total concerts, or most recent
-- Add concerts directly from the UI (admin-only)
-- Hidden sidebar with quick links to the album collection (Discogs) and Spotify profile
-- Dark, typographic interface tuned for fast scanning
-- Static, CDN-friendly build with long-term cache headers and security headers
+- Searchable concert history
+- Upcoming concerts view
+- Ticket status filter for upcoming concerts
+- Add concert modal
+- Hidden sidebar menu
+- External links to Discogs and Spotify
+- Netlify-ready deployment configuration
 
-## Tech stack
-
-| Layer    | Tooling                                |
-| -------- | -------------------------------------- |
-| UI       | React 18, Tailwind CSS 3               |
-| Build    | Vite 5, PostCSS, Autoprefixer          |
-| Hosting  | Netlify (SPA redirects, header rules)  |
-| Data     | `data/concerts.json` in the GitHub repository  |
-
-## Getting started
-
-### Prerequisites
-
-- Node.js **20 or newer**
-- npm 9+
-
-### Local development
+## Local development
 
 ```bash
 npm install
 npm run dev
 ```
 
-The dev server runs on [http://localhost:5173](http://localhost:5173) with hot module reload.
-
-### Production build
+## Production build
 
 ```bash
 npm run build
-npm run preview
 ```
 
-The optimized bundle is emitted to `dist/`.
+The production output is generated in:
 
-## Deploying to Netlify
+```text
+dist
+```
 
-The repository ships with a `netlify.toml`, so Netlify auto-detects everything:
+## Netlify setup
 
-| Setting           | Value           |
-| ----------------- | --------------- |
-| Build command     | `npm run build` |
-| Publish directory | `dist`          |
-| Node version      | `22`            |
+Use these settings in Netlify:
 
-The config also wires up:
+```text
+Build command: npm run build
+Publish directory: dist
+```
 
-- SPA fallback redirect (`/* -> /index.html`)
-- Long-term immutable caching for fingerprinted assets
-- Security headers (HSTS, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy)
+The repository includes `netlify.toml`, so Netlify should detect the correct settings automatically.
 
 ## Project structure
 
 ```text
 .
-├── index.html            # HTML shell with SEO + social meta
-├── netlify.toml          # Build, redirects, headers
+├── index.html
+├── netlify.toml
 ├── package.json
 ├── postcss.config.js
 ├── tailwind.config.js
-├── vite.config.js        # Build target, vendor chunking
-├── public/               # Static assets served as-is
-│   ├── favicon.svg
-│   ├── apple-touch-icon.svg
-│   ├── robots.txt
-│   └── site.webmanifest
-├── data/
-│   └── concerts.json     # Seed data
-└── src/
-    ├── App.jsx           # All UI + state
-    ├── main.jsx          # React entrypoint
-    └── index.css         # Tailwind layers + base styles
+├── vite.config.js
+└── src
+    ├── App.jsx
+    ├── index.css
+    └── main.jsx
 ```
 
 ## Updating content
 
-Concert data lives in `data/concerts.json` in this repository. The app fetches it at runtime from the GitHub raw URL. To add or edit concerts, update that file and push to the `main` branch — the live site will reflect the changes on the next page load.
+Most site logic and UI lives in:
 
-The in-app **Add concert** modal adds entries to the local session view only; to persist changes, edit `data/concerts.json` directly in the repository.
+```text
+src/App.jsx
+```
 
-## License
-
-MIT
+The site currently reads remote concert data through the configured API URL in `App.jsx` and keeps fallback data in the same file.
