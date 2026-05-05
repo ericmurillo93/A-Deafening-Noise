@@ -17,7 +17,7 @@ const GITHUB_TOKEN = import.meta.env.VITE_GITHUB_TOKEN;
 const APP_PASSWORD = import.meta.env.VITE_APP_PASSWORD;
 const GITHUB_API_URL = "https://api.github.com/repos/ericmurillo93/A-Deafening-Noise/contents/data/concerts.json";
 
-async function saveToGitHub(updatedData) {
+async function saveToGitHub(updatedData, commitMessage = "Update concerts via web") {
   const getRes = await fetch(GITHUB_API_URL, {
     headers: { Authorization: `Bearer ${GITHUB_TOKEN}`, Accept: "application/vnd.github+json" }
   });
@@ -29,7 +29,7 @@ async function saveToGitHub(updatedData) {
   const putRes = await fetch(GITHUB_API_URL, {
     method: "PUT",
     headers: { Authorization: `Bearer ${GITHUB_TOKEN}`, Accept: "application/vnd.github+json", "Content-Type": "application/json" },
-    body: JSON.stringify({ message: "Add concert via web", content, sha })
+    body: JSON.stringify({ message: commitMessage, content, sha })
   });
   if (!putRes.ok) throw new Error("Could not save concerts.json to GitHub");
 }
@@ -148,8 +148,8 @@ function addHistoryConcert(items, artist, venue, date) {
   return [...items, { artist: cleanedArtist, shows: [show] }];
 }
 
-function addNextConcert(items, artist, date, bought) {
-  return [...items, { artist: artist.trim(), date: date.trim(), bought }];
+function addNextConcert(items, artist, date, bought, venue) {
+  return [...items, { artist: artist.trim(), date: date.trim(), bought, venue: venue ? venue.trim() : "" }];
 }
 
 function editHistoryConcert(items, originalArtist, originalShow, newArtist, newVenue, newDate) {
@@ -186,10 +186,10 @@ function deleteHistoryConcert(items, artist, show) {
     .filter(Boolean);
 }
 
-function editNextConcert(items, originalArtist, originalDate, newArtist, newDate, newBought) {
+function editNextConcert(items, originalArtist, originalDate, newArtist, newDate, newBought, newVenue) {
   return items.map((item) => {
     if (normalize(item.artist) === normalize(originalArtist) && item.date === originalDate) {
-      return { artist: newArtist.trim(), date: newDate.trim(), bought: newBought };
+      return { artist: newArtist.trim(), date: newDate.trim(), bought: newBought, venue: newVenue ? newVenue.trim() : "" };
     }
     return item;
   });
@@ -199,42 +199,16 @@ function deleteNextConcert(items, artist, date) {
   return items.filter((item) => !(normalize(item.artist) === normalize(artist) && item.date === date));
 }
 
-// Convert "DD/MM/YYYY" → "YYYY-MM-DD" for native date input. Empty if not a single date.
-function toIsoDate(displayDate) {
-  const m = String(displayDate || "").match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-  if (!m) return "";
-  const [, d, mo, y] = m;
-  return `${y}-${mo.padStart(2, "0")}-${d.padStart(2, "0")}`;
-}
-
-// Convert "YYYY-MM-DD" → "DD/MM/YYYY"
-function fromIsoDate(iso) {
-  const m = String(iso || "").match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  if (!m) return "";
-  const [, y, mo, d] = m;
-  return `${d}/${mo}/${y}`;
-}
-
+// Plain text date field — kept simple, free-form so festival ranges work too.
 function DateField({ value, onChange }) {
   return (
-    <div className="flex items-stretch gap-2">
-      <input
-        type="text"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder="DD/MM/YYYY"
-        className="flex-1 rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-zinc-100 outline-none focus:border-zinc-400"
-      />
-      <label className="flex cursor-pointer items-center justify-center rounded-2xl border border-zinc-700 bg-zinc-900 px-4 text-zinc-300 transition hover:border-zinc-500" title="Pick from calendar">
-        <span aria-hidden="true">📅</span>
-        <input
-          type="date"
-          value={toIsoDate(value)}
-          onChange={(e) => onChange(fromIsoDate(e.target.value))}
-          className="sr-only"
-        />
-      </label>
-    </div>
+    <input
+      type="text"
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      placeholder="DD/MM/YYYY"
+      className="w-full rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-zinc-100 outline-none focus:border-zinc-400"
+    />
   );
 }
 
@@ -316,7 +290,8 @@ function EditConcertModal({ isOpen, mode, initial, onClose, onSave, onDelete, is
 
   function submit(event) {
     event.preventDefault();
-    if (!artist.trim() || !date.trim() || (!isNextMode && !venue.trim())) return;
+    if (!artist.trim() || !date.trim()) return;
+    if (!isNextMode && !venue.trim()) return;
     onSave({ artist: artist.trim(), venue: venue.trim(), date: date.trim(), bought });
   }
 
@@ -343,12 +318,10 @@ function EditConcertModal({ isOpen, mode, initial, onClose, onSave, onDelete, is
             <AutoSuggestField value={artist} onChange={setArtist} suggestions={artistSuggestions} placeholder="Artist name" />
           </label>
 
-          {!isNextMode && (
-            <label className="block">
-              <span className="mb-2 block text-xs font-bold uppercase tracking-widest text-zinc-500">Location / Venue</span>
-              <AutoSuggestField value={venue} onChange={setVenue} suggestions={venueSuggestions} placeholder="Venue or festival" />
-            </label>
-          )}
+          <label className="block">
+            <span className="mb-2 block text-xs font-bold uppercase tracking-widest text-zinc-500">Venue {isNextMode && <span className="ml-1 normal-case tracking-normal text-zinc-600">(optional)</span>}</span>
+            <AutoSuggestField value={venue} onChange={setVenue} suggestions={venueSuggestions} placeholder="Venue or festival" />
+          </label>
 
           <label className="block">
             <span className="mb-2 block text-xs font-bold uppercase tracking-widest text-zinc-500">Date</span>
@@ -373,16 +346,19 @@ function EditConcertModal({ isOpen, mode, initial, onClose, onSave, onDelete, is
   );
 }
 
-function ContextMenu({ open, x, y, onEdit, onDelete, onClose }) {
+function ContextMenu({ open, x, y, onEdit, onDelete, onMoveToHistory, onClose, showMoveToHistory }) {
   if (!open) return null;
   return (
     <>
       <div className="fixed inset-0 z-[55]" onClick={onClose} onContextMenu={(e) => { e.preventDefault(); onClose(); }} />
       <div
-        className="fixed z-[56] min-w-[140px] overflow-hidden rounded-xl border border-zinc-700 bg-zinc-950 shadow-2xl"
+        className="fixed z-[56] min-w-[160px] overflow-hidden rounded-xl border border-zinc-700 bg-zinc-950 shadow-2xl"
         style={{ left: x, top: y }}
       >
         <button onClick={onEdit} className="block w-full px-4 py-2 text-left text-sm text-zinc-100 hover:bg-zinc-800">Edit</button>
+        {showMoveToHistory && (
+          <button onClick={onMoveToHistory} className="block w-full px-4 py-2 text-left text-sm text-zinc-100 hover:bg-zinc-800">Move to history</button>
+        )}
         <button onClick={onDelete} className="block w-full px-4 py-2 text-left text-sm text-red-300 hover:bg-zinc-800">Delete</button>
       </div>
     </>
@@ -401,7 +377,8 @@ function AddConcertModal({ isOpen, mode, onClose, onSave, isSaving, saveError, a
 
   function submit(event) {
     event.preventDefault();
-    if (!artist.trim() || !date.trim() || (!isNextMode && !venue.trim())) return;
+    if (!artist.trim() || !date.trim()) return;
+    if (!isNextMode && !venue.trim()) return;
     onSave({ artist, venue, date, bought });
   }
 
@@ -422,12 +399,10 @@ function AddConcertModal({ isOpen, mode, onClose, onSave, isSaving, saveError, a
             <AutoSuggestField value={artist} onChange={setArtist} suggestions={artistSuggestions} placeholder="Artist name" />
           </label>
 
-          {!isNextMode && (
-            <label className="block">
-              <span className="mb-2 block text-xs font-bold uppercase tracking-widest text-zinc-500">Location / Venue</span>
-              <AutoSuggestField value={venue} onChange={setVenue} suggestions={venueSuggestions} placeholder="Venue or festival" />
-            </label>
-          )}
+          <label className="block">
+            <span className="mb-2 block text-xs font-bold uppercase tracking-widest text-zinc-500">Venue {isNextMode && <span className="ml-1 normal-case tracking-normal text-zinc-600">(optional)</span>}</span>
+            <AutoSuggestField value={venue} onChange={setVenue} suggestions={venueSuggestions} placeholder="Venue or festival" />
+          </label>
 
           <label className="block">
             <span className="mb-2 block text-xs font-bold uppercase tracking-widest text-zinc-500">Date</span>
@@ -755,12 +730,15 @@ export default function App() {
       let updatedNext = nextItems;
 
       if (isNext) {
-        updatedNext = sortConcerts(addNextConcert(nextItems, data.artist, data.date, data.bought), "next", "next");
+        updatedNext = sortConcerts(addNextConcert(nextItems, data.artist, data.date, data.bought, data.venue), "next", "next");
       } else {
         updatedHistory = addHistoryConcert(historyItems, data.artist, data.venue, data.date);
       }
 
-      await saveToGitHub({ history: flattenHistory(updatedHistory), next: updatedNext });
+      await saveToGitHub(
+        { history: flattenHistory(updatedHistory), next: updatedNext },
+        `Add concert: ${data.artist}${data.venue ? " — " + data.venue : ""} (${data.date})`
+      );
 
       if (isNext) setNextItems(updatedNext);
       else setHistoryItems(updatedHistory);
@@ -783,14 +761,17 @@ export default function App() {
 
       if (editTarget.mode === "next") {
         updatedNext = sortConcerts(
-          editNextConcert(nextItems, editTarget.artist, editTarget.date, data.artist, data.date, data.bought),
+          editNextConcert(nextItems, editTarget.artist, editTarget.date, data.artist, data.date, data.bought, data.venue),
           "next", "next"
         );
       } else {
         updatedHistory = editHistoryConcert(historyItems, editTarget.artist, editTarget.show, data.artist, data.venue, data.date);
       }
 
-      await saveToGitHub({ history: flattenHistory(updatedHistory), next: updatedNext });
+      await saveToGitHub(
+        { history: flattenHistory(updatedHistory), next: updatedNext },
+        `Edit concert: ${data.artist}${data.venue ? " — " + data.venue : ""} (${data.date})`
+      );
 
       if (editTarget.mode === "next") setNextItems(updatedNext);
       else setHistoryItems(updatedHistory);
@@ -817,7 +798,10 @@ export default function App() {
         updatedHistory = deleteHistoryConcert(historyItems, editTarget.artist, editTarget.show);
       }
 
-      await saveToGitHub({ history: flattenHistory(updatedHistory), next: updatedNext });
+      await saveToGitHub(
+        { history: flattenHistory(updatedHistory), next: updatedNext },
+        `Delete concert: ${editTarget.artist}${editTarget.venue ? " — " + editTarget.venue : ""} (${editTarget.date})`
+      );
 
       if (editTarget.mode === "next") setNextItems(updatedNext);
       else setHistoryItems(updatedHistory);
@@ -848,7 +832,7 @@ export default function App() {
     closeContextMenu();
     if (!t) return;
     if (t.mode === "next") {
-      setEditTarget({ mode: "next", artist: t.artist, date: t.date, bought: t.bought, venue: "" });
+      setEditTarget({ mode: "next", artist: t.artist, date: t.date, bought: t.bought, venue: t.venue || "" });
     } else {
       setEditTarget({ mode: "history", artist: t.artist, show: t.show, venue: t.venue, date: t.date });
     }
@@ -858,7 +842,7 @@ export default function App() {
     const t = contextMenu.target;
     closeContextMenu();
     if (!t) return;
-    const label = t.mode === "next" ? `${t.artist} — ${t.date}` : `${t.artist} — ${t.venue} (${t.date})`;
+    const label = t.mode === "next" ? `${t.artist}${t.venue ? " — " + t.venue : ""} (${t.date})` : `${t.artist} — ${t.venue} (${t.date})`;
     if (!window.confirm(`Delete "${label}"? This can't be undone.`)) return;
     setIsSaving(true);
     setSaveError("");
@@ -872,13 +856,53 @@ export default function App() {
         updatedHistory = deleteHistoryConcert(historyItems, t.artist, t.show);
       }
 
-      await saveToGitHub({ history: flattenHistory(updatedHistory), next: updatedNext });
+      await saveToGitHub(
+        { history: flattenHistory(updatedHistory), next: updatedNext },
+        `Delete concert: ${label}`
+      );
 
       if (t.mode === "next") setNextItems(updatedNext);
       else setHistoryItems(updatedHistory);
     } catch (error) {
       setSaveError(error.message || "Could not delete concert");
       window.alert("Delete failed: " + (error.message || "Unknown error"));
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  async function moveToHistoryFromContext() {
+    const t = contextMenu.target;
+    closeContextMenu();
+    if (!t || t.mode !== "next") return;
+
+    // Default the venue: if missing, ask the user (since history requires a venue)
+    let venueValue = t.venue;
+    if (!venueValue || !venueValue.trim()) {
+      venueValue = window.prompt(`Enter the venue for ${t.artist} on ${t.date}:`, "");
+      if (venueValue === null) return; // user cancelled
+      if (!venueValue.trim()) {
+        window.alert("Venue is required to move a concert to history.");
+        return;
+      }
+    }
+
+    setIsSaving(true);
+    setSaveError("");
+    try {
+      const updatedNext = deleteNextConcert(nextItems, t.artist, t.date);
+      const updatedHistory = addHistoryConcert(historyItems, t.artist, venueValue, t.date);
+
+      await saveToGitHub(
+        { history: flattenHistory(updatedHistory), next: updatedNext },
+        `Move to history: ${t.artist} — ${venueValue} (${t.date})`
+      );
+
+      setNextItems(updatedNext);
+      setHistoryItems(updatedHistory);
+    } catch (error) {
+      setSaveError(error.message || "Could not move concert");
+      window.alert("Move failed: " + (error.message || "Unknown error"));
     } finally {
       setIsSaving(false);
     }
@@ -988,7 +1012,7 @@ export default function App() {
                 {(isNext ? [item.date] : [...item.shows].sort((a, b) => parseDate(parseShow(b, mode).date) - parseDate(parseShow(a, mode).date))).map((show) => {
                   const { venue, date } = parseShow(show, mode);
                   const target = isNext
-                    ? { mode: "next", artist: item.artist, date: item.date, bought: item.bought }
+                    ? { mode: "next", artist: item.artist, date: item.date, bought: item.bought, venue: item.venue || "" }
                     : { mode: "history", artist: item.artist, show, venue, date };
                   let touchTimer = null;
                   let touchMoved = false;
@@ -1028,7 +1052,13 @@ export default function App() {
                           <span>{venue}</span>
                         </div>
                       )}
-                      <div className={`${!isNext ? "mt-2" : ""} flex gap-2 text-sm text-zinc-400`}>
+                      {isNext && item.venue && (
+                        <div className="flex gap-2 text-sm font-semibold text-zinc-100">
+                          <Icon type="map" />
+                          <span>{item.venue}</span>
+                        </div>
+                      )}
+                      <div className={`${(!isNext || item.venue) ? "mt-2" : ""} flex gap-2 text-sm text-zinc-400`}>
                         <Icon type="calendar" />
                         <span>{date}</span>
                       </div>
@@ -1068,6 +1098,8 @@ export default function App() {
         y={contextMenu.y}
         onEdit={startEditFromContext}
         onDelete={deleteFromContext}
+        onMoveToHistory={moveToHistoryFromContext}
+        showMoveToHistory={contextMenu.target?.mode === "next"}
         onClose={closeContextMenu}
       />
     </main>

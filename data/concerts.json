@@ -52,12 +52,12 @@
     },
     {
       "artist": "AVATAR",
-      "venue": "Riyadh Air Metropolitano",
+      "venue": "RIYADH AIR METROPOLITANO",
       "date": "05/07/2025"
     },
     {
       "artist": "AVATAR",
-      "venue": "SALA RAZZMATAZZ",
+      "venue": "RAZZMATAZZ",
       "date": "04/02/2026"
     },
     {
@@ -97,7 +97,7 @@
     },
     {
       "artist": "BETWEEN THE BURIED AND ME",
-      "venue": "SALA RAZZMATAZZ",
+      "venue": "RAZZMATAZZ",
       "date": "04/02/2017"
     },
     {
@@ -147,7 +147,7 @@
     },
     {
       "artist": "DEVIN TOWNSEND",
-      "venue": "SALA RAZZMATAZZ",
+      "venue": "RAZZMATAZZ",
       "date": "04/02/2017"
     },
     {
@@ -162,12 +162,12 @@
     },
     {
       "artist": "DREAM THEATER",
-      "venue": "SALA RAZZMATAZZ",
+      "venue": "RAZZMATAZZ",
       "date": "28/04/2017"
     },
     {
       "artist": "DREAM THEATER",
-      "venue": "SAMSUNG HALL, ZÚRICH",
+      "venue": "SAMSUNG HALL ZÜRICH",
       "date": "14/02/2020"
     },
     {
@@ -192,12 +192,12 @@
     },
     {
       "artist": "ESTOPA",
-      "venue": "ESTADI LLUIS COMPANYS",
+      "venue": "ESTADI OLÍMPIC LLUÍS COMPANYS",
       "date": "10/07/2024"
     },
     {
       "artist": "ESTOPA",
-      "venue": "MALEDUCATS 2025",
+      "venue": "MALEDUCATS",
       "date": "17/05/2025"
     },
     {
@@ -252,7 +252,7 @@
     },
     {
       "artist": "INTERVALS",
-      "venue": "RAZZMATAZZ 3",
+      "venue": "RAZZMATAZZ - SALA 3",
       "date": "22/11/2017"
     },
     {
@@ -287,7 +287,7 @@
     },
     {
       "artist": "JINJER",
-      "venue": "GENEVE ARENA",
+      "venue": "GENÈVE ARENA",
       "date": "01/08/2022"
     },
     {
@@ -312,12 +312,12 @@
     },
     {
       "artist": "LA MARAVILLOSA ORQUESTA DEL ALCOHOL",
-      "venue": "SALA RAZZMATAZZ",
+      "venue": "RAZZMATAZZ",
       "date": "13/02/2026"
     },
     {
       "artist": "LEPROUS",
-      "venue": "SALA RAZZMATAZZ",
+      "venue": "RAZZMATAZZ",
       "date": "04/02/2017"
     },
     {
@@ -352,7 +352,7 @@
     },
     {
       "artist": "LEPROUS",
-      "venue": "LES DOCKS - LAUSANNE",
+      "venue": "LES DOCKS LAUSANNE",
       "date": "26/02/2023"
     },
     {
@@ -402,7 +402,7 @@
     },
     {
       "artist": "MESHUGGAH",
-      "venue": "SALE MÉTROPOLE",
+      "venue": "SALLE MÉTROPOLE LAUSANNE",
       "date": "21/03/2024"
     },
     {
@@ -422,7 +422,7 @@
     },
     {
       "artist": "MORCHEEBA",
-      "venue": "LES NITS DE BARCELONA 2025 - JARDINS DEL PALAU DE PEDRALBES",
+      "venue": "LES NITS DE BARCELONA - JARDINS DEL PALAU DE PEDRALBES",
       "date": "07/07/2025"
     },
     {
@@ -437,7 +437,7 @@
     },
     {
       "artist": "NATHY PELUSO",
-      "venue": "SÓNAR 2025",
+      "venue": "SÓNAR",
       "date": "14/06/2025"
     },
     {
@@ -447,7 +447,7 @@
     },
     {
       "artist": "NICK JOHNSTON",
-      "venue": "RAZZMATAZZ 3",
+      "venue": "RAZZMATAZZ - SALA 3",
       "date": "22/11/2017"
     },
     {
@@ -492,27 +492,27 @@
     },
     {
       "artist": "PLINI",
-      "venue": "LES DOCKS",
+      "venue": "LES DOCKS LAUSANNE",
       "date": "12/06/2024"
     },
     {
       "artist": "POLYPHIA",
-      "venue": "RAZZMATAZZ 3",
+      "venue": "RAZZMATAZZ - SALA 3",
       "date": "22/11/2017"
     },
     {
       "artist": "POLYPHIA",
-      "venue": "KOMPLEX 457 ZURICH",
+      "venue": "KOMPLEX 457 ZÜRICH",
       "date": "24/05/2023"
     },
     {
       "artist": "POLYPHIA",
-      "venue": "LES DOCKS",
+      "venue": "LES DOCKS LAUSANNE",
       "date": "12/06/2024"
     },
     {
       "artist": "PORCUPINE TREE",
-      "venue": "HALLE 622 ZURICH",
+      "venue": "HALLE 622 ZÜRICH",
       "date": "09/11/2022"
     },
     {
@@ -572,7 +572,7 @@
     },
     {
       "artist": "SÓLSTAFIR",
-      "venue": "RAZZMATAZZ 2",
+      "venue": "RAZZMATAZZ - SALA 2",
       "date": "25/11/2017"
     },
     {
@@ -592,7 +592,7 @@
     },
     {
       "artist": "STEVEN WILSON",
-      "venue": "Sala Paral·lel 62",
+      "venue": "SALA PARAL·LEL 62",
       "date": "13/06/2025"
     },
     {
@@ -607,7 +607,7 @@
     },
     {
       "artist": "SLIPKNOT",
-      "venue": "GENEVE ARENA",
+      "venue": "GENÈVE ARENA",
       "date": "01/08/2022"
     },
     {
@@ -642,7 +642,7 @@
     },
     {
       "artist": "TESSERACT",
-      "venue": "Les Docks Lausanne",
+      "venue": "LES DOCKS LAUSANNE",
       "date": "11/01/2025"
     },
     {
@@ -667,7 +667,7 @@
     },
     {
       "artist": "TRIVIUM",
-      "venue": "RAZZMATAZZ 2",
+      "venue": "RAZZMATAZZ - SALA 2",
       "date": "08/04/2018"
     },
     {
@@ -677,7 +677,7 @@
     },
     {
       "artist": "WHILE SHE SLEEPS",
-      "venue": "RAZZMATAZZ 2",
+      "venue": "RAZZMATAZZ - SALA 2",
       "date": "18/01/2018"
     },
     {
@@ -718,7 +718,7 @@
       "bought": true
     },
     {
-      "artist": "BE PROG MY FRIEND",
+      "artist": "BE PROG! MY FRIEND",
       "date": "25/09/2026 - 26/09/2026",
       "bought": true
     },
