@@ -2,9 +2,9 @@ import React, { useEffect, useMemo, useState } from "react";
 import concertsData from "../data/concerts.json";
 
 function groupHistoryFromJson(rows) {
-  const grouped = rows.reduce((acc, { artist, venue, date }) => {
+  const grouped = rows.reduce((acc, { artist, venue, date, setlistId }) => {
     if (!acc[artist]) acc[artist] = [];
-    acc[artist].push(`${venue} - ${date}`);
+    acc[artist].push(setlistId ? `${venue} - ${date} | ${setlistId}` : `${venue} - ${date}`);
     return acc;
   }, {});
   return Object.entries(grouped).map(([artist, shows]) => ({ artist, shows }));
@@ -72,13 +72,27 @@ function Icon({ type }) {
 }
 
 function parseShow(show, mode) {
-  const dateOnly = /^(\d{1,2}\/\d{1,2}\/\d{4})(\s-\s\d{1,2}\/\d{1,2}\/\d{4})?$/.test(show);
-  if (mode === "next" || dateOnly) return { venue: "Date confirmed", date: show };
+  // Strip optional " | setlistId" suffix
+  let body = show;
+  let setlistId = "";
+  const pipeIdx = String(show).lastIndexOf(" | ");
+  if (pipeIdx !== -1) {
+    setlistId = String(show).slice(pipeIdx + 3).trim();
+    body = String(show).slice(0, pipeIdx);
+  }
 
-  const parts = show.split(" - ");
+  const dateOnly = /^(\d{1,2}\/\d{1,2}\/\d{4})(\s-\s\d{1,2}\/\d{1,2}\/\d{4})?$/.test(body);
+  if (mode === "next" || dateOnly) return { venue: "Date confirmed", date: body, setlistId };
+
+  const parts = body.split(" - ");
   const date = parts[parts.length - 1] || "";
-  const venue = parts.slice(0, -1).join(" - ") || show;
-  return { venue, date };
+  const venue = parts.slice(0, -1).join(" - ") || body;
+  return { venue, date, setlistId };
+}
+
+function buildShowString(venue, date, setlistId) {
+  const base = `${venue} - ${date}`;
+  return setlistId && setlistId.trim() ? `${base} | ${setlistId.trim()}` : base;
 }
 
 function normalize(value) {
@@ -144,11 +158,11 @@ function getVisibleNextConcerts(items, ticketFilter) {
   return items;
 }
 
-function addHistoryConcert(items, artist, venue, date) {
+function addHistoryConcert(items, artist, venue, date, setlistId) {
   const cleanedArtist = artist.trim();
   const cleanedVenue = venue.trim();
   const cleanedDate = date.trim();
-  const show = `${cleanedVenue} - ${cleanedDate}`;
+  const show = buildShowString(cleanedVenue, cleanedDate, setlistId);
   const existingIndex = items.findIndex((item) => normalize(item.artist) === normalize(cleanedArtist));
 
   if (existingIndex >= 0) {
@@ -158,13 +172,15 @@ function addHistoryConcert(items, artist, venue, date) {
   return [...items, { artist: cleanedArtist, shows: [show] }];
 }
 
-function addNextConcert(items, artist, date, bought, venue) {
-  return [...items, { artist: artist.trim(), date: date.trim(), bought, venue: venue ? venue.trim() : "" }];
+function addNextConcert(items, artist, date, bought, venue, setlistId) {
+  const item = { artist: artist.trim(), date: date.trim(), bought, venue: venue ? venue.trim() : "" };
+  if (setlistId && setlistId.trim()) item.setlistId = setlistId.trim();
+  return [...items, item];
 }
 
-function editHistoryConcert(items, originalArtist, originalShow, newArtist, newVenue, newDate) {
+function editHistoryConcert(items, originalArtist, originalShow, newArtist, newVenue, newDate, newSetlistId) {
   const cleanedNewArtist = newArtist.trim();
-  const newShow = `${newVenue.trim()} - ${newDate.trim()}`;
+  const newShow = buildShowString(newVenue.trim(), newDate.trim(), newSetlistId);
   const sameArtist = normalize(originalArtist) === normalize(cleanedNewArtist);
 
   if (sameArtist) {
@@ -183,7 +199,7 @@ function editHistoryConcert(items, originalArtist, originalShow, newArtist, newV
     })
     .filter(Boolean);
 
-  return addHistoryConcert(withoutOld, cleanedNewArtist, newVenue, newDate);
+  return addHistoryConcert(withoutOld, cleanedNewArtist, newVenue, newDate, newSetlistId);
 }
 
 function deleteHistoryConcert(items, artist, show) {
@@ -196,10 +212,12 @@ function deleteHistoryConcert(items, artist, show) {
     .filter(Boolean);
 }
 
-function editNextConcert(items, originalArtist, originalDate, newArtist, newDate, newBought, newVenue) {
+function editNextConcert(items, originalArtist, originalDate, newArtist, newDate, newBought, newVenue, newSetlistId) {
   return items.map((item) => {
     if (normalize(item.artist) === normalize(originalArtist) && item.date === originalDate) {
-      return { artist: newArtist.trim(), date: newDate.trim(), bought: newBought, venue: newVenue ? newVenue.trim() : "" };
+      const out = { artist: newArtist.trim(), date: newDate.trim(), bought: newBought, venue: newVenue ? newVenue.trim() : "" };
+      if (newSetlistId && newSetlistId.trim()) out.setlistId = newSetlistId.trim();
+      return out;
     }
     return item;
   });
@@ -284,6 +302,7 @@ function EditConcertModal({ isOpen, mode, initial, onClose, onSave, onDelete, is
   const [venue, setVenue] = useState("");
   const [date, setDate] = useState("");
   const [bought, setBought] = useState(false);
+  const [setlistId, setSetlistId] = useState("");
 
   useEffect(() => {
     if (isOpen && initial) {
@@ -291,6 +310,7 @@ function EditConcertModal({ isOpen, mode, initial, onClose, onSave, onDelete, is
       setVenue(initial.venue || "");
       setDate(initial.date || "");
       setBought(!!initial.bought);
+      setSetlistId(initial.setlistId || "");
     }
   }, [isOpen, initial]);
 
@@ -302,7 +322,7 @@ function EditConcertModal({ isOpen, mode, initial, onClose, onSave, onDelete, is
     event.preventDefault();
     if (!artist.trim() || !date.trim()) return;
     if (!isNextMode && !venue.trim()) return;
-    onSave({ artist: artist.trim(), venue: venue.trim(), date: date.trim(), bought });
+    onSave({ artist: artist.trim(), venue: venue.trim(), date: date.trim(), bought, setlistId: setlistId.trim() });
   }
 
   function handleDelete() {
@@ -338,6 +358,18 @@ function EditConcertModal({ isOpen, mode, initial, onClose, onSave, onDelete, is
             <DateField value={date} onChange={setDate} />
           </label>
 
+          <label className="block">
+            <span className="mb-2 block text-xs font-bold uppercase tracking-widest text-zinc-500">Setlist.fm ID <span className="ml-1 normal-case tracking-normal text-zinc-600">(optional)</span></span>
+            <input
+              type="text"
+              value={setlistId}
+              onChange={(event) => setSetlistId(event.target.value)}
+              placeholder="e.g. 634c222b"
+              className="w-full rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-zinc-100 outline-none focus:border-zinc-400"
+            />
+            <span className="mt-2 block text-xs text-zinc-500">8-character ID from the setlist URL on setlist.fm</span>
+          </label>
+
           {isNextMode && (
             <label className="flex items-center gap-3 rounded-2xl border border-zinc-800 bg-zinc-900 px-4 py-3 text-sm text-zinc-300">
               <input type="checkbox" checked={bought} onChange={(event) => setBought(event.target.checked)} />
@@ -356,7 +388,7 @@ function EditConcertModal({ isOpen, mode, initial, onClose, onSave, onDelete, is
   );
 }
 
-function ContextMenu({ open, x, y, onEdit, onDelete, onMoveToHistory, onClose, showMoveToHistory }) {
+function ContextMenu({ open, x, y, onEdit, onDelete, onMoveToHistory, onSetlist, onClose, showMoveToHistory, showSetlist }) {
   if (!open) return null;
   return (
     <>
@@ -365,6 +397,9 @@ function ContextMenu({ open, x, y, onEdit, onDelete, onMoveToHistory, onClose, s
         className="fixed z-[56] min-w-[160px] overflow-hidden rounded-xl border border-zinc-700 bg-zinc-950 shadow-2xl"
         style={{ left: x, top: y }}
       >
+        {showSetlist && (
+          <button onClick={onSetlist} className="block w-full px-4 py-2 text-left text-sm text-zinc-100 hover:bg-zinc-800">Setlist</button>
+        )}
         <button onClick={onEdit} className="block w-full px-4 py-2 text-left text-sm text-zinc-100 hover:bg-zinc-800">Edit</button>
         {showMoveToHistory && (
           <button onClick={onMoveToHistory} className="block w-full px-4 py-2 text-left text-sm text-zinc-100 hover:bg-zinc-800">Move to history</button>
@@ -375,11 +410,35 @@ function ContextMenu({ open, x, y, onEdit, onDelete, onMoveToHistory, onClose, s
   );
 }
 
+function SetlistModal({ target, onClose }) {
+  if (!target) return null;
+  const { artist, venue, date, setlistId } = target;
+  const widgetUrl = `https://www.setlist.fm/widgets/setlist-image-v1?id=${setlistId}`;
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 px-4">
+      <div className="w-full max-w-lg rounded-3xl border border-zinc-700 bg-zinc-950 p-6 shadow-2xl">
+        <div className="mb-6 flex items-start justify-between gap-4">
+          <div>
+            <h2 className="text-2xl font-black uppercase tracking-tight">Setlist</h2>
+            <p className="mt-1 text-sm text-zinc-400">{artist}{venue ? ` — ${venue}` : ""} ({date})</p>
+          </div>
+          <button type="button" onClick={onClose} className="rounded-full border border-zinc-700 px-3 py-1 text-sm text-zinc-300 hover:border-zinc-500">Close</button>
+        </div>
+        <div style={{ textAlign: "center", background: "#fff", borderRadius: 16, padding: 16 }} className="setlistImage">
+          <img src={widgetUrl} alt={`${artist} setlist`} style={{ border: 0, maxWidth: "100%", height: "auto" }} />
+        </div>
+        <p className="mt-4 text-center text-xs text-zinc-500">Powered by setlist.fm</p>
+      </div>
+    </div>
+  );
+}
+
 function AddConcertModal({ isOpen, mode, onClose, onSave, isSaving, saveError, artistSuggestions = [], venueSuggestions = [] }) {
   const [artist, setArtist] = useState("");
   const [venue, setVenue] = useState("");
   const [date, setDate] = useState("");
   const [bought, setBought] = useState(false);
+  const [setlistId, setSetlistId] = useState("");
 
   if (!isOpen) return null;
 
@@ -389,7 +448,7 @@ function AddConcertModal({ isOpen, mode, onClose, onSave, isSaving, saveError, a
     event.preventDefault();
     if (!artist.trim() || !date.trim()) return;
     if (!isNextMode && !venue.trim()) return;
-    onSave({ artist, venue, date, bought });
+    onSave({ artist, venue, date, bought, setlistId: setlistId.trim() });
   }
 
   return (
@@ -417,6 +476,18 @@ function AddConcertModal({ isOpen, mode, onClose, onSave, isSaving, saveError, a
           <label className="block">
             <span className="mb-2 block text-xs font-bold uppercase tracking-widest text-zinc-500">Date</span>
             <DateField value={date} onChange={setDate} />
+          </label>
+
+          <label className="block">
+            <span className="mb-2 block text-xs font-bold uppercase tracking-widest text-zinc-500">Setlist.fm ID <span className="ml-1 normal-case tracking-normal text-zinc-600">(optional)</span></span>
+            <input
+              type="text"
+              value={setlistId}
+              onChange={(event) => setSetlistId(event.target.value)}
+              placeholder="e.g. 634c222b"
+              className="w-full rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-zinc-100 outline-none focus:border-zinc-400"
+            />
+            <span className="mt-2 block text-xs text-zinc-500">8-character ID from the setlist URL on setlist.fm</span>
           </label>
 
           {isNextMode && (
@@ -672,6 +743,7 @@ export default function App() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editTarget, setEditTarget] = useState(null);
   const [contextMenu, setContextMenu] = useState({ open: false, x: 0, y: 0, target: null });
+  const [setlistTarget, setSetlistTarget] = useState(null);
   const [historyItems, setHistoryItems] = useState(fallbackConcertHistory);
   const [nextItems, setNextItems] = useState(fallbackNextConcerts);
   const [isSaving, setIsSaving] = useState(false);
@@ -724,10 +796,10 @@ export default function App() {
   function flattenHistory(historyArr) {
     return historyArr.flatMap(({ artist, shows }) =>
       shows.map((show) => {
-        const parts = show.split(" - ");
-        const date = parts[parts.length - 1];
-        const venue = parts.slice(0, -1).join(" - ");
-        return { artist, venue, date };
+        const { venue, date, setlistId } = parseShow(show, "history");
+        const out = { artist, venue, date };
+        if (setlistId) out.setlistId = setlistId;
+        return out;
       })
     );
   }
@@ -740,9 +812,9 @@ export default function App() {
       let updatedNext = nextItems;
 
       if (isNext) {
-        updatedNext = sortConcerts(addNextConcert(nextItems, data.artist, data.date, data.bought, data.venue), "next", "next");
+        updatedNext = sortConcerts(addNextConcert(nextItems, data.artist, data.date, data.bought, data.venue, data.setlistId), "next", "next");
       } else {
-        updatedHistory = addHistoryConcert(historyItems, data.artist, data.venue, data.date);
+        updatedHistory = addHistoryConcert(historyItems, data.artist, data.venue, data.date, data.setlistId);
       }
 
       await saveToGitHub(
@@ -771,11 +843,11 @@ export default function App() {
 
       if (editTarget.mode === "next") {
         updatedNext = sortConcerts(
-          editNextConcert(nextItems, editTarget.artist, editTarget.date, data.artist, data.date, data.bought, data.venue),
+          editNextConcert(nextItems, editTarget.artist, editTarget.date, data.artist, data.date, data.bought, data.venue, data.setlistId),
           "next", "next"
         );
       } else {
-        updatedHistory = editHistoryConcert(historyItems, editTarget.artist, editTarget.show, data.artist, data.venue, data.date);
+        updatedHistory = editHistoryConcert(historyItems, editTarget.artist, editTarget.show, data.artist, data.venue, data.date, data.setlistId);
       }
 
       await saveToGitHub(
@@ -844,10 +916,17 @@ export default function App() {
     closeContextMenu();
     if (!t) return;
     if (t.mode === "next") {
-      setEditTarget({ mode: "next", artist: t.artist, date: t.date, bought: t.bought, venue: t.venue || "" });
+      setEditTarget({ mode: "next", artist: t.artist, date: t.date, bought: t.bought, venue: t.venue || "", setlistId: t.setlistId || "" });
     } else {
-      setEditTarget({ mode: "history", artist: t.artist, show: t.show, venue: t.venue, date: t.date });
+      setEditTarget({ mode: "history", artist: t.artist, show: t.show, venue: t.venue, date: t.date, setlistId: t.setlistId || "" });
     }
+  }
+
+  function openSetlistFromContext() {
+    const t = contextMenu.target;
+    closeContextMenu();
+    if (!t || !t.setlistId) return;
+    setSetlistTarget({ artist: t.artist, venue: t.venue, date: t.date, setlistId: t.setlistId });
   }
 
   async function deleteFromContext() {
@@ -1022,10 +1101,10 @@ export default function App() {
 
               <div className="mt-4 space-y-3">
                 {(isNext ? [item.date] : [...item.shows].sort((a, b) => parseDate(parseShow(b, mode).date) - parseDate(parseShow(a, mode).date))).map((show) => {
-                  const { venue, date } = parseShow(show, mode);
+                  const { venue, date, setlistId } = parseShow(show, mode);
                   const target = isNext
-                    ? { mode: "next", artist: item.artist, date: item.date, bought: item.bought, venue: item.venue || "" }
-                    : { mode: "history", artist: item.artist, show, venue, date };
+                    ? { mode: "next", artist: item.artist, date: item.date, bought: item.bought, venue: item.venue || "", setlistId: item.setlistId || "" }
+                    : { mode: "history", artist: item.artist, show, venue, date, setlistId };
                   let touchTimer = null;
                   let touchMoved = false;
                   const handleTouchStart = (e) => {
@@ -1118,9 +1197,13 @@ export default function App() {
         onEdit={startEditFromContext}
         onDelete={deleteFromContext}
         onMoveToHistory={moveToHistoryFromContext}
+        onSetlist={openSetlistFromContext}
         showMoveToHistory={contextMenu.target?.mode === "next"}
+        showSetlist={!!contextMenu.target?.setlistId}
         onClose={closeContextMenu}
       />
+
+      <SetlistModal target={setlistTarget} onClose={() => setSetlistTarget(null)} />
     </main>
   );
 }
