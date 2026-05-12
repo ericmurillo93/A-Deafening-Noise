@@ -16,7 +16,7 @@
       "artist": "ALCEST",
       "venue": "RESURRECTION FEST",
       "date": "28/06/2023",
-      "setlistId": "7ba7b537"
+      "setlistId": "6ba7b612"
     },
     {
       "artist": "ANATHEMA",
@@ -52,13 +52,13 @@
       "artist": "AVATAR",
       "venue": "DOWNLOAD FESTIVAL MADRID",
       "date": "24/06/2017",
-      "setlistId": "2be4f6ce"
+      "setlistId": "4be4f706"
     },
     {
       "artist": "AVATAR",
       "venue": "SALA BIKINI",
       "date": "25/03/2018",
-      "setlistId": "3bea49d8"
+      "setlistId": "23ef08b7"
     },
     {
       "artist": "AVATAR",
@@ -214,12 +214,13 @@
       "artist": "ENTER SHIKARI",
       "venue": "O2 ARENA",
       "date": "30/10/2016",
-      "setlistId": "53f6ec41"
+      "setlistId": "5bfaefe4"
     },
     {
       "artist": "ENTER SHIKARI",
       "venue": "RAZZMATAZZ",
-      "date": "06/11/2025"
+      "date": "06/11/2025",
+      "setlistId": "1b423944"
     },
     {
       "artist": "ESTOPA",
@@ -308,7 +309,8 @@
     {
       "artist": "IRON MAIDEN",
       "venue": "RIYADH AIR METROPOLITANO",
-      "date": "05/07/2025"
+      "date": "05/07/2025",
+      "setlistId": "1353d949"
     },
     {
       "artist": "JARDIN DE LA CROIX",
@@ -344,7 +346,7 @@
       "artist": "JINJER",
       "venue": "GENEVE ARENA",
       "date": "01/08/2022",
-      "setlistId": "73b2fecd"
+      "setlistId": "43b207eb"
     },
     {
       "artist": "KVELERTAK",
@@ -386,7 +388,7 @@
       "artist": "LEPROUS",
       "venue": "BE PROG! MY FRIEND",
       "date": "01/07/2017",
-      "setlistId": "7be43f20"
+      "setlistId": "53e43f21"
     },
     {
       "artist": "LEPROUS",
@@ -398,7 +400,7 @@
       "artist": "LEPROUS",
       "venue": "DOWNLOAD FESTIVAL MADRID",
       "date": "29/06/2019",
-      "setlistId": "539156d9"
+      "setlistId": "5b916b84"
     },
     {
       "artist": "LEPROUS",
@@ -410,7 +412,7 @@
       "artist": "LEPROUS",
       "venue": "FRI-SON, FRIBOURG",
       "date": "11/02/2020",
-      "setlistId": "33981645"
+      "setlistId": "2b983046"
     },
     {
       "artist": "LEPROUS",
@@ -428,13 +430,13 @@
       "artist": "LINKIN PARK",
       "venue": "DOWNLOAD FESTIVAL MADRID",
       "date": "22/06/2017",
-      "setlistId": "63e48267"
+      "setlistId": "63e0ee4b"
     },
     {
       "artist": "MACHINE HEAD",
       "venue": "RESURRECTION FEST",
       "date": "26/06/2024",
-      "setlistId": "3abacc4f"
+      "setlistId": "13ab890d"
     },
     {
       "artist": "MARILLION",
@@ -452,7 +454,7 @@
       "artist": "MASTODON",
       "venue": "RAZZMATAZZ",
       "date": "15/02/2019",
-      "setlistId": "23924a9b"
+      "setlistId": "3956d1f"
     },
     {
       "artist": "MASTODON",
@@ -488,7 +490,7 @@
       "artist": "MICHAEL KIWANUKA",
       "venue": "MONTREUX JAZZ FESTIVAL",
       "date": "06/07/2022",
-      "setlistId": "3bb522e0"
+      "setlistId": "7bb522ec"
     },
     {
       "artist": "MICHAEL KIWANUKA",
@@ -536,13 +538,13 @@
       "artist": "NICK JOHNSTON",
       "venue": "RAZZMATAZZ 3",
       "date": "22/11/2017",
-      "setlistId": "73e0d0ad"
+      "setlistId": "23e038f7"
     },
     {
       "artist": "OPETH",
       "venue": "DOWNLOAD FESTIVAL MADRID",
       "date": "23/06/2017",
-      "setlistId": "73e48c91"
+      "setlistId": "be4fd1e"
     },
     {
       "artist": "PAIN OF SALVATION",
@@ -572,13 +574,13 @@
       "artist": "PAPA ROACH",
       "venue": "RESURRECTION FEST",
       "date": "30/06/2023",
-      "setlistId": "43a7ba5f"
+      "setlistId": "13a79d15"
     },
     {
       "artist": "PARKWAY DRIVE",
       "venue": "RESURRECTION FEST",
       "date": "01/07/2023",
-      "setlistId": "73a78d25"
+      "setlistId": "1ba78d04"
     },
     {
       "artist": "PLINI",
@@ -590,13 +592,13 @@
       "artist": "PLINI",
       "venue": "LES DOCKS",
       "date": "12/06/2024",
-      "setlistId": "6b57b79a"
+      "setlistId": "4b57b78a"
     },
     {
       "artist": "POLYPHIA",
       "venue": "RAZZMATAZZ 3",
       "date": "22/11/2017",
-      "setlistId": "6be0d09e"
+      "setlistId": "23e038f3"
     },
     {
       "artist": "POLYPHIA",
@@ -638,7 +640,7 @@
       "artist": "RISE AGAINST",
       "venue": "RESURRECTION FEST",
       "date": "01/07/2022",
-      "setlistId": "53b59caf"
+      "setlistId": "1bb5dd74"
     },
     {
       "artist": "RIVERSIDE",
@@ -656,7 +658,7 @@
       "artist": "ROGER WATERS",
       "venue": "PALAU SANT JORDI",
       "date": "13/04/2018",
-      "setlistId": "3bea11a4"
+      "setlistId": "bec81fe"
     },
     {
       "artist": "ROSALIA",
@@ -680,7 +682,7 @@
       "artist": "SÓLSTAFIR",
       "venue": "DOWNLOAD FESTIVAL MADRID",
       "date": "24/06/2017",
-      "setlistId": "53e4f6fd"
+      "setlistId": "5be4f714"
     },
     {
       "artist": "SÓLSTAFIR",
@@ -722,19 +724,19 @@
       "artist": "SLIPKNOT",
       "venue": "DOWNLOAD FESTIVAL MADRID",
       "date": "29/06/2019",
-      "setlistId": "2391aa5f"
+      "setlistId": "1b916de4"
     },
     {
       "artist": "SLIPKNOT",
       "venue": "GENEVE ARENA",
       "date": "01/08/2022",
-      "setlistId": "4bb2fed2"
+      "setlistId": "5bb207fc"
     },
     {
       "artist": "SLIPKNOT",
       "venue": "RESURRECTION FEST",
       "date": "30/06/2023",
-      "setlistId": "5ba7ba64"
+      "setlistId": "3a79d17"
     },
     {
       "artist": "SLIPKNOT",
@@ -752,7 +754,7 @@
       "artist": "SYSTEM OF A DOWN",
       "venue": "DOWNLOAD FESTIVAL MADRID",
       "date": "23/06/2017",
-      "setlistId": "13e48c95"
+      "setlistId": "1be4fd08"
     },
     {
       "artist": "SUM41",
@@ -794,13 +796,13 @@
       "artist": "TOOL",
       "venue": "DOWNLOAD FESTIVAL MADRID",
       "date": "30/06/2019",
-      "setlistId": "33916e15"
+      "setlistId": "339168cd"
     },
     {
       "artist": "TRIVIUM",
       "venue": "RAZZMATAZZ 2",
       "date": "08/04/2018",
-      "setlistId": "63ea52c3"
+      "setlistId": "23eca02b"
     },
     {
       "artist": "VETUSTA MORLA",
