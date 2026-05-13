@@ -182,6 +182,7 @@ function Icon({ type }) {
   const common = { width: "16", height: "16", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" };
   if (type === "search") return <svg {...common} className="h-5 w-5 shrink-0 text-zinc-500"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" /></svg>;
   if (type === "calendar") return <svg {...common} className="mt-0.5 h-4 w-4 shrink-0 text-zinc-600"><path d="M8 2v4" /><path d="M16 2v4" /><rect width="18" height="18" x="3" y="4" rx="2" /><path d="M3 10h18" /></svg>;
+  if (type === "music") return <svg {...common} className="h-4 w-4 shrink-0" style={{color:"inherit"}}><path d="M9 18V5l12-2v13" /><circle cx="6" cy="18" r="3" /><circle cx="18" cy="16" r="3" /></svg>;
   return <svg {...common} className="mt-0.5 h-4 w-4 shrink-0 text-zinc-500"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z" /><circle cx="12" cy="10" r="3" /></svg>;
 }
 
@@ -833,18 +834,17 @@ export default function App() {
                           onTouchCancel={() => { if (touchTimer) { clearTimeout(touchTimer); touchTimer = null; } }}
                           style={{ WebkitTouchCallout: "none" }}
                         >
-                          <div className="flex items-start justify-between gap-2">
-                            <div className="flex-1 min-w-0 space-y-2">
-                              {!isNext && <div className="flex gap-2 text-sm font-semibold text-zinc-100"><Icon type="map" /><span className="truncate">{venue}</span></div>}
-                              {isNext && item.venue && <div className="flex gap-2 text-sm font-semibold text-zinc-100"><Icon type="map" /><span className="truncate">{item.venue}</span></div>}
-                              <div className="flex gap-2 text-sm text-zinc-400"><Icon type="calendar" /><span>{date}</span></div>
-                            </div>
+                          <div className="space-y-2">
+                            {!isNext && <div className="flex gap-2 text-sm font-semibold text-zinc-100"><Icon type="map" /><span className="truncate">{venue}</span></div>}
+                            {isNext && item.venue && <div className="flex gap-2 text-sm font-semibold text-zinc-100"><Icon type="map" /><span className="truncate">{item.venue}</span></div>}
+                            <div className="flex gap-2 text-sm text-zinc-400"><Icon type="calendar" /><span>{date}</span></div>
                             {!isNext && (
                               <button
                                 onClick={(e) => { e.stopPropagation(); setSetlistTarget({ artist: item.artist, venue, date, setlistId, show }); }}
-                                className="shrink-0 rounded-xl border border-zinc-800 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-zinc-500 hover:border-zinc-600 hover:text-zinc-300 transition"
+                                className="flex items-center gap-2 text-sm text-zinc-500 hover:text-zinc-300 transition group/sl"
                               >
-                                Setlist
+                                <Icon type="music" />
+                                <span className="font-semibold">Setlist</span>
                               </button>
                             )}
                           </div>
