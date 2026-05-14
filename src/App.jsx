@@ -755,6 +755,7 @@ export default function App() {
 
   return (
     <main className="min-h-screen bg-zinc-950 text-zinc-100 md:flex">
+      {/* Desktop-only fixed Menu button */}
       <button onClick={() => setSidebarOpen(true)} className="fixed left-4 top-4 z-40 rounded-full border border-zinc-700 bg-zinc-900 px-4 py-2 text-sm font-bold text-zinc-100 shadow-2xl transition hover:border-zinc-500" aria-label="Open menu">Menu</button>
 
       {sidebarOpen && <button className="fixed inset-0 z-40 bg-black/60" onClick={() => setSidebarOpen(false)} aria-label="Close menu overlay" />}
@@ -773,7 +774,7 @@ export default function App() {
         </div>
       </aside>
 
-      <section className="mx-auto w-full max-w-7xl px-5 py-16 md:px-8 md:py-14">
+      <section className="mx-auto w-full max-w-7xl px-4 pt-6 pb-8 md:px-8 md:py-14 overflow-x-hidden">
         <header className="mb-10 text-center">
           <p className="mb-3 text-xs font-semibold uppercase tracking-[0.45em] text-zinc-400">A Deafening Noise</p>
           <h1 className="text-5xl font-black uppercase tracking-tight md:text-8xl">{title}</h1>
@@ -782,34 +783,63 @@ export default function App() {
 
         {isStats ? <StatsPage historyItems={historyItems} /> : (
           <>
-            <div className="sticky top-0 z-10 mb-8 border-y border-zinc-800 bg-zinc-950/90 py-4 backdrop-blur">
-              <div className={`mx-auto grid max-w-6xl gap-3 ${isNext ? "md:grid-cols-[220px_1fr_360px]" : "md:grid-cols-[220px_1fr_280px]"}`}>
-                <button onClick={() => setModalOpen(true)} className="rounded-full border border-zinc-700 bg-zinc-900 px-5 py-3 text-sm font-black text-zinc-100 shadow-2xl transition hover:border-zinc-500">+ Add concert</button>
-                <div className="flex items-center gap-3 rounded-full border border-zinc-700 bg-zinc-900 px-5 py-3 shadow-2xl">
-                  <Icon type="search" />
-                  <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search artist, venue, festival, city or date" className="w-full bg-transparent text-base text-zinc-100 outline-none placeholder:text-zinc-500" aria-label="Search concerts" />
-                </div>
-                {isNext ? (
-                  <div className="grid grid-cols-3 rounded-full border border-zinc-700 bg-zinc-900 p-1 text-sm text-zinc-300 shadow-2xl">
-                    <button onClick={() => setTicketFilter("all")} className={`rounded-full px-3 py-2 transition ${ticketFilter === "all" ? "bg-zinc-100 text-zinc-950" : "hover:text-zinc-100"}`}>All</button>
-                    <button onClick={() => setTicketFilter("bought")} className={`rounded-full px-3 py-2 transition ${ticketFilter === "bought" ? "bg-zinc-100 text-zinc-950" : "hover:text-zinc-100"}`}>Bought</button>
-                    <button onClick={() => setTicketFilter("pending")} className={`rounded-full px-3 py-2 transition ${ticketFilter === "pending" ? "bg-zinc-100 text-zinc-950" : "hover:text-zinc-100"}`}>Not bought</button>
+            <div className="sticky top-0 z-10 mb-8 border-y border-zinc-800 bg-zinc-950/90 py-3 backdrop-blur">
+              <div className="mx-auto max-w-6xl space-y-2 px-4 md:space-y-0 md:px-0">
+
+                {/* Mobile layout */}
+                <div className="flex items-center gap-2 md:hidden">
+                  <button onClick={() => setSidebarOpen(true)} className="shrink-0 rounded-full border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-sm font-bold text-zinc-100 hover:border-zinc-500">Menu</button>
+                  <div className="flex flex-1 items-center gap-2 rounded-full border border-zinc-700 bg-zinc-900 px-3 py-2.5 min-w-0">
+                    <Icon type="search" />
+                    <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search…" className="w-full min-w-0 bg-transparent text-sm text-zinc-100 outline-none placeholder:text-zinc-500" aria-label="Search concerts" />
                   </div>
-                ) : (
-                  <select value={sortMode} onChange={(e) => setSortMode(e.target.value)} className="rounded-full border border-zinc-700 bg-zinc-900 px-5 py-3 text-base text-zinc-100 shadow-2xl outline-none" aria-label="Sort concerts">
-                    <option value="artist">Sort by artist</option>
-                    <option value="concerts">Sort by number of concerts</option>
-                    <option value="recent">Sort by most recent</option>
-                  </select>
-                )}
+                  <button onClick={() => setModalOpen(true)} className="shrink-0 rounded-full border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-sm font-black text-zinc-100 hover:border-zinc-500">+ Add</button>
+                </div>
+                <div className="md:hidden">
+                  {isNext ? (
+                    <div className="grid grid-cols-3 rounded-full border border-zinc-700 bg-zinc-900 p-1 text-sm text-zinc-300">
+                      <button onClick={() => setTicketFilter("all")} className={`rounded-full px-3 py-2 transition ${ticketFilter === "all" ? "bg-zinc-100 text-zinc-950" : "hover:text-zinc-100"}`}>All</button>
+                      <button onClick={() => setTicketFilter("bought")} className={`rounded-full px-3 py-2 transition ${ticketFilter === "bought" ? "bg-zinc-100 text-zinc-950" : "hover:text-zinc-100"}`}>Bought</button>
+                      <button onClick={() => setTicketFilter("pending")} className={`rounded-full px-3 py-2 transition ${ticketFilter === "pending" ? "bg-zinc-100 text-zinc-950" : "hover:text-zinc-100"}`}>Pending</button>
+                    </div>
+                  ) : (
+                    <select value={sortMode} onChange={(e) => setSortMode(e.target.value)} className="w-full rounded-full border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-sm text-zinc-100 outline-none">
+                      <option value="artist">Sort by artist</option>
+                      <option value="concerts">Sort by number of concerts</option>
+                      <option value="recent">Sort by most recent</option>
+                    </select>
+                  )}
+                </div>
+
+                {/* Desktop layout */}
+                <div className={`hidden md:grid gap-3 ${isNext ? "md:grid-cols-[220px_1fr_360px]" : "md:grid-cols-[220px_1fr_280px]"}`}>
+                  <button onClick={() => setModalOpen(true)} className="rounded-full border border-zinc-700 bg-zinc-900 px-5 py-3 text-sm font-black text-zinc-100 shadow-2xl transition hover:border-zinc-500">+ Add concert</button>
+                  <div className="flex items-center gap-3 rounded-full border border-zinc-700 bg-zinc-900 px-5 py-3 shadow-2xl">
+                    <Icon type="search" />
+                    <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search artist, venue, festival, city or date" className="w-full bg-transparent text-base text-zinc-100 outline-none placeholder:text-zinc-500" aria-label="Search concerts" />
+                  </div>
+                  {isNext ? (
+                    <div className="grid grid-cols-3 rounded-full border border-zinc-700 bg-zinc-900 p-1 text-sm text-zinc-300 shadow-2xl">
+                      <button onClick={() => setTicketFilter("all")} className={`rounded-full px-3 py-2 transition ${ticketFilter === "all" ? "bg-zinc-100 text-zinc-950" : "hover:text-zinc-100"}`}>All</button>
+                      <button onClick={() => setTicketFilter("bought")} className={`rounded-full px-3 py-2 transition ${ticketFilter === "bought" ? "bg-zinc-100 text-zinc-950" : "hover:text-zinc-100"}`}>Bought</button>
+                      <button onClick={() => setTicketFilter("pending")} className={`rounded-full px-3 py-2 transition ${ticketFilter === "pending" ? "bg-zinc-100 text-zinc-950" : "hover:text-zinc-100"}`}>Not bought</button>
+                    </div>
+                  ) : (
+                    <select value={sortMode} onChange={(e) => setSortMode(e.target.value)} className="rounded-full border border-zinc-700 bg-zinc-900 px-5 py-3 text-base text-zinc-100 shadow-2xl outline-none" aria-label="Sort concerts">
+                      <option value="artist">Sort by artist</option>
+                      <option value="concerts">Sort by number of concerts</option>
+                      <option value="recent">Sort by most recent</option>
+                    </select>
+                  )}
+                </div>
               </div>
             </div>
 
-            <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3 w-full">
               {filtered.map((item) => (
-                <article key={item.artist + (isNext ? item.date : "")} className="group rounded-3xl border border-zinc-800 bg-zinc-900 p-5 shadow-xl transition hover:-translate-y-1 hover:border-zinc-500">
+                <article key={item.artist + (isNext ? item.date : "")} className="group rounded-3xl border border-zinc-800 bg-zinc-900 p-5 shadow-xl transition hover:-translate-y-1 hover:border-zinc-500 w-full min-w-0">
                   <div className="flex items-start justify-between gap-4 border-b border-zinc-800 pb-4">
-                    <h2 className="text-2xl font-black uppercase leading-none tracking-tight md:text-3xl">{item.artist}</h2>
+                    <h2 className="text-xl font-black uppercase leading-none tracking-tight md:text-3xl">{item.artist}</h2>
                     {isNext ? (
                       item.bought ? <span className="rounded-full border border-zinc-700 px-3 py-1 text-xs font-bold text-zinc-300">💰 Bought</span> : <span className="rounded-full border border-zinc-800 px-3 py-1 text-xs font-bold text-zinc-500">Pending</span>
                     ) : (
