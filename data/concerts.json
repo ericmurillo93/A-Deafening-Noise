@@ -825,11 +825,6 @@
   ],
   "next": [
     {
-      "artist": "The Aristocrats",
-      "date": "20/05/2026",
-      "bought": false
-    },
-    {
       "artist": "RIGOBERTA BANDINI",
       "date": "05/06/2026",
       "bought": true
