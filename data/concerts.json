@@ -863,6 +863,12 @@
       "venue": "SALAMANDRA"
     },
     {
+      "artist": "Toundra",
+      "date": "11/12/2026",
+      "bought": false,
+      "venue": "RAZZMATAZZ 2"
+    },
+    {
       "artist": "AMARAL",
       "date": "18/12/2026",
       "bought": false
