@@ -840,6 +840,12 @@
       "bought": true
     },
     {
+      "artist": "Whitechapel House of Protection",
+      "date": "30/06/2026",
+      "bought": false,
+      "venue": "RAZZMATAZZ 3"
+    },
+    {
       "artist": "CA7RIEL & Paco Amoroso",
       "date": "10/09/2026",
       "bought": true,
