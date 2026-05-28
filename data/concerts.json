@@ -865,6 +865,12 @@
       "artist": "Amaia",
       "date": "20/12/2026",
       "bought": false
+    },
+    {
+      "artist": "Whitechapel",
+      "date": "06/02/2027",
+      "bought": false,
+      "venue": "RAZZMATAZZ 2"
     }
   ]
 }
