@@ -851,6 +851,12 @@
       "bought": true
     },
     {
+      "artist": "Archspire",
+      "date": "06/11/2026",
+      "bought": false,
+      "venue": "SALAMANDRA"
+    },
+    {
       "artist": "AMARAL",
       "date": "18/12/2026",
       "bought": false
