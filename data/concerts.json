@@ -879,6 +879,12 @@
       "bought": false
     },
     {
+      "artist": "HAKEN",
+      "date": "23/12/2026",
+      "bought": true,
+      "venue": "SALAMANDRA"
+    },
+    {
       "artist": "Sylosis/Whitechapel",
       "date": "06/02/2027",
       "bought": false,
