@@ -833,7 +833,8 @@
     {
       "artist": "BAD BUNNY",
       "date": "06/06/2026",
-      "bought": true
+      "bought": true,
+      "venue": "RIYADH AIR METROPOLITANO"
     },
     {
       "artist": "HELLFEST",
