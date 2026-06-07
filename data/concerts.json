@@ -826,15 +826,14 @@
       "artist": "RIGOBERTA BANDINI",
       "venue": "Noches del Botánico - Madrid",
       "date": "05/06/2026"
+    },
+    {
+      "artist": "BAD BUNNY",
+      "venue": "RIYADH AIR METROPOLITANO",
+      "date": "06/06/2026"
     }
   ],
   "next": [
-    {
-      "artist": "BAD BUNNY",
-      "date": "06/06/2026",
-      "bought": true,
-      "venue": "RIYADH AIR METROPOLITANO"
-    },
     {
       "artist": "HELLFEST",
       "date": "18/06/2026 - 21/06/2026",
