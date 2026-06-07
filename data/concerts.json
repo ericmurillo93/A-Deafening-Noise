@@ -821,15 +821,14 @@
       "venue": "PALAU DE LA MÚSICA CATALANA",
       "date": "09/12/2025",
       "setlistId": "2b4fbcd2"
+    },
+    {
+      "artist": "RIGOBERTA BANDINI",
+      "venue": "Noches del Botánico - Madrid",
+      "date": "05/06/2026"
     }
   ],
   "next": [
-    {
-      "artist": "RIGOBERTA BANDINI",
-      "date": "05/06/2026",
-      "bought": true,
-      "venue": "Noches del Botánico - Madrid"
-    },
     {
       "artist": "BAD BUNNY",
       "date": "06/06/2026",
