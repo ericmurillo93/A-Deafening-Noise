@@ -877,7 +877,8 @@
     {
       "artist": "Amaia",
       "date": "20/12/2026",
-      "bought": false
+      "bought": false,
+      "venue": "PALAU SANT JORDI"
     },
     {
       "artist": "HAKEN",
