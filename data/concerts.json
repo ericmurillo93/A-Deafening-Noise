@@ -871,7 +871,8 @@
     {
       "artist": "AMARAL",
       "date": "18/12/2026",
-      "bought": false
+      "bought": false,
+      "venue": "PALAU SANT JORDI"
     },
     {
       "artist": "Amaia",
