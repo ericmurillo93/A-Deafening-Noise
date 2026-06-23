@@ -865,6 +865,12 @@
       "venue": "SALAMANDRA"
     },
     {
+      "artist": "POLYPHIA",
+      "date": "22/11/2026",
+      "bought": true,
+      "venue": "RAZZMATAZZ"
+    },
+    {
       "artist": "Toundra",
       "date": "11/12/2026",
       "bought": false,
