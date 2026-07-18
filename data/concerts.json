@@ -926,6 +926,12 @@
       "bought": true
     },
     {
+      "artist": "DEVIN TOWNSEND",
+      "date": "10/10/2026",
+      "bought": false,
+      "venue": "SALAMANDRA"
+    },
+    {
       "artist": "Archspire",
       "date": "06/11/2026",
       "bought": false,
