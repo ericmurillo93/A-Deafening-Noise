@@ -29,3 +29,21 @@ select {
 button {
   cursor: pointer;
 }
+
+.menu-button-desktop {
+  display: none;
+}
+
+.menu-button-touch {
+  display: block;
+}
+
+@media (min-width: 768px) and (pointer: fine) {
+  .menu-button-desktop {
+    display: block;
+  }
+
+  .menu-button-touch {
+    display: none;
+  }
+}
