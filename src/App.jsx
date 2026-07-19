@@ -1061,34 +1061,44 @@ function ConcertTimelinePage({ historyItems, onBack, onOpenArtist, onOpenSetlist
   return (
     <div className="mx-auto max-w-5xl">
       <section className="sticky top-0 z-10 mb-10 border-y border-zinc-800 bg-zinc-950/95 py-4 backdrop-blur">
-        <div className="grid grid-cols-2 gap-2 sm:gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,0.7fr)_auto]">
-          <DropdownMenu
-            value={artistFilter}
-            onChange={setArtistFilter}
-            ariaLabel="Filter timeline by artist"
-            groupName="timeline-filters"
-            menuAlign="left"
-            options={[{ value: "all", label: "All artists" }, ...artists.map((artist) => ({ value: artist, label: artist }))]}
-          />
-          <DropdownMenu
-            value={venueFilter}
-            onChange={setVenueFilter}
-            ariaLabel="Filter timeline by venue"
-            groupName="timeline-filters"
-            options={[{ value: "all", label: "All venues" }, ...venues.map((venue) => ({ value: venue, label: venue }))]}
-          />
-          <DropdownMenu
-            value=""
-            onChange={jumpToYear}
-            ariaLabel="Jump to timeline year"
-            buttonLabel="Years"
-            groupName="timeline-filters"
-            menuAlign="left"
-            options={groupedYears.map(([year, yearShows]) => ({ value: year, label: `${year} · ${yearShows.length} ${yearShows.length === 1 ? "concert" : "concerts"}` }))}
-          />
-          <button onClick={onBack} className="rounded-full border border-zinc-700 bg-zinc-900 px-4 py-3 text-zinc-200 transition hover:border-zinc-500 hover:text-white" aria-label="Back to concert archive" title="Back to concert archive">
-            <i className="fa-solid fa-table-cells-large" aria-hidden="true" />
-          </button>
+        <div className="space-y-2 md:hidden">
+          <div className="grid grid-cols-2 gap-2">
+            <DropdownMenu
+              value={artistFilter}
+              onChange={setArtistFilter}
+              ariaLabel="Filter timeline by artist"
+              groupName="timeline-filters"
+              menuAlign="left"
+              options={[{ value: "all", label: "All artists" }, ...artists.map((artist) => ({ value: artist, label: artist }))]}
+            />
+            <DropdownMenu
+              value={venueFilter}
+              onChange={setVenueFilter}
+              ariaLabel="Filter timeline by venue"
+              groupName="timeline-filters"
+              options={[{ value: "all", label: "All venues" }, ...venues.map((venue) => ({ value: venue, label: venue }))]}
+            />
+          </div>
+          <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2">
+            <DropdownMenu
+              value=""
+              onChange={jumpToYear}
+              ariaLabel="Jump to timeline year"
+              buttonLabel="Years"
+              groupName="timeline-filters"
+              menuAlign="left"
+              options={groupedYears.map(([year, yearShows]) => ({ value: year, label: `${year} · ${yearShows.length} ${yearShows.length === 1 ? "concert" : "concerts"}` }))}
+            />
+            <button onClick={onBack} className="rounded-full border border-zinc-700 bg-zinc-900 px-4 py-3 text-zinc-200 transition hover:border-zinc-500 hover:text-white" aria-label="Back to concert archive" title="Back to concert archive">
+              <i className="fa-solid fa-table-cells-large" aria-hidden="true" />
+            </button>
+          </div>
+        </div>
+        <div className="hidden gap-3 md:grid md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,0.7fr)_auto]">
+          <DropdownMenu value={artistFilter} onChange={setArtistFilter} ariaLabel="Filter timeline by artist" groupName="timeline-filters" menuAlign="left" options={[{ value: "all", label: "All artists" }, ...artists.map((artist) => ({ value: artist, label: artist }))]} />
+          <DropdownMenu value={venueFilter} onChange={setVenueFilter} ariaLabel="Filter timeline by venue" groupName="timeline-filters" options={[{ value: "all", label: "All venues" }, ...venues.map((venue) => ({ value: venue, label: venue }))]} />
+          <DropdownMenu value="" onChange={jumpToYear} ariaLabel="Jump to timeline year" buttonLabel="Years" groupName="timeline-filters" menuAlign="left" options={groupedYears.map(([year, yearShows]) => ({ value: year, label: `${year} · ${yearShows.length} ${yearShows.length === 1 ? "concert" : "concerts"}` }))} />
+          <button onClick={onBack} className="rounded-full border border-zinc-700 bg-zinc-900 px-4 py-3 text-zinc-200 transition hover:border-zinc-500 hover:text-white" aria-label="Back to concert archive" title="Back to concert archive"><i className="fa-solid fa-table-cells-large" aria-hidden="true" /></button>
         </div>
         {hasFilters && (
           <button onClick={() => { setArtistFilter("all"); setVenueFilter("all"); }} className="mt-3 rounded-full border border-zinc-700 px-3 py-1.5 text-xs font-bold text-zinc-300 hover:border-zinc-500">
