@@ -521,6 +521,51 @@ function CalendarExportMenu({ items, compact = false }) {
   );
 }
 
+function DropdownMenu({ value, onChange, options, compact = false, ariaLabel, className = "", groupName, centered = false }) {
+  const normalizedOptions = options.map((option) => typeof option === "string" ? { value: option, label: option } : option);
+  const activeLabel = normalizedOptions.find((option) => option.value === value)?.label || normalizedOptions[0]?.label || "";
+
+  function selectOption(event, nextValue) {
+    onChange(nextValue);
+    event.currentTarget.closest("details")?.removeAttribute("open");
+  }
+
+  return (
+    <details name={groupName} className={`group relative min-w-0 ${className}`}>
+      <summary aria-label={ariaLabel} className={`cursor-pointer list-none truncate rounded-full border border-zinc-700 bg-zinc-900 text-sm font-semibold text-zinc-100 shadow-2xl transition hover:border-zinc-500 [&::-webkit-details-marker]:hidden ${centered ? "text-center" : "text-left"} ${compact ? "px-4 py-2.5" : "px-5 py-3"}`}>
+        {activeLabel} <span className="ml-1 text-zinc-500">▾</span>
+      </summary>
+      <div className="absolute right-0 top-full z-30 mt-2 max-h-72 w-64 overflow-y-auto rounded-2xl border border-zinc-700 bg-zinc-950 p-2 shadow-2xl">
+        {normalizedOptions.map((option) => (
+          <button
+            key={option.value}
+            onClick={(event) => selectOption(event, option.value)}
+            className={`block w-full rounded-xl px-3 py-2.5 text-left text-sm font-semibold transition hover:bg-zinc-900 hover:text-white ${value === option.value ? "bg-zinc-900 text-zinc-100" : "text-zinc-400"}`}
+          >
+            {option.label}
+          </button>
+        ))}
+      </div>
+    </details>
+  );
+}
+
+function ConcertSortMenu({ value, onChange, compact = false }) {
+  return (
+    <DropdownMenu
+      value={value}
+      onChange={onChange}
+      compact={compact}
+      ariaLabel="Sort concerts"
+      options={[
+        { value: "artist", label: "Sort by artist" },
+        { value: "concerts", label: "Sort by number of concerts" },
+        { value: "recent", label: "Sort by most recent" },
+      ]}
+    />
+  );
+}
+
 function NextConcertCalendar({ items, onEdit }) {
   const [selectedConcert, setSelectedConcert] = useState(null);
   const [monthPickerOpen, setMonthPickerOpen] = useState(false);
@@ -548,18 +593,18 @@ function NextConcertCalendar({ items, onEdit }) {
     <section className="rounded-3xl border border-zinc-800 bg-zinc-900 p-3 md:p-6">
       <div className="relative mb-5 flex flex-wrap items-center justify-start gap-2">
         <button onClick={() => { const today = new Date(); setVisibleMonth(new Date(today.getFullYear(), today.getMonth(), 1)); setMonthPickerOpen(false); }} className="rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-2.5 text-sm font-black text-zinc-100 transition hover:border-zinc-500">Today</button>
-        <button onClick={() => moveMonth(-1)} className="rounded-xl px-3 py-2.5 text-lg font-bold text-zinc-400 transition hover:bg-zinc-800 hover:text-white" aria-label="Previous month">↑</button>
-        <button onClick={() => moveMonth(1)} className="rounded-xl px-3 py-2.5 text-lg font-bold text-zinc-400 transition hover:bg-zinc-800 hover:text-white" aria-label="Next month">↓</button>
+        <button onClick={() => moveMonth(-1)} className="rounded-xl px-3 py-2.5 text-sm text-zinc-400 transition hover:bg-zinc-800 hover:text-white" aria-label="Previous month"><i className="fa-solid fa-chevron-up" aria-hidden="true" /></button>
+        <button onClick={() => moveMonth(1)} className="rounded-xl px-3 py-2.5 text-sm text-zinc-400 transition hover:bg-zinc-800 hover:text-white" aria-label="Next month"><i className="fa-solid fa-chevron-down" aria-hidden="true" /></button>
         <button onClick={() => setMonthPickerOpen((open) => !open)} className="rounded-xl px-4 py-2 text-xl font-black text-zinc-100 transition hover:bg-zinc-800 md:text-2xl" aria-expanded={monthPickerOpen}>
-          {monthLabel} <span className="ml-1 text-sm text-zinc-500">⌄</span>
+          {monthLabel} <i className="fa-solid fa-chevron-down ml-2 text-xs text-zinc-500" aria-hidden="true" />
         </button>
         {monthPickerOpen && (
           <div className="absolute right-0 top-full z-30 mt-2 w-full max-w-sm rounded-3xl border border-zinc-700 bg-zinc-950 p-5 shadow-2xl sm:right-auto">
             <div className="mb-4 flex items-center justify-between">
               <span className="text-xl font-black text-zinc-100">{year}</span>
               <div className="flex gap-1">
-                <button onClick={() => setVisibleMonth(new Date(year - 1, month, 1))} className="rounded-xl px-3 py-2 text-lg text-zinc-400 hover:bg-zinc-800 hover:text-white" aria-label="Previous year">↑</button>
-                <button onClick={() => setVisibleMonth(new Date(year + 1, month, 1))} className="rounded-xl px-3 py-2 text-lg text-zinc-400 hover:bg-zinc-800 hover:text-white" aria-label="Next year">↓</button>
+                <button onClick={() => setVisibleMonth(new Date(year - 1, month, 1))} className="rounded-xl px-3 py-2 text-sm text-zinc-400 hover:bg-zinc-800 hover:text-white" aria-label="Previous year"><i className="fa-solid fa-chevron-up" aria-hidden="true" /></button>
+                <button onClick={() => setVisibleMonth(new Date(year + 1, month, 1))} className="rounded-xl px-3 py-2 text-sm text-zinc-400 hover:bg-zinc-800 hover:text-white" aria-label="Next year"><i className="fa-solid fa-chevron-down" aria-hidden="true" /></button>
               </div>
             </div>
             <div className="grid grid-cols-4 gap-2">
@@ -768,7 +813,7 @@ function ArtistDetailPage({ item, upcoming = [], onBack, onOpenSetlist, onOpenVe
     <div className="mx-auto max-w-5xl">
       <div className="mb-8 flex flex-wrap items-center justify-between gap-3">
         <button onClick={onBack} className="rounded-full border border-zinc-700 bg-zinc-900 px-5 py-2.5 text-sm font-bold text-zinc-200 transition hover:border-zinc-500 hover:text-white">
-          ← Concert history
+          ← Go back
         </button>
         {latestShow && <p className="text-sm text-zinc-500">Most recently seen {latestShow.date}</p>}
       </div>
@@ -928,7 +973,7 @@ function VenueDetailPage({ venue, historyItems, onBack, onOpenArtist, onOpenSetl
 
 // ─── Concert timeline ─────────────────────────────────────────────────────────
 
-function ConcertTimelinePage({ historyItems, onOpenArtist, onOpenSetlist, onOpenVenue }) {
+function ConcertTimelinePage({ historyItems, onBack, onOpenArtist, onOpenSetlist, onOpenVenue }) {
   const [artistFilter, setArtistFilter] = useState("all");
   const [venueFilter, setVenueFilter] = useState("all");
 
@@ -971,21 +1016,24 @@ function ConcertTimelinePage({ historyItems, onOpenArtist, onOpenSetlist, onOpen
   return (
     <div className="mx-auto max-w-5xl">
       <section className="sticky top-0 z-10 mb-10 border-y border-zinc-800 bg-zinc-950/95 py-4 backdrop-blur">
-        <div className="grid gap-3 sm:grid-cols-2">
-          <label className="min-w-0">
-            <span className="sr-only">Filter timeline by artist</span>
-            <select value={artistFilter} onChange={(event) => setArtistFilter(event.target.value)} className="w-full rounded-full border border-zinc-700 bg-zinc-900 px-4 py-3 text-sm text-zinc-100 outline-none">
-              <option value="all">All artists</option>
-              {artists.map((artist) => <option key={artist} value={artist}>{artist}</option>)}
-            </select>
-          </label>
-          <label className="min-w-0">
-            <span className="sr-only">Filter timeline by venue</span>
-            <select value={venueFilter} onChange={(event) => setVenueFilter(event.target.value)} className="w-full rounded-full border border-zinc-700 bg-zinc-900 px-4 py-3 text-sm text-zinc-100 outline-none">
-              <option value="all">All venues</option>
-              {venues.map((venue) => <option key={venue} value={venue}>{venue}</option>)}
-            </select>
-          </label>
+        <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] gap-2 sm:gap-3">
+          <DropdownMenu
+            value={artistFilter}
+            onChange={setArtistFilter}
+            ariaLabel="Filter timeline by artist"
+            groupName="timeline-filters"
+            options={[{ value: "all", label: "All artists" }, ...artists.map((artist) => ({ value: artist, label: artist }))]}
+          />
+          <DropdownMenu
+            value={venueFilter}
+            onChange={setVenueFilter}
+            ariaLabel="Filter timeline by venue"
+            groupName="timeline-filters"
+            options={[{ value: "all", label: "All venues" }, ...venues.map((venue) => ({ value: venue, label: venue }))]}
+          />
+          <button onClick={onBack} className="rounded-full border border-zinc-700 bg-zinc-900 px-4 py-3 text-zinc-200 transition hover:border-zinc-500 hover:text-white" aria-label="Back to concert archive" title="Back to concert archive">
+            <i className="fa-solid fa-table-cells-large" aria-hidden="true" />
+          </button>
         </div>
         <div className="mt-3 flex items-center gap-2 overflow-x-auto pb-1">
           {groupedYears.map(([year, yearShows]) => (
@@ -1122,12 +1170,14 @@ function YearInReviewPage({ historyItems, onOpenArtist, onOpenSetlist, onOpenVen
   return (
     <div className="mx-auto max-w-5xl">
       <div className="mb-8 flex justify-center">
-        <label>
-          <span className="sr-only">Choose review year</span>
-          <select value={activeYear} onChange={(event) => setSelectedYear(event.target.value)} className="rounded-full border border-zinc-700 bg-zinc-900 px-6 py-3 text-base font-black text-zinc-100 outline-none">
-            {years.map((year) => <option key={year} value={year}>{year}</option>)}
-          </select>
-        </label>
+        <DropdownMenu
+          value={activeYear}
+          onChange={setSelectedYear}
+          ariaLabel="Choose review year"
+          className="w-40"
+          centered
+          options={years.map((year) => ({ value: year, label: year }))}
+        />
       </div>
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
@@ -1258,7 +1308,7 @@ export default function App() {
   const [activePage, setActivePage] = useState("history");
   const [selectedArtist, setSelectedArtist] = useState(null);
   const [selectedVenue, setSelectedVenue] = useState(null);
-  const [detailReturnPage, setDetailReturnPage] = useState("history");
+  const [viewHistory, setViewHistory] = useState([]);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [editTarget, setEditTarget] = useState(null);
@@ -1288,7 +1338,7 @@ export default function App() {
     ? nextItems.filter((item) => normalize(item.artist) === normalize(artistDetail.artist))
     : [];
   const mode = isNext ? "next" : "history";
-  const title = isVenueDetail ? selectedVenue : isArtistDetail ? artistDetail.artist : isYearReview ? "Year in Review" : isTimeline ? "Timeline" : isStats ? "Stats" : isNext ? "Next Concerts" : "Concert Archive";
+  const title = isVenueDetail ? selectedVenue : isArtistDetail ? artistDetail.artist : isYearReview ? "Year in Review" : isTimeline ? "Timeline" : isStats ? "Archive Overview" : isNext ? "Next Concerts" : "Concert Archive";
   const description = isVenueDetail
     ? `${venueShows.length} archived ${venueShows.length === 1 ? "visit" : "visits"} to this venue.`
     : isArtistDetail
@@ -1326,17 +1376,39 @@ export default function App() {
 
   if (!unlocked) return <LoginGate onUnlock={handleUnlock} />;
 
-  function changePage(page) { setActivePage(page); setSelectedArtist(null); setSelectedVenue(null); setQuery(""); setSortMode("artist"); setSidebarOpen(false); }
-  function openArtistDetail(artist) { setSelectedArtist(artist); setActivePage("artist"); setSidebarOpen(false); window.scrollTo({ top: 0, behavior: "smooth" }); }
+  function changePage(page) { setActivePage(page); setSelectedArtist(null); setSelectedVenue(null); setViewHistory([]); setQuery(""); setSortMode("artist"); setSidebarOpen(false); }
+  function rememberCurrentView() {
+    setViewHistory((history) => [...history, { page: activePage, artist: selectedArtist, venue: selectedVenue }]);
+  }
+  function openArtistDetail(artist) {
+    rememberCurrentView();
+    setSelectedArtist(artist);
+    setSelectedVenue(null);
+    setActivePage("artist");
+    setSidebarOpen(false);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
   function openVenueDetail(venue) {
     if (!venue || venue === "Date confirmed") return;
-    setDetailReturnPage(activePage === "venue" ? "history" : activePage);
+    rememberCurrentView();
     setSelectedVenue(venue);
+    setSelectedArtist(null);
     setActivePage("venue");
     setSidebarOpen(false);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
-  function closeVenueDetail() { setSelectedVenue(null); setActivePage(detailReturnPage); window.scrollTo({ top: 0, behavior: "smooth" }); }
+  function goBackFromDetail() {
+    const previous = viewHistory[viewHistory.length - 1];
+    if (!previous) {
+      changePage("history");
+      return;
+    }
+    setViewHistory((history) => history.slice(0, -1));
+    setActivePage(previous.page);
+    setSelectedArtist(previous.artist);
+    setSelectedVenue(previous.venue);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
 
   async function handleAddConcert(data) {
     setIsSaving(true); setSaveError("");
@@ -1453,11 +1525,15 @@ export default function App() {
             <button onClick={() => setSidebarOpen(false)} className="rounded-full border border-zinc-700 px-3 py-1 text-sm text-zinc-300 hover:border-zinc-500">Close</button>
           </div>
           <nav className="space-y-2 text-sm">
-            <button onClick={() => changePage("history")} className={`block w-full rounded-2xl px-4 py-3 text-left transition hover:bg-zinc-900 hover:text-zinc-100 ${activePage === "history" || activePage === "artist" ? "bg-zinc-900 text-zinc-100" : "text-zinc-400"}`}>Concert history</button>
-            <button onClick={() => changePage("timeline")} className={`block w-full rounded-2xl px-4 py-3 text-left transition hover:bg-zinc-900 hover:text-zinc-100 ${activePage === "timeline" ? "bg-zinc-900 text-zinc-100" : "text-zinc-400"}`}>Timeline</button>
-            <button onClick={() => changePage("year-review")} className={`block w-full rounded-2xl px-4 py-3 text-left transition hover:bg-zinc-900 hover:text-zinc-100 ${activePage === "year-review" ? "bg-zinc-900 text-zinc-100" : "text-zinc-400"}`}>Year in review</button>
+            <button onClick={() => changePage("history")} className={`block w-full rounded-2xl px-4 py-3 text-left transition hover:bg-zinc-900 hover:text-zinc-100 ${["history", "artist", "timeline"].includes(activePage) ? "bg-zinc-900 text-zinc-100" : "text-zinc-400"}`}>Concert history</button>
             <button onClick={() => changePage("next")} className={`block w-full rounded-2xl px-4 py-3 text-left transition hover:bg-zinc-900 hover:text-zinc-100 ${activePage === "next" ? "bg-zinc-900 text-zinc-100" : "text-zinc-400"}`}>Next concerts</button>
-            <button onClick={() => changePage("stats")} className={`block w-full rounded-2xl px-4 py-3 text-left transition hover:bg-zinc-900 hover:text-zinc-100 ${activePage === "stats" ? "bg-zinc-900 text-zinc-100" : "text-zinc-400"}`}>Stats</button>
+            <div className={`rounded-2xl px-2 py-2 ${activePage === "stats" || activePage === "year-review" ? "bg-zinc-900" : ""}`}>
+              <div className={`px-2 py-1 text-left font-bold ${activePage === "stats" || activePage === "year-review" ? "text-zinc-100" : "text-zinc-400"}`}>Stats</div>
+              <div className="mt-1 border-l border-zinc-800 pl-2">
+                <button onClick={() => changePage("stats")} className={`block w-full rounded-xl px-3 py-2 text-left text-xs transition hover:bg-zinc-800 hover:text-zinc-100 ${activePage === "stats" ? "bg-zinc-800 text-zinc-100" : "text-zinc-500"}`}>Archive overview</button>
+                <button onClick={() => changePage("year-review")} className={`mt-1 block w-full rounded-xl px-3 py-2 text-left text-xs transition hover:bg-zinc-800 hover:text-zinc-100 ${activePage === "year-review" ? "bg-zinc-800 text-zinc-100" : "text-zinc-500"}`}>Year in review</button>
+              </div>
+            </div>
           </nav>
         </div>
       </aside>
@@ -1473,7 +1549,7 @@ export default function App() {
           <VenueDetailPage
             venue={selectedVenue}
             historyItems={historyItems}
-            onBack={closeVenueDetail}
+            onBack={goBackFromDetail}
             onOpenArtist={openArtistDetail}
             onOpenSetlist={setSetlistTarget}
           />
@@ -1481,13 +1557,14 @@ export default function App() {
           <ArtistDetailPage
             item={artistDetail}
             upcoming={artistUpcoming}
-            onBack={() => changePage("history")}
+            onBack={goBackFromDetail}
             onOpenSetlist={setSetlistTarget}
             onOpenVenue={openVenueDetail}
           />
         ) : isTimeline ? (
           <ConcertTimelinePage
             historyItems={historyItems}
+            onBack={() => changePage("history")}
             onOpenArtist={openArtistDetail}
             onOpenSetlist={setSetlistTarget}
             onOpenVenue={openVenueDetail}
@@ -1515,12 +1592,9 @@ export default function App() {
                   {isNext && <CalendarExportMenu items={nextItems} compact />}
                 </div>
                 {!isNext && (
-                  <div className="md:hidden">
-                    <select value={sortMode} onChange={(e) => setSortMode(e.target.value)} className="w-full rounded-full border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-sm text-zinc-100 outline-none">
-                      <option value="artist">Sort by artist</option>
-                      <option value="concerts">Sort by number of concerts</option>
-                      <option value="recent">Sort by most recent</option>
-                    </select>
+                  <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2 md:hidden">
+                    <ConcertSortMenu value={sortMode} onChange={setSortMode} compact />
+                    <button onClick={() => changePage("timeline")} className="rounded-full border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-zinc-100 transition hover:border-zinc-500" aria-label="Open concert timeline" title="Timeline"><i className="fa-solid fa-timeline" aria-hidden="true" /></button>
                   </div>
                 )}
 
@@ -1532,11 +1606,10 @@ export default function App() {
                     <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search artist, venue, festival, city or date" className="w-full bg-transparent text-base text-zinc-100 outline-none placeholder:text-zinc-500" aria-label="Search concerts" />
                   </div>
                   {!isNext && (
-                    <select value={sortMode} onChange={(e) => setSortMode(e.target.value)} className="rounded-full border border-zinc-700 bg-zinc-900 px-5 py-3 text-base text-zinc-100 shadow-2xl outline-none" aria-label="Sort concerts">
-                      <option value="artist">Sort by artist</option>
-                      <option value="concerts">Sort by number of concerts</option>
-                      <option value="recent">Sort by most recent</option>
-                    </select>
+                    <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2">
+                      <ConcertSortMenu value={sortMode} onChange={setSortMode} />
+                      <button onClick={() => changePage("timeline")} className="rounded-full border border-zinc-700 bg-zinc-900 px-4 py-3 text-zinc-100 shadow-2xl transition hover:border-zinc-500" aria-label="Open concert timeline" title="Timeline"><i className="fa-solid fa-timeline" aria-hidden="true" /></button>
+                    </div>
                   )}
                   {isNext && <CalendarExportMenu items={nextItems} />}
                 </div>
