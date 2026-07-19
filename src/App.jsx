@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import concertsData from "../data/concerts.json";
 
 // ─── Data bootstrap ───────────────────────────────────────────────────────────
@@ -510,13 +510,23 @@ function AddConcertModal({ isOpen, mode, onClose, onSave, isSaving, saveError, a
 // ─── Upcoming concert calendar ────────────────────────────────────────────────
 
 function CalendarExportMenu({ items, compact = false }) {
+  const detailsRef = useRef(null);
+
+  useEffect(() => {
+    function dismiss(event) {
+      if (detailsRef.current?.open && !detailsRef.current.contains(event.target)) detailsRef.current.removeAttribute("open");
+    }
+    document.addEventListener("pointerdown", dismiss);
+    return () => document.removeEventListener("pointerdown", dismiss);
+  }, []);
+
   function runExport(event, concerts, filename, calendarName) {
     downloadConcertCalendar(concerts, filename, calendarName);
     event.currentTarget.closest("details")?.removeAttribute("open");
   }
 
   return (
-    <details className="group relative">
+    <details ref={detailsRef} className="group relative">
       <summary className={`cursor-pointer list-none rounded-full border border-zinc-700 bg-zinc-900 text-center text-sm font-black text-zinc-100 shadow-2xl transition hover:border-zinc-500 [&::-webkit-details-marker]:hidden ${compact ? "px-3 py-2.5" : "px-5 py-3"}`}>
         Export <span className="ml-1 text-zinc-500 transition group-open:rotate-180">▾</span>
       </summary>
@@ -529,9 +539,18 @@ function CalendarExportMenu({ items, compact = false }) {
   );
 }
 
-function DropdownMenu({ value, onChange, options, compact = false, ariaLabel, className = "", groupName, centered = false, menuAlign = "right" }) {
+function DropdownMenu({ value, onChange, options, compact = false, ariaLabel, className = "", groupName, centered = false, menuAlign = "right", buttonLabel }) {
+  const detailsRef = useRef(null);
   const normalizedOptions = options.map((option) => typeof option === "string" ? { value: option, label: option } : option);
-  const activeLabel = normalizedOptions.find((option) => option.value === value)?.label || normalizedOptions[0]?.label || "";
+  const activeLabel = buttonLabel || normalizedOptions.find((option) => option.value === value)?.label || normalizedOptions[0]?.label || "";
+
+  useEffect(() => {
+    function dismiss(event) {
+      if (detailsRef.current?.open && !detailsRef.current.contains(event.target)) detailsRef.current.removeAttribute("open");
+    }
+    document.addEventListener("pointerdown", dismiss);
+    return () => document.removeEventListener("pointerdown", dismiss);
+  }, []);
 
   function selectOption(event, nextValue) {
     onChange(nextValue);
@@ -539,7 +558,7 @@ function DropdownMenu({ value, onChange, options, compact = false, ariaLabel, cl
   }
 
   return (
-    <details name={groupName} className={`group relative min-w-0 ${className}`}>
+    <details ref={detailsRef} name={groupName} className={`group relative min-w-0 ${className}`}>
       <summary aria-label={ariaLabel} className={`cursor-pointer list-none truncate rounded-full border border-zinc-700 bg-zinc-900 text-sm font-semibold text-zinc-100 shadow-2xl transition hover:border-zinc-500 [&::-webkit-details-marker]:hidden ${centered ? "text-center" : "text-left"} ${compact ? "px-4 py-2.5" : "px-5 py-3"}`}>
         {activeLabel} <span className="ml-1 text-zinc-500">▾</span>
       </summary>
@@ -577,6 +596,7 @@ function ConcertSortMenu({ value, onChange, compact = false }) {
 function NextConcertCalendar({ items, onEdit }) {
   const [selectedConcert, setSelectedConcert] = useState(null);
   const [monthPickerOpen, setMonthPickerOpen] = useState(false);
+  const monthPickerRef = useRef(null);
   const datedItems = useMemo(
     () => items
       .map((concert) => {
@@ -600,13 +620,22 @@ function NextConcertCalendar({ items, onEdit }) {
   const monthLabel = new Intl.DateTimeFormat("en", { month: "long", year: "numeric" }).format(visibleMonth);
   const weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
+  useEffect(() => {
+    if (!monthPickerOpen) return undefined;
+    function dismiss(event) {
+      if (!monthPickerRef.current?.contains(event.target)) setMonthPickerOpen(false);
+    }
+    document.addEventListener("pointerdown", dismiss);
+    return () => document.removeEventListener("pointerdown", dismiss);
+  }, [monthPickerOpen]);
+
   function moveMonth(offset) {
     setVisibleMonth((current) => new Date(current.getFullYear(), current.getMonth() + offset, 1));
   }
 
   return (
     <section className="rounded-3xl border border-zinc-800 bg-zinc-900 p-3 md:p-6">
-      <div className="relative mb-5 flex flex-wrap items-center justify-start gap-2">
+      <div ref={monthPickerRef} className="relative mb-5 flex flex-wrap items-center justify-start gap-2">
         <button onClick={() => { const today = new Date(); setVisibleMonth(new Date(today.getFullYear(), today.getMonth(), 1)); setMonthPickerOpen(false); }} className="rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-2.5 text-sm font-black text-zinc-100 transition hover:border-zinc-500">Today</button>
         <button onClick={() => moveMonth(-1)} className="rounded-xl px-3 py-2.5 text-sm text-zinc-400 transition hover:bg-zinc-800 hover:text-white" aria-label="Previous month"><i className="fa-solid fa-chevron-up" aria-hidden="true" /></button>
         <button onClick={() => moveMonth(1)} className="rounded-xl px-3 py-2.5 text-sm text-zinc-400 transition hover:bg-zinc-800 hover:text-white" aria-label="Next month"><i className="fa-solid fa-chevron-down" aria-hidden="true" /></button>
@@ -1032,12 +1061,7 @@ function ConcertTimelinePage({ historyItems, onBack, onOpenArtist, onOpenSetlist
   return (
     <div className="mx-auto max-w-5xl">
       <section className="sticky top-0 z-10 mb-10 border-y border-zinc-800 bg-zinc-950/95 py-4 backdrop-blur">
-        <div className="mb-2 flex justify-end md:hidden">
-          <button onClick={onBack} className="rounded-full border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-zinc-200 transition hover:border-zinc-500 hover:text-white" aria-label="Back to concert archive" title="Back to concert archive">
-            <i className="fa-solid fa-table-cells-large" aria-hidden="true" />
-          </button>
-        </div>
-        <div className="grid grid-cols-2 gap-2 sm:gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
+        <div className="grid grid-cols-2 gap-2 sm:gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,0.7fr)_auto]">
           <DropdownMenu
             value={artistFilter}
             onChange={setArtistFilter}
@@ -1053,22 +1077,24 @@ function ConcertTimelinePage({ historyItems, onBack, onOpenArtist, onOpenSetlist
             groupName="timeline-filters"
             options={[{ value: "all", label: "All venues" }, ...venues.map((venue) => ({ value: venue, label: venue }))]}
           />
-          <button onClick={onBack} className="hidden rounded-full border border-zinc-700 bg-zinc-900 px-4 py-3 text-zinc-200 transition hover:border-zinc-500 hover:text-white md:block" aria-label="Back to concert archive" title="Back to concert archive">
+          <DropdownMenu
+            value=""
+            onChange={jumpToYear}
+            ariaLabel="Jump to timeline year"
+            buttonLabel="Years"
+            groupName="timeline-filters"
+            menuAlign="left"
+            options={groupedYears.map(([year, yearShows]) => ({ value: year, label: `${year} · ${yearShows.length} ${yearShows.length === 1 ? "concert" : "concerts"}` }))}
+          />
+          <button onClick={onBack} className="rounded-full border border-zinc-700 bg-zinc-900 px-4 py-3 text-zinc-200 transition hover:border-zinc-500 hover:text-white" aria-label="Back to concert archive" title="Back to concert archive">
             <i className="fa-solid fa-table-cells-large" aria-hidden="true" />
           </button>
         </div>
-        <div className="mt-3 flex items-center gap-2 overflow-x-auto pb-1">
-          {groupedYears.map(([year, yearShows]) => (
-            <button key={year} onClick={() => jumpToYear(year)} className="shrink-0 rounded-full border border-zinc-800 bg-zinc-900 px-3 py-1.5 text-xs font-bold text-zinc-400 transition hover:border-zinc-600 hover:text-zinc-100">
-              {year} <span className="text-zinc-600">{yearShows.length}</span>
-            </button>
-          ))}
-          {hasFilters && (
-            <button onClick={() => { setArtistFilter("all"); setVenueFilter("all"); }} className="shrink-0 rounded-full border border-zinc-700 px-3 py-1.5 text-xs font-bold text-zinc-300 hover:border-zinc-500">
-              Clear filters
-            </button>
-          )}
-        </div>
+        {hasFilters && (
+          <button onClick={() => { setArtistFilter("all"); setVenueFilter("all"); }} className="mt-3 rounded-full border border-zinc-700 px-3 py-1.5 text-xs font-bold text-zinc-300 hover:border-zinc-500">
+            Clear filters
+          </button>
+        )}
       </section>
 
       {groupedYears.length === 0 ? (
