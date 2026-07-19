@@ -541,7 +541,7 @@ function StatsPage({ historyItems }) {
             {stats.years.map(([year, count]) => {
               const heightPct = stats.maxYear ? (count / stats.maxYear) * 100 : 0;
               return (
-                <div key={year} className="flex min-w-[36px] flex-col items-center gap-2">
+                <div key={year} className="flex min-w-[36px] flex-1 flex-col items-center gap-2">
                   <div className="flex h-44 w-full items-end">
                     <div className="w-full rounded-t-md bg-zinc-100 transition-all hover:bg-white" style={{ height: `${count === 0 ? 2 : heightPct}%`, opacity: count === 0 ? 0.15 : 1 }} title={`${count} ${count === 1 ? "show" : "shows"} in ${year}`} />
                   </div>
