@@ -756,7 +756,7 @@ export default function App() {
   return (
     <main className="min-h-screen bg-zinc-950 text-zinc-100 md:flex">
       {/* Desktop-only fixed Menu button */}
-      <button onClick={() => setSidebarOpen(true)} className="fixed left-4 top-4 z-40 rounded-full border border-zinc-700 bg-zinc-900 px-4 py-2 text-sm font-bold text-zinc-100 shadow-2xl transition hover:border-zinc-500" aria-label="Open menu">Menu</button>
+      <button onClick={() => setSidebarOpen(true)} className="fixed left-4 top-4 z-40 hidden rounded-full border border-zinc-700 bg-zinc-900 px-4 py-2 text-sm font-bold text-zinc-100 shadow-2xl transition hover:border-zinc-500 md:block" aria-label="Open menu">Menu</button>
 
       {sidebarOpen && <button className="fixed inset-0 z-40 bg-black/60" onClick={() => setSidebarOpen(false)} aria-label="Close menu overlay" />}
 
