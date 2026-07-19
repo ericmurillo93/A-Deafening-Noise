@@ -557,6 +557,93 @@ function StatsPage({ historyItems }) {
   );
 }
 
+// ─── Artist detail ────────────────────────────────────────────────────────────
+
+function ArtistDetailPage({ item, upcoming = [], onBack, onOpenSetlist }) {
+  const shows = useMemo(
+    () => [...item.shows]
+      .map((show) => ({ show, ...parseShow(show, "history") }))
+      .sort((a, b) => parseDate(b.date) - parseDate(a.date)),
+    [item]
+  );
+
+  const venues = new Set(shows.map(({ venue }) => venue).filter((venue) => venue && venue !== "Date confirmed"));
+  const years = new Set(shows.map(({ date }) => String(date).match(/(\d{4})/)?.[1]).filter(Boolean));
+  const firstShow = shows[shows.length - 1];
+  const latestShow = shows[0];
+  const summaryCards = [
+    { label: "Shows", value: shows.length },
+    { label: "Venues", value: venues.size },
+    { label: "Years seen", value: years.size },
+    { label: "First seen", value: firstShow?.date || "—" },
+  ];
+
+  return (
+    <div className="mx-auto max-w-5xl">
+      <div className="mb-8 flex flex-wrap items-center justify-between gap-3">
+        <button onClick={onBack} className="rounded-full border border-zinc-700 bg-zinc-900 px-5 py-2.5 text-sm font-bold text-zinc-200 transition hover:border-zinc-500 hover:text-white">
+          ← Concert history
+        </button>
+        {latestShow && <p className="text-sm text-zinc-500">Most recently seen {latestShow.date}</p>}
+      </div>
+
+      <div className="mb-10 grid grid-cols-2 gap-3 md:grid-cols-4">
+        {summaryCards.map(({ label, value }) => (
+          <div key={label} className="min-w-0 rounded-3xl border border-zinc-800 bg-zinc-900 p-5 text-center">
+            <div className="truncate text-2xl font-black text-zinc-100 md:text-3xl" title={String(value)}>{value}</div>
+            <div className="mt-1 text-[11px] font-bold uppercase tracking-widest text-zinc-500">{label}</div>
+          </div>
+        ))}
+      </div>
+
+      {upcoming.length > 0 && (
+        <section className="mb-10 rounded-3xl border border-zinc-700 bg-zinc-900 p-6">
+          <h2 className="mb-5 text-lg font-black uppercase tracking-tight text-zinc-100">Coming up</h2>
+          <div className="grid gap-3 md:grid-cols-2">
+            {upcoming.map((concert) => (
+              <div key={`${concert.date}-${concert.venue || ""}`} className="rounded-2xl bg-zinc-950 p-4">
+                {concert.venue && <div className="flex gap-2 text-sm font-semibold text-zinc-100"><Icon type="map" /><span>{concert.venue}</span></div>}
+                <div className={`${concert.venue ? "mt-2 " : ""}flex gap-2 text-sm text-zinc-400`}><Icon type="calendar" /><span>{concert.date}</span></div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      <section>
+        <div className="mb-5 flex items-end justify-between gap-4">
+          <h2 className="text-xl font-black uppercase tracking-tight text-zinc-100">Performance history</h2>
+          <span className="text-sm text-zinc-500">{shows.length} {shows.length === 1 ? "show" : "shows"}</span>
+        </div>
+        <div className="relative space-y-4 before:absolute before:bottom-6 before:left-[19px] before:top-6 before:w-px before:bg-zinc-800 md:before:left-[27px]">
+          {shows.map(({ show, venue, date, setlistId }, index) => (
+            <article key={show} className="relative flex gap-4 md:gap-6">
+              <div className="relative z-[1] mt-6 h-10 w-10 shrink-0 rounded-full border-4 border-zinc-950 bg-zinc-700 md:h-14 md:w-14">
+                <span className="flex h-full items-center justify-center text-[10px] font-black text-zinc-200 md:text-xs">{shows.length - index}</span>
+              </div>
+              <div className="min-w-0 flex-1 rounded-3xl border border-zinc-800 bg-zinc-900 p-5 transition hover:border-zinc-600">
+                <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
+                  <div className="min-w-0">
+                    <h3 className="break-words text-lg font-black text-zinc-100 md:text-xl">{venue}</h3>
+                    <div className="mt-2 flex gap-2 text-sm text-zinc-400"><Icon type="calendar" /><span>{date}</span></div>
+                  </div>
+                  <button
+                    onClick={() => onOpenSetlist({ artist: item.artist, venue, date, setlistId, show })}
+                    className="flex shrink-0 items-center gap-2 self-start rounded-full border border-zinc-700 px-4 py-2 text-sm font-semibold text-zinc-400 transition hover:border-zinc-500 hover:text-zinc-100"
+                  >
+                    <Icon type="music" />
+                    Setlist
+                  </button>
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+    </div>
+  );
+}
+
 // ─── LoginGate ────────────────────────────────────────────────────────────────
 
 function LoginGate({ onUnlock }) {
@@ -604,6 +691,7 @@ export default function App() {
   const [sortMode, setSortMode] = useState("artist");
   const [ticketFilter, setTicketFilter] = useState("all");
   const [activePage, setActivePage] = useState("history");
+  const [selectedArtist, setSelectedArtist] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [editTarget, setEditTarget] = useState(null);
@@ -619,9 +707,18 @@ export default function App() {
 
   const isNext = activePage === "next";
   const isStats = activePage === "stats";
+  const artistDetail = selectedArtist
+    ? historyItems.find((item) => normalize(item.artist) === normalize(selectedArtist))
+    : null;
+  const isArtistDetail = activePage === "artist" && Boolean(artistDetail);
+  const artistUpcoming = artistDetail
+    ? nextItems.filter((item) => normalize(item.artist) === normalize(artistDetail.artist))
+    : [];
   const mode = isNext ? "next" : "history";
-  const title = isStats ? "Stats" : isNext ? "Next Concerts" : "Concert Archive";
-  const description = isStats
+  const title = isArtistDetail ? artistDetail.artist : isStats ? "Stats" : isNext ? "Next Concerts" : "Concert Archive";
+  const description = isArtistDetail
+    ? `${artistDetail.shows.length} live ${artistDetail.shows.length === 1 ? "performance" : "performances"} in the archive.`
+    : isStats
     ? "A snapshot of your concert history at a glance."
     : isNext ? "Upcoming shows, festivals and planned concerts." : "A searchable lifetime lineup of artists, venues and dates.";
 
@@ -650,7 +747,8 @@ export default function App() {
 
   if (!unlocked) return <LoginGate onUnlock={handleUnlock} />;
 
-  function changePage(page) { setActivePage(page); setQuery(""); setSortMode("artist"); setTicketFilter("all"); setSidebarOpen(false); }
+  function changePage(page) { setActivePage(page); setSelectedArtist(null); setQuery(""); setSortMode("artist"); setTicketFilter("all"); setSidebarOpen(false); }
+  function openArtistDetail(artist) { setSelectedArtist(artist); setActivePage("artist"); setSidebarOpen(false); window.scrollTo({ top: 0, behavior: "smooth" }); }
 
   async function handleAddConcert(data) {
     setIsSaving(true); setSaveError("");
@@ -767,7 +865,7 @@ export default function App() {
             <button onClick={() => setSidebarOpen(false)} className="rounded-full border border-zinc-700 px-3 py-1 text-sm text-zinc-300 hover:border-zinc-500">Close</button>
           </div>
           <nav className="space-y-2 text-sm">
-            <button onClick={() => changePage("history")} className={`block w-full rounded-2xl px-4 py-3 text-left transition hover:bg-zinc-900 hover:text-zinc-100 ${activePage === "history" ? "bg-zinc-900 text-zinc-100" : "text-zinc-400"}`}>Concert history</button>
+            <button onClick={() => changePage("history")} className={`block w-full rounded-2xl px-4 py-3 text-left transition hover:bg-zinc-900 hover:text-zinc-100 ${activePage === "history" || activePage === "artist" ? "bg-zinc-900 text-zinc-100" : "text-zinc-400"}`}>Concert history</button>
             <button onClick={() => changePage("next")} className={`block w-full rounded-2xl px-4 py-3 text-left transition hover:bg-zinc-900 hover:text-zinc-100 ${activePage === "next" ? "bg-zinc-900 text-zinc-100" : "text-zinc-400"}`}>Next concerts</button>
             <button onClick={() => changePage("stats")} className={`block w-full rounded-2xl px-4 py-3 text-left transition hover:bg-zinc-900 hover:text-zinc-100 ${activePage === "stats" ? "bg-zinc-900 text-zinc-100" : "text-zinc-400"}`}>Stats</button>
           </nav>
@@ -777,11 +875,18 @@ export default function App() {
       <section className="mx-auto w-full max-w-7xl px-4 pt-6 pb-8 md:px-8 md:py-14 overflow-x-hidden">
         <header className="mb-10 text-center">
           <p className="mb-3 text-xs font-semibold uppercase tracking-[0.45em] text-zinc-400">A Deafening Noise</p>
-          <h1 className="text-5xl font-black uppercase tracking-tight md:text-8xl">{title}</h1>
+          <h1 className="break-words text-5xl font-black uppercase tracking-tight md:text-8xl">{title}</h1>
           <p className="mx-auto mt-5 max-w-2xl text-base text-zinc-400 md:text-lg">{description}</p>
         </header>
 
-        {isStats ? <StatsPage historyItems={historyItems} /> : (
+        {isArtistDetail ? (
+          <ArtistDetailPage
+            item={artistDetail}
+            upcoming={artistUpcoming}
+            onBack={() => changePage("history")}
+            onOpenSetlist={setSetlistTarget}
+          />
+        ) : isStats ? <StatsPage historyItems={historyItems} /> : (
           <>
             <div className="sticky top-0 z-10 mb-8 border-y border-zinc-800 bg-zinc-950/90 py-3 backdrop-blur">
               <div className="mx-auto max-w-6xl space-y-2 px-4 md:space-y-0 md:px-0">
@@ -839,7 +944,13 @@ export default function App() {
               {filtered.map((item) => (
                 <article key={item.artist + (isNext ? item.date : "")} className="group rounded-3xl border border-zinc-800 bg-zinc-900 p-5 shadow-xl transition hover:-translate-y-1 hover:border-zinc-500 w-full min-w-0">
                   <div className="flex items-start justify-between gap-4 border-b border-zinc-800 pb-4">
-                    <h2 className="text-xl font-black uppercase leading-none tracking-tight md:text-3xl">{item.artist}</h2>
+                    {!isNext ? (
+                      <button onClick={() => openArtistDetail(item.artist)} className="min-w-0 text-left text-xl font-black uppercase leading-none tracking-tight transition hover:text-white hover:underline hover:decoration-zinc-600 hover:underline-offset-4 md:text-3xl">
+                        {item.artist}
+                      </button>
+                    ) : (
+                      <h2 className="text-xl font-black uppercase leading-none tracking-tight md:text-3xl">{item.artist}</h2>
+                    )}
                     {isNext ? (
                       item.bought ? <span className="rounded-full border border-zinc-700 px-3 py-1 text-xs font-bold text-zinc-300">💰 Bought</span> : <span className="rounded-full border border-zinc-800 px-3 py-1 text-xs font-bold text-zinc-500">Pending</span>
                     ) : (
