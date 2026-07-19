@@ -644,6 +644,124 @@ function ArtistDetailPage({ item, upcoming = [], onBack, onOpenSetlist }) {
   );
 }
 
+// ─── Concert timeline ─────────────────────────────────────────────────────────
+
+function ConcertTimelinePage({ historyItems, onOpenArtist, onOpenSetlist }) {
+  const [artistFilter, setArtistFilter] = useState("all");
+  const [venueFilter, setVenueFilter] = useState("all");
+
+  const shows = useMemo(
+    () => historyItems.flatMap(({ artist, shows }) =>
+      shows.map((show) => ({ artist, show, ...parseShow(show, "history") }))
+    ),
+    [historyItems]
+  );
+  const artists = useMemo(
+    () => [...new Set(shows.map(({ artist }) => artist))].sort((a, b) => a.localeCompare(b)),
+    [shows]
+  );
+  const venues = useMemo(
+    () => [...new Set(shows.map(({ venue }) => venue).filter((venue) => venue && venue !== "Date confirmed"))].sort((a, b) => a.localeCompare(b)),
+    [shows]
+  );
+  const filteredShows = useMemo(
+    () => shows
+      .filter(({ artist, venue }) => artistFilter === "all" || artist === artistFilter)
+      .filter(({ venue }) => venueFilter === "all" || venue === venueFilter)
+      .sort((a, b) => parseDate(b.date) - parseDate(a.date) || a.artist.localeCompare(b.artist)),
+    [shows, artistFilter, venueFilter]
+  );
+  const groupedYears = useMemo(() => {
+    const groups = new Map();
+    filteredShows.forEach((show) => {
+      const year = String(show.date).match(/(\d{4})/)?.[1] || "Unknown";
+      if (!groups.has(year)) groups.set(year, []);
+      groups.get(year).push(show);
+    });
+    return [...groups.entries()];
+  }, [filteredShows]);
+  const hasFilters = artistFilter !== "all" || venueFilter !== "all";
+
+  function jumpToYear(year) {
+    document.getElementById(`timeline-${year}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  return (
+    <div className="mx-auto max-w-5xl">
+      <section className="sticky top-0 z-10 mb-10 border-y border-zinc-800 bg-zinc-950/95 py-4 backdrop-blur">
+        <div className="grid gap-3 sm:grid-cols-2">
+          <label className="min-w-0">
+            <span className="sr-only">Filter timeline by artist</span>
+            <select value={artistFilter} onChange={(event) => setArtistFilter(event.target.value)} className="w-full rounded-full border border-zinc-700 bg-zinc-900 px-4 py-3 text-sm text-zinc-100 outline-none">
+              <option value="all">All artists</option>
+              {artists.map((artist) => <option key={artist} value={artist}>{artist}</option>)}
+            </select>
+          </label>
+          <label className="min-w-0">
+            <span className="sr-only">Filter timeline by venue</span>
+            <select value={venueFilter} onChange={(event) => setVenueFilter(event.target.value)} className="w-full rounded-full border border-zinc-700 bg-zinc-900 px-4 py-3 text-sm text-zinc-100 outline-none">
+              <option value="all">All venues</option>
+              {venues.map((venue) => <option key={venue} value={venue}>{venue}</option>)}
+            </select>
+          </label>
+        </div>
+        <div className="mt-3 flex items-center gap-2 overflow-x-auto pb-1">
+          {groupedYears.map(([year, yearShows]) => (
+            <button key={year} onClick={() => jumpToYear(year)} className="shrink-0 rounded-full border border-zinc-800 bg-zinc-900 px-3 py-1.5 text-xs font-bold text-zinc-400 transition hover:border-zinc-600 hover:text-zinc-100">
+              {year} <span className="text-zinc-600">{yearShows.length}</span>
+            </button>
+          ))}
+          {hasFilters && (
+            <button onClick={() => { setArtistFilter("all"); setVenueFilter("all"); }} className="shrink-0 rounded-full border border-zinc-700 px-3 py-1.5 text-xs font-bold text-zinc-300 hover:border-zinc-500">
+              Clear filters
+            </button>
+          )}
+        </div>
+      </section>
+
+      {groupedYears.length === 0 ? (
+        <p className="py-16 text-center text-zinc-500">No concerts match these filters.</p>
+      ) : (
+        <div className="space-y-14">
+          {groupedYears.map(([year, yearShows]) => (
+            <section key={year} id={`timeline-${year}`} className="scroll-mt-36">
+              <div className="mb-6 flex items-end justify-between border-b border-zinc-800 pb-4">
+                <h2 className="text-4xl font-black tracking-tight text-zinc-100 md:text-6xl">{year}</h2>
+                <span className="text-sm font-semibold text-zinc-500">{yearShows.length} {yearShows.length === 1 ? "concert" : "concerts"}</span>
+              </div>
+              <div className="relative space-y-4 before:absolute before:bottom-6 before:left-[7px] before:top-6 before:w-px before:bg-zinc-800">
+                {yearShows.map(({ artist, show, venue, date, setlistId }) => (
+                  <article key={`${artist}-${show}`} className="relative flex gap-4">
+                    <span className="relative z-[1] mt-7 h-[15px] w-[15px] shrink-0 rounded-full border-4 border-zinc-950 bg-zinc-500" />
+                    <div className="min-w-0 flex-1 rounded-3xl border border-zinc-800 bg-zinc-900 p-5 transition hover:border-zinc-600">
+                      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
+                        <div className="min-w-0">
+                          <button onClick={() => onOpenArtist(artist)} className="break-words text-left text-xl font-black uppercase leading-tight text-zinc-100 transition hover:text-white hover:underline hover:decoration-zinc-600 hover:underline-offset-4 md:text-2xl">
+                            {artist}
+                          </button>
+                          <div className="mt-3 flex gap-2 text-sm font-semibold text-zinc-300"><Icon type="map" /><span className="break-words">{venue}</span></div>
+                          <div className="mt-2 flex gap-2 text-sm text-zinc-400"><Icon type="calendar" /><span>{date}</span></div>
+                        </div>
+                        <button
+                          onClick={() => onOpenSetlist({ artist, venue, date, setlistId, show })}
+                          className="flex shrink-0 items-center gap-2 self-start rounded-full border border-zinc-700 px-4 py-2 text-sm font-semibold text-zinc-400 transition hover:border-zinc-500 hover:text-zinc-100"
+                        >
+                          <Icon type="music" />
+                          Setlist
+                        </button>
+                      </div>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </section>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── LoginGate ────────────────────────────────────────────────────────────────
 
 function LoginGate({ onUnlock }) {
@@ -707,6 +825,7 @@ export default function App() {
 
   const isNext = activePage === "next";
   const isStats = activePage === "stats";
+  const isTimeline = activePage === "timeline";
   const artistDetail = selectedArtist
     ? historyItems.find((item) => normalize(item.artist) === normalize(selectedArtist))
     : null;
@@ -715,9 +834,11 @@ export default function App() {
     ? nextItems.filter((item) => normalize(item.artist) === normalize(artistDetail.artist))
     : [];
   const mode = isNext ? "next" : "history";
-  const title = isArtistDetail ? artistDetail.artist : isStats ? "Stats" : isNext ? "Next Concerts" : "Concert Archive";
+  const title = isArtistDetail ? artistDetail.artist : isTimeline ? "Timeline" : isStats ? "Stats" : isNext ? "Next Concerts" : "Concert Archive";
   const description = isArtistDetail
     ? `${artistDetail.shows.length} live ${artistDetail.shows.length === 1 ? "performance" : "performances"} in the archive.`
+    : isTimeline
+    ? "Every concert, year by year."
     : isStats
     ? "A snapshot of your concert history at a glance."
     : isNext ? "Upcoming shows, festivals and planned concerts." : "A searchable lifetime lineup of artists, venues and dates.";
@@ -866,6 +987,7 @@ export default function App() {
           </div>
           <nav className="space-y-2 text-sm">
             <button onClick={() => changePage("history")} className={`block w-full rounded-2xl px-4 py-3 text-left transition hover:bg-zinc-900 hover:text-zinc-100 ${activePage === "history" || activePage === "artist" ? "bg-zinc-900 text-zinc-100" : "text-zinc-400"}`}>Concert history</button>
+            <button onClick={() => changePage("timeline")} className={`block w-full rounded-2xl px-4 py-3 text-left transition hover:bg-zinc-900 hover:text-zinc-100 ${activePage === "timeline" ? "bg-zinc-900 text-zinc-100" : "text-zinc-400"}`}>Timeline</button>
             <button onClick={() => changePage("next")} className={`block w-full rounded-2xl px-4 py-3 text-left transition hover:bg-zinc-900 hover:text-zinc-100 ${activePage === "next" ? "bg-zinc-900 text-zinc-100" : "text-zinc-400"}`}>Next concerts</button>
             <button onClick={() => changePage("stats")} className={`block w-full rounded-2xl px-4 py-3 text-left transition hover:bg-zinc-900 hover:text-zinc-100 ${activePage === "stats" ? "bg-zinc-900 text-zinc-100" : "text-zinc-400"}`}>Stats</button>
           </nav>
@@ -884,6 +1006,12 @@ export default function App() {
             item={artistDetail}
             upcoming={artistUpcoming}
             onBack={() => changePage("history")}
+            onOpenSetlist={setSetlistTarget}
+          />
+        ) : isTimeline ? (
+          <ConcertTimelinePage
+            historyItems={historyItems}
+            onOpenArtist={openArtistDetail}
             onOpenSetlist={setSetlistTarget}
           />
         ) : isStats ? <StatsPage historyItems={historyItems} /> : (
