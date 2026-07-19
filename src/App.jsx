@@ -365,10 +365,18 @@ function SetlistModal({ target, onClose, onIdDiscovered }) {
 
 function ContextMenu({ open, x, y, onEdit, onDelete, onMoveToHistory, onClose, showMoveToHistory }) {
   if (!open) return null;
+  const viewportWidth = window.visualViewport?.width || window.innerWidth;
+  const viewportHeight = window.visualViewport?.height || window.innerHeight;
+  const menuWidth = 176;
+  const menuHeight = showMoveToHistory ? 122 : 82;
+  const edgeGap = 12;
+  const left = Math.max(edgeGap, Math.min(x, viewportWidth - menuWidth - edgeGap));
+  const top = Math.max(edgeGap, Math.min(y, viewportHeight - menuHeight - edgeGap));
+
   return (
     <>
       <div className="fixed inset-0 z-[55]" onClick={onClose} onContextMenu={(e) => { e.preventDefault(); onClose(); }} />
-      <div className="fixed z-[56] min-w-[160px] overflow-hidden rounded-xl border border-zinc-700 bg-zinc-950 shadow-2xl" style={{ left: x, top: y }}>
+      <div className="fixed z-[56] w-44 overflow-hidden rounded-xl border border-zinc-700 bg-zinc-950 shadow-2xl" style={{ left, top }}>
         <button onClick={onEdit} className="block w-full px-4 py-2 text-left text-sm text-zinc-100 hover:bg-zinc-800">Edit</button>
         {showMoveToHistory && <button onClick={onMoveToHistory} className="block w-full px-4 py-2 text-left text-sm text-zinc-100 hover:bg-zinc-800">Move to history</button>}
         <button onClick={onDelete} className="block w-full px-4 py-2 text-left text-sm text-red-300 hover:bg-zinc-800">Delete</button>
@@ -521,7 +529,7 @@ function CalendarExportMenu({ items, compact = false }) {
   );
 }
 
-function DropdownMenu({ value, onChange, options, compact = false, ariaLabel, className = "", groupName, centered = false }) {
+function DropdownMenu({ value, onChange, options, compact = false, ariaLabel, className = "", groupName, centered = false, menuAlign = "right" }) {
   const normalizedOptions = options.map((option) => typeof option === "string" ? { value: option, label: option } : option);
   const activeLabel = normalizedOptions.find((option) => option.value === value)?.label || normalizedOptions[0]?.label || "";
 
@@ -535,7 +543,7 @@ function DropdownMenu({ value, onChange, options, compact = false, ariaLabel, cl
       <summary aria-label={ariaLabel} className={`cursor-pointer list-none truncate rounded-full border border-zinc-700 bg-zinc-900 text-sm font-semibold text-zinc-100 shadow-2xl transition hover:border-zinc-500 [&::-webkit-details-marker]:hidden ${centered ? "text-center" : "text-left"} ${compact ? "px-4 py-2.5" : "px-5 py-3"}`}>
         {activeLabel} <span className="ml-1 text-zinc-500">▾</span>
       </summary>
-      <div className="absolute right-0 top-full z-30 mt-2 max-h-72 w-64 overflow-y-auto rounded-2xl border border-zinc-700 bg-zinc-950 p-2 shadow-2xl">
+      <div className={`absolute top-full z-30 mt-2 max-h-72 w-64 max-w-[calc(100vw-2rem)] overflow-y-auto rounded-2xl border border-zinc-700 bg-zinc-950 p-2 shadow-2xl ${menuAlign === "left" ? "left-0" : "right-0"}`}>
         {normalizedOptions.map((option) => (
           <button
             key={option.value}
@@ -1016,12 +1024,18 @@ function ConcertTimelinePage({ historyItems, onBack, onOpenArtist, onOpenSetlist
   return (
     <div className="mx-auto max-w-5xl">
       <section className="sticky top-0 z-10 mb-10 border-y border-zinc-800 bg-zinc-950/95 py-4 backdrop-blur">
-        <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] gap-2 sm:gap-3">
+        <div className="mb-2 flex justify-end md:hidden">
+          <button onClick={onBack} className="rounded-full border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-zinc-200 transition hover:border-zinc-500 hover:text-white" aria-label="Back to concert archive" title="Back to concert archive">
+            <i className="fa-solid fa-table-cells-large" aria-hidden="true" />
+          </button>
+        </div>
+        <div className="grid grid-cols-2 gap-2 sm:gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
           <DropdownMenu
             value={artistFilter}
             onChange={setArtistFilter}
             ariaLabel="Filter timeline by artist"
             groupName="timeline-filters"
+            menuAlign="left"
             options={[{ value: "all", label: "All artists" }, ...artists.map((artist) => ({ value: artist, label: artist }))]}
           />
           <DropdownMenu
@@ -1031,7 +1045,7 @@ function ConcertTimelinePage({ historyItems, onBack, onOpenArtist, onOpenSetlist
             groupName="timeline-filters"
             options={[{ value: "all", label: "All venues" }, ...venues.map((venue) => ({ value: venue, label: venue }))]}
           />
-          <button onClick={onBack} className="rounded-full border border-zinc-700 bg-zinc-900 px-4 py-3 text-zinc-200 transition hover:border-zinc-500 hover:text-white" aria-label="Back to concert archive" title="Back to concert archive">
+          <button onClick={onBack} className="hidden rounded-full border border-zinc-700 bg-zinc-900 px-4 py-3 text-zinc-200 transition hover:border-zinc-500 hover:text-white md:block" aria-label="Back to concert archive" title="Back to concert archive">
             <i className="fa-solid fa-table-cells-large" aria-hidden="true" />
           </button>
         </div>
@@ -1515,6 +1529,8 @@ export default function App() {
     <main className="min-h-screen bg-zinc-950 text-zinc-100 md:flex">
       {/* Desktop-only fixed Menu button */}
       <button onClick={() => setSidebarOpen(true)} className="fixed left-4 top-4 z-40 hidden rounded-full border border-zinc-700 bg-zinc-900 px-4 py-2 text-sm font-bold text-zinc-100 shadow-2xl transition hover:border-zinc-500 md:block" aria-label="Open menu">Menu</button>
+      {/* Mobile Menu starts at the top of the page and scrolls away with it */}
+      <button onClick={() => setSidebarOpen(true)} className="absolute left-4 top-6 z-40 rounded-full border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-sm font-bold text-zinc-100 shadow-2xl transition hover:border-zinc-500 md:hidden" aria-label="Open menu">Menu</button>
 
       {sidebarOpen && <button className="fixed inset-0 z-40 bg-black/60" onClick={() => setSidebarOpen(false)} aria-label="Close menu overlay" />}
 
@@ -1583,7 +1599,6 @@ export default function App() {
 
                 {/* Mobile layout */}
                 <div className="flex items-center gap-2 md:hidden">
-                  <button onClick={() => setSidebarOpen(true)} className="shrink-0 rounded-full border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-sm font-bold text-zinc-100 hover:border-zinc-500">Menu</button>
                   <div className="flex flex-1 items-center gap-2 rounded-full border border-zinc-700 bg-zinc-900 px-3 py-2.5 min-w-0">
                     <Icon type="search" />
                     <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search…" className="w-full min-w-0 bg-transparent text-sm text-zinc-100 outline-none placeholder:text-zinc-500" aria-label="Search concerts" />
