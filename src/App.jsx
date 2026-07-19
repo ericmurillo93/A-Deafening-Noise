@@ -579,13 +579,20 @@ function NextConcertCalendar({ items, onEdit }) {
   const [monthPickerOpen, setMonthPickerOpen] = useState(false);
   const datedItems = useMemo(
     () => items
-      .map((concert) => ({ ...concert, range: parseConcertDateRange(concert.date) }))
+      .map((concert) => {
+        const range = parseConcertDateRange(concert.date);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        return { ...concert, range, isPast: Boolean(range && range.end < today) };
+      })
       .filter(({ range }) => range)
       .sort((a, b) => a.range.start - b.range.start),
     [items]
   );
-  const firstDate = datedItems[0]?.range.start || new Date();
-  const [visibleMonth, setVisibleMonth] = useState(() => new Date(firstDate.getFullYear(), firstDate.getMonth(), 1));
+  const [visibleMonth, setVisibleMonth] = useState(() => {
+    const today = new Date();
+    return new Date(today.getFullYear(), today.getMonth(), 1);
+  });
   const year = visibleMonth.getFullYear();
   const month = visibleMonth.getMonth();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
@@ -639,9 +646,9 @@ function NextConcertCalendar({ items, onEdit }) {
               <div className="space-y-1">
                 {concerts.map((concert) => (
                   <button
-                    key={`${concert.artist}-${concert.date}`}
+                    key={`${concert.source}-${concert.artist}-${concert.date}-${concert.show || ""}`}
                     onClick={() => setSelectedConcert(concert)}
-                    className={`block w-full overflow-hidden rounded-md px-1.5 py-1 text-left text-[8px] font-bold leading-tight text-zinc-100 transition hover:brightness-110 md:rounded-lg md:px-2 md:py-1.5 md:text-[11px] ${concert.bought ? "border border-emerald-700 bg-emerald-900" : "border border-amber-700 bg-amber-950"}`}
+                    className={`block w-full overflow-hidden rounded-md border px-1.5 py-1 text-left text-[8px] font-bold leading-tight text-zinc-100 transition hover:brightness-110 md:rounded-lg md:px-2 md:py-1.5 md:text-[11px] ${concert.isPast ? "border-blue-700 bg-blue-950" : concert.bought ? "border-emerald-700 bg-emerald-900" : "border-amber-700 bg-amber-950"}`}
                     title={`${concert.artist} — ${concert.date}${concert.venue ? ` — ${concert.venue}` : ""}`}
                   >
                     <span className="block truncate">{concert.artist}</span>
@@ -655,6 +662,7 @@ function NextConcertCalendar({ items, onEdit }) {
       </div>
 
       <div className="mt-5 flex flex-wrap items-center justify-center gap-4 text-xs text-zinc-500">
+        <span className="flex items-center gap-2"><span className="h-3 w-3 rounded-sm border border-blue-700 bg-blue-950" /> History</span>
         <span className="flex items-center gap-2"><span className="h-3 w-3 rounded-sm border border-emerald-700 bg-emerald-900" /> Bought</span>
         <span className="flex items-center gap-2"><span className="h-3 w-3 rounded-sm border border-amber-700 bg-amber-950" /> Not bought</span>
       </div>
@@ -664,8 +672,8 @@ function NextConcertCalendar({ items, onEdit }) {
           <article className="w-full max-w-md rounded-3xl border border-zinc-700 bg-zinc-900 p-5 shadow-2xl" onClick={(event) => event.stopPropagation()}>
             <div className="flex items-start justify-between gap-4 border-b border-zinc-800 pb-4">
               <h2 className="min-w-0 break-words text-2xl font-black uppercase leading-none tracking-tight text-zinc-100">{selectedConcert.artist}</h2>
-              <span className={`shrink-0 rounded-full border px-3 py-1 text-xs font-bold text-zinc-100 ${selectedConcert.bought ? "border-emerald-800 bg-emerald-950" : "border-amber-800 bg-amber-950"}`}>
-                {selectedConcert.bought ? "Bought" : "Not bought"}
+              <span className={`shrink-0 rounded-full border px-3 py-1 text-xs font-bold text-zinc-100 ${selectedConcert.isPast ? "border-blue-800 bg-blue-950" : selectedConcert.bought ? "border-emerald-800 bg-emerald-950" : "border-amber-800 bg-amber-950"}`}>
+                {selectedConcert.isPast ? "History" : selectedConcert.bought ? "Bought" : "Not bought"}
               </span>
             </div>
             <div className="mt-4 rounded-2xl bg-zinc-950 p-4">
@@ -1352,7 +1360,7 @@ export default function App() {
     ? nextItems.filter((item) => normalize(item.artist) === normalize(artistDetail.artist))
     : [];
   const mode = isNext ? "next" : "history";
-  const title = isVenueDetail ? selectedVenue : isArtistDetail ? artistDetail.artist : isYearReview ? "Year in Review" : isTimeline ? "Timeline" : isStats ? "Archive Overview" : isNext ? "Next Concerts" : "Concert Archive";
+  const title = isVenueDetail ? selectedVenue : isArtistDetail ? artistDetail.artist : isYearReview ? "Year in Review" : isTimeline ? "Timeline" : isStats ? "Archive Overview" : isNext ? "Concert Calendar" : "Concert Archive";
   const description = isVenueDetail
     ? `${venueShows.length} archived ${venueShows.length === 1 ? "visit" : "visits"} to this venue.`
     : isArtistDetail
@@ -1363,12 +1371,23 @@ export default function App() {
     ? "Every concert, year by year."
     : isStats
     ? "A snapshot of your concert history at a glance."
-    : isNext ? "Upcoming shows, festivals and planned concerts." : "A searchable lifetime lineup of artists, venues and dates.";
+    : isNext ? "Past concerts, upcoming shows and possibilities in one calendar." : "A searchable lifetime lineup of artists, venues and dates.";
 
   const filtered = useMemo(() => {
     const visibleItems = isNext ? nextItems : historyItems;
     return sortConcerts(filterConcerts(visibleItems, query), sortMode, mode);
   }, [historyItems, nextItems, query, sortMode, mode, isNext]);
+
+  const calendarItems = useMemo(() => {
+    const archived = historyItems.flatMap(({ artist, shows }) =>
+      shows.map((show) => {
+        const { venue, date, setlistId } = parseShow(show, "history");
+        return { source: "history", artist, show, venue, date, setlistId, bought: true };
+      })
+    );
+    const upcoming = nextItems.map((concert) => ({ ...concert, source: "next" }));
+    return filterConcerts([...archived, ...upcoming], query);
+  }, [historyItems, nextItems, query]);
 
   const artistSuggestions = useMemo(() => {
     const set = new Set();
@@ -1542,7 +1561,7 @@ export default function App() {
           </div>
           <nav className="space-y-2 text-sm">
             <button onClick={() => changePage("history")} className={`block w-full rounded-2xl px-4 py-3 text-left transition hover:bg-zinc-900 hover:text-zinc-100 ${["history", "artist", "timeline"].includes(activePage) ? "bg-zinc-900 text-zinc-100" : "text-zinc-400"}`}>Concert history</button>
-            <button onClick={() => changePage("next")} className={`block w-full rounded-2xl px-4 py-3 text-left transition hover:bg-zinc-900 hover:text-zinc-100 ${activePage === "next" ? "bg-zinc-900 text-zinc-100" : "text-zinc-400"}`}>Next concerts</button>
+            <button onClick={() => changePage("next")} className={`block w-full rounded-2xl px-4 py-3 text-left transition hover:bg-zinc-900 hover:text-zinc-100 ${activePage === "next" ? "bg-zinc-900 text-zinc-100" : "text-zinc-400"}`}>Concert calendar</button>
             <div className={`rounded-2xl px-2 py-2 ${activePage === "stats" || activePage === "year-review" ? "bg-zinc-900" : ""}`}>
               <div className={`px-2 py-1 text-left font-bold ${activePage === "stats" || activePage === "year-review" ? "text-zinc-100" : "text-zinc-400"}`}>Stats</div>
               <div className="mt-1 border-l border-zinc-800 pl-2">
@@ -1633,8 +1652,11 @@ export default function App() {
 
             {isNext ? (
               <NextConcertCalendar
-                items={filtered}
-                onEdit={(concert) => setEditTarget({ mode: "next", artist: concert.artist, date: concert.date, bought: concert.bought, venue: concert.venue || "" })}
+                items={calendarItems}
+                onEdit={(concert) => setEditTarget(concert.source === "history"
+                  ? { mode: "history", artist: concert.artist, show: concert.show, venue: concert.venue, date: concert.date, setlistId: concert.setlistId || "" }
+                  : { mode: "next", artist: concert.artist, date: concert.date, bought: concert.bought, venue: concert.venue || "" }
+                )}
               />
             ) : (
             <section className="grid w-full gap-4 md:grid-cols-2 xl:grid-cols-3">
