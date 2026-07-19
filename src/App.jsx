@@ -762,6 +762,172 @@ function ConcertTimelinePage({ historyItems, onOpenArtist, onOpenSetlist }) {
   );
 }
 
+// ─── Year in review ───────────────────────────────────────────────────────────
+
+function YearInReviewPage({ historyItems, onOpenArtist, onOpenSetlist }) {
+  const allShows = useMemo(
+    () => historyItems.flatMap(({ artist, shows }) =>
+      shows.map((show) => ({ artist, show, ...parseShow(show, "history") }))
+    ),
+    [historyItems]
+  );
+  const years = useMemo(
+    () => [...new Set(allShows.map(({ date }) => String(date).match(/(\d{4})/)?.[1]).filter(Boolean))]
+      .sort((a, b) => Number(b) - Number(a)),
+    [allShows]
+  );
+  const [selectedYear, setSelectedYear] = useState(() => years[0] || "");
+  const activeYear = years.includes(selectedYear) ? selectedYear : years[0] || "";
+
+  const review = useMemo(() => {
+    if (!activeYear) return null;
+    const yearShows = allShows
+      .filter(({ date }) => String(date).match(/(\d{4})/)?.[1] === activeYear)
+      .sort((a, b) => parseDate(a.date) - parseDate(b.date) || a.artist.localeCompare(b.artist));
+    const previousYear = String(Number(activeYear) - 1);
+    const previousShows = allShows.filter(({ date }) => String(date).match(/(\d{4})/)?.[1] === previousYear);
+    const artistFirstYear = new Map();
+    allShows.forEach(({ artist, date }) => {
+      const year = String(date).match(/(\d{4})/)?.[1];
+      if (!year) return;
+      const key = normalize(artist);
+      if (!artistFirstYear.has(key) || Number(year) < Number(artistFirstYear.get(key))) artistFirstYear.set(key, year);
+    });
+    const uniqueArtists = [...new Set(yearShows.map(({ artist }) => artist))];
+    const newArtists = uniqueArtists.filter((artist) => artistFirstYear.get(normalize(artist)) === activeYear);
+    const returningArtists = uniqueArtists.filter((artist) => artistFirstYear.get(normalize(artist)) !== activeYear);
+    const venueCounts = {};
+    const monthCounts = {};
+    yearShows.forEach(({ venue, date }) => {
+      if (venue && venue !== "Date confirmed") venueCounts[venue] = (venueCounts[venue] || 0) + 1;
+      const month = String(date).match(/^\d{1,2}\/(\d{1,2})\//)?.[1];
+      if (month) monthCounts[month] = (monthCounts[month] || 0) + 1;
+    });
+    const topVenue = Object.entries(venueCounts).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))[0];
+    const busiestMonth = Object.entries(monthCounts).sort((a, b) => b[1] - a[1] || Number(a[0]) - Number(b[0]))[0];
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    return {
+      shows: yearShows,
+      uniqueArtists,
+      newArtists,
+      returningArtists,
+      firstShow: yearShows[0],
+      lastShow: yearShows[yearShows.length - 1],
+      topVenue: topVenue?.[0] || "—",
+      topVenueCount: topVenue?.[1] || 0,
+      busiestMonth: busiestMonth ? monthNames[Number(busiestMonth[0]) - 1] : "—",
+      busiestMonthCount: busiestMonth?.[1] || 0,
+      previousYear,
+      previousCount: previousShows.length,
+      change: yearShows.length - previousShows.length,
+    };
+  }, [activeYear, allShows]);
+
+  if (!review) return <p className="py-16 text-center text-zinc-500">No yearly concert data yet.</p>;
+
+  const summaryCards = [
+    { label: "Concerts", value: review.shows.length },
+    { label: "Artists", value: review.uniqueArtists.length },
+    { label: "New artists", value: review.newArtists.length },
+    { label: "Returning", value: review.returningArtists.length },
+  ];
+  const comparisonText = review.previousCount === 0
+    ? `No concerts recorded in ${review.previousYear}`
+    : review.change === 0
+    ? `The same number as ${review.previousYear}`
+    : `${Math.abs(review.change)} ${review.change > 0 ? "more" : "fewer"} than ${review.previousYear}`;
+
+  return (
+    <div className="mx-auto max-w-5xl">
+      <div className="mb-8 flex justify-center">
+        <label>
+          <span className="sr-only">Choose review year</span>
+          <select value={activeYear} onChange={(event) => setSelectedYear(event.target.value)} className="rounded-full border border-zinc-700 bg-zinc-900 px-6 py-3 text-base font-black text-zinc-100 outline-none">
+            {years.map((year) => <option key={year} value={year}>{year}</option>)}
+          </select>
+        </label>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+        {summaryCards.map(({ label, value }) => (
+          <div key={label} className="rounded-3xl border border-zinc-800 bg-zinc-900 p-5 text-center">
+            <div className="text-3xl font-black text-zinc-100 md:text-4xl">{value}</div>
+            <div className="mt-1 text-[11px] font-bold uppercase tracking-widest text-zinc-500">{label}</div>
+          </div>
+        ))}
+      </div>
+
+      <div className="mt-3 grid gap-3 md:grid-cols-3">
+        <div className="rounded-3xl border border-zinc-800 bg-zinc-900 p-6">
+          <div className="text-[11px] font-bold uppercase tracking-widest text-zinc-500">Top venue</div>
+          <div className="mt-2 break-words text-xl font-black text-zinc-100">{review.topVenue}</div>
+          <div className="mt-1 text-sm text-zinc-400">{review.topVenueCount} {review.topVenueCount === 1 ? "visit" : "visits"}</div>
+        </div>
+        <div className="rounded-3xl border border-zinc-800 bg-zinc-900 p-6">
+          <div className="text-[11px] font-bold uppercase tracking-widest text-zinc-500">Busiest month</div>
+          <div className="mt-2 text-xl font-black text-zinc-100">{review.busiestMonth}</div>
+          <div className="mt-1 text-sm text-zinc-400">{review.busiestMonthCount} {review.busiestMonthCount === 1 ? "concert" : "concerts"}</div>
+        </div>
+        <div className="rounded-3xl border border-zinc-800 bg-zinc-900 p-6">
+          <div className="text-[11px] font-bold uppercase tracking-widest text-zinc-500">Year over year</div>
+          <div className={`mt-2 text-xl font-black ${review.change > 0 ? "text-emerald-400" : review.change < 0 ? "text-amber-400" : "text-zinc-100"}`}>
+            {review.change > 0 ? "+" : ""}{review.change}
+          </div>
+          <div className="mt-1 text-sm text-zinc-400">{comparisonText}</div>
+        </div>
+      </div>
+
+      <div className="mt-10 grid gap-3 md:grid-cols-2">
+        <div className="rounded-3xl border border-zinc-800 bg-zinc-900 p-6">
+          <div className="text-[11px] font-bold uppercase tracking-widest text-zinc-500">The year began with</div>
+          {review.firstShow && (
+            <>
+              <button onClick={() => onOpenArtist(review.firstShow.artist)} className="mt-2 text-left text-xl font-black uppercase text-zinc-100 hover:underline hover:decoration-zinc-600 hover:underline-offset-4">{review.firstShow.artist}</button>
+              <p className="mt-1 text-sm text-zinc-400">{review.firstShow.venue} · {review.firstShow.date}</p>
+            </>
+          )}
+        </div>
+        <div className="rounded-3xl border border-zinc-800 bg-zinc-900 p-6">
+          <div className="text-[11px] font-bold uppercase tracking-widest text-zinc-500">The year ended with</div>
+          {review.lastShow && (
+            <>
+              <button onClick={() => onOpenArtist(review.lastShow.artist)} className="mt-2 text-left text-xl font-black uppercase text-zinc-100 hover:underline hover:decoration-zinc-600 hover:underline-offset-4">{review.lastShow.artist}</button>
+              <p className="mt-1 text-sm text-zinc-400">{review.lastShow.venue} · {review.lastShow.date}</p>
+            </>
+          )}
+        </div>
+      </div>
+
+      <section className="mt-12">
+        <div className="mb-6 flex items-end justify-between border-b border-zinc-800 pb-4">
+          <h2 className="text-2xl font-black uppercase tracking-tight text-zinc-100">The year in concerts</h2>
+          <span className="text-sm text-zinc-500">{review.shows.length} total</span>
+        </div>
+        <div className="relative space-y-4 before:absolute before:bottom-6 before:left-[7px] before:top-6 before:w-px before:bg-zinc-800">
+          {review.shows.map(({ artist, show, venue, date, setlistId }) => (
+            <article key={`${artist}-${show}`} className="relative flex gap-4">
+              <span className="relative z-[1] mt-7 h-[15px] w-[15px] shrink-0 rounded-full border-4 border-zinc-950 bg-zinc-500" />
+              <div className="min-w-0 flex-1 rounded-3xl border border-zinc-800 bg-zinc-900 p-5 transition hover:border-zinc-600">
+                <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
+                  <div className="min-w-0">
+                    <button onClick={() => onOpenArtist(artist)} className="break-words text-left text-xl font-black uppercase leading-tight text-zinc-100 hover:underline hover:decoration-zinc-600 hover:underline-offset-4">{artist}</button>
+                    <div className="mt-3 flex gap-2 text-sm font-semibold text-zinc-300"><Icon type="map" /><span className="break-words">{venue}</span></div>
+                    <div className="mt-2 flex gap-2 text-sm text-zinc-400"><Icon type="calendar" /><span>{date}</span></div>
+                  </div>
+                  <button onClick={() => onOpenSetlist({ artist, venue, date, setlistId, show })} className="flex shrink-0 items-center gap-2 self-start rounded-full border border-zinc-700 px-4 py-2 text-sm font-semibold text-zinc-400 transition hover:border-zinc-500 hover:text-zinc-100">
+                    <Icon type="music" />
+                    Setlist
+                  </button>
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+    </div>
+  );
+}
+
 // ─── LoginGate ────────────────────────────────────────────────────────────────
 
 function LoginGate({ onUnlock }) {
@@ -826,6 +992,7 @@ export default function App() {
   const isNext = activePage === "next";
   const isStats = activePage === "stats";
   const isTimeline = activePage === "timeline";
+  const isYearReview = activePage === "year-review";
   const artistDetail = selectedArtist
     ? historyItems.find((item) => normalize(item.artist) === normalize(selectedArtist))
     : null;
@@ -834,9 +1001,11 @@ export default function App() {
     ? nextItems.filter((item) => normalize(item.artist) === normalize(artistDetail.artist))
     : [];
   const mode = isNext ? "next" : "history";
-  const title = isArtistDetail ? artistDetail.artist : isTimeline ? "Timeline" : isStats ? "Stats" : isNext ? "Next Concerts" : "Concert Archive";
+  const title = isArtistDetail ? artistDetail.artist : isYearReview ? "Year in Review" : isTimeline ? "Timeline" : isStats ? "Stats" : isNext ? "Next Concerts" : "Concert Archive";
   const description = isArtistDetail
     ? `${artistDetail.shows.length} live ${artistDetail.shows.length === 1 ? "performance" : "performances"} in the archive.`
+    : isYearReview
+    ? "The artists, venues and moments that defined each year."
     : isTimeline
     ? "Every concert, year by year."
     : isStats
@@ -988,6 +1157,7 @@ export default function App() {
           <nav className="space-y-2 text-sm">
             <button onClick={() => changePage("history")} className={`block w-full rounded-2xl px-4 py-3 text-left transition hover:bg-zinc-900 hover:text-zinc-100 ${activePage === "history" || activePage === "artist" ? "bg-zinc-900 text-zinc-100" : "text-zinc-400"}`}>Concert history</button>
             <button onClick={() => changePage("timeline")} className={`block w-full rounded-2xl px-4 py-3 text-left transition hover:bg-zinc-900 hover:text-zinc-100 ${activePage === "timeline" ? "bg-zinc-900 text-zinc-100" : "text-zinc-400"}`}>Timeline</button>
+            <button onClick={() => changePage("year-review")} className={`block w-full rounded-2xl px-4 py-3 text-left transition hover:bg-zinc-900 hover:text-zinc-100 ${activePage === "year-review" ? "bg-zinc-900 text-zinc-100" : "text-zinc-400"}`}>Year in review</button>
             <button onClick={() => changePage("next")} className={`block w-full rounded-2xl px-4 py-3 text-left transition hover:bg-zinc-900 hover:text-zinc-100 ${activePage === "next" ? "bg-zinc-900 text-zinc-100" : "text-zinc-400"}`}>Next concerts</button>
             <button onClick={() => changePage("stats")} className={`block w-full rounded-2xl px-4 py-3 text-left transition hover:bg-zinc-900 hover:text-zinc-100 ${activePage === "stats" ? "bg-zinc-900 text-zinc-100" : "text-zinc-400"}`}>Stats</button>
           </nav>
@@ -1010,6 +1180,12 @@ export default function App() {
           />
         ) : isTimeline ? (
           <ConcertTimelinePage
+            historyItems={historyItems}
+            onOpenArtist={openArtistDetail}
+            onOpenSetlist={setSetlistTarget}
+          />
+        ) : isYearReview ? (
+          <YearInReviewPage
             historyItems={historyItems}
             onOpenArtist={openArtistDetail}
             onOpenSetlist={setSetlistTarget}
