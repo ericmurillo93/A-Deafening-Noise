@@ -108,12 +108,6 @@ function sortConcerts(items, sortMode, mode) {
   return sorted.sort((a, b) => a.artist.localeCompare(b.artist));
 }
 
-function getVisibleNextConcerts(items, ticketFilter) {
-  if (ticketFilter === "bought") return items.filter((i) => i.bought);
-  if (ticketFilter === "pending") return items.filter((i) => !i.bought);
-  return items;
-}
-
 function addHistoryConcert(items, artist, venue, date, setlistId) {
   const cleanedArtist = artist.trim();
   const show = buildShowString(venue.trim(), date.trim(), setlistId);
@@ -174,6 +168,67 @@ function flattenHistory(historyArr) {
       return out;
     })
   );
+}
+
+function parseConcertDateRange(value) {
+  const matches = [...String(value).matchAll(/(\d{1,2})\/(\d{1,2})\/(\d{4})/g)];
+  if (!matches.length) return null;
+  const toDate = (match) => new Date(Number(match[3]), Number(match[2]) - 1, Number(match[1]));
+  return { start: toDate(matches[0]), end: toDate(matches[matches.length - 1]) };
+}
+
+function formatIcsDate(date) {
+  return `${date.getFullYear()}${String(date.getMonth() + 1).padStart(2, "0")}${String(date.getDate()).padStart(2, "0")}`;
+}
+
+function escapeIcsText(value) {
+  return String(value || "").replace(/\\/g, "\\\\").replace(/\n/g, "\\n").replace(/,/g, "\\,").replace(/;/g, "\\;");
+}
+
+function buildConcertCalendar(items, calendarName) {
+  const stamp = new Date().toISOString().replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "Z");
+  const events = items.flatMap((concert) => {
+    const range = parseConcertDateRange(concert.date);
+    if (!range) return [];
+    const exclusiveEnd = new Date(range.end);
+    exclusiveEnd.setDate(exclusiveEnd.getDate() + 1);
+    const title = concert.bought ? `Concierto ${concert.artist}` : `Concierto ${concert.artist} - no comprado`;
+    const uidSeed = `${concert.artist}-${concert.date}-${concert.venue || ""}`.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+    return [
+      "BEGIN:VEVENT",
+      `UID:${uidSeed}@a-deafening-noise`,
+      `DTSTAMP:${stamp}`,
+      `DTSTART;VALUE=DATE:${formatIcsDate(range.start)}`,
+      `DTEND;VALUE=DATE:${formatIcsDate(exclusiveEnd)}`,
+      `SUMMARY:${escapeIcsText(title)}`,
+      concert.venue ? `LOCATION:${escapeIcsText(concert.venue)}` : null,
+      `DESCRIPTION:${escapeIcsText(concert.bought ? "Entrada comprada" : "Entrada no comprada")}`,
+      "END:VEVENT",
+    ].filter(Boolean);
+  });
+  return [
+    "BEGIN:VCALENDAR",
+    "VERSION:2.0",
+    "CALSCALE:GREGORIAN",
+    "METHOD:PUBLISH",
+    "PRODID:-//A Deafening Noise//Concert Calendar//ES",
+    `X-WR-CALNAME:${escapeIcsText(calendarName)}`,
+    ...events,
+    "END:VCALENDAR",
+    "",
+  ].join("\r\n");
+}
+
+function downloadConcertCalendar(items, filename, calendarName) {
+  const blob = new Blob([buildConcertCalendar(items, calendarName)], { type: "text/calendar;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 0);
 }
 
 // ─── Icons ────────────────────────────────────────────────────────────────────
@@ -441,6 +496,137 @@ function AddConcertModal({ isOpen, mode, onClose, onSave, isSaving, saveError, a
         {saveError && <div className="mt-3 rounded-2xl border border-red-900 bg-red-950/40 px-4 py-3 text-sm text-red-200">{saveError}</div>}
       </div>
     </div>
+  );
+}
+
+// ─── Upcoming concert calendar ────────────────────────────────────────────────
+
+function CalendarExportMenu({ items, compact = false }) {
+  function runExport(event, concerts, filename, calendarName) {
+    downloadConcertCalendar(concerts, filename, calendarName);
+    event.currentTarget.closest("details")?.removeAttribute("open");
+  }
+
+  return (
+    <details className="group relative">
+      <summary className={`cursor-pointer list-none rounded-full border border-zinc-700 bg-zinc-900 text-center text-sm font-black text-zinc-100 shadow-2xl transition hover:border-zinc-500 [&::-webkit-details-marker]:hidden ${compact ? "px-3 py-2.5" : "px-5 py-3"}`}>
+        Export <span className="ml-1 text-zinc-500 transition group-open:rotate-180">▾</span>
+      </summary>
+      <div className="absolute right-0 top-full z-30 mt-2 w-56 overflow-hidden rounded-2xl border border-zinc-700 bg-zinc-950 p-2 shadow-2xl">
+        <button onClick={(event) => runExport(event, items, "concerts.ics", "Próximos conciertos")} disabled={items.length === 0} className="block w-full rounded-xl px-3 py-2.5 text-left text-sm font-semibold text-zinc-300 transition hover:bg-zinc-900 hover:text-white disabled:opacity-40">All concerts</button>
+        <button onClick={(event) => runExport(event, items.filter((item) => item.bought), "concerts-bought.ics", "Conciertos comprados")} disabled={!items.some((item) => item.bought)} className="block w-full rounded-xl px-3 py-2.5 text-left text-sm font-semibold text-zinc-300 transition hover:bg-zinc-900 hover:text-white disabled:opacity-40">Bought concerts</button>
+        <button onClick={(event) => runExport(event, items.filter((item) => !item.bought), "concerts-not-bought.ics", "Conciertos no comprados")} disabled={!items.some((item) => !item.bought)} className="block w-full rounded-xl px-3 py-2.5 text-left text-sm font-semibold text-zinc-300 transition hover:bg-zinc-900 hover:text-white disabled:opacity-40">Not bought concerts</button>
+      </div>
+    </details>
+  );
+}
+
+function NextConcertCalendar({ items, onEdit }) {
+  const [selectedConcert, setSelectedConcert] = useState(null);
+  const [monthPickerOpen, setMonthPickerOpen] = useState(false);
+  const datedItems = useMemo(
+    () => items
+      .map((concert) => ({ ...concert, range: parseConcertDateRange(concert.date) }))
+      .filter(({ range }) => range)
+      .sort((a, b) => a.range.start - b.range.start),
+    [items]
+  );
+  const firstDate = datedItems[0]?.range.start || new Date();
+  const [visibleMonth, setVisibleMonth] = useState(() => new Date(firstDate.getFullYear(), firstDate.getMonth(), 1));
+  const year = visibleMonth.getFullYear();
+  const month = visibleMonth.getMonth();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const leadingDays = (new Date(year, month, 1).getDay() + 6) % 7;
+  const monthLabel = new Intl.DateTimeFormat("en", { month: "long", year: "numeric" }).format(visibleMonth);
+  const weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+  function moveMonth(offset) {
+    setVisibleMonth((current) => new Date(current.getFullYear(), current.getMonth() + offset, 1));
+  }
+
+  return (
+    <section className="rounded-3xl border border-zinc-800 bg-zinc-900 p-3 md:p-6">
+      <div className="relative mb-5 flex flex-wrap items-center justify-start gap-2">
+        <button onClick={() => { const today = new Date(); setVisibleMonth(new Date(today.getFullYear(), today.getMonth(), 1)); setMonthPickerOpen(false); }} className="rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-2.5 text-sm font-black text-zinc-100 transition hover:border-zinc-500">Today</button>
+        <button onClick={() => moveMonth(-1)} className="rounded-xl px-3 py-2.5 text-lg font-bold text-zinc-400 transition hover:bg-zinc-800 hover:text-white" aria-label="Previous month">↑</button>
+        <button onClick={() => moveMonth(1)} className="rounded-xl px-3 py-2.5 text-lg font-bold text-zinc-400 transition hover:bg-zinc-800 hover:text-white" aria-label="Next month">↓</button>
+        <button onClick={() => setMonthPickerOpen((open) => !open)} className="rounded-xl px-4 py-2 text-xl font-black text-zinc-100 transition hover:bg-zinc-800 md:text-2xl" aria-expanded={monthPickerOpen}>
+          {monthLabel} <span className="ml-1 text-sm text-zinc-500">⌄</span>
+        </button>
+        {monthPickerOpen && (
+          <div className="absolute right-0 top-full z-30 mt-2 w-full max-w-sm rounded-3xl border border-zinc-700 bg-zinc-950 p-5 shadow-2xl sm:right-auto">
+            <div className="mb-4 flex items-center justify-between">
+              <span className="text-xl font-black text-zinc-100">{year}</span>
+              <div className="flex gap-1">
+                <button onClick={() => setVisibleMonth(new Date(year - 1, month, 1))} className="rounded-xl px-3 py-2 text-lg text-zinc-400 hover:bg-zinc-800 hover:text-white" aria-label="Previous year">↑</button>
+                <button onClick={() => setVisibleMonth(new Date(year + 1, month, 1))} className="rounded-xl px-3 py-2 text-lg text-zinc-400 hover:bg-zinc-800 hover:text-white" aria-label="Next year">↓</button>
+              </div>
+            </div>
+            <div className="grid grid-cols-4 gap-2">
+              {["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"].map((label, monthIndex) => (
+                <button key={label} onClick={() => { setVisibleMonth(new Date(year, monthIndex, 1)); setMonthPickerOpen(false); }} className={`rounded-xl px-2 py-3 text-sm font-semibold transition ${monthIndex === month ? "bg-zinc-100 text-zinc-950" : "text-zinc-300 hover:bg-zinc-800 hover:text-white"}`}>
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="grid grid-cols-7 gap-1 md:gap-2">
+        {weekdays.map((day) => <div key={day} className="pb-2 text-center text-[10px] font-bold uppercase text-zinc-600 md:text-xs">{day}</div>)}
+        {Array.from({ length: leadingDays }).map((_, index) => <div key={`empty-${index}`} className="min-h-20 rounded-xl bg-zinc-950/30 md:min-h-32" />)}
+        {Array.from({ length: daysInMonth }, (_, index) => {
+          const day = index + 1;
+          const calendarDay = new Date(year, month, day);
+          const concerts = datedItems.filter(({ range }) => calendarDay >= range.start && calendarDay <= range.end);
+          return (
+            <div key={day} className={`min-h-20 rounded-xl border p-1.5 md:min-h-32 md:rounded-2xl md:p-2 ${concerts.length ? "border-zinc-700 bg-zinc-950" : "border-zinc-800/60 bg-zinc-950/40"}`}>
+              <div className="mb-1 text-right text-[10px] font-bold text-zinc-600 md:text-xs">{day}</div>
+              <div className="space-y-1">
+                {concerts.map((concert) => (
+                  <button
+                    key={`${concert.artist}-${concert.date}`}
+                    onClick={() => setSelectedConcert(concert)}
+                    className={`block w-full overflow-hidden rounded-md px-1.5 py-1 text-left text-[8px] font-bold leading-tight text-zinc-100 transition hover:brightness-110 md:rounded-lg md:px-2 md:py-1.5 md:text-[11px] ${concert.bought ? "border border-emerald-700 bg-emerald-900" : "border border-amber-700 bg-amber-950"}`}
+                    title={`${concert.artist} — ${concert.date}${concert.venue ? ` — ${concert.venue}` : ""}`}
+                  >
+                    <span className="block truncate">{concert.artist}</span>
+                    {concert.date.includes(" - ") && <span className="mt-0.5 hidden font-medium opacity-60 md:block">{concert.date}</span>}
+                  </button>
+                ))}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="mt-5 flex flex-wrap items-center justify-center gap-4 text-xs text-zinc-500">
+        <span className="flex items-center gap-2"><span className="h-3 w-3 rounded-sm border border-emerald-700 bg-emerald-900" /> Bought</span>
+        <span className="flex items-center gap-2"><span className="h-3 w-3 rounded-sm border border-amber-700 bg-amber-950" /> Not bought</span>
+      </div>
+
+      {selectedConcert && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/75 px-4" onClick={() => setSelectedConcert(null)}>
+          <article className="w-full max-w-md rounded-3xl border border-zinc-700 bg-zinc-900 p-5 shadow-2xl" onClick={(event) => event.stopPropagation()}>
+            <div className="flex items-start justify-between gap-4 border-b border-zinc-800 pb-4">
+              <h2 className="min-w-0 break-words text-2xl font-black uppercase leading-none tracking-tight text-zinc-100">{selectedConcert.artist}</h2>
+              <span className={`shrink-0 rounded-full border px-3 py-1 text-xs font-bold text-zinc-100 ${selectedConcert.bought ? "border-emerald-800 bg-emerald-950" : "border-amber-800 bg-amber-950"}`}>
+                {selectedConcert.bought ? "Bought" : "Not bought"}
+              </span>
+            </div>
+            <div className="mt-4 rounded-2xl bg-zinc-950 p-4">
+              {selectedConcert.venue && <div className="flex gap-2 text-sm font-semibold text-zinc-100"><Icon type="map" /><span className="break-words">{selectedConcert.venue}</span></div>}
+              <div className={`${selectedConcert.venue ? "mt-2 " : ""}flex gap-2 text-sm text-zinc-400`}><Icon type="calendar" /><span>{selectedConcert.date}</span></div>
+            </div>
+            <div className="mt-5 flex gap-3">
+              <button onClick={() => setSelectedConcert(null)} className="flex-1 rounded-2xl border border-zinc-700 px-5 py-3 font-black text-zinc-300 transition hover:border-zinc-500">Close</button>
+              <button onClick={() => { onEdit(selectedConcert); setSelectedConcert(null); }} className="flex-1 rounded-2xl bg-zinc-100 px-5 py-3 font-black text-zinc-950 transition hover:bg-white">Edit concert</button>
+            </div>
+          </article>
+        </div>
+      )}
+    </section>
   );
 }
 
@@ -1069,7 +1255,6 @@ export default function App() {
 
   const [query, setQuery] = useState("");
   const [sortMode, setSortMode] = useState("artist");
-  const [ticketFilter, setTicketFilter] = useState("all");
   const [activePage, setActivePage] = useState("history");
   const [selectedArtist, setSelectedArtist] = useState(null);
   const [selectedVenue, setSelectedVenue] = useState(null);
@@ -1117,9 +1302,9 @@ export default function App() {
     : isNext ? "Upcoming shows, festivals and planned concerts." : "A searchable lifetime lineup of artists, venues and dates.";
 
   const filtered = useMemo(() => {
-    const visibleItems = isNext ? getVisibleNextConcerts(nextItems, ticketFilter) : historyItems;
+    const visibleItems = isNext ? nextItems : historyItems;
     return sortConcerts(filterConcerts(visibleItems, query), sortMode, mode);
-  }, [historyItems, nextItems, query, sortMode, mode, isNext, ticketFilter]);
+  }, [historyItems, nextItems, query, sortMode, mode, isNext]);
 
   const artistSuggestions = useMemo(() => {
     const set = new Set();
@@ -1141,7 +1326,7 @@ export default function App() {
 
   if (!unlocked) return <LoginGate onUnlock={handleUnlock} />;
 
-  function changePage(page) { setActivePage(page); setSelectedArtist(null); setSelectedVenue(null); setQuery(""); setSortMode("artist"); setTicketFilter("all"); setSidebarOpen(false); }
+  function changePage(page) { setActivePage(page); setSelectedArtist(null); setSelectedVenue(null); setQuery(""); setSortMode("artist"); setSidebarOpen(false); }
   function openArtistDetail(artist) { setSelectedArtist(artist); setActivePage("artist"); setSidebarOpen(false); window.scrollTo({ top: 0, behavior: "smooth" }); }
   function openVenueDetail(venue) {
     if (!venue || venue === "Date confirmed") return;
@@ -1327,48 +1512,44 @@ export default function App() {
                     <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search…" className="w-full min-w-0 bg-transparent text-sm text-zinc-100 outline-none placeholder:text-zinc-500" aria-label="Search concerts" />
                   </div>
                   <button onClick={() => setModalOpen(true)} className="shrink-0 rounded-full border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-sm font-black text-zinc-100 hover:border-zinc-500">+ Add</button>
+                  {isNext && <CalendarExportMenu items={nextItems} compact />}
                 </div>
-                <div className="md:hidden">
-                  {isNext ? (
-                    <div className="grid grid-cols-3 rounded-full border border-zinc-700 bg-zinc-900 p-1 text-sm text-zinc-300">
-                      <button onClick={() => setTicketFilter("all")} className={`rounded-full px-3 py-2 transition ${ticketFilter === "all" ? "bg-zinc-100 text-zinc-950" : "hover:text-zinc-100"}`}>All</button>
-                      <button onClick={() => setTicketFilter("bought")} className={`rounded-full px-3 py-2 transition ${ticketFilter === "bought" ? "bg-zinc-100 text-zinc-950" : "hover:text-zinc-100"}`}>Bought</button>
-                      <button onClick={() => setTicketFilter("pending")} className={`rounded-full px-3 py-2 transition ${ticketFilter === "pending" ? "bg-zinc-100 text-zinc-950" : "hover:text-zinc-100"}`}>Pending</button>
-                    </div>
-                  ) : (
+                {!isNext && (
+                  <div className="md:hidden">
                     <select value={sortMode} onChange={(e) => setSortMode(e.target.value)} className="w-full rounded-full border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-sm text-zinc-100 outline-none">
                       <option value="artist">Sort by artist</option>
                       <option value="concerts">Sort by number of concerts</option>
                       <option value="recent">Sort by most recent</option>
                     </select>
-                  )}
-                </div>
+                  </div>
+                )}
 
                 {/* Desktop layout */}
-                <div className={`hidden md:grid gap-3 ${isNext ? "md:grid-cols-[220px_1fr_360px]" : "md:grid-cols-[220px_1fr_280px]"}`}>
+                <div className={`hidden md:grid gap-3 ${isNext ? "md:grid-cols-[220px_1fr_180px]" : "md:grid-cols-[220px_1fr_280px]"}`}>
                   <button onClick={() => setModalOpen(true)} className="rounded-full border border-zinc-700 bg-zinc-900 px-5 py-3 text-sm font-black text-zinc-100 shadow-2xl transition hover:border-zinc-500">+ Add concert</button>
                   <div className="flex items-center gap-3 rounded-full border border-zinc-700 bg-zinc-900 px-5 py-3 shadow-2xl">
                     <Icon type="search" />
                     <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search artist, venue, festival, city or date" className="w-full bg-transparent text-base text-zinc-100 outline-none placeholder:text-zinc-500" aria-label="Search concerts" />
                   </div>
-                  {isNext ? (
-                    <div className="grid grid-cols-3 rounded-full border border-zinc-700 bg-zinc-900 p-1 text-sm text-zinc-300 shadow-2xl">
-                      <button onClick={() => setTicketFilter("all")} className={`rounded-full px-3 py-2 transition ${ticketFilter === "all" ? "bg-zinc-100 text-zinc-950" : "hover:text-zinc-100"}`}>All</button>
-                      <button onClick={() => setTicketFilter("bought")} className={`rounded-full px-3 py-2 transition ${ticketFilter === "bought" ? "bg-zinc-100 text-zinc-950" : "hover:text-zinc-100"}`}>Bought</button>
-                      <button onClick={() => setTicketFilter("pending")} className={`rounded-full px-3 py-2 transition ${ticketFilter === "pending" ? "bg-zinc-100 text-zinc-950" : "hover:text-zinc-100"}`}>Not bought</button>
-                    </div>
-                  ) : (
+                  {!isNext && (
                     <select value={sortMode} onChange={(e) => setSortMode(e.target.value)} className="rounded-full border border-zinc-700 bg-zinc-900 px-5 py-3 text-base text-zinc-100 shadow-2xl outline-none" aria-label="Sort concerts">
                       <option value="artist">Sort by artist</option>
                       <option value="concerts">Sort by number of concerts</option>
                       <option value="recent">Sort by most recent</option>
                     </select>
                   )}
+                  {isNext && <CalendarExportMenu items={nextItems} />}
                 </div>
               </div>
             </div>
 
-            <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3 w-full">
+            {isNext ? (
+              <NextConcertCalendar
+                items={filtered}
+                onEdit={(concert) => setEditTarget({ mode: "next", artist: concert.artist, date: concert.date, bought: concert.bought, venue: concert.venue || "" })}
+              />
+            ) : (
+            <section className="grid w-full gap-4 md:grid-cols-2 xl:grid-cols-3">
               {filtered.map((item) => (
                 <article key={item.artist + (isNext ? item.date : "")} className="group rounded-3xl border border-zinc-800 bg-zinc-900 p-5 shadow-xl transition hover:-translate-y-1 hover:border-zinc-500 w-full min-w-0">
                   <div className="flex items-start justify-between gap-4 border-b border-zinc-800 pb-4">
@@ -1424,6 +1605,7 @@ export default function App() {
                 </article>
               ))}
             </section>
+            )}
             {filtered.length === 0 && <div className="mt-16 text-center text-zinc-500">No concerts found.</div>}
           </>
         )}
