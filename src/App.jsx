@@ -470,7 +470,7 @@ function StatsBar({ data, max, accent = "bg-zinc-100", label }) {
   );
 }
 
-function StatsPage({ historyItems }) {
+function StatsPage({ historyItems, onOpenVenue }) {
   const stats = useMemo(() => {
     const totalArtists = historyItems.length;
     const totalShows = historyItems.reduce((s, i) => s + i.shows.length, 0);
@@ -522,7 +522,7 @@ function StatsPage({ historyItems }) {
         </div>
         <div className="rounded-3xl border border-zinc-800 bg-zinc-900 p-6">
           <div className="text-[11px] font-bold uppercase tracking-widest text-zinc-500">Top venue</div>
-          <div className="mt-2 text-2xl font-black uppercase text-zinc-100">{stats.topVenue}</div>
+          <button onClick={() => stats.topVenue !== "—" && onOpenVenue(stats.topVenue)} className="mt-2 text-left text-2xl font-black uppercase text-zinc-100 hover:underline hover:decoration-zinc-600 hover:underline-offset-4">{stats.topVenue}</button>
           <div className="mt-1 text-sm text-zinc-400">{stats.topVenueShows} {stats.topVenueShows === 1 ? "show" : "shows"}</div>
         </div>
       </div>
@@ -559,7 +559,7 @@ function StatsPage({ historyItems }) {
 
 // ─── Artist detail ────────────────────────────────────────────────────────────
 
-function ArtistDetailPage({ item, upcoming = [], onBack, onOpenSetlist }) {
+function ArtistDetailPage({ item, upcoming = [], onBack, onOpenSetlist, onOpenVenue }) {
   const shows = useMemo(
     () => [...item.shows]
       .map((show) => ({ show, ...parseShow(show, "history") }))
@@ -602,7 +602,7 @@ function ArtistDetailPage({ item, upcoming = [], onBack, onOpenSetlist }) {
           <div className="grid gap-3 md:grid-cols-2">
             {upcoming.map((concert) => (
               <div key={`${concert.date}-${concert.venue || ""}`} className="rounded-2xl bg-zinc-950 p-4">
-                {concert.venue && <div className="flex gap-2 text-sm font-semibold text-zinc-100"><Icon type="map" /><span>{concert.venue}</span></div>}
+                {concert.venue && <div className="flex gap-2 text-sm font-semibold text-zinc-100"><Icon type="map" /><button onClick={() => onOpenVenue(concert.venue)} className="text-left hover:underline hover:decoration-zinc-600 hover:underline-offset-4">{concert.venue}</button></div>}
                 <div className={`${concert.venue ? "mt-2 " : ""}flex gap-2 text-sm text-zinc-400`}><Icon type="calendar" /><span>{concert.date}</span></div>
               </div>
             ))}
@@ -624,7 +624,7 @@ function ArtistDetailPage({ item, upcoming = [], onBack, onOpenSetlist }) {
               <div className="min-w-0 flex-1 rounded-3xl border border-zinc-800 bg-zinc-900 p-5 transition hover:border-zinc-600">
                 <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
                   <div className="min-w-0">
-                    <h3 className="break-words text-lg font-black text-zinc-100 md:text-xl">{venue}</h3>
+                    <button onClick={() => onOpenVenue(venue)} className="break-words text-left text-lg font-black text-zinc-100 hover:underline hover:decoration-zinc-600 hover:underline-offset-4 md:text-xl">{venue}</button>
                     <div className="mt-2 flex gap-2 text-sm text-zinc-400"><Icon type="calendar" /><span>{date}</span></div>
                   </div>
                   <button
@@ -644,9 +644,105 @@ function ArtistDetailPage({ item, upcoming = [], onBack, onOpenSetlist }) {
   );
 }
 
+// ─── Venue detail ─────────────────────────────────────────────────────────────
+
+function VenueDetailPage({ venue, historyItems, onBack, onOpenArtist, onOpenSetlist }) {
+  const shows = useMemo(
+    () => historyItems.flatMap(({ artist, shows }) =>
+      shows
+        .map((show) => ({ artist, show, ...parseShow(show, "history") }))
+        .filter((entry) => normalize(entry.venue) === normalize(venue))
+    ).sort((a, b) => parseDate(b.date) - parseDate(a.date) || a.artist.localeCompare(b.artist)),
+    [historyItems, venue]
+  );
+  const artists = useMemo(() => {
+    const counts = {};
+    shows.forEach(({ artist }) => { counts[artist] = (counts[artist] || 0) + 1; });
+    return Object.entries(counts).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+  }, [shows]);
+  const years = new Set(shows.map(({ date }) => String(date).match(/(\d{4})/)?.[1]).filter(Boolean));
+  const firstVisit = shows[shows.length - 1];
+  const latestVisit = shows[0];
+  const topArtist = artists[0];
+  const summaryCards = [
+    { label: "Visits", value: shows.length },
+    { label: "Artists", value: artists.length },
+    { label: "Years active", value: years.size },
+    { label: "First visit", value: firstVisit?.date || "—" },
+  ];
+
+  return (
+    <div className="mx-auto max-w-5xl">
+      <div className="mb-8 flex flex-wrap items-center justify-between gap-3">
+        <button onClick={onBack} className="rounded-full border border-zinc-700 bg-zinc-900 px-5 py-2.5 text-sm font-bold text-zinc-200 transition hover:border-zinc-500 hover:text-white">
+          ← Go back
+        </button>
+        {latestVisit && <p className="text-sm text-zinc-500">Last visited {latestVisit.date}</p>}
+      </div>
+
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+        {summaryCards.map(({ label, value }) => (
+          <div key={label} className="min-w-0 rounded-3xl border border-zinc-800 bg-zinc-900 p-5 text-center">
+            <div className="truncate text-2xl font-black text-zinc-100 md:text-3xl" title={String(value)}>{value}</div>
+            <div className="mt-1 text-[11px] font-bold uppercase tracking-widest text-zinc-500">{label}</div>
+          </div>
+        ))}
+      </div>
+
+      {topArtist && (
+        <section className="mt-3 rounded-3xl border border-zinc-800 bg-zinc-900 p-6">
+          <div className="text-[11px] font-bold uppercase tracking-widest text-zinc-500">Most seen here</div>
+          <button onClick={() => onOpenArtist(topArtist[0])} className="mt-2 text-left text-2xl font-black uppercase text-zinc-100 hover:underline hover:decoration-zinc-600 hover:underline-offset-4">{topArtist[0]}</button>
+          <p className="mt-1 text-sm text-zinc-400">{topArtist[1]} {topArtist[1] === 1 ? "performance" : "performances"}</p>
+        </section>
+      )}
+
+      <section className="mt-10 rounded-3xl border border-zinc-800 bg-zinc-900 p-6">
+        <div className="mb-5 flex items-end justify-between gap-4">
+          <h2 className="text-xl font-black uppercase tracking-tight text-zinc-100">Artists at this venue</h2>
+          <span className="text-sm text-zinc-500">{artists.length}</span>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {artists.map(([artist, count]) => (
+            <button key={artist} onClick={() => onOpenArtist(artist)} className="rounded-full border border-zinc-700 bg-zinc-950 px-4 py-2 text-sm font-semibold text-zinc-300 transition hover:border-zinc-500 hover:text-white">
+              {artist} <span className="ml-1 text-zinc-600">{count}</span>
+            </button>
+          ))}
+        </div>
+      </section>
+
+      <section className="mt-12">
+        <div className="mb-6 flex items-end justify-between border-b border-zinc-800 pb-4">
+          <h2 className="text-2xl font-black uppercase tracking-tight text-zinc-100">Visit history</h2>
+          <span className="text-sm text-zinc-500">{shows.length} total</span>
+        </div>
+        <div className="relative space-y-4 before:absolute before:bottom-6 before:left-[7px] before:top-6 before:w-px before:bg-zinc-800">
+          {shows.map(({ artist, show, date, setlistId }) => (
+            <article key={`${artist}-${show}`} className="relative flex gap-4">
+              <span className="relative z-[1] mt-7 h-[15px] w-[15px] shrink-0 rounded-full border-4 border-zinc-950 bg-zinc-500" />
+              <div className="min-w-0 flex-1 rounded-3xl border border-zinc-800 bg-zinc-900 p-5 transition hover:border-zinc-600">
+                <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
+                  <div className="min-w-0">
+                    <button onClick={() => onOpenArtist(artist)} className="break-words text-left text-xl font-black uppercase text-zinc-100 hover:underline hover:decoration-zinc-600 hover:underline-offset-4">{artist}</button>
+                    <div className="mt-3 flex gap-2 text-sm text-zinc-400"><Icon type="calendar" /><span>{date}</span></div>
+                  </div>
+                  <button onClick={() => onOpenSetlist({ artist, venue, date, setlistId, show })} className="flex shrink-0 items-center gap-2 self-start rounded-full border border-zinc-700 px-4 py-2 text-sm font-semibold text-zinc-400 transition hover:border-zinc-500 hover:text-zinc-100">
+                    <Icon type="music" />
+                    Setlist
+                  </button>
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+    </div>
+  );
+}
+
 // ─── Concert timeline ─────────────────────────────────────────────────────────
 
-function ConcertTimelinePage({ historyItems, onOpenArtist, onOpenSetlist }) {
+function ConcertTimelinePage({ historyItems, onOpenArtist, onOpenSetlist, onOpenVenue }) {
   const [artistFilter, setArtistFilter] = useState("all");
   const [venueFilter, setVenueFilter] = useState("all");
 
@@ -739,7 +835,7 @@ function ConcertTimelinePage({ historyItems, onOpenArtist, onOpenSetlist }) {
                           <button onClick={() => onOpenArtist(artist)} className="break-words text-left text-xl font-black uppercase leading-tight text-zinc-100 transition hover:text-white hover:underline hover:decoration-zinc-600 hover:underline-offset-4 md:text-2xl">
                             {artist}
                           </button>
-                          <div className="mt-3 flex gap-2 text-sm font-semibold text-zinc-300"><Icon type="map" /><span className="break-words">{venue}</span></div>
+                          <div className="mt-3 flex gap-2 text-sm font-semibold text-zinc-300"><Icon type="map" /><button onClick={() => onOpenVenue(venue)} className="break-words text-left hover:underline hover:decoration-zinc-600 hover:underline-offset-4">{venue}</button></div>
                           <div className="mt-2 flex gap-2 text-sm text-zinc-400"><Icon type="calendar" /><span>{date}</span></div>
                         </div>
                         <button
@@ -764,7 +860,7 @@ function ConcertTimelinePage({ historyItems, onOpenArtist, onOpenSetlist }) {
 
 // ─── Year in review ───────────────────────────────────────────────────────────
 
-function YearInReviewPage({ historyItems, onOpenArtist, onOpenSetlist }) {
+function YearInReviewPage({ historyItems, onOpenArtist, onOpenSetlist, onOpenVenue }) {
   const allShows = useMemo(
     () => historyItems.flatMap(({ artist, shows }) =>
       shows.map((show) => ({ artist, show, ...parseShow(show, "history") }))
@@ -860,7 +956,7 @@ function YearInReviewPage({ historyItems, onOpenArtist, onOpenSetlist }) {
       <div className="mt-3 grid gap-3 md:grid-cols-3">
         <div className="rounded-3xl border border-zinc-800 bg-zinc-900 p-6">
           <div className="text-[11px] font-bold uppercase tracking-widest text-zinc-500">Top venue</div>
-          <div className="mt-2 break-words text-xl font-black text-zinc-100">{review.topVenue}</div>
+          <button onClick={() => review.topVenue !== "—" && onOpenVenue(review.topVenue)} className="mt-2 break-words text-left text-xl font-black text-zinc-100 hover:underline hover:decoration-zinc-600 hover:underline-offset-4">{review.topVenue}</button>
           <div className="mt-1 text-sm text-zinc-400">{review.topVenueCount} {review.topVenueCount === 1 ? "visit" : "visits"}</div>
         </div>
         <div className="rounded-3xl border border-zinc-800 bg-zinc-900 p-6">
@@ -911,7 +1007,7 @@ function YearInReviewPage({ historyItems, onOpenArtist, onOpenSetlist }) {
                 <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
                   <div className="min-w-0">
                     <button onClick={() => onOpenArtist(artist)} className="break-words text-left text-xl font-black uppercase leading-tight text-zinc-100 hover:underline hover:decoration-zinc-600 hover:underline-offset-4">{artist}</button>
-                    <div className="mt-3 flex gap-2 text-sm font-semibold text-zinc-300"><Icon type="map" /><span className="break-words">{venue}</span></div>
+                    <div className="mt-3 flex gap-2 text-sm font-semibold text-zinc-300"><Icon type="map" /><button onClick={() => onOpenVenue(venue)} className="break-words text-left hover:underline hover:decoration-zinc-600 hover:underline-offset-4">{venue}</button></div>
                     <div className="mt-2 flex gap-2 text-sm text-zinc-400"><Icon type="calendar" /><span>{date}</span></div>
                   </div>
                   <button onClick={() => onOpenSetlist({ artist, venue, date, setlistId, show })} className="flex shrink-0 items-center gap-2 self-start rounded-full border border-zinc-700 px-4 py-2 text-sm font-semibold text-zinc-400 transition hover:border-zinc-500 hover:text-zinc-100">
@@ -976,6 +1072,8 @@ export default function App() {
   const [ticketFilter, setTicketFilter] = useState("all");
   const [activePage, setActivePage] = useState("history");
   const [selectedArtist, setSelectedArtist] = useState(null);
+  const [selectedVenue, setSelectedVenue] = useState(null);
+  const [detailReturnPage, setDetailReturnPage] = useState("history");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [editTarget, setEditTarget] = useState(null);
@@ -993,6 +1091,10 @@ export default function App() {
   const isStats = activePage === "stats";
   const isTimeline = activePage === "timeline";
   const isYearReview = activePage === "year-review";
+  const venueShows = selectedVenue
+    ? historyItems.flatMap(({ shows }) => shows.map((show) => parseShow(show, "history"))).filter(({ venue }) => normalize(venue) === normalize(selectedVenue))
+    : [];
+  const isVenueDetail = activePage === "venue" && venueShows.length > 0;
   const artistDetail = selectedArtist
     ? historyItems.find((item) => normalize(item.artist) === normalize(selectedArtist))
     : null;
@@ -1001,8 +1103,10 @@ export default function App() {
     ? nextItems.filter((item) => normalize(item.artist) === normalize(artistDetail.artist))
     : [];
   const mode = isNext ? "next" : "history";
-  const title = isArtistDetail ? artistDetail.artist : isYearReview ? "Year in Review" : isTimeline ? "Timeline" : isStats ? "Stats" : isNext ? "Next Concerts" : "Concert Archive";
-  const description = isArtistDetail
+  const title = isVenueDetail ? selectedVenue : isArtistDetail ? artistDetail.artist : isYearReview ? "Year in Review" : isTimeline ? "Timeline" : isStats ? "Stats" : isNext ? "Next Concerts" : "Concert Archive";
+  const description = isVenueDetail
+    ? `${venueShows.length} archived ${venueShows.length === 1 ? "visit" : "visits"} to this venue.`
+    : isArtistDetail
     ? `${artistDetail.shows.length} live ${artistDetail.shows.length === 1 ? "performance" : "performances"} in the archive.`
     : isYearReview
     ? "The artists, venues and moments that defined each year."
@@ -1037,8 +1141,17 @@ export default function App() {
 
   if (!unlocked) return <LoginGate onUnlock={handleUnlock} />;
 
-  function changePage(page) { setActivePage(page); setSelectedArtist(null); setQuery(""); setSortMode("artist"); setTicketFilter("all"); setSidebarOpen(false); }
+  function changePage(page) { setActivePage(page); setSelectedArtist(null); setSelectedVenue(null); setQuery(""); setSortMode("artist"); setTicketFilter("all"); setSidebarOpen(false); }
   function openArtistDetail(artist) { setSelectedArtist(artist); setActivePage("artist"); setSidebarOpen(false); window.scrollTo({ top: 0, behavior: "smooth" }); }
+  function openVenueDetail(venue) {
+    if (!venue || venue === "Date confirmed") return;
+    setDetailReturnPage(activePage === "venue" ? "history" : activePage);
+    setSelectedVenue(venue);
+    setActivePage("venue");
+    setSidebarOpen(false);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+  function closeVenueDetail() { setSelectedVenue(null); setActivePage(detailReturnPage); window.scrollTo({ top: 0, behavior: "smooth" }); }
 
   async function handleAddConcert(data) {
     setIsSaving(true); setSaveError("");
@@ -1171,26 +1284,37 @@ export default function App() {
           <p className="mx-auto mt-5 max-w-2xl text-base text-zinc-400 md:text-lg">{description}</p>
         </header>
 
-        {isArtistDetail ? (
+        {isVenueDetail ? (
+          <VenueDetailPage
+            venue={selectedVenue}
+            historyItems={historyItems}
+            onBack={closeVenueDetail}
+            onOpenArtist={openArtistDetail}
+            onOpenSetlist={setSetlistTarget}
+          />
+        ) : isArtistDetail ? (
           <ArtistDetailPage
             item={artistDetail}
             upcoming={artistUpcoming}
             onBack={() => changePage("history")}
             onOpenSetlist={setSetlistTarget}
+            onOpenVenue={openVenueDetail}
           />
         ) : isTimeline ? (
           <ConcertTimelinePage
             historyItems={historyItems}
             onOpenArtist={openArtistDetail}
             onOpenSetlist={setSetlistTarget}
+            onOpenVenue={openVenueDetail}
           />
         ) : isYearReview ? (
           <YearInReviewPage
             historyItems={historyItems}
             onOpenArtist={openArtistDetail}
             onOpenSetlist={setSetlistTarget}
+            onOpenVenue={openVenueDetail}
           />
-        ) : isStats ? <StatsPage historyItems={historyItems} /> : (
+        ) : isStats ? <StatsPage historyItems={historyItems} onOpenVenue={openVenueDetail} /> : (
           <>
             <div className="sticky top-0 z-10 mb-8 border-y border-zinc-800 bg-zinc-950/90 py-3 backdrop-blur">
               <div className="mx-auto max-w-6xl space-y-2 px-4 md:space-y-0 md:px-0">
@@ -1280,7 +1404,7 @@ export default function App() {
                           style={{ WebkitTouchCallout: "none" }}
                         >
                           <div className="space-y-2">
-                            {!isNext && <div className="flex gap-2 text-sm font-semibold text-zinc-100"><Icon type="map" /><span className="truncate">{venue}</span></div>}
+                            {!isNext && <div className="flex gap-2 text-sm font-semibold text-zinc-100"><Icon type="map" /><button onClick={() => openVenueDetail(venue)} className="truncate text-left hover:underline hover:decoration-zinc-600 hover:underline-offset-4">{venue}</button></div>}
                             {isNext && item.venue && <div className="flex gap-2 text-sm font-semibold text-zinc-100"><Icon type="map" /><span className="truncate">{item.venue}</span></div>}
                             <div className="flex gap-2 text-sm text-zinc-400"><Icon type="calendar" /><span>{date}</span></div>
                             {!isNext && (
