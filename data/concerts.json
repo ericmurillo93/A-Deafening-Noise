@@ -1130,6 +1130,12 @@
       "venue": "Sala Paral·lel 62",
       "date": "26/02/2027",
       "bought": false
+    },
+    {
+      "artist": "Whitechapel",
+      "venue": "RAZZMATAZZ 2",
+      "date": "06/02/2026",
+      "bought": false
     }
   ]
 }
