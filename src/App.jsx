@@ -12,8 +12,7 @@ function groupHistoryFromJson(rows) {
   return Object.entries(grouped).map(([artist, shows]) => ({ artist, shows }));
 }
 
-const fallbackConcertHistory = groupHistoryFromJson(concertsData.history);
-const fallbackNextConcerts = concertsData.next;
+const fallbackConcerts = concertsData.concerts;
 
 const APP_PASSWORD = import.meta.env.VITE_APP_PASSWORD;
 
@@ -70,14 +69,12 @@ function parseShow(show, mode) {
   const dateOnly = /^(\d{1,2}\/\d{1,2}\/\d{4})(\s-\s\d{1,2}\/\d{1,2}\/\d{4})?$/.test(body);
   if (mode === "next" || dateOnly) return { venue: "Date confirmed", date: body, setlistId };
   const parts = body.split(" - ");
-  const date = parts[parts.length - 1] || "";
-  const venue = parts.slice(0, -1).join(" - ") || body;
+  const hasDateRange = parts.length >= 3
+    && /^\d{1,2}\/\d{1,2}\/\d{4}$/.test(parts[parts.length - 2])
+    && /^\d{1,2}\/\d{1,2}\/\d{4}$/.test(parts[parts.length - 1]);
+  const date = hasDateRange ? parts.slice(-2).join(" - ") : parts[parts.length - 1] || "";
+  const venue = parts.slice(0, hasDateRange ? -2 : -1).join(" - ") || body;
   return { venue, date, setlistId };
-}
-
-function buildShowString(venue, date, setlistId) {
-  const base = `${venue} - ${date}`;
-  return setlistId && setlistId.trim() ? `${base} | ${setlistId.trim()}` : base;
 }
 
 function getMostRecentShowDate(item, mode) {
@@ -108,73 +105,49 @@ function sortConcerts(items, sortMode, mode) {
   return sorted.sort((a, b) => a.artist.localeCompare(b.artist));
 }
 
-function addHistoryConcert(items, artist, venue, date, setlistId) {
-  const cleanedArtist = artist.trim();
-  const show = buildShowString(venue.trim(), date.trim(), setlistId);
-  const existingIndex = items.findIndex((item) => normalize(item.artist) === normalize(cleanedArtist));
-  if (existingIndex >= 0) return items.map((item, i) => i === existingIndex ? { ...item, shows: [...item.shows, show] } : item);
-  return [...items, { artist: cleanedArtist, shows: [show] }];
-}
-
-function addNextConcert(items, artist, date, bought, venue) {
-  return [...items, { artist: artist.trim(), date: date.trim(), bought, venue: venue ? venue.trim() : "" }];
-}
-
-function editHistoryConcert(items, originalArtist, originalShow, newArtist, newVenue, newDate, newSetlistId) {
-  const cleanedNewArtist = newArtist.trim();
-  const newShow = buildShowString(newVenue.trim(), newDate.trim(), newSetlistId);
-  const sameArtist = normalize(originalArtist) === normalize(cleanedNewArtist);
-  if (sameArtist) {
-    return items.map((item) => {
-      if (normalize(item.artist) !== normalize(originalArtist)) return item;
-      return { ...item, shows: item.shows.map((s) => (s === originalShow ? newShow : s)) };
-    });
-  }
-  const withoutOld = items.map((item) => {
-    if (normalize(item.artist) !== normalize(originalArtist)) return item;
-    const remaining = item.shows.filter((s) => s !== originalShow);
-    return remaining.length ? { ...item, shows: remaining } : null;
-  }).filter(Boolean);
-  return addHistoryConcert(withoutOld, cleanedNewArtist, newVenue, newDate, newSetlistId);
-}
-
-function deleteHistoryConcert(items, artist, show) {
-  return items.map((item) => {
-    if (normalize(item.artist) !== normalize(artist)) return item;
-    const remaining = item.shows.filter((s) => s !== show);
-    return remaining.length ? { ...item, shows: remaining } : null;
-  }).filter(Boolean);
-}
-
-function editNextConcert(items, originalArtist, originalDate, newArtist, newDate, newBought, newVenue) {
-  return items.map((item) => {
-    if (normalize(item.artist) === normalize(originalArtist) && item.date === originalDate) {
-      return { artist: newArtist.trim(), date: newDate.trim(), bought: newBought, venue: newVenue ? newVenue.trim() : "" };
-    }
-    return item;
-  });
-}
-
-function deleteNextConcert(items, artist, date) {
-  return items.filter((item) => !(normalize(item.artist) === normalize(artist) && item.date === date));
-}
-
-function flattenHistory(historyArr) {
-  return historyArr.flatMap(({ artist, shows }) =>
-    shows.map((show) => {
-      const { venue, date, setlistId } = parseShow(show, "history");
-      const out = { artist, venue, date };
-      if (setlistId) out.setlistId = setlistId;
-      return out;
-    })
-  );
-}
-
 function parseConcertDateRange(value) {
   const matches = [...String(value).matchAll(/(\d{1,2})\/(\d{1,2})\/(\d{4})/g)];
   if (!matches.length) return null;
   const toDate = (match) => new Date(Number(match[3]), Number(match[2]) - 1, Number(match[1]));
   return { start: toDate(matches[0]), end: toDate(matches[matches.length - 1]) };
+}
+
+function isPastConcert(concert) {
+  const range = parseConcertDateRange(concert.date);
+  if (!range) return false;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return range.end < today;
+}
+
+function concertMatches(concert, target) {
+  return normalize(concert.artist) === normalize(target.artist)
+    && concert.date === target.date
+    && normalize(concert.venue || "") === normalize(target.venue || "");
+}
+
+function updateConcert(items, target, data) {
+  let updated = false;
+  return items.map((concert) => {
+    if (updated || !concertMatches(concert, target)) return concert;
+    updated = true;
+    return {
+      artist: data.artist.trim(),
+      venue: data.venue?.trim() || "",
+      date: data.date.trim(),
+      bought: target.mode === "history" ? true : Boolean(data.bought),
+      ...(data.setlistId?.trim() ? { setlistId: data.setlistId.trim() } : {}),
+    };
+  });
+}
+
+function removeConcert(items, target) {
+  let removed = false;
+  return items.filter((concert) => {
+    if (removed || !concertMatches(concert, target)) return true;
+    removed = true;
+    return false;
+  });
 }
 
 function formatIcsDate(date) {
@@ -363,12 +336,12 @@ function SetlistModal({ target, onClose, onIdDiscovered }) {
 
 // ─── ContextMenu ──────────────────────────────────────────────────────────────
 
-function ContextMenu({ open, x, y, onEdit, onDelete, onMoveToHistory, onClose, showMoveToHistory }) {
+function ContextMenu({ open, x, y, onEdit, onDelete, onClose }) {
   if (!open) return null;
   const viewportWidth = window.visualViewport?.width || window.innerWidth;
   const viewportHeight = window.visualViewport?.height || window.innerHeight;
   const menuWidth = 176;
-  const menuHeight = showMoveToHistory ? 122 : 82;
+  const menuHeight = 82;
   const edgeGap = 12;
   const left = Math.max(edgeGap, Math.min(x, viewportWidth - menuWidth - edgeGap));
   const top = Math.max(edgeGap, Math.min(y, viewportHeight - menuHeight - edgeGap));
@@ -378,7 +351,6 @@ function ContextMenu({ open, x, y, onEdit, onDelete, onMoveToHistory, onClose, s
       <div className="fixed inset-0 z-[55]" onClick={onClose} onContextMenu={(e) => { e.preventDefault(); onClose(); }} />
       <div className="fixed z-[56] w-44 overflow-hidden rounded-xl border border-zinc-700 bg-zinc-950 shadow-2xl" style={{ left, top }}>
         <button onClick={onEdit} className="block w-full px-4 py-2 text-left text-sm text-zinc-100 hover:bg-zinc-800">Edit</button>
-        {showMoveToHistory && <button onClick={onMoveToHistory} className="block w-full px-4 py-2 text-left text-sm text-zinc-100 hover:bg-zinc-800">Move to history</button>}
         <button onClick={onDelete} className="block w-full px-4 py-2 text-left text-sm text-red-300 hover:bg-zinc-800">Delete</button>
       </div>
     </>
@@ -1372,18 +1344,24 @@ export default function App() {
   const [editTarget, setEditTarget] = useState(null);
   const [contextMenu, setContextMenu] = useState({ open: false, x: 0, y: 0, target: null });
   const [setlistTarget, setSetlistTarget] = useState(null);
-  const [historyItems, setHistoryItems] = useState(fallbackConcertHistory);
-  const [nextItems, setNextItems] = useState(fallbackNextConcerts);
+  const [concertItems, setConcertItems] = useState(fallbackConcerts);
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
   const [confirmDelete, setConfirmDelete] = useState(null);
-  const [moveToHistoryTarget, setMoveToHistoryTarget] = useState(null);
-  const [moveVenue, setMoveVenue] = useState("");
 
   const isNext = activePage === "next";
   const isStats = activePage === "stats";
   const isTimeline = activePage === "timeline";
   const isYearReview = activePage === "year-review";
+  const historyConcerts = useMemo(
+    () => concertItems.filter((concert) => concert.bought && isPastConcert(concert)),
+    [concertItems]
+  );
+  const historyItems = useMemo(() => groupHistoryFromJson(historyConcerts), [historyConcerts]);
+  const nextItems = useMemo(
+    () => concertItems.filter((concert) => !isPastConcert(concert)),
+    [concertItems]
+  );
   const venueShows = selectedVenue
     ? historyItems.flatMap(({ shows }) => shows.map((show) => parseShow(show, "history"))).filter(({ venue }) => normalize(venue) === normalize(selectedVenue))
     : [];
@@ -1415,15 +1393,11 @@ export default function App() {
   }, [historyItems, nextItems, query, sortMode, mode, isNext]);
 
   const calendarItems = useMemo(() => {
-    const archived = historyItems.flatMap(({ artist, shows }) =>
-      shows.map((show) => {
-        const { venue, date, setlistId } = parseShow(show, "history");
-        return { source: "history", artist, show, venue, date, setlistId, bought: true };
-      })
-    );
-    const upcoming = nextItems.map((concert) => ({ ...concert, source: "next" }));
-    return filterConcerts([...archived, ...upcoming], query);
-  }, [historyItems, nextItems, query]);
+    const visibleConcerts = concertItems
+      .filter((concert) => concert.bought || !isPastConcert(concert))
+      .map((concert) => ({ ...concert, source: isPastConcert(concert) ? "history" : "next" }));
+    return filterConcerts(visibleConcerts, query);
+  }, [concertItems, query]);
 
   const artistSuggestions = useMemo(() => {
     const set = new Set();
@@ -1482,12 +1456,15 @@ export default function App() {
   async function handleAddConcert(data) {
     setIsSaving(true); setSaveError("");
     try {
-      let updatedHistory = historyItems;
-      let updatedNext = nextItems;
-      if (isNext) updatedNext = sortConcerts(addNextConcert(nextItems, data.artist, data.date, data.bought, data.venue), "next", "next");
-      else updatedHistory = addHistoryConcert(historyItems, data.artist, data.venue, data.date, "");
-      await saveToGitHub({ history: flattenHistory(updatedHistory), next: updatedNext }, `Add concert: ${data.artist}${data.venue ? " — " + data.venue : ""} (${data.date})`);
-      if (isNext) setNextItems(updatedNext); else setHistoryItems(updatedHistory);
+      const newConcert = {
+        artist: data.artist.trim(),
+        venue: data.venue?.trim() || "",
+        date: data.date.trim(),
+        bought: isNext ? Boolean(data.bought) : true,
+      };
+      const updatedConcerts = [...concertItems, newConcert];
+      await saveToGitHub({ concerts: updatedConcerts }, `Add concert: ${data.artist}${data.venue ? " — " + data.venue : ""} (${data.date})`);
+      setConcertItems(updatedConcerts);
       setModalOpen(false);
     } catch (e) { setSaveError(e.message || "Could not save concert"); }
     finally { setIsSaving(false); }
@@ -1497,12 +1474,9 @@ export default function App() {
     if (!editTarget) return;
     setIsSaving(true); setSaveError("");
     try {
-      let updatedHistory = historyItems;
-      let updatedNext = nextItems;
-      if (editTarget.mode === "next") updatedNext = sortConcerts(editNextConcert(nextItems, editTarget.artist, editTarget.date, data.artist, data.date, data.bought, data.venue), "next", "next");
-      else updatedHistory = editHistoryConcert(historyItems, editTarget.artist, editTarget.show, data.artist, data.venue, data.date, data.setlistId || "");
-      await saveToGitHub({ history: flattenHistory(updatedHistory), next: updatedNext }, `Edit concert: ${data.artist}${data.venue ? " — " + data.venue : ""} (${data.date})`);
-      if (editTarget.mode === "next") setNextItems(updatedNext); else setHistoryItems(updatedHistory);
+      const updatedConcerts = updateConcert(concertItems, editTarget, data);
+      await saveToGitHub({ concerts: updatedConcerts }, `Edit concert: ${data.artist}${data.venue ? " — " + data.venue : ""} (${data.date})`);
+      setConcertItems(updatedConcerts);
       setEditTarget(null);
     } catch (e) { setSaveError(e.message || "Could not save changes"); }
     finally { setIsSaving(false); }
@@ -1512,12 +1486,9 @@ export default function App() {
     if (!editTarget) return;
     setIsSaving(true); setSaveError("");
     try {
-      let updatedHistory = historyItems;
-      let updatedNext = nextItems;
-      if (editTarget.mode === "next") updatedNext = deleteNextConcert(nextItems, editTarget.artist, editTarget.date);
-      else updatedHistory = deleteHistoryConcert(historyItems, editTarget.artist, editTarget.show);
-      await saveToGitHub({ history: flattenHistory(updatedHistory), next: updatedNext }, `Delete concert: ${editTarget.artist}${editTarget.venue ? " — " + editTarget.venue : ""} (${editTarget.date})`);
-      if (editTarget.mode === "next") setNextItems(updatedNext); else setHistoryItems(updatedHistory);
+      const updatedConcerts = removeConcert(concertItems, editTarget);
+      await saveToGitHub({ concerts: updatedConcerts }, `Delete concert: ${editTarget.artist}${editTarget.venue ? " — " + editTarget.venue : ""} (${editTarget.date})`);
+      setConcertItems(updatedConcerts);
       setEditTarget(null);
     } catch (e) { setSaveError(e.message || "Could not delete concert"); }
     finally { setIsSaving(false); }
@@ -1538,41 +1509,19 @@ export default function App() {
     setConfirmDelete(t);
   }
 
-  function moveToHistoryFromContext() {
-    const t = contextMenu.target; closeContextMenu(); if (!t || t.mode !== "next") return;
-    if (!t.venue?.trim()) { setMoveToHistoryTarget(t); return; }
-    doMoveToHistory(t, t.venue);
-  }
-
-  async function doMoveToHistory(t, venueValue) {
-    setIsSaving(true); setSaveError("");
-    try {
-      const updatedNext = deleteNextConcert(nextItems, t.artist, t.date);
-      const updatedHistory = addHistoryConcert(historyItems, t.artist, venueValue, t.date, "");
-      await saveToGitHub({ history: flattenHistory(updatedHistory), next: updatedNext }, `Move to history: ${t.artist} — ${venueValue} (${t.date})`);
-      setNextItems(updatedNext); setHistoryItems(updatedHistory);
-    } catch (e) { setSaveError(e.message || "Could not move concert"); }
-    finally { setIsSaving(false); setMoveToHistoryTarget(null); }
-  }
-
   async function handleSetlistIdDiscovered(artist, show, discoveredId) {
-    // Persist the newly discovered setlistId back into the JSON so future lookups use the direct API
-    const updatedHistory = historyItems.map((item) => {
-      if (normalize(item.artist) !== normalize(artist)) return item;
-      return {
-        ...item,
-        shows: item.shows.map((s) => {
-          if (s !== show) return s;
-          const { venue, date } = parseShow(s, "history");
-          return buildShowString(venue, date, discoveredId);
-        }),
-      };
+    const { venue, date } = parseShow(show, "history");
+    let updated = false;
+    const updatedConcerts = concertItems.map((concert) => {
+      if (updated || !concertMatches(concert, { artist, venue, date })) return concert;
+      updated = true;
+      return { ...concert, setlistId: discoveredId };
     });
-    setHistoryItems(updatedHistory);
+    setConcertItems(updatedConcerts);
     // Save silently in the background — don't block or show saving indicator
     try {
       await saveToGitHub(
-        { history: flattenHistory(updatedHistory), next: nextItems },
+        { concerts: updatedConcerts },
         `Auto-save setlist ID for ${artist}`
       );
     } catch (_) {
@@ -1774,11 +1723,9 @@ export default function App() {
               <button onClick={async () => {
                 const t = confirmDelete; setConfirmDelete(null); setIsSaving(true);
                 try {
-                  let updatedHistory = historyItems, updatedNext = nextItems;
-                  if (t.mode === "next") updatedNext = deleteNextConcert(nextItems, t.artist, t.date);
-                  else updatedHistory = deleteHistoryConcert(historyItems, t.artist, t.show);
-                  await saveToGitHub({ history: flattenHistory(updatedHistory), next: updatedNext }, `Delete concert: ${t.artist}${t.venue ? " — " + t.venue : ""} (${t.date})`);
-                  if (t.mode === "next") setNextItems(updatedNext); else setHistoryItems(updatedHistory);
+                  const updatedConcerts = removeConcert(concertItems, t);
+                  await saveToGitHub({ concerts: updatedConcerts }, `Delete concert: ${t.artist}${t.venue ? " — " + t.venue : ""} (${t.date})`);
+                  setConcertItems(updatedConcerts);
                 } catch (e) { setSaveError(e.message || "Could not delete"); }
                 finally { setIsSaving(false); }
               }} className="flex-1 rounded-2xl border border-red-900 bg-red-950/40 px-5 py-3 font-black text-red-200 transition hover:bg-red-950/60">Delete</button>
@@ -1787,23 +1734,9 @@ export default function App() {
         </div>
       )}
 
-      {moveToHistoryTarget && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 px-4">
-          <div className="w-full max-w-sm rounded-3xl border border-zinc-700 bg-zinc-950 p-6 shadow-2xl">
-            <h2 className="text-xl font-black uppercase tracking-tight mb-2">Move to history</h2>
-            <p className="text-sm text-zinc-400 mb-4">Enter the venue for <span className="text-zinc-100 font-semibold">{moveToHistoryTarget.artist}</span> on {moveToHistoryTarget.date}.</p>
-            <input type="text" value={moveVenue} onChange={(e) => setMoveVenue(e.target.value)} onKeyDown={(e) => e.key === "Enter" && moveVenue.trim() && doMoveToHistory(moveToHistoryTarget, moveVenue)} placeholder="Venue name" autoFocus className="w-full rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-zinc-100 outline-none focus:border-zinc-400 mb-4" />
-            <div className="flex gap-3">
-              <button onClick={() => { setMoveToHistoryTarget(null); setMoveVenue(""); }} className="flex-1 rounded-2xl border border-zinc-700 px-5 py-3 font-black text-zinc-300 transition hover:border-zinc-500">Cancel</button>
-              <button onClick={() => moveVenue.trim() && doMoveToHistory(moveToHistoryTarget, moveVenue)} disabled={!moveVenue.trim()} className="flex-1 rounded-2xl bg-zinc-100 px-5 py-3 font-black text-zinc-950 transition hover:bg-white disabled:opacity-40">Move</button>
-            </div>
-          </div>
-        </div>
-      )}
-
       <AddConcertModal isOpen={modalOpen} mode={mode} onClose={() => setModalOpen(false)} onSave={handleAddConcert} isSaving={isSaving} saveError={saveError} artistSuggestions={artistSuggestions} venueSuggestions={venueSuggestions} />
       <EditConcertModal isOpen={!!editTarget} mode={editTarget?.mode || mode} initial={editTarget} onClose={() => setEditTarget(null)} onSave={handleEditConcert} onDelete={handleDeleteConcert} isSaving={isSaving} saveError={saveError} artistSuggestions={artistSuggestions} venueSuggestions={venueSuggestions} />
-      <ContextMenu open={contextMenu.open} x={contextMenu.x} y={contextMenu.y} onEdit={startEditFromContext} onDelete={deleteFromContext} onMoveToHistory={moveToHistoryFromContext} showMoveToHistory={contextMenu.target?.mode === "next"} onClose={closeContextMenu} />
+      <ContextMenu open={contextMenu.open} x={contextMenu.x} y={contextMenu.y} onEdit={startEditFromContext} onDelete={deleteFromContext} onClose={closeContextMenu} />
       <SetlistModal target={setlistTarget} onClose={() => setSetlistTarget(null)} onIdDiscovered={handleSetlistIdDiscovered} />
     </main>
   );
