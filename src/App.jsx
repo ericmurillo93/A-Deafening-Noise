@@ -51,6 +51,23 @@ function normalize(value) {
   return String(value).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 }
 
+function readRouteFromHash() {
+  if (typeof window === "undefined") return { page: "history", artist: null, venue: null };
+  const [pagePart = "history", ...valueParts] = window.location.hash.replace(/^#\/?/, "").split("/");
+  const value = valueParts.length ? decodeURIComponent(valueParts.join("/")) : null;
+  if (pagePart === "artist" && value) return { page: "artist", artist: value, venue: null };
+  if (pagePart === "venue" && value) return { page: "venue", artist: null, venue: value };
+  const pageAliases = { calendar: "next", history: "history", timeline: "timeline", stats: "stats", "year-review": "year-review" };
+  return { page: pageAliases[pagePart] || "history", artist: null, venue: null };
+}
+
+function routeToHash({ page, artist, venue }) {
+  if (page === "artist" && artist) return `#artist/${encodeURIComponent(artist)}`;
+  if (page === "venue" && venue) return `#venue/${encodeURIComponent(venue)}`;
+  if (page === "next") return "#calendar";
+  return `#${page || "history"}`;
+}
+
 function parseDate(date) {
   const match = String(date).match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
   if (!match) return 0;
@@ -1328,15 +1345,15 @@ function LoginGate({ onUnlock }) {
 // ─── App ──────────────────────────────────────────────────────────────────────
 
 export default function App() {
+  const initialRoute = useMemo(() => readRouteFromHash(), []);
   const [unlocked, setUnlocked] = useState(() => sessionStorage.getItem("adn_unlocked") === "1");
   function handleUnlock() { sessionStorage.setItem("adn_unlocked", "1"); setUnlocked(true); }
 
   const [query, setQuery] = useState("");
   const [sortMode, setSortMode] = useState("artist");
-  const [activePage, setActivePage] = useState("history");
-  const [selectedArtist, setSelectedArtist] = useState(null);
-  const [selectedVenue, setSelectedVenue] = useState(null);
-  const [viewHistory, setViewHistory] = useState([]);
+  const [activePage, setActivePage] = useState(initialRoute.page);
+  const [selectedArtist, setSelectedArtist] = useState(initialRoute.artist);
+  const [selectedVenue, setSelectedVenue] = useState(initialRoute.venue);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [statsMenuOpen, setStatsMenuOpen] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
@@ -1416,40 +1433,51 @@ export default function App() {
     return [...set].sort((a, b) => a.localeCompare(b));
   }, [historyItems]);
 
+  useEffect(() => {
+    const initial = readRouteFromHash();
+    window.history.replaceState({ adnRoute: true, canGoBack: false }, "", routeToHash(initial));
+
+    function restoreRoute() {
+      const route = readRouteFromHash();
+      setActivePage(route.page);
+      setSelectedArtist(route.artist);
+      setSelectedVenue(route.venue);
+      setQuery("");
+      setSortMode("artist");
+      setSidebarOpen(false);
+    }
+
+    window.addEventListener("popstate", restoreRoute);
+    window.addEventListener("hashchange", restoreRoute);
+    return () => {
+      window.removeEventListener("popstate", restoreRoute);
+      window.removeEventListener("hashchange", restoreRoute);
+    };
+  }, []);
+
   if (!unlocked) return <LoginGate onUnlock={handleUnlock} />;
 
-  function changePage(page) { setActivePage(page); setSelectedArtist(null); setSelectedVenue(null); setViewHistory([]); setQuery(""); setSortMode("artist"); setSidebarOpen(false); }
-  function rememberCurrentView() {
-    setViewHistory((history) => [...history, { page: activePage, artist: selectedArtist, venue: selectedVenue }]);
-  }
-  function openArtistDetail(artist) {
-    rememberCurrentView();
-    setSelectedArtist(artist);
-    setSelectedVenue(null);
-    setActivePage("artist");
+  function navigateTo(route) {
+    window.history.pushState({ adnRoute: true, canGoBack: true }, "", routeToHash(route));
+    setActivePage(route.page);
+    setSelectedArtist(route.artist || null);
+    setSelectedVenue(route.venue || null);
+    setQuery("");
+    setSortMode("artist");
     setSidebarOpen(false);
     window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+  function changePage(page) { navigateTo({ page, artist: null, venue: null }); }
+  function openArtistDetail(artist) {
+    navigateTo({ page: "artist", artist, venue: null });
   }
   function openVenueDetail(venue) {
     if (!venue || venue === "Date confirmed") return;
-    rememberCurrentView();
-    setSelectedVenue(venue);
-    setSelectedArtist(null);
-    setActivePage("venue");
-    setSidebarOpen(false);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    navigateTo({ page: "venue", artist: null, venue });
   }
   function goBackFromDetail() {
-    const previous = viewHistory[viewHistory.length - 1];
-    if (!previous) {
-      changePage("history");
-      return;
-    }
-    setViewHistory((history) => history.slice(0, -1));
-    setActivePage(previous.page);
-    setSelectedArtist(previous.artist);
-    setSelectedVenue(previous.venue);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    if (window.history.state?.canGoBack) window.history.back();
+    else changePage("history");
   }
 
   async function handleAddConcert(data) {
