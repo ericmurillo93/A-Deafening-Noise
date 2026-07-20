@@ -673,18 +673,16 @@ function NextConcertCalendar({ items, onEdit }) {
           <article className="w-full max-w-md rounded-3xl border border-zinc-700 bg-zinc-900 p-5 shadow-2xl" onClick={(event) => event.stopPropagation()}>
             <div className="flex items-start justify-between gap-4 border-b border-zinc-800 pb-4">
               <h2 className="min-w-0 break-words text-2xl font-black uppercase leading-none tracking-tight text-zinc-100">{selectedConcert.artist}</h2>
-              <span className={`shrink-0 rounded-full border px-3 py-1 text-xs font-bold text-zinc-100 ${selectedConcert.isPast ? "border-blue-800 bg-blue-950" : selectedConcert.bought ? "border-emerald-800 bg-emerald-950" : "border-amber-800 bg-amber-950"}`}>
-                {selectedConcert.isPast ? "History" : selectedConcert.bought ? "Bought" : "Not bought"}
-              </span>
+              <button type="button" onClick={() => setSelectedConcert(null)} className="shrink-0 rounded-full border border-zinc-700 px-3 py-1 text-sm text-zinc-300 transition hover:border-zinc-500">Close</button>
             </div>
-            <div className="mt-4 rounded-2xl bg-zinc-950 p-4">
+            <span className={`mt-4 inline-flex rounded-full border px-3 py-1 text-xs font-bold text-zinc-100 ${selectedConcert.isPast ? "border-blue-800 bg-blue-950" : selectedConcert.bought ? "border-emerald-800 bg-emerald-950" : "border-amber-800 bg-amber-950"}`}>
+              {selectedConcert.isPast ? "History" : selectedConcert.bought ? "Bought" : "Not bought"}
+            </span>
+            <div className="mt-3 rounded-2xl bg-zinc-950 p-4">
               {selectedConcert.venue && <div className="flex gap-2 text-sm font-semibold text-zinc-100"><Icon type="map" /><span className="break-words">{selectedConcert.venue}</span></div>}
               <div className={`${selectedConcert.venue ? "mt-2 " : ""}flex gap-2 text-sm text-zinc-400`}><Icon type="calendar" /><span>{selectedConcert.date}</span></div>
             </div>
-            <div className="mt-5 flex gap-3">
-              <button onClick={() => setSelectedConcert(null)} className="flex-1 rounded-2xl border border-zinc-700 px-5 py-3 font-black text-zinc-300 transition hover:border-zinc-500">Close</button>
-              <button onClick={() => { onEdit(selectedConcert); setSelectedConcert(null); }} className="flex-1 rounded-2xl bg-zinc-100 px-5 py-3 font-black text-zinc-950 transition hover:bg-white">Edit concert</button>
-            </div>
+            <button onClick={() => { onEdit(selectedConcert); setSelectedConcert(null); }} className="mt-5 w-full rounded-2xl bg-zinc-100 px-5 py-3 font-black text-zinc-950 transition hover:bg-white">Edit concert</button>
           </article>
         </div>
       )}
@@ -1340,6 +1338,7 @@ export default function App() {
   const [selectedVenue, setSelectedVenue] = useState(null);
   const [viewHistory, setViewHistory] = useState([]);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [statsMenuOpen, setStatsMenuOpen] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [editTarget, setEditTarget] = useState(null);
   const [contextMenu, setContextMenu] = useState({ open: false, x: 0, y: 0, target: null });
@@ -1548,11 +1547,16 @@ export default function App() {
             <button onClick={() => changePage("history")} className={`block w-full rounded-2xl px-4 py-3 text-left transition hover:bg-zinc-900 hover:text-zinc-100 ${["history", "artist", "timeline"].includes(activePage) ? "bg-zinc-900 text-zinc-100" : "text-zinc-400"}`}>Concert history</button>
             <button onClick={() => changePage("next")} className={`block w-full rounded-2xl px-4 py-3 text-left transition hover:bg-zinc-900 hover:text-zinc-100 ${activePage === "next" ? "bg-zinc-900 text-zinc-100" : "text-zinc-400"}`}>Concert calendar</button>
             <div className={`rounded-2xl px-2 py-2 ${activePage === "stats" || activePage === "year-review" ? "bg-zinc-900" : ""}`}>
-              <div className={`px-2 py-1 text-left font-bold ${activePage === "stats" || activePage === "year-review" ? "text-zinc-100" : "text-zinc-400"}`}>Stats</div>
-              <div className="mt-1 border-l border-zinc-800 pl-2">
-                <button onClick={() => changePage("stats")} className={`block w-full rounded-xl px-3 py-2 text-left text-xs transition hover:bg-zinc-800 hover:text-zinc-100 ${activePage === "stats" ? "bg-zinc-800 text-zinc-100" : "text-zinc-500"}`}>Archive overview</button>
-                <button onClick={() => changePage("year-review")} className={`mt-1 block w-full rounded-xl px-3 py-2 text-left text-xs transition hover:bg-zinc-800 hover:text-zinc-100 ${activePage === "year-review" ? "bg-zinc-800 text-zinc-100" : "text-zinc-500"}`}>Year in review</button>
-              </div>
+              <button onClick={() => setStatsMenuOpen((open) => !open)} className={`flex w-full items-center justify-between rounded-xl px-2 py-2 text-left font-bold transition hover:bg-zinc-800 hover:text-zinc-100 ${activePage === "stats" || activePage === "year-review" ? "text-zinc-100" : "text-zinc-400"}`} aria-expanded={statsMenuOpen}>
+                <span>Stats</span>
+                <i className={`fa-solid fa-chevron-down text-xs text-zinc-600 transition-transform ${statsMenuOpen ? "rotate-180" : ""}`} aria-hidden="true" />
+              </button>
+              {statsMenuOpen && (
+                <div className="mt-1 border-l border-zinc-800 pl-2">
+                  <button onClick={() => changePage("stats")} className={`block w-full rounded-xl px-3 py-2 text-left text-xs transition hover:bg-zinc-800 hover:text-zinc-100 ${activePage === "stats" ? "bg-zinc-800 text-zinc-100" : "text-zinc-500"}`}>Archive overview</button>
+                  <button onClick={() => changePage("year-review")} className={`mt-1 block w-full rounded-xl px-3 py-2 text-left text-xs transition hover:bg-zinc-800 hover:text-zinc-100 ${activePage === "year-review" ? "bg-zinc-800 text-zinc-100" : "text-zinc-500"}`}>Year in review</button>
+                </div>
+              )}
             </div>
           </nav>
         </div>
