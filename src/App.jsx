@@ -309,14 +309,14 @@ function SetlistModal({ target, onClose, onEdit, onIdDiscovered }) {
         </div>
 
         <div className="overflow-y-auto flex-1">
-          <section className="mb-5 rounded-2xl border border-zinc-800 bg-zinc-900 p-4">
-            <div className="text-[11px] font-bold uppercase tracking-widest text-zinc-500">Attended with</div>
-            {target.attendees?.length ? (
+          {target.attendees?.length > 0 && (
+            <section className="mb-5 rounded-2xl border border-zinc-800 bg-zinc-900 p-4">
+              <div className="text-[11px] font-bold uppercase tracking-widest text-zinc-500">Attended with</div>
               <div className="mt-3 flex flex-wrap gap-2">
                 {target.attendees.map((person) => <span key={person} className="rounded-full border border-zinc-700 bg-zinc-950 px-3 py-1 text-sm font-semibold text-zinc-200">{person}</span>)}
               </div>
-            ) : <p className="mt-2 text-sm text-zinc-500">Not specified</p>}
-          </section>
+            </section>
+          )}
           <h3 className="mb-3 text-xs font-bold uppercase tracking-widest text-zinc-500">Setlist</h3>
           {status === "loading" && (
             <div className="flex flex-col items-center justify-center py-12 gap-3">
@@ -613,6 +613,7 @@ function ConcertSortMenu({ value, onChange, compact = false }) {
 function NextConcertCalendar({ items, onOpen, onContextMenu, onContextMenuAt }) {
   const [monthPickerOpen, setMonthPickerOpen] = useState(false);
   const monthPickerRef = useRef(null);
+  const swipeStartRef = useRef(null);
   const datedItems = useMemo(
     () => items
       .map((concert) => {
@@ -678,7 +679,26 @@ function NextConcertCalendar({ items, onOpen, onContextMenu, onContextMenuAt }) 
         )}
       </div>
 
-      <div className="grid grid-cols-7 gap-1 md:gap-2">
+      <div
+        className="grid grid-cols-7 gap-1 md:gap-2"
+        style={{ touchAction: "pan-y" }}
+        onTouchStart={(event) => {
+          const touch = event.touches[0];
+          swipeStartRef.current = { x: touch.clientX, y: touch.clientY };
+        }}
+        onTouchEnd={(event) => {
+          const start = swipeStartRef.current;
+          swipeStartRef.current = null;
+          if (!start || !event.changedTouches[0]) return;
+          const touch = event.changedTouches[0];
+          const deltaX = touch.clientX - start.x;
+          const deltaY = touch.clientY - start.y;
+          if (Math.abs(deltaX) < 50 || Math.abs(deltaX) <= Math.abs(deltaY) * 1.25) return;
+          moveMonth(deltaX > 0 ? 1 : -1);
+          setMonthPickerOpen(false);
+        }}
+        onTouchCancel={() => { swipeStartRef.current = null; }}
+      >
         {weekdays.map((day) => <div key={day} className="pb-2 text-center text-[10px] font-bold uppercase text-zinc-600 md:text-xs">{day}</div>)}
         {Array.from({ length: leadingDays }).map((_, index) => <div key={`empty-${index}`} className="min-h-20 rounded-xl bg-zinc-950/30 md:min-h-32" />)}
         {Array.from({ length: daysInMonth }, (_, index) => {
@@ -693,7 +713,7 @@ function NextConcertCalendar({ items, onOpen, onContextMenu, onContextMenuAt }) 
                   <button
                     key={`${concert.source}-${concert.artist}-${concert.date}-${concert.show || ""}`}
                     onClick={(event) => {
-                      if (!event.currentTarget._adnLongPressed) onOpen(concert);
+                      if (!event.currentTarget._adnLongPressed && !event.currentTarget._adnTouchMoved) onOpen(concert);
                     }}
                     onContextMenu={(event) => onContextMenu(event, concert)}
                     onTouchStart={(event) => {

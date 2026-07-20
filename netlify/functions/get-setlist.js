@@ -1,4 +1,4 @@
-exports.handler = async function (event) {
+export async function handler(event) {
   if (event.httpMethod !== "POST") {
     return { statusCode: 405, body: "Method Not Allowed" };
   }
@@ -10,7 +10,14 @@ exports.handler = async function (event) {
     return { statusCode: 400, body: "Invalid JSON body" };
   }
 
-  const apiKey = process.env.SETLIST_API_KEY || "jAwJ271j9ZbVeXmzE7sH1CTKDxpGt378UqBw";
+  const apiKey = process.env.SETLIST_API_KEY;
+  if (!apiKey) {
+    return {
+      statusCode: 500,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ error: "Server is missing SETLIST_API_KEY." }),
+    };
+  }
 
   const headers = {
     "x-api-key": apiKey,
