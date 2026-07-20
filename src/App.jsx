@@ -156,6 +156,7 @@ function updateConcert(items, target, data) {
       date: data.date.trim(),
       bought: target.mode === "history" ? true : Boolean(data.bought),
       ...(data.setlistId?.trim() ? { setlistId: data.setlistId.trim() } : {}),
+      ...(data.attendees?.length ? { attendees: data.attendees } : {}),
     };
   });
 }
@@ -267,7 +268,7 @@ function AutoSuggestField({ value, onChange, suggestions, placeholder }) {
 
 // ─── SetlistModal ─────────────────────────────────────────────────────────────
 
-function SetlistModal({ target, onClose, onIdDiscovered }) {
+function SetlistModal({ target, onClose, onEdit, onIdDiscovered }) {
   const [state, setState] = useState({ status: "idle", data: null, error: null });
 
   useEffect(() => {
@@ -278,7 +279,7 @@ function SetlistModal({ target, onClose, onIdDiscovered }) {
         setState({ status: "ok", data, error: null });
         // If we found the setlist via search and the ID wasn't stored yet, save it back
         if (!target.setlistId && data.id && onIdDiscovered) {
-          onIdDiscovered(target.artist, target.show, data.id);
+          onIdDiscovered(target, data.id);
         }
       })
       .catch((err) => setState({ status: "error", data: null, error: err.message }));
@@ -287,9 +288,6 @@ function SetlistModal({ target, onClose, onIdDiscovered }) {
   if (!target) return null;
   const { artist, venue, date } = target;
   const { status, data, error } = state;
-
-  // Explicitly read top-level "url" from API response (not the nested per-song urls)
-  const setlistUrl = data?.url ?? null;
 
   let songs = [];
   if (data?.sets?.set) {
@@ -301,14 +299,25 @@ function SetlistModal({ target, onClose, onIdDiscovered }) {
       <div className="w-full max-w-lg rounded-3xl border border-zinc-700 bg-zinc-950 p-6 shadow-2xl max-h-[90vh] flex flex-col">
         <div className="mb-5 flex items-start justify-between gap-4 shrink-0">
           <div>
-            <h2 className="text-2xl font-black uppercase tracking-tight">Setlist</h2>
-            <p className="mt-1 text-sm text-zinc-400">{artist}{venue ? ` — ${venue}` : ""} ({date})</p>
-            {setlistUrl && <a href={setlistUrl} target="_blank" rel="noopener noreferrer" className="mt-1 inline-block text-xs text-zinc-600 hover:text-zinc-400 underline underline-offset-2">View on setlist.fm ↗</a>}
+            <h2 className="text-2xl font-black uppercase tracking-tight">{artist}</h2>
+            <p className="mt-1 text-sm text-zinc-400">{venue || "Venue not specified"} · {date}</p>
           </div>
-          <button type="button" onClick={onClose} className="rounded-full border border-zinc-700 px-3 py-1 text-sm text-zinc-300 hover:border-zinc-500 shrink-0">Close</button>
+          <div className="flex shrink-0 items-center gap-2">
+            <button type="button" onClick={() => onEdit(target)} className="flex h-8 w-8 items-center justify-center rounded-full border border-zinc-700 text-sm text-zinc-300 hover:border-zinc-500 hover:text-white" aria-label="Edit concert" title="Edit concert"><i className="fa-solid fa-pencil" aria-hidden="true" /></button>
+            <button type="button" onClick={onClose} className="rounded-full border border-zinc-700 px-3 py-1 text-sm text-zinc-300 hover:border-zinc-500">Close</button>
+          </div>
         </div>
 
         <div className="overflow-y-auto flex-1">
+          <section className="mb-5 rounded-2xl border border-zinc-800 bg-zinc-900 p-4">
+            <div className="text-[11px] font-bold uppercase tracking-widest text-zinc-500">Attended with</div>
+            {target.attendees?.length ? (
+              <div className="mt-3 flex flex-wrap gap-2">
+                {target.attendees.map((person) => <span key={person} className="rounded-full border border-zinc-700 bg-zinc-950 px-3 py-1 text-sm font-semibold text-zinc-200">{person}</span>)}
+              </div>
+            ) : <p className="mt-2 text-sm text-zinc-500">Not specified</p>}
+          </section>
+          <h3 className="mb-3 text-xs font-bold uppercase tracking-widest text-zinc-500">Setlist</h3>
           {status === "loading" && (
             <div className="flex flex-col items-center justify-center py-12 gap-3">
               <span className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-zinc-600 border-t-zinc-200" />
@@ -378,12 +387,13 @@ function ContextMenu({ open, x, y, onEdit, onDelete, onClose }) {
 
 // ─── EditConcertModal ─────────────────────────────────────────────────────────
 
-function EditConcertModal({ isOpen, mode, initial, onClose, onSave, onDelete, isSaving, saveError, artistSuggestions = [], venueSuggestions = [] }) {
+function EditConcertModal({ isOpen, mode, initial, onClose, onSave, isSaving, saveError, artistSuggestions = [], venueSuggestions = [] }) {
   const [artist, setArtist] = useState("");
   const [venue, setVenue] = useState("");
   const [date, setDate] = useState("");
   const [bought, setBought] = useState(false);
   const [setlistId, setSetlistId] = useState("");
+  const [attendees, setAttendees] = useState("");
 
   useEffect(() => {
     if (isOpen && initial) {
@@ -392,6 +402,7 @@ function EditConcertModal({ isOpen, mode, initial, onClose, onSave, onDelete, is
       setDate(initial.date || "");
       setBought(!!initial.bought);
       setSetlistId(initial.setlistId || "");
+      setAttendees((initial.attendees || []).join(", "));
     }
   }, [isOpen, initial]);
 
@@ -401,7 +412,14 @@ function EditConcertModal({ isOpen, mode, initial, onClose, onSave, onDelete, is
   function submit() {
     if (!artist.trim() || !date.trim()) return;
     if (!isNextMode && !venue.trim()) return;
-    onSave({ artist: artist.trim(), venue: venue.trim(), date: date.trim(), bought, setlistId: setlistId.trim() });
+    onSave({
+      artist: artist.trim(),
+      venue: venue.trim(),
+      date: date.trim(),
+      bought,
+      setlistId: setlistId.trim(),
+      attendees: [...new Set(attendees.split(",").map((name) => name.trim()).filter(Boolean))],
+    });
   }
 
   return (
@@ -427,6 +445,11 @@ function EditConcertModal({ isOpen, mode, initial, onClose, onSave, onDelete, is
             <span className="mb-2 block text-xs font-bold uppercase tracking-widest text-zinc-500">Date</span>
             <input type="text" value={date} onChange={(e) => setDate(e.target.value)} placeholder="DD/MM/YYYY" className="w-full rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-zinc-100 outline-none focus:border-zinc-400" />
           </label>
+          <label className="block">
+            <span className="mb-2 block text-xs font-bold uppercase tracking-widest text-zinc-500">Attended with <span className="normal-case tracking-normal text-zinc-600">(optional)</span></span>
+            <input type="text" value={attendees} onChange={(e) => setAttendees(e.target.value)} placeholder="Attendee" className="w-full rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-zinc-100 outline-none focus:border-zinc-400" />
+            <span className="mt-1 block text-xs text-zinc-600">Separate multiple names with commas.</span>
+          </label>
           {isNextMode && (
             <label className="flex items-center gap-3 rounded-2xl border border-zinc-800 bg-zinc-900 px-4 py-3 text-sm text-zinc-300">
               <input type="checkbox" checked={bought} onChange={(e) => setBought(e.target.checked)} />
@@ -434,10 +457,7 @@ function EditConcertModal({ isOpen, mode, initial, onClose, onSave, onDelete, is
             </label>
           )}
         </div>
-        <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-          <button onClick={submit} disabled={isSaving} className="flex-1 rounded-2xl bg-zinc-100 px-5 py-3 font-black text-zinc-950 transition hover:bg-white disabled:opacity-50">{isSaving ? "Saving..." : "Save changes"}</button>
-          <button type="button" onClick={onDelete} disabled={isSaving} className="rounded-2xl border border-red-900 bg-red-950/40 px-5 py-3 font-black text-red-200 transition hover:bg-red-950/60 disabled:opacity-50">Delete</button>
-        </div>
+        <button onClick={submit} disabled={isSaving} className="mt-6 w-full rounded-2xl bg-zinc-100 px-5 py-3 font-black text-zinc-950 transition hover:bg-white disabled:opacity-50">{isSaving ? "Saving..." : "Save changes"}</button>
         {saveError && <div className="mt-3 rounded-2xl border border-red-900 bg-red-950/40 px-4 py-3 text-sm text-red-200">{saveError}</div>}
       </div>
     </div>
@@ -451,6 +471,7 @@ function AddConcertModal({ isOpen, mode, onClose, onSave, isSaving, saveError, a
   const [venue, setVenue] = useState("");
   const [date, setDate] = useState("");
   const [bought, setBought] = useState(false);
+  const [attendees, setAttendees] = useState("");
 
   if (!isOpen) return null;
   const isNextMode = mode === "next";
@@ -458,7 +479,7 @@ function AddConcertModal({ isOpen, mode, onClose, onSave, isSaving, saveError, a
   function submit() {
     if (!artist.trim() || !date.trim()) return;
     if (!isNextMode && !venue.trim()) return;
-    onSave({ artist, venue, date, bought });
+    onSave({ artist, venue, date, bought, attendees: [...new Set(attendees.split(",").map((name) => name.trim()).filter(Boolean))] });
   }
 
   return (
@@ -483,6 +504,11 @@ function AddConcertModal({ isOpen, mode, onClose, onSave, isSaving, saveError, a
           <label className="block">
             <span className="mb-2 block text-xs font-bold uppercase tracking-widest text-zinc-500">Date</span>
             <input type="text" value={date} onChange={(e) => setDate(e.target.value)} placeholder="DD/MM/YYYY" className="w-full rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-zinc-100 outline-none focus:border-zinc-400" />
+          </label>
+          <label className="block">
+            <span className="mb-2 block text-xs font-bold uppercase tracking-widest text-zinc-500">Attended with <span className="normal-case tracking-normal text-zinc-600">(optional)</span></span>
+            <input type="text" value={attendees} onChange={(e) => setAttendees(e.target.value)} placeholder="Attendee" className="w-full rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-zinc-100 outline-none focus:border-zinc-400" />
+            <span className="mt-1 block text-xs text-zinc-600">Separate multiple names with commas.</span>
           </label>
           {isNextMode && (
             <label className="flex items-center gap-3 rounded-2xl border border-zinc-800 bg-zinc-900 px-4 py-3 text-sm text-zinc-300">
@@ -584,8 +610,7 @@ function ConcertSortMenu({ value, onChange, compact = false }) {
   );
 }
 
-function NextConcertCalendar({ items, onEdit }) {
-  const [selectedConcert, setSelectedConcert] = useState(null);
+function NextConcertCalendar({ items, onOpen, onContextMenu, onContextMenuAt }) {
   const [monthPickerOpen, setMonthPickerOpen] = useState(false);
   const monthPickerRef = useRef(null);
   const datedItems = useMemo(
@@ -667,7 +692,35 @@ function NextConcertCalendar({ items, onEdit }) {
                 {concerts.map((concert) => (
                   <button
                     key={`${concert.source}-${concert.artist}-${concert.date}-${concert.show || ""}`}
-                    onClick={() => setSelectedConcert(concert)}
+                    onClick={(event) => {
+                      if (!event.currentTarget._adnLongPressed) onOpen(concert);
+                    }}
+                    onContextMenu={(event) => onContextMenu(event, concert)}
+                    onTouchStart={(event) => {
+                      const touch = event.touches[0];
+                      const button = event.currentTarget;
+                      button._adnTouchMoved = false;
+                      button._adnTouchTimer = setTimeout(() => {
+                        if (!button._adnTouchMoved) {
+                          button._adnLongPressed = true;
+                          if (navigator.vibrate) navigator.vibrate(20);
+                          onContextMenuAt(touch.clientX, touch.clientY, concert);
+                        }
+                      }, 500);
+                    }}
+                    onTouchMove={(event) => {
+                      event.currentTarget._adnTouchMoved = true;
+                      clearTimeout(event.currentTarget._adnTouchTimer);
+                    }}
+                    onTouchEnd={(event) => {
+                      const button = event.currentTarget;
+                      clearTimeout(button._adnTouchTimer);
+                      setTimeout(() => { button._adnLongPressed = false; }, 400);
+                    }}
+                    onTouchCancel={(event) => {
+                      clearTimeout(event.currentTarget._adnTouchTimer);
+                      event.currentTarget._adnLongPressed = false;
+                    }}
                     className={`block w-full overflow-hidden rounded-md border px-1.5 py-1 text-left text-[8px] font-bold leading-tight text-zinc-100 transition hover:brightness-110 md:rounded-lg md:px-2 md:py-1.5 md:text-[11px] ${concert.isPast ? "border-blue-700 bg-blue-950" : concert.bought ? "border-emerald-700 bg-emerald-900" : "border-amber-700 bg-amber-950"}`}
                     title={`${concert.artist} — ${concert.date}${concert.venue ? ` — ${concert.venue}` : ""}`}
                   >
@@ -687,25 +740,32 @@ function NextConcertCalendar({ items, onEdit }) {
         <span className="flex items-center gap-2"><span className="h-3 w-3 rounded-sm border border-amber-700 bg-amber-950" /> Not bought</span>
       </div>
 
-      {selectedConcert && (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/75 px-4" onClick={() => setSelectedConcert(null)}>
-          <article className="w-full max-w-md rounded-3xl border border-zinc-700 bg-zinc-900 p-5 shadow-2xl" onClick={(event) => event.stopPropagation()}>
-            <div className="flex items-start justify-between gap-4 border-b border-zinc-800 pb-4">
-              <h2 className="min-w-0 break-words text-2xl font-black uppercase leading-none tracking-tight text-zinc-100">{selectedConcert.artist}</h2>
-              <button type="button" onClick={() => setSelectedConcert(null)} className="shrink-0 rounded-full border border-zinc-700 px-3 py-1 text-sm text-zinc-300 transition hover:border-zinc-500">Close</button>
-            </div>
-            <span className={`mt-4 inline-flex rounded-full border px-3 py-1 text-xs font-bold text-zinc-100 ${selectedConcert.isPast ? "border-blue-800 bg-blue-950" : selectedConcert.bought ? "border-emerald-800 bg-emerald-950" : "border-amber-800 bg-amber-950"}`}>
-              {selectedConcert.isPast ? "History" : selectedConcert.bought ? "Bought" : "Not bought"}
-            </span>
-            <div className="mt-3 rounded-2xl bg-zinc-950 p-4">
-              {selectedConcert.venue && <div className="flex gap-2 text-sm font-semibold text-zinc-100"><Icon type="map" /><span className="break-words">{selectedConcert.venue}</span></div>}
-              <div className={`${selectedConcert.venue ? "mt-2 " : ""}flex gap-2 text-sm text-zinc-400`}><Icon type="calendar" /><span>{selectedConcert.date}</span></div>
-            </div>
-            <button onClick={() => { onEdit(selectedConcert); setSelectedConcert(null); }} className="mt-5 w-full rounded-2xl bg-zinc-100 px-5 py-3 font-black text-zinc-950 transition hover:bg-white">Edit concert</button>
-          </article>
-        </div>
-      )}
     </section>
+  );
+}
+
+function CalendarConcertModal({ target, onClose, onEdit }) {
+  if (!target) return null;
+  const isPast = isPastConcert(target);
+  return (
+    <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/75 px-4" onClick={onClose}>
+      <article className="w-full max-w-md rounded-3xl border border-zinc-700 bg-zinc-900 p-5 shadow-2xl" onClick={(event) => event.stopPropagation()}>
+        <div className="flex items-start justify-between gap-4 border-b border-zinc-800 pb-4">
+          <h2 className="min-w-0 break-words text-2xl font-black uppercase leading-none tracking-tight text-zinc-100">{target.artist}</h2>
+          <div className="flex shrink-0 items-center gap-2">
+            <button type="button" onClick={() => onEdit(target)} className="flex h-8 w-8 items-center justify-center rounded-full border border-zinc-700 text-sm text-zinc-300 transition hover:border-zinc-500 hover:text-white" aria-label="Edit concert" title="Edit concert"><i className="fa-solid fa-pencil" aria-hidden="true" /></button>
+            <button type="button" onClick={onClose} className="rounded-full border border-zinc-700 px-3 py-1 text-sm text-zinc-300 transition hover:border-zinc-500">Close</button>
+          </div>
+        </div>
+        <span className={`mt-4 inline-flex rounded-full border px-3 py-1 text-xs font-bold text-zinc-100 ${isPast ? "border-blue-800 bg-blue-950" : target.bought ? "border-emerald-800 bg-emerald-950" : "border-amber-800 bg-amber-950"}`}>
+          {isPast ? "History" : target.bought ? "Bought" : "Not bought"}
+        </span>
+        <div className="mt-3 rounded-2xl bg-zinc-950 p-4">
+          {target.venue && <div className="flex gap-2 text-sm font-semibold text-zinc-100"><Icon type="map" /><span className="break-words">{target.venue}</span></div>}
+          <div className={`${target.venue ? "mt-2 " : ""}flex gap-2 text-sm text-zinc-400`}><Icon type="calendar" /><span>{target.date}</span></div>
+        </div>
+      </article>
+    </div>
   );
 }
 
@@ -1485,10 +1545,14 @@ export default function App() {
   const [editTarget, setEditTarget] = useState(null);
   const [contextMenu, setContextMenu] = useState({ open: false, x: 0, y: 0, target: null });
   const [setlistTarget, setSetlistTarget] = useState(null);
+  const [calendarTarget, setCalendarTarget] = useState(null);
   const [concertItems, setConcertItems] = useState(fallbackConcerts);
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
   const [confirmDelete, setConfirmDelete] = useState(null);
+  const dialogHistoryOpenRef = useRef(false);
+  const closingDialogWithBackRef = useRef(false);
+  const anyDialogOpen = modalOpen || Boolean(editTarget) || Boolean(setlistTarget) || Boolean(calendarTarget) || Boolean(confirmDelete);
 
   const isNext = activePage === "next";
   const isStats = activePage === "stats";
@@ -1563,6 +1627,16 @@ export default function App() {
     window.history.replaceState({ adnRoute: true, canGoBack: false }, "", routeToHash(initial));
 
     function restoreRoute() {
+      if (dialogHistoryOpenRef.current || closingDialogWithBackRef.current) {
+        dialogHistoryOpenRef.current = false;
+        closingDialogWithBackRef.current = false;
+        setModalOpen(false);
+        setEditTarget(null);
+        setSetlistTarget(null);
+        setCalendarTarget(null);
+        setConfirmDelete(null);
+        return;
+      }
       const route = readRouteFromHash();
       setActivePage(route.page);
       setSelectedArtist(route.artist);
@@ -1579,6 +1653,21 @@ export default function App() {
       window.removeEventListener("hashchange", restoreRoute);
     };
   }, []);
+
+  useEffect(() => {
+    if (anyDialogOpen && !dialogHistoryOpenRef.current) {
+      window.history.pushState({ ...window.history.state, adnModal: true }, "", window.location.href);
+      dialogHistoryOpenRef.current = true;
+      return;
+    }
+    if (!anyDialogOpen && dialogHistoryOpenRef.current) {
+      dialogHistoryOpenRef.current = false;
+      if (window.history.state?.adnModal) {
+        closingDialogWithBackRef.current = true;
+        window.history.back();
+      }
+    }
+  }, [anyDialogOpen]);
 
   if (!unlocked) return <LoginGate onUnlock={handleUnlock} />;
 
@@ -1604,6 +1693,16 @@ export default function App() {
     if (window.history.state?.canGoBack) window.history.back();
     else changePage("history");
   }
+  function openConcertDetails(target) {
+    const storedConcert = concertItems.find((concert) => concertMatches(concert, target));
+    setSetlistTarget({
+      ...target,
+      mode: isPastConcert(storedConcert || target) ? "history" : "next",
+      bought: storedConcert?.bought ?? target.bought,
+      attendees: storedConcert?.attendees || [],
+      setlistId: storedConcert?.setlistId || target.setlistId || "",
+    });
+  }
 
   async function handleAddConcert(data) {
     setIsSaving(true); setSaveError("");
@@ -1613,6 +1712,7 @@ export default function App() {
         venue: data.venue?.trim() || "",
         date: data.date.trim(),
         bought: isNext ? Boolean(data.bought) : true,
+        ...(data.attendees?.length ? { attendees: data.attendees } : {}),
       };
       const updatedConcerts = [...concertItems, newConcert];
       await saveToGitHub({ concerts: updatedConcerts }, `Add concert: ${data.artist}${data.venue ? " — " + data.venue : ""} (${data.date})`);
@@ -1634,26 +1734,14 @@ export default function App() {
     finally { setIsSaving(false); }
   }
 
-  async function handleDeleteConcert() {
-    if (!editTarget) return;
-    setIsSaving(true); setSaveError("");
-    try {
-      const updatedConcerts = removeConcert(concertItems, editTarget);
-      await saveToGitHub({ concerts: updatedConcerts }, `Delete concert: ${editTarget.artist}${editTarget.venue ? " — " + editTarget.venue : ""} (${editTarget.date})`);
-      setConcertItems(updatedConcerts);
-      setEditTarget(null);
-    } catch (e) { setSaveError(e.message || "Could not delete concert"); }
-    finally { setIsSaving(false); }
-  }
-
   function openContextMenu(e, target) { e.preventDefault(); if (isSaving) return; setContextMenu({ open: true, x: e.clientX, y: e.clientY, target }); }
   function openContextMenuAt(x, y, target) { if (isSaving) return; setContextMenu({ open: true, x, y, target }); }
   function closeContextMenu() { setContextMenu({ open: false, x: 0, y: 0, target: null }); }
 
   function startEditFromContext() {
     const t = contextMenu.target; closeContextMenu(); if (!t) return;
-    if (t.mode === "next") setEditTarget({ mode: "next", artist: t.artist, date: t.date, bought: t.bought, venue: t.venue || "" });
-    else setEditTarget({ mode: "history", artist: t.artist, show: t.show, venue: t.venue, date: t.date, setlistId: t.setlistId || "" });
+    if (t.mode === "next") setEditTarget({ mode: "next", artist: t.artist, date: t.date, bought: t.bought, venue: t.venue || "", attendees: t.attendees || [], setlistId: t.setlistId || "" });
+    else setEditTarget({ mode: "history", artist: t.artist, show: t.show, venue: t.venue, date: t.date, setlistId: t.setlistId || "", attendees: t.attendees || [] });
   }
 
   function deleteFromContext() {
@@ -1661,8 +1749,8 @@ export default function App() {
     setConfirmDelete(t);
   }
 
-  async function handleSetlistIdDiscovered(artist, show, discoveredId) {
-    const { venue, date } = parseShow(show, "history");
+  async function handleSetlistIdDiscovered(target, discoveredId) {
+    const { artist, venue, date } = target;
     let updated = false;
     const updatedConcerts = concertItems.map((concert) => {
       if (updated || !concertMatches(concert, { artist, venue, date })) return concert;
@@ -1728,14 +1816,14 @@ export default function App() {
             historyItems={historyItems}
             onBack={goBackFromDetail}
             onOpenArtist={openArtistDetail}
-            onOpenSetlist={setSetlistTarget}
+            onOpenSetlist={openConcertDetails}
           />
         ) : isArtistDetail ? (
           <ArtistDetailPage
             item={artistDetail}
             upcoming={artistUpcoming}
             onBack={goBackFromDetail}
-            onOpenSetlist={setSetlistTarget}
+            onOpenSetlist={openConcertDetails}
             onOpenVenue={openVenueDetail}
           />
         ) : isTimeline ? (
@@ -1743,14 +1831,14 @@ export default function App() {
             historyItems={historyItems}
             onBack={() => changePage("history")}
             onOpenArtist={openArtistDetail}
-            onOpenSetlist={setSetlistTarget}
+            onOpenSetlist={openConcertDetails}
             onOpenVenue={openVenueDetail}
           />
         ) : isYearReview ? (
           <YearInReviewPage
             historyItems={historyItems}
             onOpenArtist={openArtistDetail}
-            onOpenSetlist={setSetlistTarget}
+            onOpenSetlist={openConcertDetails}
             onOpenVenue={openVenueDetail}
           />
         ) : isStats ? <StatsPage historyItems={historyItems} onOpenVenue={openVenueDetail} /> : (
@@ -1795,10 +1883,9 @@ export default function App() {
             {isNext ? (
               <NextConcertCalendar
                 items={calendarItems}
-                onEdit={(concert) => setEditTarget(concert.source === "history"
-                  ? { mode: "history", artist: concert.artist, show: concert.show, venue: concert.venue, date: concert.date, setlistId: concert.setlistId || "" }
-                  : { mode: "next", artist: concert.artist, date: concert.date, bought: concert.bought, venue: concert.venue || "" }
-                )}
+                onOpen={(concert) => setCalendarTarget({ ...concert, mode: concert.source === "history" ? "history" : "next" })}
+                onContextMenu={(event, concert) => openContextMenu(event, { ...concert, mode: concert.source === "history" ? "history" : "next" })}
+                onContextMenuAt={(x, y, concert) => openContextMenuAt(x, y, { ...concert, mode: concert.source === "history" ? "history" : "next" })}
               />
             ) : (
             <section className="grid w-full gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -1824,31 +1911,25 @@ export default function App() {
                       const target = isNext
                         ? { mode: "next", artist: item.artist, date: item.date, bought: item.bought, venue: item.venue || "" }
                         : { mode: "history", artist: item.artist, show, venue, date, setlistId };
-                      let touchTimer = null, touchMoved = false;
+                      const storedConcert = concertItems.find((concert) => concertMatches(concert, target));
+                      const concertTarget = { ...target, attendees: storedConcert?.attendees || [], setlistId: storedConcert?.setlistId || setlistId };
+                      let touchTimer = null, touchMoved = false, longPressed = false;
                       return (
                         <div
                           key={`${item.artist}-${show}`}
                           className="select-none rounded-2xl bg-zinc-950 p-4 transition hover:bg-zinc-900"
-                          onContextMenu={(e) => openContextMenu(e, target)}
-                          onTouchStart={(e) => { touchMoved = false; const t = e.touches[0]; const sx = t.clientX, sy = t.clientY; touchTimer = setTimeout(() => { if (!touchMoved) { if (navigator.vibrate) navigator.vibrate(20); openContextMenuAt(sx, sy, target); } }, 500); }}
+                          onClick={() => { if (!longPressed) openConcertDetails(concertTarget); }}
+                          onContextMenu={(e) => openContextMenu(e, concertTarget)}
+                          onTouchStart={(e) => { touchMoved = false; longPressed = false; const t = e.touches[0]; const sx = t.clientX, sy = t.clientY; touchTimer = setTimeout(() => { if (!touchMoved) { longPressed = true; if (navigator.vibrate) navigator.vibrate(20); openContextMenuAt(sx, sy, concertTarget); } }, 500); }}
                           onTouchMove={() => { touchMoved = true; if (touchTimer) { clearTimeout(touchTimer); touchTimer = null; } }}
-                          onTouchEnd={() => { if (touchTimer) { clearTimeout(touchTimer); touchTimer = null; } }}
+                          onTouchEnd={() => { if (touchTimer) { clearTimeout(touchTimer); touchTimer = null; } setTimeout(() => { longPressed = false; }, 400); }}
                           onTouchCancel={() => { if (touchTimer) { clearTimeout(touchTimer); touchTimer = null; } }}
                           style={{ WebkitTouchCallout: "none" }}
                         >
                           <div className="space-y-2">
-                            {!isNext && <div className="flex gap-2 text-sm font-semibold text-zinc-100"><Icon type="map" /><button onClick={() => openVenueDetail(venue)} className="truncate text-left hover:underline hover:decoration-zinc-600 hover:underline-offset-4">{venue}</button></div>}
+                            {!isNext && <div className="flex gap-2 text-sm font-semibold text-zinc-100"><Icon type="map" /><button onClick={(event) => { event.stopPropagation(); openVenueDetail(venue); }} className="truncate text-left hover:underline hover:decoration-zinc-600 hover:underline-offset-4">{venue}</button></div>}
                             {isNext && item.venue && <div className="flex gap-2 text-sm font-semibold text-zinc-100"><Icon type="map" /><span className="truncate">{item.venue}</span></div>}
                             <div className="flex gap-2 text-sm text-zinc-400"><Icon type="calendar" /><span>{date}</span></div>
-                            {!isNext && (
-                              <button
-                                onClick={(e) => { e.stopPropagation(); setSetlistTarget({ artist: item.artist, venue, date, setlistId, show }); }}
-                                className="flex items-center gap-2 text-sm text-zinc-500 hover:text-zinc-300 transition group/sl"
-                              >
-                                <Icon type="music" />
-                                <span className="font-semibold">Setlist</span>
-                              </button>
-                            )}
                           </div>
                         </div>
                       );
@@ -1892,9 +1973,19 @@ export default function App() {
       )}
 
       <AddConcertModal isOpen={modalOpen} mode={mode} onClose={() => setModalOpen(false)} onSave={handleAddConcert} isSaving={isSaving} saveError={saveError} artistSuggestions={artistSuggestions} venueSuggestions={venueSuggestions} />
-      <EditConcertModal isOpen={!!editTarget} mode={editTarget?.mode || mode} initial={editTarget} onClose={() => setEditTarget(null)} onSave={handleEditConcert} onDelete={handleDeleteConcert} isSaving={isSaving} saveError={saveError} artistSuggestions={artistSuggestions} venueSuggestions={venueSuggestions} />
+      <EditConcertModal isOpen={!!editTarget} mode={editTarget?.mode || mode} initial={editTarget} onClose={() => setEditTarget(null)} onSave={handleEditConcert} isSaving={isSaving} saveError={saveError} artistSuggestions={artistSuggestions} venueSuggestions={venueSuggestions} />
       <ContextMenu open={contextMenu.open} x={contextMenu.x} y={contextMenu.y} onEdit={startEditFromContext} onDelete={deleteFromContext} onClose={closeContextMenu} />
-      <SetlistModal target={setlistTarget} onClose={() => setSetlistTarget(null)} onIdDiscovered={handleSetlistIdDiscovered} />
+      <SetlistModal
+        target={setlistTarget}
+        onClose={() => setSetlistTarget(null)}
+        onEdit={(target) => { setSetlistTarget(null); setEditTarget(target); }}
+        onIdDiscovered={handleSetlistIdDiscovered}
+      />
+      <CalendarConcertModal
+        target={calendarTarget}
+        onClose={() => setCalendarTarget(null)}
+        onEdit={(target) => { setCalendarTarget(null); setEditTarget(target); }}
+      />
     </main>
   );
 }
