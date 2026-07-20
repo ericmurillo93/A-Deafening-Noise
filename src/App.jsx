@@ -628,6 +628,12 @@ function NextConcertCalendar({ items, onOpen, onContextMenu, onContextMenuAt }) 
     [items]
   );
   const [visibleMonth, setVisibleMonth] = useState(() => {
+    const savedMonth = localStorage.getItem("adn_calendar_month");
+    const match = savedMonth?.match(/^(\d{4})-(\d{1,2})$/);
+    if (match) {
+      const saved = new Date(Number(match[1]), Number(match[2]) - 1, 1);
+      if (!Number.isNaN(saved.getTime())) return saved;
+    }
     const today = new Date();
     return new Date(today.getFullYear(), today.getMonth(), 1);
   });
@@ -637,6 +643,10 @@ function NextConcertCalendar({ items, onOpen, onContextMenu, onContextMenuAt }) 
   const leadingDays = (new Date(year, month, 1).getDay() + 6) % 7;
   const monthLabel = new Intl.DateTimeFormat("en", { month: "long", year: "numeric" }).format(visibleMonth);
   const weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+  useEffect(() => {
+    localStorage.setItem("adn_calendar_month", `${visibleMonth.getFullYear()}-${visibleMonth.getMonth() + 1}`);
+  }, [visibleMonth]);
 
   useEffect(() => {
     if (!monthPickerOpen) return undefined;
