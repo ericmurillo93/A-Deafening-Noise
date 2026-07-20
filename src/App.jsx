@@ -612,6 +612,7 @@ function ConcertSortMenu({ value, onChange, compact = false }) {
 
 function NextConcertCalendar({ items, onOpen, onContextMenu, onContextMenuAt }) {
   const [monthPickerOpen, setMonthPickerOpen] = useState(false);
+  const [selectedDay, setSelectedDay] = useState(null);
   const monthPickerRef = useRef(null);
   const swipeStartRef = useRef(null);
   const datedItems = useMemo(
@@ -648,6 +649,43 @@ function NextConcertCalendar({ items, onOpen, onContextMenu, onContextMenuAt }) 
 
   function moveMonth(offset) {
     setVisibleMonth((current) => new Date(current.getFullYear(), current.getMonth() + offset, 1));
+    setSelectedDay(null);
+  }
+
+  function eventInteractionProps(concert) {
+    return {
+      onClick(event) {
+        if (!event.currentTarget._adnLongPressed && !event.currentTarget._adnTouchMoved) onOpen(concert);
+      },
+      onContextMenu(event) {
+        onContextMenu(event, concert);
+      },
+      onTouchStart(event) {
+        const touch = event.touches[0];
+        const button = event.currentTarget;
+        button._adnTouchMoved = false;
+        button._adnTouchTimer = setTimeout(() => {
+          if (!button._adnTouchMoved) {
+            button._adnLongPressed = true;
+            if (navigator.vibrate) navigator.vibrate(20);
+            onContextMenuAt(touch.clientX, touch.clientY, concert);
+          }
+        }, 500);
+      },
+      onTouchMove(event) {
+        event.currentTarget._adnTouchMoved = true;
+        clearTimeout(event.currentTarget._adnTouchTimer);
+      },
+      onTouchEnd(event) {
+        const button = event.currentTarget;
+        clearTimeout(button._adnTouchTimer);
+        setTimeout(() => { button._adnLongPressed = false; }, 400);
+      },
+      onTouchCancel(event) {
+        clearTimeout(event.currentTarget._adnTouchTimer);
+        event.currentTarget._adnLongPressed = false;
+      },
+    };
   }
 
   return (
@@ -694,7 +732,7 @@ function NextConcertCalendar({ items, onOpen, onContextMenu, onContextMenuAt }) 
           const deltaX = touch.clientX - start.x;
           const deltaY = touch.clientY - start.y;
           if (Math.abs(deltaX) < 50 || Math.abs(deltaX) <= Math.abs(deltaY) * 1.25) return;
-          moveMonth(deltaX > 0 ? 1 : -1);
+          moveMonth(deltaX > 0 ? -1 : 1);
           setMonthPickerOpen(false);
         }}
         onTouchCancel={() => { swipeStartRef.current = null; }}
@@ -706,41 +744,21 @@ function NextConcertCalendar({ items, onOpen, onContextMenu, onContextMenuAt }) 
           const calendarDay = new Date(year, month, day);
           const concerts = datedItems.filter(({ range }) => calendarDay >= range.start && calendarDay <= range.end);
           return (
-            <div key={day} className={`min-h-20 rounded-xl border p-1.5 md:min-h-32 md:rounded-2xl md:p-2 ${concerts.length ? "border-zinc-700 bg-zinc-950" : "border-zinc-800/60 bg-zinc-950/40"}`}>
+            <div key={day} onClick={() => concerts.length && setSelectedDay({ date: calendarDay, concerts })} className={`h-20 overflow-hidden rounded-xl border p-1.5 md:h-auto md:min-h-32 md:overflow-visible md:rounded-2xl md:p-2 ${concerts.length ? "cursor-pointer border-zinc-700 bg-zinc-950" : "border-zinc-800/60 bg-zinc-950/40"}`}>
               <div className="mb-1 text-right text-[10px] font-bold text-zinc-600 md:text-xs">{day}</div>
-              <div className="space-y-1">
+              {concerts.length > 0 && (
+                <div className="md:hidden">
+                  <div className={`truncate rounded-md border px-1 py-1 text-center text-[8px] font-bold text-zinc-100 ${concerts.some((concert) => concert.isPast) ? "border-blue-700 bg-blue-950" : concerts.some((concert) => concert.bought) ? "border-emerald-700 bg-emerald-900" : "border-amber-700 bg-amber-950"}`}>
+                    {concerts.length === 1 ? concerts[0].artist : `${concerts.length} shows`}
+                  </div>
+                </div>
+              )}
+              <div className="hidden space-y-1 md:block">
                 {concerts.map((concert) => (
                   <button
                     key={`${concert.source}-${concert.artist}-${concert.date}-${concert.show || ""}`}
-                    onClick={(event) => {
-                      if (!event.currentTarget._adnLongPressed && !event.currentTarget._adnTouchMoved) onOpen(concert);
-                    }}
-                    onContextMenu={(event) => onContextMenu(event, concert)}
-                    onTouchStart={(event) => {
-                      const touch = event.touches[0];
-                      const button = event.currentTarget;
-                      button._adnTouchMoved = false;
-                      button._adnTouchTimer = setTimeout(() => {
-                        if (!button._adnTouchMoved) {
-                          button._adnLongPressed = true;
-                          if (navigator.vibrate) navigator.vibrate(20);
-                          onContextMenuAt(touch.clientX, touch.clientY, concert);
-                        }
-                      }, 500);
-                    }}
-                    onTouchMove={(event) => {
-                      event.currentTarget._adnTouchMoved = true;
-                      clearTimeout(event.currentTarget._adnTouchTimer);
-                    }}
-                    onTouchEnd={(event) => {
-                      const button = event.currentTarget;
-                      clearTimeout(button._adnTouchTimer);
-                      setTimeout(() => { button._adnLongPressed = false; }, 400);
-                    }}
-                    onTouchCancel={(event) => {
-                      clearTimeout(event.currentTarget._adnTouchTimer);
-                      event.currentTarget._adnLongPressed = false;
-                    }}
+                    {...eventInteractionProps(concert)}
+                    onClick={(event) => { event.stopPropagation(); eventInteractionProps(concert).onClick(event); }}
                     className={`block w-full overflow-hidden rounded-md border px-1.5 py-1 text-left text-[8px] font-bold leading-tight text-zinc-100 transition hover:brightness-110 md:rounded-lg md:px-2 md:py-1.5 md:text-[11px] ${concert.isPast ? "border-blue-700 bg-blue-950" : concert.bought ? "border-emerald-700 bg-emerald-900" : "border-amber-700 bg-amber-950"}`}
                     title={`${concert.artist} — ${concert.date}${concert.venue ? ` — ${concert.venue}` : ""}`}
                   >
@@ -753,6 +771,29 @@ function NextConcertCalendar({ items, onOpen, onContextMenu, onContextMenuAt }) 
           );
         })}
       </div>
+
+      {selectedDay && (
+        <section className="mt-4 rounded-2xl border border-zinc-700 bg-zinc-950 p-4 md:hidden">
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <h3 className="text-sm font-black uppercase tracking-tight text-zinc-100">
+              {new Intl.DateTimeFormat("en", { weekday: "short", day: "numeric", month: "short" }).format(selectedDay.date)}
+            </h3>
+            <span className="text-xs font-semibold text-zinc-500">{selectedDay.concerts.length} {selectedDay.concerts.length === 1 ? "concert" : "concerts"}</span>
+          </div>
+          <div className="space-y-2">
+            {selectedDay.concerts.map((concert) => (
+              <button
+                key={`agenda-${concert.source}-${concert.artist}-${concert.date}-${concert.show || concert.venue || ""}`}
+                {...eventInteractionProps(concert)}
+                className={`block w-full rounded-xl border px-3 py-2.5 text-left text-sm font-bold text-zinc-100 transition hover:brightness-110 ${concert.isPast ? "border-blue-700 bg-blue-950" : concert.bought ? "border-emerald-700 bg-emerald-900" : "border-amber-700 bg-amber-950"}`}
+              >
+                <span className="block">{concert.artist}</span>
+                {concert.venue && <span className="mt-0.5 block truncate text-xs font-medium opacity-60">{concert.venue}</span>}
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
 
       <div className="mt-5 flex flex-wrap items-center justify-center gap-4 text-xs text-zinc-500">
         <span className="flex items-center gap-2"><span className="h-3 w-3 rounded-sm border border-blue-700 bg-blue-950" /> History</span>
