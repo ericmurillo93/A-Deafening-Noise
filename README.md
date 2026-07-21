@@ -1,69 +1,65 @@
 # A Deafening Noise
 
-A personal concert archive built with React, Vite and Tailwind CSS.
+A private, password-protected concert archive built with React, Vite and Tailwind CSS.
 
-## Features
+It provides:
 
-- Searchable concert history
-- Upcoming concerts view
-- Ticket status filter for upcoming concerts
-- Add concert modal
-- Hidden sidebar menu
-- External links to Discogs and Spotify
-- Netlify-ready deployment configuration
+- searchable concert history, artist and venue detail pages;
+- a timeline, lifetime statistics, year reviews, and geographic views;
+- an upcoming-concert calendar with bought and unpurchased states;
+- concert details, attendees, setlist.fm integration, and calendar export;
+- automated concert suggestions from Resurrection Fest Route, Live Nation Spain, and Madness Live;
+- responsive desktop, phone portrait, and phone landscape layouts.
 
-## Local development
+## Clone and prepare the project
+
+Prerequisites are Git, Node.js/npm, and a browser. GitHub CLI is recommended for contributors who will push changes. The included `.nvmrc` selects Node 24.
 
 ```bash
-npm install
+git clone https://github.com/ericmurillo93/A-Deafening-Noise.git
+cd A-Deafening-Noise
+nvm install
+nvm use
+npm run setup:auth
+```
+
+`setup:auth` installs locked dependencies, safely creates `.env.local`, and guides GitHub/Codex authentication. Browser confirmation is still required. To prepare only the website without authentication, use:
+
+```bash
+npm run setup
+```
+
+## Work on the project
+
+Start the local website:
+
+```bash
 npm run dev
 ```
 
-## Production build
+Open <http://127.0.0.1:5173>.
+
+Start Codex from another terminal in the repository root:
 
 ```bash
-npm run build
+npm run codex
 ```
 
-The production output is generated in:
+Codex automatically reads `AGENTS.md`, so the project architecture, established behavior, verification requirements, and Git rules are available in every session.
 
-```text
-dist
-```
+When Codex handles a change, ask it to verify, commit, and push the intended files. The required validation and Git-safety rules are defined in `AGENTS.md`; the underlying commands remain documented in the full development guide.
 
-## Netlify setup
+## Full documentation
 
-Use these settings in Netlify:
+See the [development and operations guide](docs/DEVELOPMENT.md) for:
 
-```text
-Build command: npm run build
-Publish directory: dist
-```
+- authentication and optional environment variables;
+- all development commands;
+- local-versus-production behavior;
+- Netlify configuration;
+- GitHub Actions and concert scrapers;
+- the concert data model;
+- interaction conventions;
+- project structure and troubleshooting.
 
-The repository includes `netlify.toml`, so Netlify should detect the correct settings automatically.
-
-## Project structure
-
-```text
-.
-├── index.html
-├── netlify.toml
-├── package.json
-├── postcss.config.js
-├── tailwind.config.js
-├── vite.config.js
-└── src
-    ├── App.jsx
-    ├── index.css
-    └── main.jsx
-```
-
-## Updating content
-
-Most site logic and UI lives in:
-
-```text
-src/App.jsx
-```
-
-The site currently reads remote concert data through the configured API URL in `App.jsx` and keeps fallback data in the same file.
+Durable instructions for Codex and other coding agents live in [AGENTS.md](AGENTS.md).

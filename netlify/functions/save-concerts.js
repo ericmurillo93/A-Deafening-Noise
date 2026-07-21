@@ -1,6 +1,7 @@
 // netlify/functions/save-concerts.js
 // Server-side proxy that writes concerts.json to GitHub.
-// The GitHub token and password live only on the server, never in the browser bundle.
+// The GitHub token lives only on the server. The password is also used by the
+// browser login gate, so it should be treated as a lightweight access check.
 
 const REPO = "ericmurillo93/A-Deafening-Noise";
 const FILE_PATH = "data/concerts.json";

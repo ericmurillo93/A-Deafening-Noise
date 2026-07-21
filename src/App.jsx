@@ -18,6 +18,7 @@ function groupHistoryFromJson(rows) {
 const fallbackConcerts = concertsData.concerts;
 
 const APP_PASSWORD = import.meta.env.VITE_APP_PASSWORD;
+const IS_LOCAL = import.meta.env.DEV;
 
 // ─── GitHub save ──────────────────────────────────────────────────────────────
 
@@ -1663,7 +1664,7 @@ function LoginGate({ onUnlock }) {
 
 export default function App() {
   const initialRoute = useMemo(() => readRouteFromHash(), []);
-  const [unlocked, setUnlocked] = useState(() => sessionStorage.getItem("adn_unlocked") === "1");
+  const [unlocked, setUnlocked] = useState(() => IS_LOCAL || sessionStorage.getItem("adn_unlocked") === "1");
   function handleUnlock() { sessionStorage.setItem("adn_unlocked", "1"); setUnlocked(true); }
 
   const [query, setQuery] = useState("");

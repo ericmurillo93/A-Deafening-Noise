@@ -4,7 +4,13 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite --host 0.0.0.0",
+    "setup": "node scripts/setup-local.mjs",
+    "setup:auth": "node scripts/setup-local.mjs --auth",
+    "codex": "npx --yes @openai/codex",
+    "codex:login": "npx --yes @openai/codex login",
+    "dev": "vite --host 127.0.0.1",
+    "dev:local": "vite --host 127.0.0.1",
+    "dev:network": "vite --host 0.0.0.0",
     "build": "vite build",
     "preview": "vite preview --host 0.0.0.0"
   },
