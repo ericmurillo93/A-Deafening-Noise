@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { ComposableMap, Geographies, Geography, ZoomableGroup } from "react-simple-maps";
 import worldGeography from "world-atlas/countries-110m.json";
 import concertsData from "../data/concerts.json";
+import suggestionsData from "../data/suggestions.json";
 
 // ─── Data bootstrap ───────────────────────────────────────────────────────────
 
@@ -466,12 +467,21 @@ function EditConcertModal({ isOpen, mode, initial, onClose, onSave, isSaving, sa
 
 // ─── AddConcertModal ──────────────────────────────────────────────────────────
 
-function AddConcertModal({ isOpen, mode, onClose, onSave, isSaving, saveError, artistSuggestions = [], venueSuggestions = [] }) {
+function AddConcertModal({ isOpen, mode, initial, onClose, onSave, isSaving, saveError, artistSuggestions = [], venueSuggestions = [] }) {
   const [artist, setArtist] = useState("");
   const [venue, setVenue] = useState("");
   const [date, setDate] = useState("");
   const [bought, setBought] = useState(false);
   const [attendees, setAttendees] = useState("");
+
+  useEffect(() => {
+    if (!isOpen) return;
+    setArtist(initial?.artist || "");
+    setVenue(initial?.venue || "");
+    setDate(initial?.date || "");
+    setBought(Boolean(initial?.bought));
+    setAttendees("");
+  }, [isOpen, initial]);
 
   if (!isOpen) return null;
   const isNextMode = mode === "next";
@@ -811,6 +821,57 @@ function NextConcertCalendar({ items, onOpen, onContextMenu, onContextMenuAt }) 
         <span className="flex items-center gap-2"><span className="h-3 w-3 rounded-sm border border-amber-700 bg-amber-950" /> Not bought</span>
       </div>
 
+    </section>
+  );
+}
+
+function ConcertSuggestions({ suggestions, onAdd }) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <section className="mt-5 rounded-3xl border border-zinc-800 bg-zinc-900 p-2">
+      <button
+        type="button"
+        onClick={() => setOpen((current) => !current)}
+        className="flex w-full items-center justify-between rounded-2xl px-4 py-3 text-left font-bold text-zinc-100 transition hover:bg-zinc-800"
+        aria-expanded={open}
+      >
+        <span className="flex items-center gap-3">
+          <i className="fa-solid fa-wand-magic-sparkles text-zinc-400" aria-hidden="true" />
+          <span>Concert suggestions</span>
+          <span className="rounded-full border border-zinc-700 px-2 py-0.5 text-xs text-zinc-400">{suggestions.length}</span>
+        </span>
+        <i className={`fa-solid fa-chevron-down text-xs text-zinc-600 transition-transform ${open ? "rotate-180" : ""}`} aria-hidden="true" />
+      </button>
+
+      {open && (
+        <div className="mx-3 mb-3 mt-1 border-l border-zinc-700 pl-3">
+          {suggestions.length ? (
+            <div className="space-y-2">
+              {suggestions.map((suggestion) => (
+                <article key={suggestion.id} className="rounded-2xl border border-zinc-800 bg-zinc-950 p-4">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="min-w-0">
+                      <h3 className="truncate font-black uppercase tracking-tight text-zinc-100">{suggestion.artist}</h3>
+                      <p className="mt-1 text-sm text-zinc-400">
+                        {suggestion.date}{suggestion.venue ? ` · ${suggestion.venue}` : ""}{suggestion.city ? ` · ${suggestion.city}` : ""}
+                      </p>
+                      <a href={suggestion.sourceUrl} target="_blank" rel="noreferrer" className="mt-1 inline-block text-xs text-zinc-600 transition hover:text-zinc-300">
+                        {suggestion.source} <span aria-hidden="true">↗</span>
+                      </a>
+                    </div>
+                    <button type="button" onClick={() => onAdd(suggestion)} className="shrink-0 rounded-full border border-zinc-600 bg-zinc-900 px-5 py-2.5 text-sm font-black text-zinc-100 transition hover:border-zinc-400 hover:bg-zinc-800">
+                      Add
+                    </button>
+                  </div>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <p className="rounded-2xl bg-zinc-950 px-4 py-5 text-sm text-zinc-500">No new suggestions right now.</p>
+          )}
+        </div>
+      )}
     </section>
   );
 }
@@ -1613,6 +1674,7 @@ export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [statsMenuOpen, setStatsMenuOpen] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
+  const [addInitial, setAddInitial] = useState(null);
   const [editTarget, setEditTarget] = useState(null);
   const [contextMenu, setContextMenu] = useState({ open: false, x: 0, y: 0, target: null });
   const [setlistTarget, setSetlistTarget] = useState(null);
@@ -1674,6 +1736,10 @@ export default function App() {
       .map((concert) => ({ ...concert, source: isPastConcert(concert) ? "history" : "next" }));
     return filterConcerts(visibleConcerts, query);
   }, [concertItems, query]);
+
+  const availableSuggestions = useMemo(() => suggestionsData.suggestions.filter((suggestion) =>
+    !concertItems.some((concert) => normalize(concert.artist) === normalize(suggestion.artist) && concert.date === suggestion.date)
+  ), [concertItems]);
 
   const artistSuggestions = useMemo(() => {
     const set = new Set();
@@ -1789,6 +1855,7 @@ export default function App() {
       await saveToGitHub({ concerts: updatedConcerts }, `Add concert: ${data.artist}${data.venue ? " — " + data.venue : ""} (${data.date})`);
       setConcertItems(updatedConcerts);
       setModalOpen(false);
+      setAddInitial(null);
     } catch (e) { setSaveError(e.message || "Could not save concert"); }
     finally { setIsSaving(false); }
   }
@@ -1923,7 +1990,7 @@ export default function App() {
                     <Icon type="search" />
                     <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search…" className="w-full min-w-0 bg-transparent text-sm text-zinc-100 outline-none placeholder:text-zinc-500" aria-label="Search concerts" />
                   </div>
-                  <button onClick={() => setModalOpen(true)} className="shrink-0 rounded-full border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-sm font-black text-zinc-100 hover:border-zinc-500">+ Add</button>
+                  <button onClick={() => { setAddInitial(null); setModalOpen(true); }} className="shrink-0 rounded-full border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-sm font-black text-zinc-100 hover:border-zinc-500">+ Add</button>
                   {isNext && <CalendarExportMenu items={nextItems} compact />}
                 </div>
                 {!isNext && (
@@ -1935,7 +2002,7 @@ export default function App() {
 
                 {/* Desktop layout */}
                 <div className={`hidden md:grid gap-3 ${isNext ? "md:grid-cols-[220px_1fr_180px]" : "md:grid-cols-[220px_1fr_280px]"}`}>
-                  <button onClick={() => setModalOpen(true)} className="rounded-full border border-zinc-700 bg-zinc-900 px-5 py-3 text-sm font-black text-zinc-100 shadow-2xl transition hover:border-zinc-500">+ Add concert</button>
+                  <button onClick={() => { setAddInitial(null); setModalOpen(true); }} className="rounded-full border border-zinc-700 bg-zinc-900 px-5 py-3 text-sm font-black text-zinc-100 shadow-2xl transition hover:border-zinc-500">+ Add concert</button>
                   <div className="flex items-center gap-3 rounded-full border border-zinc-700 bg-zinc-900 px-5 py-3 shadow-2xl">
                     <Icon type="search" />
                     <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search artist, venue, festival, city or date" className="w-full bg-transparent text-base text-zinc-100 outline-none placeholder:text-zinc-500" aria-label="Search concerts" />
@@ -1952,12 +2019,21 @@ export default function App() {
             </div>
 
             {isNext ? (
-              <NextConcertCalendar
-                items={calendarItems}
-                onOpen={(concert) => setCalendarTarget({ ...concert, mode: concert.source === "history" ? "history" : "next" })}
-                onContextMenu={(event, concert) => openContextMenu(event, { ...concert, mode: concert.source === "history" ? "history" : "next" })}
-                onContextMenuAt={(x, y, concert) => openContextMenuAt(x, y, { ...concert, mode: concert.source === "history" ? "history" : "next" })}
-              />
+              <>
+                <NextConcertCalendar
+                  items={calendarItems}
+                  onOpen={(concert) => setCalendarTarget({ ...concert, mode: concert.source === "history" ? "history" : "next" })}
+                  onContextMenu={(event, concert) => openContextMenu(event, { ...concert, mode: concert.source === "history" ? "history" : "next" })}
+                  onContextMenuAt={(x, y, concert) => openContextMenuAt(x, y, { ...concert, mode: concert.source === "history" ? "history" : "next" })}
+                />
+                <ConcertSuggestions
+                  suggestions={availableSuggestions}
+                  onAdd={(suggestion) => {
+                    setAddInitial({ artist: suggestion.artist, venue: suggestion.venue, date: suggestion.date, bought: false });
+                    setModalOpen(true);
+                  }}
+                />
+              </>
             ) : (
             <section className="grid w-full gap-4 md:grid-cols-2 xl:grid-cols-3">
               {filtered.map((item) => (
@@ -2043,7 +2119,7 @@ export default function App() {
         </div>
       )}
 
-      <AddConcertModal isOpen={modalOpen} mode={mode} onClose={() => setModalOpen(false)} onSave={handleAddConcert} isSaving={isSaving} saveError={saveError} artistSuggestions={artistSuggestions} venueSuggestions={venueSuggestions} />
+      <AddConcertModal isOpen={modalOpen} mode={mode} initial={addInitial} onClose={() => { setModalOpen(false); setAddInitial(null); }} onSave={handleAddConcert} isSaving={isSaving} saveError={saveError} artistSuggestions={artistSuggestions} venueSuggestions={venueSuggestions} />
       <EditConcertModal isOpen={!!editTarget} mode={editTarget?.mode || mode} initial={editTarget} onClose={() => setEditTarget(null)} onSave={handleEditConcert} isSaving={isSaving} saveError={saveError} artistSuggestions={artistSuggestions} venueSuggestions={venueSuggestions} />
       <ContextMenu open={contextMenu.open} x={contextMenu.x} y={contextMenu.y} onEdit={startEditFromContext} onDelete={deleteFromContext} onClose={closeContextMenu} />
       <SetlistModal
