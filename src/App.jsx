@@ -71,6 +71,18 @@ function suggestionDecisionKey({ artist, date }) {
   return `${normalizedArtist}|${date}`;
 }
 
+function formatEuropeanDateTime(value) {
+  return new Intl.DateTimeFormat("es-ES", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+    timeZone: "Europe/Berlin",
+  }).format(new Date(value));
+}
+
 function readRouteFromHash() {
   if (typeof window === "undefined") return { page: "history", artist: null, venue: null };
   const [pagePart = "history", ...valueParts] = window.location.hash.replace(/^#\/?/, "").split("/");
@@ -921,7 +933,9 @@ function ConcertSuggestions({ suggestions, reviews, onInterested, onNotIntereste
   const refreshMessage = refreshRunning
     ? "Searching for concerts…"
     : refreshIsNewerThanPage && refresh.status === "completed" && refresh.conclusion === "success"
-      ? "Search finished. Reload shortly to see the deployed results."
+      ? refresh.generatedAt === suggestionsData.generatedAt
+        ? "Search finished. No new suggestions found."
+        : "Search finished. Reload shortly to see the deployed results."
       : refreshIsNewerThanPage && refresh.status === "completed" && refresh.conclusion
         ? "The search did not finish successfully."
         : "";
@@ -946,7 +960,7 @@ function ConcertSuggestions({ suggestions, reviews, onInterested, onNotIntereste
         <div className="mx-3 mb-3 mt-1 border-l border-zinc-700 pl-3">
           <div className="mb-3 flex flex-col gap-2 rounded-2xl border border-zinc-800 bg-zinc-950 p-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="min-w-0 text-xs text-zinc-500">
-              <p>Last updated {new Date(suggestionsData.generatedAt).toLocaleString()}</p>
+              <p>Last updated {formatEuropeanDateTime(suggestionsData.generatedAt)}</p>
               {refreshMessage && <p className="mt-1 font-semibold text-zinc-300">{refreshMessage}</p>}
               {refreshError && <p className="mt-1 font-semibold text-red-300">{refreshError}</p>}
             </div>
