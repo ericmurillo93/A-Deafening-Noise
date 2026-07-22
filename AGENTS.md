@@ -59,7 +59,7 @@ Read `README.md` for the quick start and `docs/DEVELOPMENT.md` for production co
 - Interested opens the normal prefilled calendar Add modal; Not Interested stages a persistent artist/date dismissal.
 - Suggestion decisions remain in browser storage until Save writes all interested concerts and dismissals together in one commit.
 - Preserve `dismissedSuggestions` on every `data/concerts.json` write; the combiner excludes those keys from later scraper runs.
-- `.github/workflows/concert-suggestions.yml` runs weekly and manually, committing only changed suggestions.
+- `.github/workflows/concert-suggestions.yml` runs only on demand from the website or Actions UI, committing only changed suggestions.
 
 ## Verification
 

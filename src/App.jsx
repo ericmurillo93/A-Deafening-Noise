@@ -35,6 +35,16 @@ async function saveToGitHub(updatedData, commitMessage = "Update concerts via we
   }
 }
 
+async function suggestionRefreshRequest(endpoint) {
+  const res = await fetch(`/.netlify/functions/${endpoint}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ password: APP_PASSWORD }),
+  });
+  if (!res.ok) throw new Error((await res.text()) || `Request failed (${res.status})`);
+  return res.json();
+}
+
 // ─── Setlist.fm proxy ─────────────────────────────────────────────────────────
 
 async function fetchSetlist({ setlistId, artist, date }) {
@@ -856,7 +866,65 @@ function NextConcertCalendar({ items, onOpen, onContextMenu, onContextMenuAt }) 
 
 function ConcertSuggestions({ suggestions, reviews, onInterested, onNotInterested, onSave, isSaving, saveError }) {
   const [open, setOpen] = useState(false);
+  const [refresh, setRefresh] = useState({ status: "idle", conclusion: null });
+  const [refreshError, setRefreshError] = useState("");
+  const refreshRequestedAtRef = useRef(0);
   const pendingCount = Object.keys(reviews).length;
+
+  useEffect(() => {
+    if (!open) return undefined;
+    let cancelled = false;
+    let timer;
+    const check = async () => {
+      try {
+        const result = await suggestionRefreshRequest("suggestion-refresh-status");
+        if (cancelled) return;
+        const waitingForDispatchedRun = refreshRequestedAtRef.current
+          && (!result.createdAt || new Date(result.createdAt).getTime() < refreshRequestedAtRef.current - 5000);
+        if (waitingForDispatchedRun) {
+          setRefresh({ status: "queued", conclusion: null });
+          timer = window.setTimeout(check, 5000);
+          return;
+        }
+        setRefresh(result);
+        if (["queued", "in_progress", "waiting", "pending"].includes(result.status)) {
+          timer = window.setTimeout(check, 8000);
+        } else if (refreshRequestedAtRef.current) {
+          refreshRequestedAtRef.current = 0;
+        }
+      } catch (error) {
+        if (!cancelled) setRefreshError(error.message);
+      }
+    };
+    check();
+    return () => { cancelled = true; window.clearTimeout(timer); };
+  }, [open, refresh.status === "queued"]);
+
+  const startRefresh = async () => {
+    setRefreshError("");
+    refreshRequestedAtRef.current = Date.now();
+    setRefresh({ status: "queued", conclusion: null });
+    try {
+      const result = await suggestionRefreshRequest("refresh-suggestions");
+      if (result.alreadyRunning) refreshRequestedAtRef.current = 0;
+      setRefresh({ status: result.status || "queued", conclusion: null, createdAt: result.createdAt });
+    } catch (error) {
+      refreshRequestedAtRef.current = 0;
+      setRefresh({ status: "completed", conclusion: "failure" });
+      setRefreshError(error.message);
+    }
+  };
+
+  const refreshRunning = ["queued", "in_progress", "waiting", "pending"].includes(refresh.status);
+  const refreshIsNewerThanPage = refresh.createdAt
+    && new Date(refresh.createdAt).getTime() > new Date(suggestionsData.generatedAt).getTime();
+  const refreshMessage = refreshRunning
+    ? "Searching for concerts…"
+    : refreshIsNewerThanPage && refresh.status === "completed" && refresh.conclusion === "success"
+      ? "Search finished. Reload shortly to see the deployed results."
+      : refreshIsNewerThanPage && refresh.status === "completed" && refresh.conclusion
+        ? "The search did not finish successfully."
+        : "";
 
   return (
     <section className="mt-5 rounded-3xl border border-zinc-800 bg-zinc-900 p-2">
@@ -876,6 +944,17 @@ function ConcertSuggestions({ suggestions, reviews, onInterested, onNotIntereste
 
       {open && (
         <div className="mx-3 mb-3 mt-1 border-l border-zinc-700 pl-3">
+          <div className="mb-3 flex flex-col gap-2 rounded-2xl border border-zinc-800 bg-zinc-950 p-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="min-w-0 text-xs text-zinc-500">
+              <p>Last updated {new Date(suggestionsData.generatedAt).toLocaleString()}</p>
+              {refreshMessage && <p className="mt-1 font-semibold text-zinc-300">{refreshMessage}</p>}
+              {refreshError && <p className="mt-1 font-semibold text-red-300">{refreshError}</p>}
+            </div>
+            <button type="button" onClick={startRefresh} disabled={refreshRunning} className="shrink-0 rounded-full border border-zinc-700 px-4 py-2 text-sm font-bold text-zinc-100 transition hover:border-zinc-500 disabled:cursor-wait disabled:opacity-50">
+              <i className={`fa-solid fa-rotate mr-2 ${refreshRunning ? "animate-spin" : ""}`} aria-hidden="true" />
+              {refreshRunning ? "Searching" : "Find concerts"}
+            </button>
+          </div>
           {suggestions.length ? (
             <div className="space-y-2">
               {suggestions.map((suggestion) => (

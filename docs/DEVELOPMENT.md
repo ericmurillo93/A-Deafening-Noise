@@ -170,7 +170,7 @@ GITHUB_TOKEN
 SETLIST_API_KEY
 ```
 
-`APP_PASSWORD` and `VITE_APP_PASSWORD` must contain the same value. `GITHUB_TOKEN` needs permission to update `data/concerts.json`. Keep all values in Netlify, never in the repository.
+`APP_PASSWORD` and `VITE_APP_PASSWORD` must contain the same value. `GITHUB_TOKEN` needs **Contents: read and write** to update `data/concerts.json`, plus **Actions: read and write** to start and monitor the suggestion workflow. Keep all values in Netlify, never in the repository or browser code.
 
 The checked-in `netlify.toml` defines:
 
@@ -182,24 +182,20 @@ Functions directory: netlify/functions
 
 ## Concert suggestion automation
 
-The workflow `.github/workflows/concert-suggestions.yml` runs every Monday and can also be started manually. It refreshes Resurrection Fest Route, Live Nation Spain, Madness Live, Sala Razzmatazz, Sala Apolo, Sala Bikini, Paral·lel 62, Palau de la Música Catalana, Les Docks, and Montreux Jazz Festival:
+The workflow `.github/workflows/concert-suggestions.yml` runs only on demand. Open **Concert suggestions** below the calendar and select **Find concerts**. The browser sends the shared app password to a Netlify function; the function keeps `GITHUB_TOKEN` server-side and dispatches GitHub Actions. The UI then polls a second authenticated function for progress. GitHub Actions refreshes Resurrection Fest Route, Live Nation Spain, Madness Live, Sala Razzmatazz, Sala Apolo, Sala Bikini, Paral·lel 62, Palau de la Música Catalana, Les Docks, and Montreux Jazz Festival.
+
+GitHub's Actions UI remains a fallback:
 
 1. Open the repository on GitHub.
 2. Select **Actions**.
 3. Select **Refresh concert suggestions**.
+4. Select **Run workflow**.
 
 To run the complete pipeline locally:
 
 ```bash
 npm run suggestions:refresh
 ```
-4. Select **Run workflow**.
-
-The workflow runs:
-
-- Resurrection Fest Route;
-- Live Nation Spain;
-- Madness Live.
 
 Scraped lineups are matched against `data/listened-artists.json`, which contains artists heard at least once in the imported Spotify Extended Streaming History. Existing artist/date pairs in `data/concerts.json` and previously dismissed artist/date pairs are excluded. The workflow combines and deduplicates results into `data/suggestions.json`. Suggestions never appear directly as calendar events; the expandable **Concert suggestions** panel below the calendar presents them for review.
 

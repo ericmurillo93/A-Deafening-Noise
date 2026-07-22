@@ -1,5 +1,6 @@
 import fs from "node:fs/promises";
 import path from "node:path";
+import { spawn } from "node:child_process";
 import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react";
 
@@ -16,10 +17,32 @@ const readJsonBody = async (request) => {
 };
 
 function localNetlifyFunctions(env) {
+  let suggestionRefresh = { status: "idle", conclusion: null };
   return {
     name: "local-netlify-functions",
     apply: "serve",
     configureServer(server) {
+      server.middlewares.use("/.netlify/functions/refresh-suggestions", async (request, response) => {
+        if (request.method !== "POST") return jsonResponse(response, 405, "Method not allowed");
+        if (["queued", "in_progress"].includes(suggestionRefresh.status)) {
+          return jsonResponse(response, 200, { ok: true, alreadyRunning: true, status: suggestionRefresh.status });
+        }
+        suggestionRefresh = { status: "queued", conclusion: null };
+        const child = spawn(process.execPath, ["scripts/refresh-concert-suggestions.mjs"], {
+          cwd: server.config.root,
+          stdio: "inherit",
+        });
+        suggestionRefresh = { status: "in_progress", conclusion: null };
+        child.on("error", () => { suggestionRefresh = { status: "completed", conclusion: "failure" }; });
+        child.on("exit", (code) => { suggestionRefresh = { status: "completed", conclusion: code === 0 ? "success" : "failure" }; });
+        return jsonResponse(response, 202, { ok: true, status: "in_progress", local: true });
+      });
+
+      server.middlewares.use("/.netlify/functions/suggestion-refresh-status", async (request, response) => {
+        if (request.method !== "POST") return jsonResponse(response, 405, "Method not allowed");
+        return jsonResponse(response, 200, suggestionRefresh);
+      });
+
       server.middlewares.use("/.netlify/functions/save-concerts", async (request, response) => {
         if (request.method !== "POST") return jsonResponse(response, 405, "Method not allowed");
 
