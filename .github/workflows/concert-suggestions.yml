@@ -30,9 +30,16 @@ jobs:
           node scripts/scrape-resurrection-route.mjs --output=/tmp/resurrection.json
           node scripts/scrape-livenation-events.mjs --output=/tmp/livenation.json
           node scripts/scrape-madness-live.mjs --output=/tmp/madness-live.json
+          node scripts/scrape-razzmatazz.mjs --output=/tmp/razzmatazz.json
+          node scripts/scrape-parallel62.mjs --output=/tmp/parallel62.json
+          node scripts/scrape-palau-musica.mjs --output=/tmp/palau.json
+          node scripts/scrape-docks.mjs --output=/tmp/docks.json
+          node scripts/scrape-montreux-jazz-festival.mjs --output=/tmp/montreux.json
+          node scripts/scrape-sala-apolo.mjs --output=/tmp/apolo.json
+          node scripts/scrape-bikini-barcelona.mjs --output=/tmp/bikini.json
 
       - name: Combine suggestions
-        run: node scripts/combine-concert-suggestions.mjs /tmp/resurrection.json /tmp/livenation.json /tmp/madness-live.json --output=data/suggestions.json
+        run: node scripts/combine-concert-suggestions.mjs /tmp/resurrection.json /tmp/livenation.json /tmp/madness-live.json /tmp/razzmatazz.json /tmp/parallel62.json /tmp/palau.json /tmp/docks.json /tmp/montreux.json /tmp/apolo.json /tmp/bikini.json --output=data/suggestions.json
 
       - name: Commit refreshed suggestions
         run: |

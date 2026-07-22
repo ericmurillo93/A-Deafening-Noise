@@ -10,6 +10,7 @@ Read `README.md` for the quick start and `docs/DEVELOPMENT.md` for production co
 
 - React/Vite single-page application; most UI and state live in `src/App.jsx`.
 - `data/concerts.json` is the canonical concert dataset.
+- `data/listened-artists.json` is the privacy-reduced Spotify artist catalog used for suggestion affinity.
 - `data/suggestions.json` is generated discovery output, never canonical concert data.
 - `netlify/functions/save-concerts.js` writes production edits to GitHub.
 - `netlify/functions/get-setlist.js` proxies setlist.fm in production.
@@ -47,14 +48,17 @@ Read `README.md` for the quick start and `docs/DEVELOPMENT.md` for production co
 
 ## Suggestion pipeline
 
-- Scrapers: Resurrection Fest Route, Live Nation Spain, and Madness Live.
-- Match only billed artists that already exist in the archive.
+- Scrapers: Resurrection Fest Route, Live Nation Spain, Madness Live, Sala Razzmatazz, Sala Apolo, Sala Bikini, Paral·lel 62, Palau de la Música Catalana, Les Docks, and Montreux Jazz Festival.
+- Match only billed artists that exist in `data/listened-artists.json`.
 - Exclude an artist/date already present in `data/concerts.json`.
+- Generate the listened catalog with `npm run import:spotify`; never commit raw Spotify exports.
 - Prefer missing a structurally ambiguous festival over inventing an artist-to-day mapping.
 - Respect robots.txt and keep requests polite.
 - `scripts/combine-concert-suggestions.mjs` flattens/deduplicates results into `data/suggestions.json`.
 - Suggestions stay below the calendar in the expandable review panel; never draw them as calendar events.
-- Add opens the normal prefilled calendar Add modal. A successful save makes the suggestion disappear through concert-data filtering.
+- Interested opens the normal prefilled calendar Add modal; Not Interested stages a persistent artist/date dismissal.
+- Suggestion decisions remain in browser storage until Save writes all interested concerts and dismissals together in one commit.
+- Preserve `dismissedSuggestions` on every `data/concerts.json` write; the combiner excludes those keys from later scraper runs.
 - `.github/workflows/concert-suggestions.yml` runs weekly and manually, committing only changed suggestions.
 
 ## Verification
@@ -69,10 +73,18 @@ git diff --check
 For scraper changes, also run:
 
 ```bash
+node --check scripts/import-spotify-history.mjs
 node --check scripts/scrape-resurrection-route.mjs
 node --check scripts/scrape-livenation-events.mjs
 node --check scripts/scrape-madness-live.mjs
 node --check scripts/combine-concert-suggestions.mjs
+node --check scripts/scrape-razzmatazz.mjs
+node --check scripts/scrape-parallel62.mjs
+node --check scripts/scrape-palau-musica.mjs
+node --check scripts/scrape-docks.mjs
+node --check scripts/scrape-montreux-jazz-festival.mjs
+node --check scripts/scrape-sala-apolo.mjs
+node --check scripts/scrape-bikini-barcelona.mjs
 ```
 
 Validate JSON files with `JSON.parse` before committing. Test high-risk calendar/modal changes on both desktop and phone-sized layouts when possible.

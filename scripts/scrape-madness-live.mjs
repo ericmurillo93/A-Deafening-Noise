@@ -129,8 +129,9 @@ function tourStops(detailHtml) {
 
 const root = process.cwd();
 const concertData = JSON.parse(await fs.readFile(path.join(root, "data/concerts.json"), "utf8"));
-const archiveArtistsByKey = new Map(
-  concertData.concerts.filter(({ artist }) => artist).map(({ artist }) => [normalize(artist), artist]),
+const listenedArtistData = JSON.parse(await fs.readFile(path.join(root, "data/listened-artists.json"), "utf8"));
+const listenedArtistsByKey = new Map(
+  listenedArtistData.artists.filter(({ artist }) => artist).map(({ artist }) => [normalize(artist), artist]),
 );
 const existingArtistDates = new Set(
   concertData.concerts.map(({ artist, date }) => `${normalize(artist)}|${date}`),
@@ -148,7 +149,7 @@ for (const [index, sourceUrl] of links.entries()) {
   if (index > 0) await new Promise((resolve) => setTimeout(resolve, 250));
   const detailHtml = await fetchHtml(sourceUrl);
   const billedKeys = billedArtistKeys(detailHtml);
-  const matchedArtists = [...archiveArtistsByKey]
+  const matchedArtists = [...listenedArtistsByKey]
     .filter(([key]) => billedKeys.has(key))
     .map(([, artist]) => artist);
   if (!matchedArtists.length) continue;

@@ -8,7 +8,7 @@ It provides:
 - a timeline, lifetime statistics, year reviews, and geographic views;
 - an upcoming-concert calendar with bought and unpurchased states;
 - concert details, attendees, setlist.fm integration, and calendar export;
-- automated concert suggestions from Resurrection Fest Route, Live Nation Spain, and Madness Live;
+- automated concert suggestions from promoters, venues, and festivals in Spain and Switzerland;
 - responsive desktop, phone portrait, and phone landscape layouts.
 
 ## Clone and prepare the project

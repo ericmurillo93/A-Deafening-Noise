@@ -80,10 +80,11 @@ function billedPerformerNames(detailHtml) {
 
 const root = process.cwd();
 const concertData = JSON.parse(await fs.readFile(path.join(root, "data/concerts.json"), "utf8"));
-const archiveArtists = [...new Map(concertData.concerts.filter(({ artist }) => artist).map(({ artist }) => [normalize(artist), artist])).values()]
+const listenedArtistData = JSON.parse(await fs.readFile(path.join(root, "data/listened-artists.json"), "utf8"));
+const listenedArtists = [...new Map(listenedArtistData.artists.filter(({ artist }) => artist).map(({ artist }) => [normalize(artist), artist])).values()]
   .sort((a, b) => b.length - a.length);
-const existingConcerts = new Set(concertData.concerts.map(({ artist, venue, date }) =>
-  `${normalize(artist)}|${normalize(venue)}|${date}`
+const existingArtistDates = new Set(concertData.concerts.map(({ artist, date }) =>
+  `${normalize(artist)}|${date}`
 ));
 
 const listingUrl = `${BASE_URL}/route/?filter_city=${encodeURIComponent(city)}&q=&filter_date_range=`;
@@ -98,13 +99,13 @@ for (const [index, sourceUrl] of links.entries()) {
   if (index > 0) await new Promise((resolve) => setTimeout(resolve, 250));
   const detailHtml = await fetchHtml(sourceUrl);
   const billedNames = new Set(billedPerformerNames(detailHtml).map(normalize).filter(Boolean));
-  const matchedArtists = archiveArtists.filter((artist) => billedNames.has(normalize(artist)));
+  const matchedArtists = listenedArtists.filter((artist) => billedNames.has(normalize(artist)));
   if (!matchedArtists.length) continue;
 
   for (const stop of routeStops(detailHtml).filter((entry) => normalize(entry.city) === normalize(city))) {
     matchedStops += 1;
     const newArtists = matchedArtists.filter((artist) =>
-      !existingConcerts.has(`${normalize(artist)}|${normalize(stop.venue)}|${stop.date}`)
+      !existingArtistDates.has(`${normalize(artist)}|${stop.date}`)
     );
     const trackedArtists = matchedArtists.filter((artist) => !newArtists.includes(artist));
     alreadyTracked += trackedArtists.length;

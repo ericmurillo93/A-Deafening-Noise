@@ -8,6 +8,8 @@
     "setup:auth": "node scripts/setup-local.mjs --auth",
     "codex": "npx --yes @openai/codex",
     "codex:login": "npx --yes @openai/codex login",
+    "import:spotify": "node scripts/import-spotify-history.mjs",
+    "suggestions:refresh": "node scripts/refresh-concert-suggestions.mjs",
     "dev": "vite --host 127.0.0.1",
     "dev:local": "vite --host 127.0.0.1",
     "dev:network": "vite --host 0.0.0.0",

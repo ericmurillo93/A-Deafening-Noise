@@ -16,6 +16,7 @@ function groupHistoryFromJson(rows) {
 }
 
 const fallbackConcerts = concertsData.concerts;
+const fallbackDismissedSuggestions = concertsData.dismissedSuggestions || [];
 
 const APP_PASSWORD = import.meta.env.VITE_APP_PASSWORD;
 const IS_LOCAL = import.meta.env.DEV;
@@ -53,6 +54,11 @@ async function fetchSetlist({ setlistId, artist, date }) {
 
 function normalize(value) {
   return String(value).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
+
+function suggestionDecisionKey({ artist, date }) {
+  const normalizedArtist = normalize(artist).replace(/[^a-z0-9]+/g, " ").trim();
+  return `${normalizedArtist}|${date}`;
 }
 
 function readRouteFromHash() {
@@ -468,7 +474,7 @@ function EditConcertModal({ isOpen, mode, initial, onClose, onSave, isSaving, sa
 
 // ─── AddConcertModal ──────────────────────────────────────────────────────────
 
-function AddConcertModal({ isOpen, mode, initial, onClose, onSave, isSaving, saveError, artistSuggestions = [], venueSuggestions = [] }) {
+function AddConcertModal({ isOpen, mode, initial, stagingSuggestion = false, onClose, onSave, isSaving, saveError, artistSuggestions = [], venueSuggestions = [] }) {
   const [artist, setArtist] = useState("");
   const [venue, setVenue] = useState("");
   const [date, setDate] = useState("");
@@ -481,7 +487,7 @@ function AddConcertModal({ isOpen, mode, initial, onClose, onSave, isSaving, sav
     setVenue(initial?.venue || "");
     setDate(initial?.date || "");
     setBought(Boolean(initial?.bought));
-    setAttendees("");
+    setAttendees((initial?.attendees || []).join(", "));
   }, [isOpen, initial]);
 
   if (!isOpen) return null;
@@ -493,17 +499,39 @@ function AddConcertModal({ isOpen, mode, initial, onClose, onSave, isSaving, sav
     onSave({ artist, venue, date, bought, attendees: [...new Set(attendees.split(",").map((name) => name.trim()).filter(Boolean))] });
   }
 
+  function stageSuggestion(ticketBought) {
+    onSave({
+      artist: initial?.artist || "",
+      venue: initial?.venue || "",
+      date: initial?.date || "",
+      bought: ticketBought,
+      attendees: initial?.attendees || [],
+    });
+  }
+
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 px-4">
       <div className="w-full max-w-lg rounded-3xl border border-zinc-700 bg-zinc-950 p-6 shadow-2xl">
         <div className="mb-6 flex items-start justify-between gap-4">
           <div>
             <h2 className="text-2xl font-black uppercase tracking-tight">Add concert</h2>
-            <p className="mt-1 text-sm text-zinc-500">{isNextMode ? "Add an upcoming concert." : "Add a concert to the archive."}</p>
+            <p className="mt-1 text-sm text-zinc-500">{stagingSuggestion ? "Choose whether you already bought the ticket." : isNextMode ? "Add an upcoming concert." : "Add a concert to the archive."}</p>
           </div>
           <button type="button" onClick={onClose} className="rounded-full border border-zinc-700 px-3 py-1 text-sm text-zinc-300 hover:border-zinc-500">Close</button>
         </div>
-        <div className="space-y-4">
+        {stagingSuggestion ? (
+          <div>
+            <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-4">
+              <div className="font-black uppercase tracking-tight text-zinc-100">{initial?.artist}</div>
+              <div className="mt-1 text-sm text-zinc-400">{initial?.date}{initial?.venue ? ` · ${initial.venue}` : ""}</div>
+            </div>
+            <p className="mb-3 mt-5 text-center text-xs font-bold uppercase tracking-widest text-zinc-500">Ticket status</p>
+            <div className="grid grid-cols-2 gap-3">
+              <button type="button" onClick={() => stageSuggestion(true)} className="rounded-2xl border border-emerald-700 bg-emerald-950 px-4 py-3 font-black text-emerald-100 transition hover:border-emerald-500 hover:bg-emerald-900">Bought</button>
+              <button type="button" onClick={() => stageSuggestion(false)} className="rounded-2xl border border-amber-700 bg-amber-950 px-4 py-3 font-black text-amber-100 transition hover:border-amber-500 hover:bg-amber-900">Not bought</button>
+            </div>
+          </div>
+        ) : <div className="space-y-4">
           <label className="block">
             <span className="mb-2 block text-xs font-bold uppercase tracking-widest text-zinc-500">Artist</span>
             <AutoSuggestField value={artist} onChange={setArtist} suggestions={artistSuggestions} placeholder="Artist name" />
@@ -527,8 +555,8 @@ function AddConcertModal({ isOpen, mode, initial, onClose, onSave, isSaving, sav
               <span>💰 Ticket bought</span>
             </label>
           )}
-        </div>
-        <button onClick={submit} disabled={isSaving} className="mt-6 w-full rounded-2xl bg-zinc-100 px-5 py-3 font-black text-zinc-950 transition hover:bg-white disabled:opacity-50">{isSaving ? "Saving..." : "Add concert"}</button>
+        </div>}
+        {!stagingSuggestion && <button onClick={submit} disabled={isSaving} className="mt-6 w-full rounded-2xl bg-zinc-100 px-5 py-3 font-black text-zinc-950 transition hover:bg-white disabled:opacity-50">{isSaving ? "Saving..." : "Add concert"}</button>}
         {saveError && <div className="mt-3 rounded-2xl border border-red-900 bg-red-950/40 px-4 py-3 text-sm text-red-200">{saveError}</div>}
       </div>
     </div>
@@ -826,8 +854,9 @@ function NextConcertCalendar({ items, onOpen, onContextMenu, onContextMenuAt }) 
   );
 }
 
-function ConcertSuggestions({ suggestions, onAdd }) {
+function ConcertSuggestions({ suggestions, reviews, onInterested, onNotInterested, onSave, isSaving, saveError }) {
   const [open, setOpen] = useState(false);
+  const pendingCount = Object.keys(reviews).length;
 
   return (
     <section className="mt-5 rounded-3xl border border-zinc-800 bg-zinc-900 p-2">
@@ -861,15 +890,28 @@ function ConcertSuggestions({ suggestions, onAdd }) {
                         {suggestion.source} <span aria-hidden="true">↗</span>
                       </a>
                     </div>
-                    <button type="button" onClick={() => onAdd(suggestion)} className="shrink-0 rounded-full border border-zinc-600 bg-zinc-900 px-5 py-2.5 text-sm font-black text-zinc-100 transition hover:border-zinc-400 hover:bg-zinc-800">
-                      Add
-                    </button>
+                    <div className="flex shrink-0 gap-2">
+                      <button type="button" onClick={() => onInterested(suggestion)} className={`flex-1 rounded-full border px-4 py-2.5 text-sm font-black transition sm:flex-none ${reviews[suggestion.id]?.decision === "interested" ? "border-emerald-500 bg-emerald-950 text-emerald-200" : "border-zinc-600 bg-zinc-900 text-zinc-100 hover:border-emerald-600"}`}>
+                        Interested
+                      </button>
+                      <button type="button" onClick={() => onNotInterested(suggestion)} className={`flex-1 rounded-full border px-4 py-2.5 text-sm font-black transition sm:flex-none ${reviews[suggestion.id]?.decision === "not-interested" ? "border-red-700 bg-red-950/60 text-red-200" : "border-zinc-700 bg-zinc-900 text-zinc-400 hover:border-red-800 hover:text-red-200"}`}>
+                        Not interested
+                      </button>
+                    </div>
                   </div>
                 </article>
               ))}
             </div>
           ) : (
             <p className="rounded-2xl bg-zinc-950 px-4 py-5 text-sm text-zinc-500">No new suggestions right now.</p>
+          )}
+          {pendingCount > 0 && (
+            <div className="sticky bottom-3 mt-3 rounded-2xl border border-zinc-700 bg-zinc-900/95 p-3 shadow-2xl backdrop-blur">
+              <button type="button" onClick={onSave} disabled={isSaving} className="w-full rounded-xl bg-zinc-100 px-5 py-3 text-sm font-black text-zinc-950 transition hover:bg-white disabled:opacity-50">
+                {isSaving ? "Saving decisions..." : `Save ${pendingCount} ${pendingCount === 1 ? "decision" : "decisions"}`}
+              </button>
+              {saveError && <p className="mt-2 text-center text-xs font-semibold text-red-300">{saveError}</p>}
+            </div>
           )}
         </div>
       )}
@@ -1676,11 +1718,20 @@ export default function App() {
   const [statsMenuOpen, setStatsMenuOpen] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [addInitial, setAddInitial] = useState(null);
+  const [activeSuggestionId, setActiveSuggestionId] = useState(null);
   const [editTarget, setEditTarget] = useState(null);
   const [contextMenu, setContextMenu] = useState({ open: false, x: 0, y: 0, target: null });
   const [setlistTarget, setSetlistTarget] = useState(null);
   const [calendarTarget, setCalendarTarget] = useState(null);
   const [concertItems, setConcertItems] = useState(fallbackConcerts);
+  const [dismissedSuggestions, setDismissedSuggestions] = useState(fallbackDismissedSuggestions);
+  const [pendingSuggestionReviews, setPendingSuggestionReviews] = useState(() => {
+    try {
+      const stored = JSON.parse(localStorage.getItem("adn_pending_suggestion_reviews") || "{}");
+      return stored && !Array.isArray(stored) && typeof stored === "object" ? stored : {};
+    }
+    catch { return {}; }
+  });
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
   const [confirmDelete, setConfirmDelete] = useState(null);
@@ -1739,8 +1790,9 @@ export default function App() {
   }, [concertItems, query]);
 
   const availableSuggestions = useMemo(() => suggestionsData.suggestions.filter((suggestion) =>
-    !concertItems.some((concert) => normalize(concert.artist) === normalize(suggestion.artist) && concert.date === suggestion.date)
-  ), [concertItems]);
+    !dismissedSuggestions.includes(suggestionDecisionKey(suggestion))
+      && !concertItems.some((concert) => normalize(concert.artist) === normalize(suggestion.artist) && concert.date === suggestion.date)
+  ), [concertItems, dismissedSuggestions]);
 
   const artistSuggestions = useMemo(() => {
     const set = new Set();
@@ -1761,6 +1813,10 @@ export default function App() {
   }, [historyItems]);
 
   useEffect(() => {
+    localStorage.setItem("adn_pending_suggestion_reviews", JSON.stringify(pendingSuggestionReviews));
+  }, [pendingSuggestionReviews]);
+
+  useEffect(() => {
     const initial = readRouteFromHash();
     window.history.replaceState({ adnRoute: true, canGoBack: false }, "", routeToHash(initial));
 
@@ -1769,6 +1825,8 @@ export default function App() {
         dialogHistoryOpenRef.current = false;
         closingDialogWithBackRef.current = false;
         setModalOpen(false);
+        setAddInitial(null);
+        setActiveSuggestionId(null);
         setEditTarget(null);
         setSetlistTarget(null);
         setCalendarTarget(null);
@@ -1842,18 +1900,39 @@ export default function App() {
     });
   }
 
+  function concertDataPayload(concerts, dismissed = dismissedSuggestions) {
+    return { concerts, dismissedSuggestions: [...new Set(dismissed)] };
+  }
+
   async function handleAddConcert(data) {
+    const newConcert = {
+      artist: data.artist.trim(),
+      venue: data.venue?.trim() || "",
+      date: data.date.trim(),
+      bought: isNext ? Boolean(data.bought) : true,
+      ...(data.attendees?.length ? { attendees: data.attendees } : {}),
+    };
+    if (activeSuggestionId) {
+      const suggestion = suggestionsData.suggestions.find(({ id }) => id === activeSuggestionId);
+      setPendingSuggestionReviews((current) => ({
+        ...current,
+        [activeSuggestionId]: {
+          decision: "interested",
+          concert: newConcert,
+          key: suggestionDecisionKey(suggestion || newConcert),
+        },
+      }));
+      setSaveError("");
+      setModalOpen(false);
+      setAddInitial(null);
+      setActiveSuggestionId(null);
+      return;
+    }
+
     setIsSaving(true); setSaveError("");
     try {
-      const newConcert = {
-        artist: data.artist.trim(),
-        venue: data.venue?.trim() || "",
-        date: data.date.trim(),
-        bought: isNext ? Boolean(data.bought) : true,
-        ...(data.attendees?.length ? { attendees: data.attendees } : {}),
-      };
       const updatedConcerts = [...concertItems, newConcert];
-      await saveToGitHub({ concerts: updatedConcerts }, `Add concert: ${data.artist}${data.venue ? " — " + data.venue : ""} (${data.date})`);
+      await saveToGitHub(concertDataPayload(updatedConcerts), `Add concert: ${data.artist}${data.venue ? " — " + data.venue : ""} (${data.date})`);
       setConcertItems(updatedConcerts);
       setModalOpen(false);
       setAddInitial(null);
@@ -1866,7 +1945,7 @@ export default function App() {
     setIsSaving(true); setSaveError("");
     try {
       const updatedConcerts = updateConcert(concertItems, editTarget, data);
-      await saveToGitHub({ concerts: updatedConcerts }, `Edit concert: ${data.artist}${data.venue ? " — " + data.venue : ""} (${data.date})`);
+      await saveToGitHub(concertDataPayload(updatedConcerts), `Edit concert: ${data.artist}${data.venue ? " — " + data.venue : ""} (${data.date})`);
       setConcertItems(updatedConcerts);
       setEditTarget(null);
     } catch (e) { setSaveError(e.message || "Could not save changes"); }
@@ -1888,6 +1967,36 @@ export default function App() {
     setConfirmDelete(t);
   }
 
+  async function saveSuggestionReviews() {
+    const reviews = Object.entries(pendingSuggestionReviews);
+    if (!reviews.length) return;
+    setIsSaving(true); setSaveError("");
+    try {
+      const interestedConcerts = reviews
+        .filter(([, review]) => review.decision === "interested" && review.concert)
+        .map(([, review]) => review.concert)
+        .filter((candidate) => !concertItems.some((concert) => concertMatches(concert, candidate)));
+      const updatedConcerts = [...concertItems, ...interestedConcerts];
+      const updatedDismissed = new Set(dismissedSuggestions);
+      reviews.forEach(([, review]) => {
+        if (!review.key) return;
+        if (review.decision === "not-interested") updatedDismissed.add(review.key);
+        else updatedDismissed.delete(review.key);
+      });
+      await saveToGitHub(
+        concertDataPayload(updatedConcerts, [...updatedDismissed]),
+        `Review ${reviews.length} concert ${reviews.length === 1 ? "suggestion" : "suggestions"}`,
+      );
+      setConcertItems(updatedConcerts);
+      setDismissedSuggestions([...updatedDismissed]);
+      setPendingSuggestionReviews({});
+    } catch (error) {
+      setSaveError(error.message || "Could not save suggestion decisions");
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
   async function handleSetlistIdDiscovered(target, discoveredId) {
     const { artist, venue, date } = target;
     let updated = false;
@@ -1900,7 +2009,7 @@ export default function App() {
     // Save silently in the background — don't block or show saving indicator
     try {
       await saveToGitHub(
-        { concerts: updatedConcerts },
+        concertDataPayload(updatedConcerts),
         `Auto-save setlist ID for ${artist}`
       );
     } catch (_) {
@@ -1991,7 +2100,7 @@ export default function App() {
                     <Icon type="search" />
                     <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search…" className="w-full min-w-0 bg-transparent text-sm text-zinc-100 outline-none placeholder:text-zinc-500" aria-label="Search concerts" />
                   </div>
-                  <button onClick={() => { setAddInitial(null); setModalOpen(true); }} className="shrink-0 rounded-full border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-sm font-black text-zinc-100 hover:border-zinc-500">+ Add</button>
+                  <button onClick={() => { setActiveSuggestionId(null); setAddInitial(null); setModalOpen(true); }} className="shrink-0 rounded-full border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-sm font-black text-zinc-100 hover:border-zinc-500">+ Add</button>
                   {isNext && <CalendarExportMenu items={nextItems} compact />}
                 </div>
                 {!isNext && (
@@ -2003,7 +2112,7 @@ export default function App() {
 
                 {/* Desktop layout */}
                 <div className={`hidden md:grid gap-3 ${isNext ? "md:grid-cols-[220px_1fr_180px]" : "md:grid-cols-[220px_1fr_280px]"}`}>
-                  <button onClick={() => { setAddInitial(null); setModalOpen(true); }} className="rounded-full border border-zinc-700 bg-zinc-900 px-5 py-3 text-sm font-black text-zinc-100 shadow-2xl transition hover:border-zinc-500">+ Add concert</button>
+                  <button onClick={() => { setActiveSuggestionId(null); setAddInitial(null); setModalOpen(true); }} className="rounded-full border border-zinc-700 bg-zinc-900 px-5 py-3 text-sm font-black text-zinc-100 shadow-2xl transition hover:border-zinc-500">+ Add concert</button>
                   <div className="flex items-center gap-3 rounded-full border border-zinc-700 bg-zinc-900 px-5 py-3 shadow-2xl">
                     <Icon type="search" />
                     <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search artist, venue, festival, city or date" className="w-full bg-transparent text-base text-zinc-100 outline-none placeholder:text-zinc-500" aria-label="Search concerts" />
@@ -2029,10 +2138,24 @@ export default function App() {
                 />
                 <ConcertSuggestions
                   suggestions={availableSuggestions}
-                  onAdd={(suggestion) => {
-                    setAddInitial({ artist: suggestion.artist, venue: suggestion.venue, date: suggestion.date, bought: false });
+                  reviews={pendingSuggestionReviews}
+                  onInterested={(suggestion) => {
+                    const pendingConcert = pendingSuggestionReviews[suggestion.id]?.concert;
+                    setSaveError("");
+                    setActiveSuggestionId(suggestion.id);
+                    setAddInitial(pendingConcert || { artist: suggestion.artist, venue: suggestion.venue, date: suggestion.date, bought: false });
                     setModalOpen(true);
                   }}
+                  onNotInterested={(suggestion) => {
+                    setSaveError("");
+                    setPendingSuggestionReviews((current) => ({
+                      ...current,
+                      [suggestion.id]: { decision: "not-interested", key: suggestionDecisionKey(suggestion) },
+                    }));
+                  }}
+                  onSave={saveSuggestionReviews}
+                  isSaving={isSaving}
+                  saveError={saveError}
                 />
               </>
             ) : (
@@ -2110,7 +2233,7 @@ export default function App() {
                 const t = confirmDelete; setConfirmDelete(null); setIsSaving(true);
                 try {
                   const updatedConcerts = removeConcert(concertItems, t);
-                  await saveToGitHub({ concerts: updatedConcerts }, `Delete concert: ${t.artist}${t.venue ? " — " + t.venue : ""} (${t.date})`);
+                  await saveToGitHub(concertDataPayload(updatedConcerts), `Delete concert: ${t.artist}${t.venue ? " — " + t.venue : ""} (${t.date})`);
                   setConcertItems(updatedConcerts);
                 } catch (e) { setSaveError(e.message || "Could not delete"); }
                 finally { setIsSaving(false); }
@@ -2120,7 +2243,7 @@ export default function App() {
         </div>
       )}
 
-      <AddConcertModal isOpen={modalOpen} mode={mode} initial={addInitial} onClose={() => { setModalOpen(false); setAddInitial(null); }} onSave={handleAddConcert} isSaving={isSaving} saveError={saveError} artistSuggestions={artistSuggestions} venueSuggestions={venueSuggestions} />
+      <AddConcertModal isOpen={modalOpen} mode={mode} initial={addInitial} stagingSuggestion={Boolean(activeSuggestionId)} onClose={() => { setModalOpen(false); setAddInitial(null); setActiveSuggestionId(null); }} onSave={handleAddConcert} isSaving={isSaving} saveError={saveError} artistSuggestions={artistSuggestions} venueSuggestions={venueSuggestions} />
       <EditConcertModal isOpen={!!editTarget} mode={editTarget?.mode || mode} initial={editTarget} onClose={() => setEditTarget(null)} onSave={handleEditConcert} isSaving={isSaving} saveError={saveError} artistSuggestions={artistSuggestions} venueSuggestions={venueSuggestions} />
       <ContextMenu open={contextMenu.open} x={contextMenu.x} y={contextMenu.y} onEdit={startEditFromContext} onDelete={deleteFromContext} onClose={closeContextMenu} />
       <SetlistModal

@@ -128,6 +128,9 @@ npm run codex
 # Authenticate Codex independently
 npm run codex:login
 
+# Import a local Spotify Extended Streaming History export
+npm run import:spotify -- path/to/my_spotify_data.zip
+
 # Localhost-only development server (recommended)
 npm run dev
 
@@ -179,11 +182,17 @@ Functions directory: netlify/functions
 
 ## Concert suggestion automation
 
-The workflow `.github/workflows/concert-suggestions.yml` runs every Monday and can also be started manually:
+The workflow `.github/workflows/concert-suggestions.yml` runs every Monday and can also be started manually. It refreshes Resurrection Fest Route, Live Nation Spain, Madness Live, Sala Razzmatazz, Sala Apolo, Sala Bikini, Paral·lel 62, Palau de la Música Catalana, Les Docks, and Montreux Jazz Festival:
 
 1. Open the repository on GitHub.
 2. Select **Actions**.
 3. Select **Refresh concert suggestions**.
+
+To run the complete pipeline locally:
+
+```bash
+npm run suggestions:refresh
+```
 4. Select **Run workflow**.
 
 The workflow runs:
@@ -192,9 +201,19 @@ The workflow runs:
 - Live Nation Spain;
 - Madness Live.
 
-It combines and deduplicates results into `data/suggestions.json`. Suggestions never appear directly as calendar events; the expandable **Concert suggestions** panel below the calendar presents them for review.
+Scraped lineups are matched against `data/listened-artists.json`, which contains artists heard at least once in the imported Spotify Extended Streaming History. Existing artist/date pairs in `data/concerts.json` and previously dismissed artist/date pairs are excluded. The workflow combines and deduplicates results into `data/suggestions.json`. Suggestions never appear directly as calendar events; the expandable **Concert suggestions** panel below the calendar presents them for review.
 
-Selecting **Add** opens the normal Add Concert modal with artist, venue, and date prefilled. Saving adds the concert to `data/concerts.json`, immediately removes the suggestion from the visible list, and excludes it from later scraper runs.
+### Import Spotify listening history
+
+Request the Extended Streaming History export from Spotify, keep the downloaded ZIP outside version control, and run:
+
+```bash
+npm run import:spotify -- path/to/my_spotify_data.zip
+```
+
+The importer writes `data/listened-artists.json`. It retains only artist-level aggregates: artist name, number of listening records, total milliseconds, and first/last timestamps. Raw track names, IP addresses, devices, and other private export fields are not retained. The `.gitignore` protects the expected ZIP filename and a `spotify-data/` import directory; never commit the raw export under another name.
+
+Select **Interested** to open the normal Add Concert modal with artist, venue, and date prefilled, or **Not interested** to dismiss a suggestion. These choices are staged in browser storage, so you can review the complete list without creating a commit per concert. Use **Save decisions** once at the end: interested concerts and dismissed artist/date keys are written together to `data/concerts.json` in one commit. Persisted dismissals are excluded from later scraper runs.
 
 Run the complete pipeline locally:
 
@@ -220,7 +239,7 @@ gh auth setup-git
 
 ## Data model
 
-The canonical dataset is `data/concerts.json`:
+The canonical dataset is `data/concerts.json`. Its `concerts` array stores the archive and its optional `dismissedSuggestions` array stores normalized `artist|DD/MM/YYYY` keys from the suggestion review flow:
 
 ```json
 {
@@ -261,6 +280,7 @@ Setlist lookup first uses a stored `setlistId`. If no ID exists, the proxy searc
 ├── docs/DEVELOPMENT.md               Detailed contributor and operations guide
 ├── data/
 │   ├── concerts.json                 Canonical concert dataset
+│   ├── listened-artists.json          Privacy-reduced Spotify artist catalog
 │   └── suggestions.json              Generated, reviewable suggestions
 ├── netlify/functions/
 │   ├── get-setlist.js                Production setlist.fm proxy

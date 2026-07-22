@@ -25,13 +25,21 @@ if (!inputPaths.length) {
 
 const combined = [];
 const seen = new Set();
+let dismissedSuggestions = new Set();
+
+try {
+  const concertData = JSON.parse(await fs.readFile(path.resolve("data/concerts.json"), "utf8"));
+  dismissedSuggestions = new Set(concertData.dismissedSuggestions || []);
+} catch {
+  // Suggestions can still be generated before a concert dataset exists.
+}
 
 for (const inputPath of inputPaths) {
   const result = JSON.parse(await fs.readFile(path.resolve(inputPath), "utf8"));
   for (const suggestion of result.suggestions || []) {
     for (const artist of suggestion.artists || []) {
       const key = `${normalize(artist)}|${suggestion.date}`;
-      if (seen.has(key)) continue;
+      if (seen.has(key) || dismissedSuggestions.has(key)) continue;
       seen.add(key);
       combined.push({
         id: `${suggestion.id}-${slug(artist)}`,

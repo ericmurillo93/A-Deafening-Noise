@@ -87,8 +87,9 @@ async function fetchEvents() {
 
 const root = process.cwd();
 const concertData = JSON.parse(await fs.readFile(path.join(root, "data/concerts.json"), "utf8"));
-const archiveArtistsByKey = new Map(
-  concertData.concerts
+const listenedArtistData = JSON.parse(await fs.readFile(path.join(root, "data/listened-artists.json"), "utf8"));
+const listenedArtistsByKey = new Map(
+  listenedArtistData.artists
     .filter(({ artist }) => artist)
     .map(({ artist }) => [normalize(artist), artist]),
 );
@@ -119,7 +120,7 @@ for (const event of events) {
   if (!date) continue;
   const matchedArtists = [...new Set(
     (event.lineup || [])
-      .map(({ name }) => archiveArtistsByKey.get(normalize(name)))
+      .map(({ name }) => listenedArtistsByKey.get(normalize(name)))
       .filter(Boolean),
   )];
   if (!matchedArtists.length) continue;
