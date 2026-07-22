@@ -26,10 +26,12 @@ if (!inputPaths.length) {
 const combined = [];
 const seen = new Set();
 let dismissedSuggestions = new Set();
+let existingConcerts = new Set();
 
 try {
   const concertData = JSON.parse(await fs.readFile(path.resolve("data/concerts.json"), "utf8"));
   dismissedSuggestions = new Set(concertData.dismissedSuggestions || []);
+  existingConcerts = new Set((concertData.concerts || []).map(({ artist, date }) => `${normalize(artist)}|${date}`));
 } catch {
   // Suggestions can still be generated before a concert dataset exists.
 }
@@ -37,12 +39,13 @@ try {
 for (const inputPath of inputPaths) {
   const result = JSON.parse(await fs.readFile(path.resolve(inputPath), "utf8"));
   for (const suggestion of result.suggestions || []) {
-    for (const artist of suggestion.artists || []) {
+    const artists = suggestion.artists || (suggestion.artist ? [suggestion.artist] : []);
+    for (const artist of artists) {
       const key = `${normalize(artist)}|${suggestion.date}`;
-      if (seen.has(key) || dismissedSuggestions.has(key)) continue;
+      if (seen.has(key) || dismissedSuggestions.has(key) || existingConcerts.has(key)) continue;
       seen.add(key);
       combined.push({
-        id: `${suggestion.id}-${slug(artist)}`,
+        id: result.preserved ? suggestion.id : `${suggestion.id}-${slug(artist)}`,
         artist,
         venue: suggestion.venue || "",
         city: suggestion.city || "",
