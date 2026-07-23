@@ -1827,7 +1827,7 @@ function YearInReviewPage({ historyItems, onOpenArtist, onOpenSetlist, onOpenVen
 
 // ─── LoginGate ────────────────────────────────────────────────────────────────
 
-function LoginGate() {
+function LoginGate({ onSignedIn }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -1839,7 +1839,10 @@ function LoginGate() {
     setLoading(true);
     setError("");
     const { error: authError } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
-    if (!authError) return;
+    if (!authError) {
+      onSignedIn();
+      return;
+    }
     setError("Incorrect email or password.");
     setPassword("");
     setShake(true);
@@ -2081,7 +2084,7 @@ export default function App() {
 
   if (!authReady) return <div className="flex min-h-screen items-center justify-center bg-zinc-950 text-zinc-500">Loading…</div>;
   if (!supabaseEnabled && !IS_LOCAL) return <div className="flex min-h-screen items-center justify-center bg-zinc-950 px-6 text-center text-red-300">Supabase is not configured for this deployment.</div>;
-  if (supabaseEnabled && !session) return <LoginGate />;
+  if (supabaseEnabled && !session) return <LoginGate onSignedIn={() => navigateToArchive({ replace: true })} />;
   if (!dataReady) return <div className="flex min-h-screen items-center justify-center bg-zinc-950 text-zinc-500">Loading your concert archive…</div>;
   if (dataLoadError) return <div className="flex min-h-screen items-center justify-center bg-zinc-950 px-6 text-center text-red-300">{dataLoadError}</div>;
 
@@ -2094,6 +2097,20 @@ export default function App() {
     setSortMode("artist");
     setSidebarOpen(false);
     window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function navigateToArchive({ replace = false } = {}) {
+    const historyRoute = { page: "history", artist: null, venue: null };
+    const updateHistory = replace ? window.history.replaceState.bind(window.history) : window.history.pushState.bind(window.history);
+    updateHistory({ adnRoute: true, canGoBack: !replace }, "", routeToHash(historyRoute));
+    setActivePage("history");
+    setSelectedArtist(null);
+    setSelectedVenue(null);
+    setQuery("");
+    setSortMode("artist");
+    setSidebarOpen(false);
+    setStatsMenuOpen(false);
+    window.scrollTo({ top: 0, behavior: "auto" });
   }
   function changePage(page) { navigateTo({ page: !canEdit && page === "next" ? "history" : page, artist: null, venue: null }); }
   function openArtistDetail(artist) {
