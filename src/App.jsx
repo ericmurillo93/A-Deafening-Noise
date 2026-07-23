@@ -2202,6 +2202,15 @@ export default function App() {
   useEffect(() => {
     if (!supabaseEnabled) return undefined;
     const recoveryRequested = new URLSearchParams(window.location.search).get("password-recovery") === "1";
+    function showLoginRoute() {
+      window.history.replaceState({ adnRoute: true, canGoBack: false }, "", "/");
+      setActivePage("history");
+      setSelectedArtist(null);
+      setSelectedVenue(null);
+      setQuery("");
+      setSortMode("artist");
+      setSidebarOpen(false);
+    }
     function openRecovery(sessionToUse) {
       if (!recoveryRequested || !sessionToUse) return;
       setPasswordModalMode("recovery");
@@ -2212,7 +2221,13 @@ export default function App() {
     }
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session);
-      openRecovery(data.session);
+      if (data.session) {
+        openRecovery(data.session);
+        if (!recoveryRequested && window.location.pathname === "/" && !window.location.hash) {
+          window.history.replaceState({ adnRoute: true, canGoBack: false }, "", "/history");
+        }
+      }
+      else if (!recoveryRequested) showLoginRoute();
       setAuthReady(true);
     });
     const { data: listener } = supabase.auth.onAuthStateChange((event, nextSession) => {
@@ -2225,7 +2240,10 @@ export default function App() {
         setSelectedVenue(null);
       }
       setAuthReady(true);
-      if (!nextSession) setDataReady(false);
+      if (!nextSession) {
+        setDataReady(false);
+        if (!recoveryRequested || event === "SIGNED_OUT") showLoginRoute();
+      }
     });
     return () => listener.subscription.unsubscribe();
   }, []);
@@ -2265,7 +2283,8 @@ export default function App() {
   useEffect(() => {
     const initial = readRouteFromLocation();
     const isPasswordRecovery = new URLSearchParams(window.location.search).get("password-recovery") === "1";
-    if (!isPasswordRecovery) window.history.replaceState({ adnRoute: true, canGoBack: false }, "", routeToPath(initial));
+    const isLoggedOutRoot = window.location.pathname === "/" && !window.location.hash;
+    if (!isPasswordRecovery && !isLoggedOutRoot) window.history.replaceState({ adnRoute: true, canGoBack: false }, "", routeToPath(initial));
 
     function restoreRoute() {
       if (dialogHistoryOpenRef.current || closingDialogWithBackRef.current) {
