@@ -17,7 +17,7 @@ Read `README.md` for the quick start and `docs/DEVELOPMENT.md` for production co
 - `netlify/functions/save-concerts.js` is retained as a protected legacy/backup writer.
 - `netlify/functions/get-setlist.js` proxies setlist.fm in production.
 - `vite.config.js` emulates those functions locally and writes concert edits directly to the working tree.
-- Hash routes provide browser history for archive, calendar, timeline, stats, year review, artist, and venue views.
+- Clean History API routes provide direct URLs and browser history for archive, calendar, timeline, stats, year review, artist, and venue views; Netlify's SPA fallback serves direct requests.
 
 ## Local versus production boundaries
 

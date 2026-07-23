@@ -181,6 +181,14 @@ VITE_SUPABASE_PUBLISHABLE_KEY
 
 `GITHUB_TOKEN` needs **Contents: read and write** to update the JSON backup, plus **Actions: read and write** to start and monitor the suggestion workflow. The Supabase values are publishable browser configuration; authorization is enforced through user sessions and database policies. Keep GitHub and setlist.fm secrets in Netlify, never in the repository or browser code.
 
+### Password recovery
+
+In **Supabase → Authentication → Providers → Email**, enable **Secure password change**. In **Authentication → URL Configuration**, use `https://adeafeningnoise.com` as the Site URL. Allow `https://adeafeningnoise.com/**` and the local development roots (for example `http://localhost:5173/**`) as Redirect URLs.
+
+Authenticated password changes use Supabase reauthentication: an email code is required before the new password is accepted. The login screen's **Forgot password?** action sends Supabase's recovery link back to `?password-recovery=1`; the app consumes the recovery session, asks for a new password, then signs out. The browser enforces a shared 60-second cooldown between authentication emails, including across reloads. For a larger public user base, configure custom SMTP instead of relying on Supabase's limited shared email service.
+
+The application uses clean History API routes such as `/history`, `/calendar`, `/timeline`, `/stats`, `/year-review`, `/artist/:name`, and `/venue/:name`. Netlify's checked-in SPA fallback serves `index.html` for direct route requests. Legacy hash URLs are converted to their clean equivalent on first load.
+
 The checked-in `netlify.toml` defines:
 
 ```text

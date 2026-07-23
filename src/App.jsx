@@ -21,6 +21,41 @@ const fallbackConcerts = concertsData.concerts;
 const fallbackDismissedSuggestions = concertsData.dismissedSuggestions || [];
 
 const IS_LOCAL = import.meta.env.DEV;
+const AUTH_EMAIL_COOLDOWN_KEY = "adn_auth_email_cooldown_until";
+const AUTH_EMAIL_COOLDOWN_MS = 60_000;
+
+function useAuthEmailCooldown() {
+  const readUntil = () => Number(localStorage.getItem(AUTH_EMAIL_COOLDOWN_KEY)) || 0;
+  const [until, setUntil] = useState(readUntil);
+  const [now, setNow] = useState(Date.now());
+  const seconds = Math.max(0, Math.ceil((until - now) / 1000));
+
+  useEffect(() => {
+    if (until <= Date.now()) return undefined;
+    const timer = window.setInterval(() => {
+      const nextNow = Date.now();
+      setNow(nextNow);
+      if (nextNow >= until) window.clearInterval(timer);
+    }, 1000);
+    return () => window.clearInterval(timer);
+  }, [until]);
+
+  function refresh() {
+    const storedUntil = readUntil();
+    setUntil(storedUntil);
+    setNow(Date.now());
+    return Math.max(0, Math.ceil((storedUntil - Date.now()) / 1000));
+  }
+
+  function start() {
+    const nextUntil = Date.now() + AUTH_EMAIL_COOLDOWN_MS;
+    localStorage.setItem(AUTH_EMAIL_COOLDOWN_KEY, String(nextUntil));
+    setUntil(nextUntil);
+    setNow(Date.now());
+  }
+
+  return { seconds, refresh, start };
+}
 
 async function sessionHeaders() {
   if (!supabaseEnabled) return {};
@@ -95,21 +130,34 @@ function formatEuropeanDateTime(value) {
   }).format(new Date(value));
 }
 
-function readRouteFromHash() {
-  if (typeof window === "undefined") return { page: "history", artist: null, venue: null };
-  const [pagePart = "history", ...valueParts] = window.location.hash.replace(/^#\/?/, "").split("/");
-  const value = valueParts.length ? decodeURIComponent(valueParts.join("/")) : null;
+function parseRouteParts(pagePart = "history", valueParts = []) {
+  let value = null;
+  try {
+    value = valueParts.length ? decodeURIComponent(valueParts.join("/")) : null;
+  } catch {
+    value = valueParts.join("/") || null;
+  }
   if (pagePart === "artist" && value) return { page: "artist", artist: value, venue: null };
   if (pagePart === "venue" && value) return { page: "venue", artist: null, venue: value };
   const pageAliases = { calendar: "next", history: "history", timeline: "timeline", stats: "stats", "year-review": "year-review" };
   return { page: pageAliases[pagePart] || "history", artist: null, venue: null };
 }
 
-function routeToHash({ page, artist, venue }) {
-  if (page === "artist" && artist) return `#artist/${encodeURIComponent(artist)}`;
-  if (page === "venue" && venue) return `#venue/${encodeURIComponent(venue)}`;
-  if (page === "next") return "#calendar";
-  return `#${page || "history"}`;
+function readRouteFromLocation() {
+  if (typeof window === "undefined") return { page: "history", artist: null, venue: null };
+  const pathParts = window.location.pathname.replace(/^\/+|\/+$/g, "").split("/").filter(Boolean);
+  if (pathParts.length) return parseRouteParts(pathParts[0], pathParts.slice(1));
+
+  // Convert previously shared hash routes to clean paths on first load.
+  const legacyParts = window.location.hash.replace(/^#\/?/, "").split("/").filter(Boolean);
+  return legacyParts.length ? parseRouteParts(legacyParts[0], legacyParts.slice(1)) : parseRouteParts();
+}
+
+function routeToPath({ page, artist, venue }) {
+  if (page === "artist" && artist) return `/artist/${encodeURIComponent(artist)}`;
+  if (page === "venue" && venue) return `/venue/${encodeURIComponent(venue)}`;
+  if (page === "next") return "/calendar";
+  return `/${page || "history"}`;
 }
 
 function parseDate(date) {
@@ -1832,7 +1880,10 @@ function LoginGate({ onSignedIn }) {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [resetLoading, setResetLoading] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
   const [shake, setShake] = useState(false);
+  const emailCooldown = useAuthEmailCooldown();
 
   async function attempt(event) {
     event.preventDefault();
@@ -1850,6 +1901,36 @@ function LoginGate({ onSignedIn }) {
     setLoading(false);
   }
 
+  async function requestPasswordReset() {
+    const normalizedEmail = email.trim();
+    setError("");
+    setResetSent(false);
+    if (!normalizedEmail || !/^\S+@\S+\.\S+$/.test(normalizedEmail)) {
+      setError("Enter your email address first.");
+      return;
+    }
+    const cooldownSeconds = emailCooldown.refresh();
+    if (cooldownSeconds > 0) {
+      setError(`Wait ${cooldownSeconds} seconds before requesting another email.`);
+      return;
+    }
+    setResetLoading(true);
+    try {
+      const redirectTo = `${window.location.origin}/?password-recovery=1`;
+      const { error: resetError } = await supabase.auth.resetPasswordForEmail(normalizedEmail, { redirectTo });
+      if (resetError) {
+        setError(resetError.message || "Could not send the recovery email.");
+        return;
+      }
+      emailCooldown.start();
+      setResetSent(true);
+    } catch {
+      setError("Could not send the recovery email. Check your connection and try again.");
+    } finally {
+      setResetLoading(false);
+    }
+  }
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-zinc-950 px-4">
       <div className={`w-full max-w-sm ${shake ? "animate-shake" : ""}`}>
@@ -1859,12 +1940,138 @@ function LoginGate({ onSignedIn }) {
           <p className="mt-3 text-sm text-zinc-500">Sign in to open your concert history.</p>
         </div>
         <form onSubmit={attempt} className="space-y-4">
-          <input type="email" value={email} onChange={(e) => { setEmail(e.target.value); setError(""); }} placeholder="Email" autoComplete="email" autoFocus className={`w-full rounded-2xl border bg-zinc-900 px-5 py-4 text-zinc-100 outline-none transition placeholder:text-zinc-600 ${error ? "border-red-700" : "border-zinc-700 focus:border-zinc-400"}`} />
+          <input type="email" value={email} onChange={(e) => { setEmail(e.target.value); setError(""); setResetSent(false); }} placeholder="Email" autoComplete="email" autoFocus className={`w-full rounded-2xl border bg-zinc-900 px-5 py-4 text-zinc-100 outline-none transition placeholder:text-zinc-600 ${error ? "border-red-700" : "border-zinc-700 focus:border-zinc-400"}`} />
           <input type="password" value={password} onChange={(e) => { setPassword(e.target.value); setError(""); }} placeholder="Password" autoComplete="current-password" className={`w-full rounded-2xl border bg-zinc-900 px-5 py-4 text-zinc-100 outline-none transition placeholder:text-zinc-600 ${error ? "border-red-700 text-red-300" : "border-zinc-700 focus:border-zinc-400"}`} />
           {error && <p className="text-center text-sm text-red-400">{error}</p>}
+          {resetSent && <p className="rounded-2xl border border-emerald-900 bg-emerald-950/40 px-4 py-3 text-center text-sm text-emerald-300">If that account exists, a recovery link has been sent.</p>}
           <button type="submit" disabled={loading} className="w-full rounded-2xl bg-zinc-100 py-4 font-black uppercase tracking-widest text-zinc-950 transition hover:bg-white disabled:opacity-50">{loading ? "Signing in…" : "Sign in"}</button>
+          <button type="button" onClick={requestPasswordReset} disabled={loading || resetLoading || emailCooldown.seconds > 0} className="w-full py-2 text-sm font-semibold text-zinc-500 transition hover:text-zinc-200 disabled:opacity-50">{resetLoading ? "Sending recovery email…" : emailCooldown.seconds > 0 ? `Try again in ${emailCooldown.seconds}s` : "Forgot password?"}</button>
         </form>
       </div>
+    </div>
+  );
+}
+
+function ChangePasswordModal({ mode, email, onClose }) {
+  const isOpen = Boolean(mode);
+  const isRecovery = mode === "recovery";
+  const [step, setStep] = useState("request");
+  const [nonce, setNonce] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmation, setConfirmation] = useState("");
+  const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const emailCooldown = useAuthEmailCooldown();
+
+  useEffect(() => {
+    if (!isOpen) return;
+    setStep(isRecovery ? "password" : "request");
+    setNonce("");
+    setNewPassword("");
+    setConfirmation("");
+    setError("");
+    setSaving(false);
+    setSaved(false);
+  }, [isOpen, isRecovery]);
+
+  if (!isOpen) return null;
+
+  async function sendVerificationCode() {
+    setError("");
+    const cooldownSeconds = emailCooldown.refresh();
+    if (cooldownSeconds > 0) {
+      setError(`Wait ${cooldownSeconds} seconds before requesting another email.`);
+      return;
+    }
+    setSaving(true);
+    try {
+      const { error: reauthenticationError } = await supabase.auth.reauthenticate();
+      if (reauthenticationError) {
+        setError(reauthenticationError.message || "Could not send the verification code.");
+        return;
+      }
+      emailCooldown.start();
+      setStep("password");
+    } catch {
+      setError("Could not send the verification code. Check your connection and try again.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function submit(event) {
+    event.preventDefault();
+    setError("");
+    if (newPassword.length < 8) {
+      setError("Use at least 8 characters for the new password.");
+      return;
+    }
+    if (newPassword !== confirmation) {
+      setError("The new passwords do not match.");
+      return;
+    }
+    if (!isRecovery && !/^\d{6}$/.test(nonce.trim())) {
+      setError("Enter the 6-digit code from your email.");
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const { error: updateError } = await supabase.auth.updateUser({
+        password: newPassword,
+        ...(!isRecovery ? { nonce: nonce.trim() } : {}),
+      });
+      if (updateError) {
+        setError(updateError.message || "Could not change your password.");
+        return;
+      }
+      setNonce("");
+      setNewPassword("");
+      setConfirmation("");
+      setSaved(true);
+      await supabase.auth.signOut();
+    } catch {
+      setError("Could not change your password. Check your connection and try again.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/75 px-4" onClick={() => { if (!saving) onClose(); }}>
+      <section role="dialog" aria-modal="true" aria-labelledby="change-password-title" className="w-full max-w-md rounded-3xl border border-zinc-700 bg-zinc-950 p-6 shadow-2xl" onClick={(event) => event.stopPropagation()}>
+        <div className="mb-6 flex items-start justify-between gap-4">
+          <div>
+            <p className="mb-2 text-xs font-bold uppercase tracking-[0.25em] text-zinc-600">{isRecovery ? "Account recovery" : "Account security"}</p>
+            <h2 id="change-password-title" className="text-2xl font-black text-zinc-100">{step === "request" && !saved ? "Verify your email" : "Choose a new password"}</h2>
+          </div>
+          <button type="button" onClick={onClose} disabled={saving} className="rounded-full border border-zinc-700 px-3 py-1.5 text-sm text-zinc-400 transition hover:border-zinc-500 hover:text-white disabled:opacity-40" aria-label="Close">Close</button>
+        </div>
+        {saved ? (
+          <div>
+            <p className="mb-6 rounded-2xl border border-emerald-900 bg-emerald-950/50 px-4 py-3 text-sm text-emerald-300">Your password has been changed. Sign in again with your new password.</p>
+            <button type="button" onClick={onClose} className="w-full rounded-2xl bg-zinc-100 py-3.5 font-black text-zinc-950 transition hover:bg-white">Done</button>
+          </div>
+        ) : step === "request" ? (
+          <div>
+            <p className="mb-2 text-sm text-zinc-300">We'll email a verification code to:</p>
+            <p className="mb-6 break-all text-sm font-bold text-zinc-100">{email}</p>
+            {error && <p className="mb-4 rounded-2xl border border-red-900 bg-red-950/40 px-4 py-3 text-sm text-red-300">{error}</p>}
+            <button type="button" onClick={sendVerificationCode} disabled={saving || emailCooldown.seconds > 0} className="w-full rounded-2xl bg-zinc-100 py-3.5 font-black text-zinc-950 transition hover:bg-white disabled:opacity-50">{saving ? "Sending code…" : emailCooldown.seconds > 0 ? `Try again in ${emailCooldown.seconds}s` : "Send verification code"}</button>
+          </div>
+        ) : (
+          <form onSubmit={submit} className="space-y-4">
+            {!isRecovery && <p className="text-sm text-zinc-400">Enter the verification code sent to {email}.</p>}
+            {!isRecovery && <input type="text" inputMode="numeric" value={nonce} onChange={(event) => { setNonce(event.target.value.replace(/\D/g, "").slice(0, 6)); setError(""); }} placeholder="6-digit verification code" autoComplete="one-time-code" pattern="[0-9]{6}" autoFocus required className="w-full rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3.5 text-zinc-100 outline-none transition placeholder:text-zinc-600 focus:border-zinc-400" />}
+            <input type="password" value={newPassword} onChange={(event) => { setNewPassword(event.target.value); setError(""); }} placeholder="New password" autoComplete="new-password" minLength={8} required className="w-full rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3.5 text-zinc-100 outline-none transition placeholder:text-zinc-600 focus:border-zinc-400" />
+            <input type="password" value={confirmation} onChange={(event) => { setConfirmation(event.target.value); setError(""); }} placeholder="Confirm new password" autoComplete="new-password" minLength={8} required className="w-full rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3.5 text-zinc-100 outline-none transition placeholder:text-zinc-600 focus:border-zinc-400" />
+            <p className="text-xs text-zinc-600">Use at least 8 characters.</p>
+            {error && <p className="rounded-2xl border border-red-900 bg-red-950/40 px-4 py-3 text-sm text-red-300">{error}</p>}
+            <button type="submit" disabled={saving} className="w-full rounded-2xl bg-zinc-100 py-3.5 font-black text-zinc-950 transition hover:bg-white disabled:opacity-50">{saving ? "Changing password…" : "Change password"}</button>
+          </form>
+        )}
+      </section>
     </div>
   );
 }
@@ -1872,7 +2079,7 @@ function LoginGate({ onSignedIn }) {
 // ─── App ──────────────────────────────────────────────────────────────────────
 
 export default function App() {
-  const initialRoute = useMemo(() => readRouteFromHash(), []);
+  const initialRoute = useMemo(() => readRouteFromLocation(), []);
   const [session, setSession] = useState(null);
   const [authReady, setAuthReady] = useState(!supabaseEnabled);
   const [dataReady, setDataReady] = useState(!supabaseEnabled);
@@ -1904,9 +2111,13 @@ export default function App() {
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
   const [confirmDelete, setConfirmDelete] = useState(null);
+  const [passwordModalMode, setPasswordModalMode] = useState(null);
   const dialogHistoryOpenRef = useRef(false);
   const closingDialogWithBackRef = useRef(false);
-  const anyDialogOpen = modalOpen || Boolean(editTarget) || Boolean(setlistTarget) || Boolean(calendarTarget) || Boolean(confirmDelete);
+  const passwordModalModeRef = useRef(null);
+  passwordModalModeRef.current = passwordModalMode;
+  const anyDialogOpen = modalOpen || Boolean(editTarget) || Boolean(setlistTarget) || Boolean(calendarTarget) || Boolean(confirmDelete) || Boolean(passwordModalMode);
+  const currentUserId = session?.user?.id || "";
   const currentEmail = session?.user?.email?.toLowerCase() || "";
   const currentUserName = currentEmail === "eric.murillo93@gmail.com" ? "Eric" : currentEmail === "rpsaray@gmail.com" ? "Saray" : currentEmail === "murillodma@gmail.com" ? "Papa" : "";
   const canEdit = !supabaseEnabled || currentUserName === "Eric";
@@ -1990,12 +2201,29 @@ export default function App() {
 
   useEffect(() => {
     if (!supabaseEnabled) return undefined;
+    const recoveryRequested = new URLSearchParams(window.location.search).get("password-recovery") === "1";
+    function openRecovery(sessionToUse) {
+      if (!recoveryRequested || !sessionToUse) return;
+      setPasswordModalMode("recovery");
+      window.history.replaceState({ adnRoute: true, canGoBack: false }, "", "/history");
+      setActivePage("history");
+      setSelectedArtist(null);
+      setSelectedVenue(null);
+    }
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session);
+      openRecovery(data.session);
       setAuthReady(true);
     });
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+    const { data: listener } = supabase.auth.onAuthStateChange((event, nextSession) => {
       setSession(nextSession);
+      if (event === "PASSWORD_RECOVERY") {
+        setPasswordModalMode("recovery");
+        window.history.replaceState({ adnRoute: true, canGoBack: false }, "", "/history");
+        setActivePage("history");
+        setSelectedArtist(null);
+        setSelectedVenue(null);
+      }
       setAuthReady(true);
       if (!nextSession) setDataReady(false);
     });
@@ -2003,7 +2231,7 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (!supabaseEnabled || !session) return;
+    if (!supabaseEnabled || !currentUserId) return;
     let cancelled = false;
     setDataReady(false);
     setDataLoadError("");
@@ -2025,17 +2253,19 @@ export default function App() {
       }
     })();
     return () => { cancelled = true; };
-  }, [session, currentEmail]);
+  }, [currentUserId, currentEmail]);
 
   useEffect(() => {
+    if (supabaseEnabled && (!authReady || !currentUserId)) return;
     if (canEdit || activePage !== "next") return;
-    window.history.replaceState({ adnRoute: true, canGoBack: false }, "", routeToHash({ page: "history" }));
+    window.history.replaceState({ adnRoute: true, canGoBack: false }, "", routeToPath({ page: "history" }));
     setActivePage("history");
-  }, [activePage, canEdit]);
+  }, [activePage, canEdit, authReady, currentUserId]);
 
   useEffect(() => {
-    const initial = readRouteFromHash();
-    window.history.replaceState({ adnRoute: true, canGoBack: false }, "", routeToHash(initial));
+    const initial = readRouteFromLocation();
+    const isPasswordRecovery = new URLSearchParams(window.location.search).get("password-recovery") === "1";
+    if (!isPasswordRecovery) window.history.replaceState({ adnRoute: true, canGoBack: false }, "", routeToPath(initial));
 
     function restoreRoute() {
       if (dialogHistoryOpenRef.current || closingDialogWithBackRef.current) {
@@ -2048,9 +2278,11 @@ export default function App() {
         setSetlistTarget(null);
         setCalendarTarget(null);
         setConfirmDelete(null);
+        if (passwordModalModeRef.current === "recovery") void supabase.auth.signOut();
+        setPasswordModalMode(null);
         return;
       }
-      const route = readRouteFromHash();
+      const route = readRouteFromLocation();
       setActivePage(route.page);
       setSelectedArtist(route.artist);
       setSelectedVenue(route.venue);
@@ -2060,10 +2292,8 @@ export default function App() {
     }
 
     window.addEventListener("popstate", restoreRoute);
-    window.addEventListener("hashchange", restoreRoute);
     return () => {
       window.removeEventListener("popstate", restoreRoute);
-      window.removeEventListener("hashchange", restoreRoute);
     };
   }, []);
 
@@ -2082,14 +2312,22 @@ export default function App() {
     }
   }, [anyDialogOpen]);
 
-  if (!authReady) return <div className="flex min-h-screen items-center justify-center bg-zinc-950 text-zinc-500">Loading…</div>;
-  if (!supabaseEnabled && !IS_LOCAL) return <div className="flex min-h-screen items-center justify-center bg-zinc-950 px-6 text-center text-red-300">Supabase is not configured for this deployment.</div>;
-  if (supabaseEnabled && !session) return <LoginGate onSignedIn={() => navigateToArchive({ replace: true })} />;
-  if (!dataReady) return <div className="flex min-h-screen items-center justify-center bg-zinc-950 text-zinc-500">Loading your concert archive…</div>;
-  if (dataLoadError) return <div className="flex min-h-screen items-center justify-center bg-zinc-950 px-6 text-center text-red-300">{dataLoadError}</div>;
+  function closePasswordModal() {
+    if (passwordModalMode === "recovery") void supabase.auth.signOut();
+    setPasswordModalMode(null);
+  }
+
+  const passwordModal = <ChangePasswordModal mode={passwordModalMode} email={currentEmail} onClose={closePasswordModal} />;
+
+  if (!authReady) return <>{passwordModal}<div className="flex min-h-screen items-center justify-center bg-zinc-950 text-zinc-500">Loading…</div></>;
+  if (!supabaseEnabled && !IS_LOCAL) return <>{passwordModal}<div className="flex min-h-screen items-center justify-center bg-zinc-950 px-6 text-center text-red-300">Supabase is not configured for this deployment.</div></>;
+  if (passwordModalMode === "recovery") return <>{passwordModal}<div className="min-h-screen bg-zinc-950" aria-hidden="true" /></>;
+  if (supabaseEnabled && !session) return <>{passwordModal}<LoginGate onSignedIn={() => navigateToArchive({ replace: true })} /></>;
+  if (!dataReady) return <>{passwordModal}<div className="flex min-h-screen items-center justify-center bg-zinc-950 text-zinc-500">Loading your concert archive…</div></>;
+  if (dataLoadError) return <>{passwordModal}<div className="flex min-h-screen items-center justify-center bg-zinc-950 px-6 text-center text-red-300">{dataLoadError}</div></>;
 
   function navigateTo(route) {
-    window.history.pushState({ adnRoute: true, canGoBack: true }, "", routeToHash(route));
+    window.history.pushState({ adnRoute: true, canGoBack: true }, "", routeToPath(route));
     setActivePage(route.page);
     setSelectedArtist(route.artist || null);
     setSelectedVenue(route.venue || null);
@@ -2102,7 +2340,7 @@ export default function App() {
   function navigateToArchive({ replace = false } = {}) {
     const historyRoute = { page: "history", artist: null, venue: null };
     const updateHistory = replace ? window.history.replaceState.bind(window.history) : window.history.pushState.bind(window.history);
-    updateHistory({ adnRoute: true, canGoBack: !replace }, "", routeToHash(historyRoute));
+    updateHistory({ adnRoute: true, canGoBack: !replace }, "", routeToPath(historyRoute));
     setActivePage("history");
     setSelectedArtist(null);
     setSelectedVenue(null);
@@ -2255,6 +2493,8 @@ export default function App() {
   }
 
   return (
+    <>
+    {passwordModal}
     <main className="min-h-screen bg-zinc-950 text-zinc-100 md:flex">
       {/* Desktop-only fixed Menu button */}
       <button onClick={() => setSidebarOpen(true)} className="menu-button-desktop fixed left-4 top-4 z-40 rounded-full border border-zinc-700 bg-zinc-900 px-4 py-2 text-sm font-bold text-zinc-100 shadow-2xl transition hover:border-zinc-500" aria-label="Open menu">Menu</button>
@@ -2269,7 +2509,7 @@ export default function App() {
             <button onClick={() => changePage("history")} className="text-left text-xl font-black text-zinc-100">A Deafening Noise</button>
             <button onClick={() => setSidebarOpen(false)} className="rounded-full border border-zinc-700 px-3 py-1 text-sm text-zinc-300 hover:border-zinc-500">Close</button>
           </div>
-          {currentUserName && <div className="mb-5 flex items-center justify-between rounded-2xl border border-zinc-800 bg-zinc-900 px-4 py-3"><span className="text-sm font-bold text-zinc-200">{currentUserName}</span><button type="button" onClick={() => supabase.auth.signOut()} className="text-xs font-semibold text-zinc-500 hover:text-zinc-200">Sign out</button></div>}
+          {currentUserName && <div className="mb-5 rounded-2xl border border-zinc-800 bg-zinc-900 px-4 py-3"><span className="mb-3 block text-sm font-bold text-zinc-200">{currentUserName}</span><div className="flex items-center gap-4"><button type="button" onClick={() => { setSidebarOpen(false); setPasswordModalMode("change"); }} className="text-xs font-semibold text-zinc-500 hover:text-zinc-200">Change password</button><button type="button" onClick={() => supabase.auth.signOut()} className="text-xs font-semibold text-zinc-500 hover:text-zinc-200">Sign out</button></div></div>}
           <nav className="space-y-2 text-sm">
             <button onClick={() => changePage("history")} className={`block w-full rounded-2xl px-4 py-3 text-left transition hover:bg-zinc-900 hover:text-zinc-100 ${["history", "artist", "timeline"].includes(activePage) ? "bg-zinc-900 text-zinc-100" : "text-zinc-400"}`}>Concert history</button>
             {canEdit && <button onClick={() => changePage("next")} className={`block w-full rounded-2xl px-4 py-3 text-left transition hover:bg-zinc-900 hover:text-zinc-100 ${activePage === "next" ? "bg-zinc-900 text-zinc-100" : "text-zinc-400"}`}>Concert calendar</button>}
@@ -2496,5 +2736,6 @@ export default function App() {
         onEdit={canEdit ? (target) => { setCalendarTarget(null); setEditTarget(target); } : null}
       />
     </main>
+    </>
   );
 }
