@@ -38,7 +38,7 @@ const envExample = path.join(root, ".env.example");
 const envLocal = path.join(root, ".env.local");
 if (!fs.existsSync(envLocal)) {
   fs.copyFileSync(envExample, envLocal, fs.constants.COPYFILE_EXCL);
-  process.stdout.write("Created .env.local from .env.example. Add SETLIST_API_KEY there if setlist lookup is needed.\n");
+  process.stdout.write("Created .env.local from .env.example. Add the Supabase publishable configuration and SETLIST_API_KEY.\n");
 } else {
   process.stdout.write("Preserved the existing .env.local.\n");
 }

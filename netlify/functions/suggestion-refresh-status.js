@@ -1,9 +1,10 @@
-import { getGitHubConfig, getLatestSuggestionRun, githubRequest, isAuthorized } from "./lib/github.js";
+import { getGitHubConfig, getLatestSuggestionRun, githubRequest } from "./lib/github.js";
+import { requireArchiveUser } from "./lib/supabase-auth.js";
 
 export async function handler(event) {
   try {
-    const { token, password } = getGitHubConfig();
-    const auth = isAuthorized(event, password);
+    const { token } = getGitHubConfig();
+    const auth = await requireArchiveUser(event, { admin: true });
     if (auth.error) return auth.error;
     const run = await getLatestSuggestionRun(token);
     let generatedAt = null;

@@ -38,6 +38,15 @@ The setup script creates `.env.local` from `.env.example`. Local setlist lookup 
 SETLIST_API_KEY=your_real_setlist_fm_key
 ```
 
+Authenticated development also requires the public Supabase configuration:
+
+```text
+VITE_SUPABASE_URL=https://zhlcnidaymhaaskedbdx.supabase.co
+VITE_SUPABASE_PUBLISHABLE_KEY=your_publishable_key
+```
+
+The publishable key is designed for browser use and is protected by Supabase Auth and RLS. Never put a Supabase secret or `service_role` key in a `VITE_` variable.
+
 The application otherwise works without this key; only setlist lookups are unavailable. `.env.local` and all `.env.*` files except `.env.example` are ignored by Git. Never commit real keys, passwords, or tokens.
 
 ## Run the website and Codex
@@ -70,9 +79,9 @@ Official references: [Codex CLI](https://developers.openai.com/codex/cli) and [A
 
 Local development intentionally differs from production:
 
-- The password screen is skipped because `import.meta.env.DEV` is true.
-- Add, edit, delete, attendee, ticket-status, and discovered setlist-ID changes write directly to `data/concerts.json`.
-- Local saves do not call GitHub and do not create commits automatically.
+- With Supabase variables configured, local development uses the same Supabase Auth sessions as production.
+- Add, edit, delete, attendee, ticket-status, and discovered setlist-ID changes write to Supabase.
+- Local saves do not call GitHub and do not create commits automatically. Without Supabase configuration, the legacy Vite JSON fallback remains available for isolated development.
 - Setlist requests are handled by development-only middleware in `vite.config.js`.
 - The middleware is enabled only while Vite serves the app and is not included in the production runtime.
 
@@ -147,7 +156,7 @@ npm run build
 npm run preview
 ```
 
-Only use `dev:network` on a trusted network. The development save endpoint intentionally has no password gate.
+Only use `dev:network` on a trusted network. The legacy JSON fallback save endpoint is localhost-only and intentionally has no password gate.
 
 ## Production behavior
 
@@ -155,22 +164,22 @@ Netlify builds production with `npm run build` and publishes `dist`.
 
 | Behavior | Local development | Netlify production |
 | --- | --- | --- |
-| Login gate | Skipped | Required |
-| Concert writes | Directly updates local JSON | Netlify function commits JSON through GitHub API |
+| Login gate | Supabase Auth | Supabase Auth |
+| Concert writes | Supabase RPC | Supabase RPC |
 | Setlist requests | Vite development middleware | Netlify function |
 | Secrets | `.env.local` | Netlify environment variables |
-| Git commits | Manual | Concert edits create data commits through the production function |
+| Git commits | Manual | Discovery creates a JSON backup commit before scraping |
 
 The Netlify site requires:
 
 ```text
-APP_PASSWORD
-VITE_APP_PASSWORD
 GITHUB_TOKEN
 SETLIST_API_KEY
+VITE_SUPABASE_URL
+VITE_SUPABASE_PUBLISHABLE_KEY
 ```
 
-`APP_PASSWORD` and `VITE_APP_PASSWORD` must contain the same value. `GITHUB_TOKEN` needs **Contents: read and write** to update `data/concerts.json`, plus **Actions: read and write** to start and monitor the suggestion workflow. Keep all values in Netlify, never in the repository or browser code.
+`GITHUB_TOKEN` needs **Contents: read and write** to update the JSON backup, plus **Actions: read and write** to start and monitor the suggestion workflow. The Supabase values are publishable browser configuration; authorization is enforced through user sessions and database policies. Keep GitHub and setlist.fm secrets in Netlify, never in the repository or browser code.
 
 The checked-in `netlify.toml` defines:
 
@@ -182,7 +191,7 @@ Functions directory: netlify/functions
 
 ## Concert suggestion automation
 
-The workflow `.github/workflows/concert-suggestions.yml` runs only on demand. Open **Concert suggestions** below the calendar and select **Find concerts**. The browser sends the shared app password to a Netlify function; the function keeps `GITHUB_TOKEN` server-side and dispatches GitHub Actions. The UI then polls a second authenticated function for progress. GitHub Actions refreshes Resurrection Fest Route, Live Nation Spain, Madness Live, Sala Razzmatazz, Sala Apolo, Sala Bikini, Paral·lel 62, Palau de la Música Catalana, Les Docks, and Montreux Jazz Festival.
+The workflow `.github/workflows/concert-suggestions.yml` runs only on demand. Open **Concert suggestions** below the calendar and select **Find concerts**. The browser sends Eric's Supabase session token to a Netlify function; the function backs the current Supabase archive up to `data/concerts.json`, keeps `GITHUB_TOKEN` server-side, and dispatches GitHub Actions. The UI then polls a second authenticated function for progress. GitHub Actions refreshes Resurrection Fest Route, Live Nation Spain, Madness Live, Sala Razzmatazz, Sala Apolo, Sala Bikini, Paral·lel 62, Palau de la Música Catalana, Les Docks, and Montreux Jazz Festival.
 
 GitHub's Actions UI remains a fallback:
 
@@ -209,7 +218,7 @@ npm run import:spotify -- path/to/my_spotify_data.zip
 
 The importer writes `data/listened-artists.json`. It retains only artist-level aggregates: artist name, number of listening records, total milliseconds, and first/last timestamps. Raw track names, IP addresses, devices, and other private export fields are not retained. The `.gitignore` protects the expected ZIP filename and a `spotify-data/` import directory; never commit the raw export under another name.
 
-Select **Interested** to open the normal Add Concert modal with artist, venue, and date prefilled, or **Not interested** to dismiss a suggestion. These choices are staged in browser storage, so you can review the complete list without creating a commit per concert. Use **Save decisions** once at the end: interested concerts and dismissed artist/date keys are written together to `data/concerts.json` in one commit. Persisted dismissals are excluded from later scraper runs.
+Select **Interested** to open the normal Add Concert modal with artist, venue, and date prefilled, or **Not interested** to dismiss a suggestion. These choices are staged in browser storage, so you can review the complete list without creating a write per concert. Use **Save decisions** once at the end: interested concerts and dismissed artist/date keys are written together to Supabase. Persisted dismissals are excluded from later scraper runs.
 
 Run the complete pipeline locally:
 
@@ -235,7 +244,7 @@ gh auth setup-git
 
 ## Data model
 
-The canonical dataset is `data/concerts.json`. Its `concerts` array stores the archive and its optional `dismissedSuggestions` array stores normalized `artist|DD/MM/YYYY` keys from the suggestion review flow:
+Supabase is the production source of truth. The normalized model uses `profiles`, `concerts`, `concert_participants`, and `dismissed_suggestions`. `data/concerts.json` remains the compatible local fallback and GitHub backup:
 
 ```json
 {
@@ -312,7 +321,7 @@ Run `npm run dev:network`, use the computer's LAN IP and port 5173, and check th
 
 ### Production concert writes fail
 
-Check Netlify function logs and verify `APP_PASSWORD`, `VITE_APP_PASSWORD`, and `GITHUB_TOKEN`.
+Check Netlify function logs and verify `GITHUB_TOKEN`, `VITE_SUPABASE_URL`, and `VITE_SUPABASE_PUBLISHABLE_KEY`.
 
 ### A scraper stops matching events
 

@@ -1,21 +1,19 @@
 // netlify/functions/save-concerts.js
 // Server-side proxy that writes concerts.json to GitHub.
-// The GitHub token lives only on the server. The password is also used by the
-// browser login gate, so it should be treated as a lightweight access check.
+// Legacy JSON backup writer. Supabase is the production source of truth.
+
+import { requireArchiveUser } from "./lib/supabase-auth.js";
 
 const REPO = "ericmurillo93/A-Deafening-Noise";
 const FILE_PATH = "data/concerts.json";
 
 export async function handler(event) {
-  // Only POST is allowed
-  if (event.httpMethod !== "POST") {
-    return { statusCode: 405, body: "Method not allowed" };
-  }
+  const auth = await requireArchiveUser(event, { admin: true });
+  if (auth.error) return auth.error;
 
   const token = process.env.GITHUB_TOKEN;
-  const password = process.env.APP_PASSWORD;
 
-  if (!token || !password) {
+  if (!token) {
     return { statusCode: 500, body: "Server is missing required environment variables." };
   }
 
@@ -24,11 +22,6 @@ export async function handler(event) {
     body = JSON.parse(event.body || "{}");
   } catch {
     return { statusCode: 400, body: "Invalid JSON body" };
-  }
-
-  // Auth: simple shared password check
-  if (body.password !== password) {
-    return { statusCode: 401, body: "Unauthorized" };
   }
 
   if (!body.data || typeof body.data !== "object") {

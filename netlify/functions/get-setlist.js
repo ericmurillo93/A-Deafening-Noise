@@ -1,7 +1,8 @@
+import { requireArchiveUser } from "./lib/supabase-auth.js";
+
 export async function handler(event) {
-  if (event.httpMethod !== "POST") {
-    return { statusCode: 405, body: "Method Not Allowed" };
-  }
+  const auth = await requireArchiveUser(event);
+  if (auth.error) return auth.error;
 
   let setlistId, artist, date;
   try {

@@ -4,6 +4,7 @@ import worldGeography from "world-atlas/countries-110m.json";
 import whatsappIcon from "@fortawesome/fontawesome-free/svgs/brands/whatsapp.svg";
 import concertsData from "../data/concerts.json";
 import suggestionsData from "../data/suggestions.json";
+import { loadConcertData, replaceConcertData, supabase, supabaseEnabled } from "./lib/supabase";
 
 // ─── Data bootstrap ───────────────────────────────────────────────────────────
 
@@ -19,16 +20,26 @@ function groupHistoryFromJson(rows) {
 const fallbackConcerts = concertsData.concerts;
 const fallbackDismissedSuggestions = concertsData.dismissedSuggestions || [];
 
-const APP_PASSWORD = import.meta.env.VITE_APP_PASSWORD;
 const IS_LOCAL = import.meta.env.DEV;
+
+async function sessionHeaders() {
+  if (!supabaseEnabled) return {};
+  const { data } = await supabase.auth.getSession();
+  const token = data.session?.access_token;
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
 
 // ─── GitHub save ──────────────────────────────────────────────────────────────
 
-async function saveToGitHub(updatedData, commitMessage = "Update concerts via web") {
+async function saveConcertData(updatedData, commitMessage = "Update concerts via web") {
+  if (supabaseEnabled) {
+    await replaceConcertData(updatedData);
+    return;
+  }
   const res = await fetch("/.netlify/functions/save-concerts", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ data: updatedData, commitMessage, password: APP_PASSWORD }),
+    headers: { "Content-Type": "application/json", ...(await sessionHeaders()) },
+    body: JSON.stringify({ data: updatedData, commitMessage }),
   });
   if (!res.ok) {
     const text = await res.text();
@@ -39,8 +50,8 @@ async function saveToGitHub(updatedData, commitMessage = "Update concerts via we
 async function suggestionRefreshRequest(endpoint) {
   const res = await fetch(`/.netlify/functions/${endpoint}`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ password: APP_PASSWORD }),
+    headers: { "Content-Type": "application/json", ...(await sessionHeaders()) },
+    body: "{}",
   });
   if (!res.ok) throw new Error((await res.text()) || `Request failed (${res.status})`);
   return res.json();
@@ -51,7 +62,7 @@ async function suggestionRefreshRequest(endpoint) {
 async function fetchSetlist({ setlistId, artist, date }) {
   const res = await fetch("/.netlify/functions/get-setlist", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...(await sessionHeaders()) },
     body: JSON.stringify({ setlistId: setlistId || null, artist, date }),
   });
   if (!res.ok) {
@@ -346,7 +357,7 @@ function SetlistModal({ target, onClose, onEdit, onIdDiscovered }) {
             <p className="mt-1 text-sm text-zinc-400">{venue || "Venue not specified"} · {date}</p>
           </div>
           <div className="flex shrink-0 items-center gap-2">
-            <button type="button" onClick={() => onEdit(target)} className="flex h-8 w-8 items-center justify-center rounded-full border border-zinc-700 text-sm text-zinc-300 hover:border-zinc-500 hover:text-white" aria-label="Edit concert" title="Edit concert"><i className="fa-solid fa-pencil" aria-hidden="true" /></button>
+            {onEdit && <button type="button" onClick={() => onEdit(target)} className="flex h-8 w-8 items-center justify-center rounded-full border border-zinc-700 text-sm text-zinc-300 hover:border-zinc-500 hover:text-white" aria-label="Edit concert" title="Edit concert"><i className="fa-solid fa-pencil" aria-hidden="true" /></button>}
             <button type="button" onClick={onClose} className="rounded-full border border-zinc-700 px-3 py-1 text-sm text-zinc-300 hover:border-zinc-500">Close</button>
           </div>
         </div>
@@ -1062,7 +1073,7 @@ function CalendarConcertModal({ target, onClose, onEdit }) {
         <div className="flex items-start justify-between gap-4 border-b border-zinc-800 pb-4">
           <h2 className="min-w-0 break-words text-2xl font-black uppercase leading-none tracking-tight text-zinc-100">{target.artist}</h2>
           <div className="flex shrink-0 items-center gap-2">
-            <button type="button" onClick={() => onEdit(target)} className="flex h-8 w-8 items-center justify-center rounded-full border border-zinc-700 text-sm text-zinc-300 transition hover:border-zinc-500 hover:text-white" aria-label="Edit concert" title="Edit concert"><i className="fa-solid fa-pencil" aria-hidden="true" /></button>
+            {onEdit && <button type="button" onClick={() => onEdit(target)} className="flex h-8 w-8 items-center justify-center rounded-full border border-zinc-700 text-sm text-zinc-300 transition hover:border-zinc-500 hover:text-white" aria-label="Edit concert" title="Edit concert"><i className="fa-solid fa-pencil" aria-hidden="true" /></button>}
             <button type="button" onClick={onClose} className="rounded-full border border-zinc-700 px-3 py-1 text-sm text-zinc-300 transition hover:border-zinc-500">Close</button>
           </div>
         </div>
@@ -1816,21 +1827,24 @@ function YearInReviewPage({ historyItems, onOpenArtist, onOpenSetlist, onOpenVen
 
 // ─── LoginGate ────────────────────────────────────────────────────────────────
 
-function LoginGate({ onUnlock }) {
-  const [input, setInput] = useState("");
-  const [error, setError] = useState(false);
+function LoginGate() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const [shake, setShake] = useState(false);
 
-  function attempt(event) {
+  async function attempt(event) {
     event.preventDefault();
-    if (input === APP_PASSWORD) {
-      onUnlock();
-    } else {
-      setError(true);
-      setShake(true);
-      setInput("");
-      setTimeout(() => setShake(false), 500);
-    }
+    setLoading(true);
+    setError("");
+    const { error: authError } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+    if (!authError) return;
+    setError("Incorrect email or password.");
+    setPassword("");
+    setShake(true);
+    setTimeout(() => setShake(false), 500);
+    setLoading(false);
   }
 
   return (
@@ -1839,12 +1853,13 @@ function LoginGate({ onUnlock }) {
         <div className="mb-10 text-center">
           <p className="mb-3 text-xs font-semibold uppercase tracking-[0.45em] text-zinc-500">A Deafening Noise</p>
           <h1 className="text-4xl font-black uppercase tracking-tight text-zinc-100">Private Archive</h1>
-          <p className="mt-3 text-sm text-zinc-500">Enter the password to continue.</p>
+          <p className="mt-3 text-sm text-zinc-500">Sign in to open your concert history.</p>
         </div>
         <form onSubmit={attempt} className="space-y-4">
-          <input type="password" value={input} onChange={(e) => { setInput(e.target.value); setError(false); }} placeholder="Password" autoFocus className={`w-full rounded-2xl border px-5 py-4 text-center text-lg tracking-widest bg-zinc-900 text-zinc-100 outline-none transition placeholder:tracking-normal placeholder:text-zinc-600 ${error ? "border-red-700 text-red-300" : "border-zinc-700 focus:border-zinc-400"}`} />
-          {error && <p className="text-center text-sm text-red-400">Incorrect password.</p>}
-          <button type="submit" className="w-full rounded-2xl bg-zinc-100 py-4 font-black uppercase tracking-widest text-zinc-950 transition hover:bg-white">Unlock</button>
+          <input type="email" value={email} onChange={(e) => { setEmail(e.target.value); setError(""); }} placeholder="Email" autoComplete="email" autoFocus className={`w-full rounded-2xl border bg-zinc-900 px-5 py-4 text-zinc-100 outline-none transition placeholder:text-zinc-600 ${error ? "border-red-700" : "border-zinc-700 focus:border-zinc-400"}`} />
+          <input type="password" value={password} onChange={(e) => { setPassword(e.target.value); setError(""); }} placeholder="Password" autoComplete="current-password" className={`w-full rounded-2xl border bg-zinc-900 px-5 py-4 text-zinc-100 outline-none transition placeholder:text-zinc-600 ${error ? "border-red-700 text-red-300" : "border-zinc-700 focus:border-zinc-400"}`} />
+          {error && <p className="text-center text-sm text-red-400">{error}</p>}
+          <button type="submit" disabled={loading} className="w-full rounded-2xl bg-zinc-100 py-4 font-black uppercase tracking-widest text-zinc-950 transition hover:bg-white disabled:opacity-50">{loading ? "Signing in…" : "Sign in"}</button>
         </form>
       </div>
     </div>
@@ -1855,8 +1870,10 @@ function LoginGate({ onUnlock }) {
 
 export default function App() {
   const initialRoute = useMemo(() => readRouteFromHash(), []);
-  const [unlocked, setUnlocked] = useState(() => IS_LOCAL || sessionStorage.getItem("adn_unlocked") === "1");
-  function handleUnlock() { sessionStorage.setItem("adn_unlocked", "1"); setUnlocked(true); }
+  const [session, setSession] = useState(null);
+  const [authReady, setAuthReady] = useState(!supabaseEnabled);
+  const [dataReady, setDataReady] = useState(!supabaseEnabled);
+  const [dataLoadError, setDataLoadError] = useState("");
 
   const [query, setQuery] = useState("");
   const [sortMode, setSortMode] = useState("artist");
@@ -1887,8 +1904,11 @@ export default function App() {
   const dialogHistoryOpenRef = useRef(false);
   const closingDialogWithBackRef = useRef(false);
   const anyDialogOpen = modalOpen || Boolean(editTarget) || Boolean(setlistTarget) || Boolean(calendarTarget) || Boolean(confirmDelete);
+  const currentEmail = session?.user?.email?.toLowerCase() || "";
+  const currentUserName = currentEmail === "eric.murillo93@gmail.com" ? "Eric" : currentEmail === "rpsaray@gmail.com" ? "Saray" : currentEmail === "murillodma@gmail.com" ? "Papa" : "";
+  const canEdit = !supabaseEnabled || currentUserName === "Eric";
 
-  const isNext = activePage === "next";
+  const isNext = canEdit && activePage === "next";
   const isStats = activePage === "stats";
   const isTimeline = activePage === "timeline";
   const isYearReview = activePage === "year-review";
@@ -1924,7 +1944,7 @@ export default function App() {
     ? "Every concert, year by year."
     : isStats
     ? "A snapshot of your concert history at a glance."
-    : isNext ? "Past concerts, upcoming shows and possibilities in one calendar." : "A searchable lifetime lineup of artists, venues and dates.";
+    : isNext ? "Past concerts, upcoming shows and possibilities in one calendar." : canEdit ? "A searchable lifetime lineup of artists, venues and dates." : `${historyConcerts.length} concerts shared with Eric.`;
 
   const filtered = useMemo(() => {
     const visibleItems = isNext ? nextItems : historyItems;
@@ -1964,6 +1984,51 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem("adn_pending_suggestion_reviews", JSON.stringify(pendingSuggestionReviews));
   }, [pendingSuggestionReviews]);
+
+  useEffect(() => {
+    if (!supabaseEnabled) return undefined;
+    supabase.auth.getSession().then(({ data }) => {
+      setSession(data.session);
+      setAuthReady(true);
+    });
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+      setSession(nextSession);
+      setAuthReady(true);
+      if (!nextSession) setDataReady(false);
+    });
+    return () => listener.subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (!supabaseEnabled || !session) return;
+    let cancelled = false;
+    setDataReady(false);
+    setDataLoadError("");
+    (async () => {
+      try {
+        let archive = await loadConcertData();
+        if (currentEmail === "eric.murillo93@gmail.com" && archive.concerts.length === 0) {
+          await replaceConcertData({ concerts: fallbackConcerts, dismissedSuggestions: fallbackDismissedSuggestions });
+          archive = await loadConcertData();
+        }
+        if (!cancelled) {
+          setConcertItems(archive.concerts || []);
+          setDismissedSuggestions(archive.dismissedSuggestions || []);
+        }
+      } catch (error) {
+        if (!cancelled) setDataLoadError(error.message || "Could not load the archive");
+      } finally {
+        if (!cancelled) setDataReady(true);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [session, currentEmail]);
+
+  useEffect(() => {
+    if (canEdit || activePage !== "next") return;
+    window.history.replaceState({ adnRoute: true, canGoBack: false }, "", routeToHash({ page: "history" }));
+    setActivePage("history");
+  }, [activePage, canEdit]);
 
   useEffect(() => {
     const initial = readRouteFromHash();
@@ -2014,7 +2079,11 @@ export default function App() {
     }
   }, [anyDialogOpen]);
 
-  if (!unlocked) return <LoginGate onUnlock={handleUnlock} />;
+  if (!authReady) return <div className="flex min-h-screen items-center justify-center bg-zinc-950 text-zinc-500">Loading…</div>;
+  if (!supabaseEnabled && !IS_LOCAL) return <div className="flex min-h-screen items-center justify-center bg-zinc-950 px-6 text-center text-red-300">Supabase is not configured for this deployment.</div>;
+  if (supabaseEnabled && !session) return <LoginGate />;
+  if (!dataReady) return <div className="flex min-h-screen items-center justify-center bg-zinc-950 text-zinc-500">Loading your concert archive…</div>;
+  if (dataLoadError) return <div className="flex min-h-screen items-center justify-center bg-zinc-950 px-6 text-center text-red-300">{dataLoadError}</div>;
 
   function navigateTo(route) {
     window.history.pushState({ adnRoute: true, canGoBack: true }, "", routeToHash(route));
@@ -2026,7 +2095,7 @@ export default function App() {
     setSidebarOpen(false);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
-  function changePage(page) { navigateTo({ page, artist: null, venue: null }); }
+  function changePage(page) { navigateTo({ page: !canEdit && page === "next" ? "history" : page, artist: null, venue: null }); }
   function openArtistDetail(artist) {
     navigateTo({ page: "artist", artist, venue: null });
   }
@@ -2083,7 +2152,7 @@ export default function App() {
     setIsSaving(true); setSaveError("");
     try {
       const updatedConcerts = [...concertItems, newConcert];
-      await saveToGitHub(concertDataPayload(updatedConcerts), `Add concert: ${data.artist}${data.venue ? " — " + data.venue : ""} (${data.date})`);
+      await saveConcertData(concertDataPayload(updatedConcerts), `Add concert: ${data.artist}${data.venue ? " — " + data.venue : ""} (${data.date})`);
       setConcertItems(updatedConcerts);
       setModalOpen(false);
       setAddInitial(null);
@@ -2096,15 +2165,15 @@ export default function App() {
     setIsSaving(true); setSaveError("");
     try {
       const updatedConcerts = updateConcert(concertItems, editTarget, data);
-      await saveToGitHub(concertDataPayload(updatedConcerts), `Edit concert: ${data.artist}${data.venue ? " — " + data.venue : ""} (${data.date})`);
+      await saveConcertData(concertDataPayload(updatedConcerts), `Edit concert: ${data.artist}${data.venue ? " — " + data.venue : ""} (${data.date})`);
       setConcertItems(updatedConcerts);
       setEditTarget(null);
     } catch (e) { setSaveError(e.message || "Could not save changes"); }
     finally { setIsSaving(false); }
   }
 
-  function openContextMenu(e, target) { e.preventDefault(); if (isSaving) return; setContextMenu({ open: true, x: e.clientX, y: e.clientY, target }); }
-  function openContextMenuAt(x, y, target) { if (isSaving) return; setContextMenu({ open: true, x, y, target }); }
+  function openContextMenu(e, target) { e.preventDefault(); if (isSaving || !canEdit) return; setContextMenu({ open: true, x: e.clientX, y: e.clientY, target }); }
+  function openContextMenuAt(x, y, target) { if (isSaving || !canEdit) return; setContextMenu({ open: true, x, y, target }); }
   function closeContextMenu() { setContextMenu({ open: false, x: 0, y: 0, target: null }); }
 
   function startEditFromContext() {
@@ -2134,7 +2203,7 @@ export default function App() {
         if (review.decision === "not-interested") updatedDismissed.add(review.key);
         else updatedDismissed.delete(review.key);
       });
-      await saveToGitHub(
+      await saveConcertData(
         concertDataPayload(updatedConcerts, [...updatedDismissed]),
         `Review ${reviews.length} concert ${reviews.length === 1 ? "suggestion" : "suggestions"}`,
       );
@@ -2159,7 +2228,7 @@ export default function App() {
     setConcertItems(updatedConcerts);
     // Save silently in the background — don't block or show saving indicator
     try {
-      await saveToGitHub(
+      await saveConcertData(
         concertDataPayload(updatedConcerts),
         `Auto-save setlist ID for ${artist}`
       );
@@ -2183,9 +2252,10 @@ export default function App() {
             <button onClick={() => changePage("history")} className="text-left text-xl font-black text-zinc-100">A Deafening Noise</button>
             <button onClick={() => setSidebarOpen(false)} className="rounded-full border border-zinc-700 px-3 py-1 text-sm text-zinc-300 hover:border-zinc-500">Close</button>
           </div>
+          {currentUserName && <div className="mb-5 flex items-center justify-between rounded-2xl border border-zinc-800 bg-zinc-900 px-4 py-3"><span className="text-sm font-bold text-zinc-200">{currentUserName}</span><button type="button" onClick={() => supabase.auth.signOut()} className="text-xs font-semibold text-zinc-500 hover:text-zinc-200">Sign out</button></div>}
           <nav className="space-y-2 text-sm">
             <button onClick={() => changePage("history")} className={`block w-full rounded-2xl px-4 py-3 text-left transition hover:bg-zinc-900 hover:text-zinc-100 ${["history", "artist", "timeline"].includes(activePage) ? "bg-zinc-900 text-zinc-100" : "text-zinc-400"}`}>Concert history</button>
-            <button onClick={() => changePage("next")} className={`block w-full rounded-2xl px-4 py-3 text-left transition hover:bg-zinc-900 hover:text-zinc-100 ${activePage === "next" ? "bg-zinc-900 text-zinc-100" : "text-zinc-400"}`}>Concert calendar</button>
+            {canEdit && <button onClick={() => changePage("next")} className={`block w-full rounded-2xl px-4 py-3 text-left transition hover:bg-zinc-900 hover:text-zinc-100 ${activePage === "next" ? "bg-zinc-900 text-zinc-100" : "text-zinc-400"}`}>Concert calendar</button>}
             <div className={`rounded-2xl px-2 py-2 ${activePage === "stats" || activePage === "year-review" ? "bg-zinc-900" : ""}`}>
               <button onClick={() => setStatsMenuOpen((open) => !open)} className={`flex w-full items-center justify-between rounded-xl px-2 py-2 text-left font-bold transition hover:bg-zinc-800 hover:text-zinc-100 ${activePage === "stats" || activePage === "year-review" ? "text-zinc-100" : "text-zinc-400"}`} aria-expanded={statsMenuOpen}>
                 <span>Stats</span>
@@ -2251,7 +2321,7 @@ export default function App() {
                     <Icon type="search" />
                     <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search…" className="w-full min-w-0 bg-transparent text-sm text-zinc-100 outline-none placeholder:text-zinc-500" aria-label="Search concerts" />
                   </div>
-                  <button onClick={() => { setActiveSuggestionId(null); setAddInitial(null); setModalOpen(true); }} className="shrink-0 rounded-full border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-sm font-black text-zinc-100 hover:border-zinc-500">+ Add</button>
+                  {canEdit && <button onClick={() => { setActiveSuggestionId(null); setAddInitial(null); setModalOpen(true); }} className="shrink-0 rounded-full border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-sm font-black text-zinc-100 hover:border-zinc-500">+ Add</button>}
                   {isNext && <CalendarExportMenu items={nextItems} compact />}
                 </div>
                 {!isNext && (
@@ -2262,8 +2332,8 @@ export default function App() {
                 )}
 
                 {/* Desktop layout */}
-                <div className={`hidden md:grid gap-3 ${isNext ? "md:grid-cols-[220px_1fr_180px]" : "md:grid-cols-[220px_1fr_280px]"}`}>
-                  <button onClick={() => { setActiveSuggestionId(null); setAddInitial(null); setModalOpen(true); }} className="rounded-full border border-zinc-700 bg-zinc-900 px-5 py-3 text-sm font-black text-zinc-100 shadow-2xl transition hover:border-zinc-500">+ Add concert</button>
+                <div className={`hidden md:grid gap-3 ${isNext ? "md:grid-cols-[220px_1fr_180px]" : canEdit ? "md:grid-cols-[220px_1fr_280px]" : "md:grid-cols-[1fr_280px]"}`}>
+                  {canEdit && <button onClick={() => { setActiveSuggestionId(null); setAddInitial(null); setModalOpen(true); }} className="rounded-full border border-zinc-700 bg-zinc-900 px-5 py-3 text-sm font-black text-zinc-100 shadow-2xl transition hover:border-zinc-500">+ Add concert</button>}
                   <div className="flex items-center gap-3 rounded-full border border-zinc-700 bg-zinc-900 px-5 py-3 shadow-2xl">
                     <Icon type="search" />
                     <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search artist, venue, festival, city or date" className="w-full bg-transparent text-base text-zinc-100 outline-none placeholder:text-zinc-500" aria-label="Search concerts" />
@@ -2384,7 +2454,7 @@ export default function App() {
                 const t = confirmDelete; setConfirmDelete(null); setIsSaving(true);
                 try {
                   const updatedConcerts = removeConcert(concertItems, t);
-                  await saveToGitHub(concertDataPayload(updatedConcerts), `Delete concert: ${t.artist}${t.venue ? " — " + t.venue : ""} (${t.date})`);
+                  await saveConcertData(concertDataPayload(updatedConcerts), `Delete concert: ${t.artist}${t.venue ? " — " + t.venue : ""} (${t.date})`);
                   setConcertItems(updatedConcerts);
                 } catch (e) { setSaveError(e.message || "Could not delete"); }
                 finally { setIsSaving(false); }
@@ -2394,19 +2464,19 @@ export default function App() {
         </div>
       )}
 
-      <AddConcertModal isOpen={modalOpen} mode={mode} initial={addInitial} stagingSuggestion={Boolean(activeSuggestionId)} onClose={() => { setModalOpen(false); setAddInitial(null); setActiveSuggestionId(null); }} onSave={handleAddConcert} isSaving={isSaving} saveError={saveError} artistSuggestions={artistSuggestions} venueSuggestions={venueSuggestions} />
-      <EditConcertModal isOpen={!!editTarget} mode={editTarget?.mode || mode} initial={editTarget} onClose={() => setEditTarget(null)} onSave={handleEditConcert} isSaving={isSaving} saveError={saveError} artistSuggestions={artistSuggestions} venueSuggestions={venueSuggestions} />
-      <ContextMenu open={contextMenu.open} x={contextMenu.x} y={contextMenu.y} onEdit={startEditFromContext} onDelete={deleteFromContext} onClose={closeContextMenu} />
+      {canEdit && <AddConcertModal isOpen={modalOpen} mode={mode} initial={addInitial} stagingSuggestion={Boolean(activeSuggestionId)} onClose={() => { setModalOpen(false); setAddInitial(null); setActiveSuggestionId(null); }} onSave={handleAddConcert} isSaving={isSaving} saveError={saveError} artistSuggestions={artistSuggestions} venueSuggestions={venueSuggestions} />}
+      {canEdit && <EditConcertModal isOpen={!!editTarget} mode={editTarget?.mode || mode} initial={editTarget} onClose={() => setEditTarget(null)} onSave={handleEditConcert} isSaving={isSaving} saveError={saveError} artistSuggestions={artistSuggestions} venueSuggestions={venueSuggestions} />}
+      {canEdit && <ContextMenu open={contextMenu.open} x={contextMenu.x} y={contextMenu.y} onEdit={startEditFromContext} onDelete={deleteFromContext} onClose={closeContextMenu} />}
       <SetlistModal
         target={setlistTarget}
         onClose={() => setSetlistTarget(null)}
-        onEdit={(target) => { setSetlistTarget(null); setEditTarget(target); }}
-        onIdDiscovered={handleSetlistIdDiscovered}
+        onEdit={canEdit ? (target) => { setSetlistTarget(null); setEditTarget(target); } : null}
+        onIdDiscovered={canEdit ? handleSetlistIdDiscovered : null}
       />
       <CalendarConcertModal
         target={calendarTarget}
         onClose={() => setCalendarTarget(null)}
-        onEdit={(target) => { setCalendarTarget(null); setEditTarget(target); }}
+        onEdit={canEdit ? (target) => { setCalendarTarget(null); setEditTarget(target); } : null}
       />
     </main>
   );

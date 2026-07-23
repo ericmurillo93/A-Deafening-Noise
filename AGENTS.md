@@ -9,21 +9,23 @@ Read `README.md` for the quick start and `docs/DEVELOPMENT.md` for production co
 ## Architecture
 
 - React/Vite single-page application; most UI and state live in `src/App.jsx`.
-- `data/concerts.json` is the canonical concert dataset.
+- Supabase is the production source of truth for profiles, concerts, participants, and dismissed suggestions.
+- `data/concerts.json` is the local fallback and GitHub backup dataset.
 - `data/listened-artists.json` is the privacy-reduced Spotify artist catalog used for suggestion affinity.
 - `data/suggestions.json` is generated discovery output, never canonical concert data.
-- `netlify/functions/save-concerts.js` writes production edits to GitHub.
+- Supabase Auth and RLS provide per-user visibility; only Eric can write.
+- `netlify/functions/save-concerts.js` is retained as a protected legacy/backup writer.
 - `netlify/functions/get-setlist.js` proxies setlist.fm in production.
 - `vite.config.js` emulates those functions locally and writes concert edits directly to the working tree.
 - Hash routes provide browser history for archive, calendar, timeline, stats, year review, artist, and venue views.
 
 ## Local versus production boundaries
 
-- Local Vite development skips login through `import.meta.env.DEV`.
-- Production must retain the login gate.
+- Supabase-enabled local and production builds use the same authenticated login.
+- Production must retain Supabase Auth and must never restore a shared client-side password gate.
 - Local function emulation must remain `apply: "serve"`; it must never become production runtime code.
-- Never commit `.env.local`, passwords, GitHub tokens, or setlist.fm keys.
-- Local UI edits to `data/concerts.json` are not automatically committed.
+- Never commit `.env.local`, passwords, GitHub tokens, Supabase secret/service-role keys, or setlist.fm keys.
+- Supabase-enabled local UI edits write to Supabase and do not update or commit the JSON fallback automatically.
 
 ## Concert rules
 
@@ -33,6 +35,7 @@ Read `README.md` for the quick start and `docs/DEVELOPMENT.md` for production co
 - Archive additions are automatically bought; calendar additions expose the bought checkbox.
 - Date format is `DD/MM/YYYY`; preserve existing date-range support.
 - Optional fields: `setlistId`, `attendees`, and `ticketUrl`.
+- Eric sees and edits the complete archive. Saray and Papa are read-only, see only linked concerts, and have no calendar or suggestion access.
 - If attendees are empty, do not render the attendee section in concert details.
 - Setlist lookup prefers stored ID, falls back to artist/date, then persists a discovered ID.
 
@@ -57,8 +60,8 @@ Read `README.md` for the quick start and `docs/DEVELOPMENT.md` for production co
 - `scripts/combine-concert-suggestions.mjs` flattens/deduplicates results into `data/suggestions.json`.
 - Suggestions stay below the calendar in the expandable review panel; never draw them as calendar events.
 - Interested opens the normal prefilled calendar Add modal; Not Interested stages a persistent artist/date dismissal.
-- Suggestion decisions remain in browser storage until Save writes all interested concerts and dismissals together in one commit.
-- Preserve `dismissedSuggestions` on every `data/concerts.json` write; the combiner excludes those keys from later scraper runs.
+- Suggestion decisions remain in browser storage until Save writes all interested concerts and dismissals together to Supabase.
+- Preserve `dismissedSuggestions` on every archive replacement. Discovery first backs Supabase up to `data/concerts.json`; the combiner excludes those keys from later scraper runs.
 - `.github/workflows/concert-suggestions.yml` runs only on demand from the website or Actions UI, committing only changed suggestions.
 
 ## Verification

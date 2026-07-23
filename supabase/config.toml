@@ -1,0 +1,13 @@
+project_id = "zhlcnidaymhaaskedbdx"
+
+[api]
+enabled = true
+schemas = ["public", "graphql_public"]
+
+[auth]
+enabled = true
+enable_signup = false
+
+[auth.email]
+enable_signup = false
+enable_confirmations = true

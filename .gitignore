@@ -12,6 +12,9 @@ node_modules
 # Build output
 dist
 
+# Local Supabase CLI state
+supabase/.temp/
+
 # Lock files (optional but recommended)
 deno.lock
 

@@ -3,21 +3,8 @@ const WORKFLOW = "concert-suggestions.yml";
 
 export function getGitHubConfig() {
   const token = process.env.GITHUB_TOKEN;
-  const password = process.env.APP_PASSWORD;
-  if (!token || !password) throw new Error("Server is missing required environment variables.");
-  return { token, password };
-}
-
-export function isAuthorized(event, password) {
-  if (event.httpMethod !== "POST") return { error: { statusCode: 405, body: "Method not allowed" } };
-  let body;
-  try {
-    body = JSON.parse(event.body || "{}");
-  } catch {
-    return { error: { statusCode: 400, body: "Invalid JSON body" } };
-  }
-  if (body.password !== password) return { error: { statusCode: 401, body: "Unauthorized" } };
-  return { body };
+  if (!token) throw new Error("Server is missing GITHUB_TOKEN.");
+  return { token };
 }
 
 export async function githubRequest(token, path, options = {}) {

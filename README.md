@@ -1,6 +1,6 @@
 # A Deafening Noise
 
-A private, password-protected concert archive built with React, Vite and Tailwind CSS.
+A private, multi-user concert archive built with React, Vite, Tailwind CSS and Supabase.
 
 It provides:
 
