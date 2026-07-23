@@ -1,4 +1,16 @@
 {
-  "generatedAt": "2026-07-22T17:12:33.586Z",
-  "suggestions": []
+  "generatedAt": "2026-07-23T13:32:41.148Z",
+  "suggestions": [
+    {
+      "id": "razzmatazz-11082026-godsmack-world-tour-2026-godsmack",
+      "artist": "Godsmack",
+      "venue": "Razzmatazz",
+      "city": "Barcelona",
+      "country": "ES",
+      "date": "11/08/2026",
+      "title": "godsmack world tour 2026",
+      "source": "Sala Razzmatazz",
+      "sourceUrl": "https://www.salarazzmatazz.com/agenda/11-08-2026-godsmack-world-tour-2026/"
+    }
+  ]
 }
