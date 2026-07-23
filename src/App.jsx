@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { ComposableMap, Geographies, Geography, ZoomableGroup } from "react-simple-maps";
 import worldGeography from "world-atlas/countries-110m.json";
+import whatsappIcon from "@fortawesome/fontawesome-free/svgs/brands/whatsapp.svg";
 import concertsData from "../data/concerts.json";
 import suggestionsData from "../data/suggestions.json";
 
@@ -175,6 +176,17 @@ function concertMatches(concert, target) {
     && normalize(concert.venue || "") === normalize(target.venue || "");
 }
 
+function normalizeTicketUrl(value) {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+  try {
+    const url = new URL(/^https?:\/\//i.test(raw) ? raw : `https://${raw}`);
+    return ["http:", "https:"].includes(url.protocol) ? url.href : "";
+  } catch {
+    return "";
+  }
+}
+
 function updateConcert(items, target, data) {
   let updated = false;
   return items.map((concert) => {
@@ -187,6 +199,7 @@ function updateConcert(items, target, data) {
       bought: target.mode === "history" ? true : Boolean(data.bought),
       ...(data.setlistId?.trim() ? { setlistId: data.setlistId.trim() } : {}),
       ...(data.attendees?.length ? { attendees: data.attendees } : {}),
+      ...(normalizeTicketUrl(data.ticketUrl) ? { ticketUrl: normalizeTicketUrl(data.ticketUrl) } : {}),
     };
   });
 }
@@ -424,6 +437,7 @@ function EditConcertModal({ isOpen, mode, initial, onClose, onSave, isSaving, sa
   const [bought, setBought] = useState(false);
   const [setlistId, setSetlistId] = useState("");
   const [attendees, setAttendees] = useState("");
+  const [ticketUrl, setTicketUrl] = useState("");
 
   useEffect(() => {
     if (isOpen && initial) {
@@ -433,6 +447,7 @@ function EditConcertModal({ isOpen, mode, initial, onClose, onSave, isSaving, sa
       setBought(!!initial.bought);
       setSetlistId(initial.setlistId || "");
       setAttendees((initial.attendees || []).join(", "));
+      setTicketUrl(initial.ticketUrl || "");
     }
   }, [isOpen, initial]);
 
@@ -449,12 +464,13 @@ function EditConcertModal({ isOpen, mode, initial, onClose, onSave, isSaving, sa
       bought,
       setlistId: setlistId.trim(),
       attendees: [...new Set(attendees.split(",").map((name) => name.trim()).filter(Boolean))],
+      ticketUrl: normalizeTicketUrl(ticketUrl),
     });
   }
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 px-4">
-      <div className="w-full max-w-lg rounded-3xl border border-zinc-700 bg-zinc-950 p-6 shadow-2xl">
+      <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-3xl border border-zinc-700 bg-zinc-950 p-6 shadow-2xl">
         <div className="mb-6 flex items-start justify-between gap-4">
           <div>
             <h2 className="text-2xl font-black uppercase tracking-tight">Edit concert</h2>
@@ -475,6 +491,12 @@ function EditConcertModal({ isOpen, mode, initial, onClose, onSave, isSaving, sa
             <span className="mb-2 block text-xs font-bold uppercase tracking-widest text-zinc-500">Date</span>
             <input type="text" value={date} onChange={(e) => setDate(e.target.value)} placeholder="DD/MM/YYYY" className="w-full rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-zinc-100 outline-none focus:border-zinc-400" />
           </label>
+          {isNextMode && (
+            <label className="block">
+              <span className="mb-2 block text-xs font-bold uppercase tracking-widest text-zinc-500">Ticket / event link <span className="normal-case tracking-normal text-zinc-600">(optional)</span></span>
+              <input type="url" value={ticketUrl} onChange={(e) => setTicketUrl(e.target.value)} placeholder="https://…" className="w-full rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-zinc-100 outline-none focus:border-zinc-400" />
+            </label>
+          )}
           <label className="block">
             <span className="mb-2 block text-xs font-bold uppercase tracking-widest text-zinc-500">Attended with <span className="normal-case tracking-normal text-zinc-600">(optional)</span></span>
             <input type="text" value={attendees} onChange={(e) => setAttendees(e.target.value)} placeholder="Attendee" className="w-full rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-zinc-100 outline-none focus:border-zinc-400" />
@@ -502,6 +524,7 @@ function AddConcertModal({ isOpen, mode, initial, stagingSuggestion = false, onC
   const [date, setDate] = useState("");
   const [bought, setBought] = useState(false);
   const [attendees, setAttendees] = useState("");
+  const [ticketUrl, setTicketUrl] = useState("");
 
   useEffect(() => {
     if (!isOpen) return;
@@ -510,6 +533,7 @@ function AddConcertModal({ isOpen, mode, initial, stagingSuggestion = false, onC
     setDate(initial?.date || "");
     setBought(Boolean(initial?.bought));
     setAttendees((initial?.attendees || []).join(", "));
+    setTicketUrl(initial?.ticketUrl || "");
   }, [isOpen, initial]);
 
   if (!isOpen) return null;
@@ -518,7 +542,7 @@ function AddConcertModal({ isOpen, mode, initial, stagingSuggestion = false, onC
   function submit() {
     if (!artist.trim() || !date.trim()) return;
     if (!isNextMode && !venue.trim()) return;
-    onSave({ artist, venue, date, bought, attendees: [...new Set(attendees.split(",").map((name) => name.trim()).filter(Boolean))] });
+    onSave({ artist, venue, date, bought, ticketUrl: normalizeTicketUrl(ticketUrl), attendees: [...new Set(attendees.split(",").map((name) => name.trim()).filter(Boolean))] });
   }
 
   function stageSuggestion(ticketBought) {
@@ -527,13 +551,14 @@ function AddConcertModal({ isOpen, mode, initial, stagingSuggestion = false, onC
       venue: initial?.venue || "",
       date: initial?.date || "",
       bought: ticketBought,
+      ticketUrl: normalizeTicketUrl(initial?.ticketUrl),
       attendees: initial?.attendees || [],
     });
   }
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 px-4">
-      <div className="w-full max-w-lg rounded-3xl border border-zinc-700 bg-zinc-950 p-6 shadow-2xl">
+      <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-3xl border border-zinc-700 bg-zinc-950 p-6 shadow-2xl">
         <div className="mb-6 flex items-start justify-between gap-4">
           <div>
             <h2 className="text-2xl font-black uppercase tracking-tight">Add concert</h2>
@@ -566,6 +591,12 @@ function AddConcertModal({ isOpen, mode, initial, stagingSuggestion = false, onC
             <span className="mb-2 block text-xs font-bold uppercase tracking-widest text-zinc-500">Date</span>
             <input type="text" value={date} onChange={(e) => setDate(e.target.value)} placeholder="DD/MM/YYYY" className="w-full rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-zinc-100 outline-none focus:border-zinc-400" />
           </label>
+          {isNextMode && (
+            <label className="block">
+              <span className="mb-2 block text-xs font-bold uppercase tracking-widest text-zinc-500">Ticket / event link <span className="normal-case tracking-normal text-zinc-600">(optional)</span></span>
+              <input type="url" value={ticketUrl} onChange={(e) => setTicketUrl(e.target.value)} placeholder="https://…" className="w-full rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-zinc-100 outline-none focus:border-zinc-400" />
+            </label>
+          )}
           <label className="block">
             <span className="mb-2 block text-xs font-bold uppercase tracking-widest text-zinc-500">Attended with <span className="normal-case tracking-normal text-zinc-600">(optional)</span></span>
             <input type="text" value={attendees} onChange={(e) => setAttendees(e.target.value)} placeholder="Attendee" className="w-full rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-zinc-100 outline-none focus:border-zinc-400" />
@@ -1015,6 +1046,16 @@ function ConcertSuggestions({ suggestions, reviews, onInterested, onNotIntereste
 function CalendarConcertModal({ target, onClose, onEdit }) {
   if (!target) return null;
   const isPast = isPastConcert(target);
+  const ticketUrl = normalizeTicketUrl(target.ticketUrl);
+  const whatsappMessage = [
+    `Concierto: ${target.artist}`,
+    `Fecha: ${target.date}`,
+    target.venue ? `Lugar: ${target.venue}` : "",
+    ticketUrl ? `Entradas: ${ticketUrl}` : "",
+    "",
+    "¿Te interesa?",
+  ].filter((line, index) => line || index === 4).join("\n");
+  const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(whatsappMessage)}`;
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/75 px-4" onClick={onClose}>
       <article className="w-full max-w-md rounded-3xl border border-zinc-700 bg-zinc-900 p-5 shadow-2xl" onClick={(event) => event.stopPropagation()}>
@@ -1025,12 +1066,27 @@ function CalendarConcertModal({ target, onClose, onEdit }) {
             <button type="button" onClick={onClose} className="rounded-full border border-zinc-700 px-3 py-1 text-sm text-zinc-300 transition hover:border-zinc-500">Close</button>
           </div>
         </div>
-        <span className={`mt-4 inline-flex rounded-full border px-3 py-1 text-xs font-bold text-zinc-100 ${isPast ? "border-blue-800 bg-blue-950" : target.bought ? "border-emerald-800 bg-emerald-950" : "border-amber-800 bg-amber-950"}`}>
-          {isPast ? "History" : target.bought ? "Bought" : "Not bought"}
-        </span>
-        <div className="mt-3 rounded-2xl bg-zinc-950 p-4">
-          {target.venue && <div className="flex gap-2 text-sm font-semibold text-zinc-100"><Icon type="map" /><span className="break-words">{target.venue}</span></div>}
-          <div className={`${target.venue ? "mt-2 " : ""}flex gap-2 text-sm text-zinc-400`}><Icon type="calendar" /><span>{target.date}</span></div>
+        <div className="mt-4 overflow-hidden rounded-2xl bg-zinc-950">
+          <div className="p-4">
+            <div className="flex items-start justify-between gap-4">
+              {target.venue ? <div className="flex min-w-0 gap-2 text-sm font-semibold text-zinc-100"><Icon type="map" /><span className="break-words">{target.venue}</span></div> : <span />}
+              <span className={`shrink-0 rounded-full border px-3 py-1 text-xs font-bold text-zinc-100 ${isPast ? "border-blue-800 bg-blue-950" : target.bought ? "border-emerald-800 bg-emerald-950" : "border-amber-800 bg-amber-950"}`}>
+                {isPast ? "History" : target.bought ? "Bought" : "Not bought"}
+              </span>
+            </div>
+            <div className={`${target.venue ? "mt-2 " : ""}flex gap-2 text-sm text-zinc-400`}><Icon type="calendar" /><span>{target.date}</span></div>
+          </div>
+          {!isPast && (
+            <div className="flex items-center justify-between gap-3 border-t border-zinc-800 px-4 py-3">
+              {ticketUrl ? (
+                <a href={ticketUrl} target="_blank" rel="noreferrer" className="inline-flex min-w-0 items-center gap-2 text-xs font-bold text-zinc-400 transition hover:text-white"><i className="fa-solid fa-ticket" aria-hidden="true" /><span className="truncate">Tickets</span><span aria-hidden="true">↗</span></a>
+              ) : <span />}
+              <a href={whatsappUrl} target="_blank" rel="noreferrer" className="inline-flex shrink-0 items-center gap-2 rounded-full border border-[#25D366]/40 bg-[#128C7E]/20 px-3 py-1.5 text-xs font-bold text-[#7ce6a3] transition hover:border-[#25D366] hover:bg-[#128C7E]/35 hover:text-white" aria-label={`Share ${target.artist} concert on WhatsApp`}>
+                <img src={whatsappIcon} alt="" className="h-4 w-4 brightness-0 invert opacity-80" />
+                Share
+              </a>
+            </div>
+          )}
         </div>
       </article>
     </div>
@@ -1990,6 +2046,7 @@ export default function App() {
       bought: storedConcert?.bought ?? target.bought,
       attendees: storedConcert?.attendees || [],
       setlistId: storedConcert?.setlistId || target.setlistId || "",
+      ticketUrl: storedConcert?.ticketUrl || target.ticketUrl || "",
     });
   }
 
@@ -2004,6 +2061,7 @@ export default function App() {
       date: data.date.trim(),
       bought: isNext ? Boolean(data.bought) : true,
       ...(data.attendees?.length ? { attendees: data.attendees } : {}),
+      ...(normalizeTicketUrl(data.ticketUrl) ? { ticketUrl: normalizeTicketUrl(data.ticketUrl) } : {}),
     };
     if (activeSuggestionId) {
       const suggestion = suggestionsData.suggestions.find(({ id }) => id === activeSuggestionId);
@@ -2051,7 +2109,7 @@ export default function App() {
 
   function startEditFromContext() {
     const t = contextMenu.target; closeContextMenu(); if (!t) return;
-    if (t.mode === "next") setEditTarget({ mode: "next", artist: t.artist, date: t.date, bought: t.bought, venue: t.venue || "", attendees: t.attendees || [], setlistId: t.setlistId || "" });
+    if (t.mode === "next") setEditTarget({ mode: "next", artist: t.artist, date: t.date, bought: t.bought, venue: t.venue || "", attendees: t.attendees || [], setlistId: t.setlistId || "", ticketUrl: t.ticketUrl || "" });
     else setEditTarget({ mode: "history", artist: t.artist, show: t.show, venue: t.venue, date: t.date, setlistId: t.setlistId || "", attendees: t.attendees || [] });
   }
 
@@ -2236,7 +2294,7 @@ export default function App() {
                     const pendingConcert = pendingSuggestionReviews[suggestion.id]?.concert;
                     setSaveError("");
                     setActiveSuggestionId(suggestion.id);
-                    setAddInitial(pendingConcert || { artist: suggestion.artist, venue: suggestion.venue, date: suggestion.date, bought: false });
+                    setAddInitial(pendingConcert || { artist: suggestion.artist, venue: suggestion.venue, date: suggestion.date, bought: false, ticketUrl: suggestion.sourceUrl || "" });
                     setModalOpen(true);
                   }}
                   onNotInterested={(suggestion) => {
@@ -2276,7 +2334,7 @@ export default function App() {
                         ? { mode: "next", artist: item.artist, date: item.date, bought: item.bought, venue: item.venue || "" }
                         : { mode: "history", artist: item.artist, show, venue, date, setlistId };
                       const storedConcert = concertItems.find((concert) => concertMatches(concert, target));
-                      const concertTarget = { ...target, attendees: storedConcert?.attendees || [], setlistId: storedConcert?.setlistId || setlistId };
+                      const concertTarget = { ...target, attendees: storedConcert?.attendees || [], setlistId: storedConcert?.setlistId || setlistId, ticketUrl: storedConcert?.ticketUrl || "" };
                       let touchTimer = null, touchMoved = false, longPressed = false;
                       return (
                         <div

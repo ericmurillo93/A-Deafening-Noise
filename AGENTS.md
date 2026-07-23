@@ -32,7 +32,7 @@ Read `README.md` for the quick start and `docs/DEVELOPMENT.md` for production co
 - Future + `bought: false` is an unpurchased possibility.
 - Archive additions are automatically bought; calendar additions expose the bought checkbox.
 - Date format is `DD/MM/YYYY`; preserve existing date-range support.
-- Optional fields: `setlistId` and `attendees`.
+- Optional fields: `setlistId`, `attendees`, and `ticketUrl`.
 - If attendees are empty, do not render the attendee section in concert details.
 - Setlist lookup prefers stored ID, falls back to artist/date, then persists a discovered ID.
 

@@ -1069,109 +1069,127 @@
       "artist": "CA7RIEL & Paco Amoroso",
       "venue": "PALAU SANT JORDI",
       "date": "10/09/2026",
-      "bought": true
+      "bought": true,
+      "ticketUrl": "https://www.livenation.es/event/ca7riel-and-paco-amoroso-free-spirits-world-tour-barcelona-tickets-edp1660583"
     },
     {
       "artist": "HAKEN",
       "venue": "SALAMANDRA",
       "date": "23/09/2026",
-      "bought": true
+      "bought": true,
+      "ticketUrl": "https://www.madnesslive.es/es/pagina/372-haken-actuaran-en-septiembre-de-2026-en-barcelona"
     },
     {
       "artist": "BE PROG! MY FRIEND",
       "venue": "",
       "date": "25/09/2026 - 26/09/2026",
-      "bought": true
+      "bought": true,
+      "ticketUrl": "https://www.madnesslive.es/es/conciertos-en-barcelona/1918-comprar-entrada-abono-be-prog-my-friend-2026-barcelona.html"
     },
     {
       "artist": "DEVIN TOWNSEND",
       "venue": "SALAMANDRA",
       "date": "10/10/2026",
-      "bought": false
+      "bought": false,
+      "ticketUrl": "https://www.madnesslive.es/es/pagina/378-devin-townsend-ofrecera-dos-conciertos-acusticos-en-espana-acompanados-de-encuentros-con-el-publico"
     },
     {
       "artist": "Archspire",
       "venue": "SALAMANDRA",
       "date": "06/11/2026",
-      "bought": false
+      "bought": false,
+      "ticketUrl": "https://www.madnesslive.es/es/pagina/359-archspire-anuncian-su-regreso-a-espana-con-el-nuevo-album-too-fast-to-die"
     },
     {
       "artist": "POLYPHIA",
       "venue": "RAZZMATAZZ",
       "date": "22/11/2026",
-      "bought": true
+      "bought": true,
+      "ticketUrl": "https://www.salarazzmatazz.com/agenda/22-11-2026-polyphia/"
     },
     {
       "artist": "Toundra",
       "venue": "RAZZMATAZZ 2",
       "date": "11/12/2026",
-      "bought": false
+      "bought": false,
+      "ticketUrl": "https://www.salarazzmatazz.com/agenda/11-12-2026-toundra/"
     },
     {
       "artist": "AMARAL",
       "venue": "PALAU SANT JORDI",
       "date": "18/12/2026",
-      "bought": false
+      "bought": false,
+      "ticketUrl": "https://www.elcorteingles.es/entradas/conciertos/entradas-amaral-barcelona-42875264745714/"
     },
     {
       "artist": "Amaia",
       "venue": "PALAU SANT JORDI",
       "date": "20/12/2026",
-      "bought": false
+      "bought": false,
+      "ticketUrl": "https://palausantjordi.barcelona/es/amaia2026"
     },
     {
       "artist": "Sylosis",
       "venue": "RAZZMATAZZ 2",
       "date": "06/02/2027",
-      "bought": false
+      "bought": false,
+      "ticketUrl": "https://www.resurrectionfest.es/route/whitechapel-tour-2027/"
     },
     {
       "artist": "MORGAN",
       "venue": "Sala Paral·lel 62",
       "date": "26/02/2027",
-      "bought": false
+      "bought": false,
+      "ticketUrl": "https://tickets.oneboxtds.com/farotickets/select/2880063"
     },
     {
       "artist": "Whitechapel",
       "venue": "RAZZMATAZZ 2",
       "date": "06/02/2027",
-      "bought": false
+      "bought": false,
+      "ticketUrl": "https://www.resurrectionfest.es/route/whitechapel-tour-2027/"
     },
     {
       "artist": "Fontaines D.C.",
       "venue": "Les Docks",
       "date": "17/08/2026",
-      "bought": false
+      "bought": false,
+      "ticketUrl": "https://www.docks.ch/evenement/concerts/20260817/fontaines-d-c-2/"
     },
     {
       "artist": "Fontaines D.C.",
       "venue": "Les Docks",
       "date": "18/08/2026",
-      "bought": false
+      "bought": false,
+      "ticketUrl": "https://www.docks.ch/evenement/concerts/20260818/fontaines-d-c-3/"
     },
     {
       "artist": "Hermanos Gutiérrez",
       "venue": "Gran Teatre del Liceu",
       "date": "30/08/2026",
-      "bought": false
+      "bought": false,
+      "ticketUrl": "https://www.ticketmaster.es/artist/hermanos-gutierrez-entradas/1158644"
     },
     {
       "artist": "Hermanos Gutiérrez",
       "venue": "Gran Teatre del Liceu",
       "date": "31/08/2026",
-      "bought": false
+      "bought": false,
+      "ticketUrl": "https://www.ticketmaster.es/artist/hermanos-gutierrez-entradas/1158644"
     },
     {
       "artist": "Perturbator",
       "venue": "Razzmatazz",
       "date": "22/11/2026",
-      "bought": false
+      "bought": false,
+      "ticketUrl": "https://www.salarazzmatazz.com/agenda/22-11-2026-polyphia/"
     },
     {
       "artist": "Eluveitie",
       "venue": "Razzmatazz",
       "date": "02/12/2026",
-      "bought": false
+      "bought": false,
+      "ticketUrl": "https://www.resurrectionfest.es/route/eluveitie-tour-2026/"
     }
   ],
   "dismissedSuggestions": [

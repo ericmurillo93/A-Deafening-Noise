@@ -25,7 +25,9 @@ export async function context() {
   return {
     root,
     listened: new Map(listened.artists.filter(({ artist }) => artist).map(({ artist }) => [normalize(artist), artist])),
-    existing: new Set(concerts.concerts.map(({ artist, date }) => `${normalize(artist)}|${date}`)),
+    existing: process.argv.includes("--include-existing")
+      ? new Set()
+      : new Set(concerts.concerts.map(({ artist, date }) => `${normalize(artist)}|${date}`)),
   };
 }
 
