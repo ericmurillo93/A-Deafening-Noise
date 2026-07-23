@@ -26,14 +26,20 @@
       "venue": "BE PROG! MY FRIEND",
       "date": "01/07/2017",
       "bought": true,
-      "setlistId": "4be43f22"
+      "setlistId": "4be43f22",
+      "attendees": [
+        "Papa"
+      ]
     },
     {
       "artist": "ANIMALS AS LEADERS",
       "venue": "BE PROG! MY FRIEND",
       "date": "30/06/2017",
       "bought": true,
-      "setlistId": "6be4c6c6"
+      "setlistId": "6be4c6c6",
+      "attendees": [
+        "Papa"
+      ]
     },
     {
       "artist": "ARCHITECTS",
@@ -123,7 +129,10 @@
       "venue": "BE PROG! MY FRIEND",
       "date": "29/06/2018",
       "bought": true,
-      "setlistId": "4bea1766"
+      "setlistId": "4bea1766",
+      "attendees": [
+        "Papa"
+      ]
     },
     {
       "artist": "A PERFECT CIRCLE",
@@ -137,7 +146,10 @@
       "venue": "BE PROG! MY FRIEND",
       "date": "29/06/2018",
       "bought": true,
-      "setlistId": "4bea17f6"
+      "setlistId": "4bea17f6",
+      "attendees": [
+        "Papa"
+      ]
     },
     {
       "artist": "BEHEMOTH",
@@ -212,7 +224,10 @@
       "venue": "BE PROG! MY FRIEND",
       "date": "30/06/2017",
       "bought": true,
-      "setlistId": "63e4c6c7"
+      "setlistId": "63e4c6c7",
+      "attendees": [
+        "Papa"
+      ]
     },
     {
       "artist": "CODE ORANGE",
@@ -240,11 +255,14 @@
       "venue": "BE PROG! MY FRIEND",
       "date": "01/07/2017",
       "bought": true,
-      "setlistId": "43e43f23"
+      "setlistId": "43e43f23",
+      "attendees": [
+        "Papa"
+      ]
     },
     {
       "artist": "DREAM THEATER",
-      "venue": "CLUB SANT JORDI",
+      "venue": "SANT JORDI CLUB",
       "date": "24/02/2012",
       "bought": true,
       "setlistId": "53deffc1"
@@ -289,21 +307,30 @@
       "venue": "GIRONA",
       "date": "03/06/2022",
       "bought": true,
-      "setlistId": "1b44bd74"
+      "setlistId": "1b44bd74",
+      "attendees": [
+        "Saray"
+      ]
     },
     {
       "artist": "ESTOPA",
-      "venue": "ESTADI LLUIS COMPANYS",
+      "venue": "ESTADI OLÍMPIC LLUÍS COMPANYS",
       "date": "10/07/2024",
       "bought": true,
-      "setlistId": "1356357d"
+      "setlistId": "1356357d",
+      "attendees": [
+        "Saray"
+      ]
     },
     {
       "artist": "ESTOPA",
       "venue": "MALEDUCATS 2025",
       "date": "17/05/2025",
       "bought": true,
-      "setlistId": "2347e0ff"
+      "setlistId": "2347e0ff",
+      "attendees": [
+        "Saray"
+      ]
     },
     {
       "artist": "FEVER 333",
@@ -321,10 +348,13 @@
     },
     {
       "artist": "HAKEN",
-      "venue": "BE PROG MY FRIEND",
+      "venue": "BE PROG! MY FRIEND",
       "date": "27/09/2024",
       "bought": true,
-      "setlistId": "23537c37"
+      "setlistId": "23537c37",
+      "attendees": [
+        "Papa"
+      ]
     },
     {
       "artist": "HEAVEN SHALL BURN",
@@ -338,7 +368,10 @@
       "venue": "BE PROG! MY FRIEND",
       "date": "30/06/2018",
       "bought": true,
-      "setlistId": "3ea0d37"
+      "setlistId": "3ea0d37",
+      "attendees": [
+        "Papa"
+      ]
     },
     {
       "artist": "GHOST",
@@ -401,14 +434,20 @@
       "venue": "BE PROG! MY FRIEND",
       "date": "01/07/2017",
       "bought": true,
-      "setlistId": "43e43f27"
+      "setlistId": "43e43f27",
+      "attendees": [
+        "Papa"
+      ]
     },
     {
       "artist": "JETHRO TULL",
       "venue": "BE PROG! MY FRIEND",
       "date": "01/07/2017",
       "bought": true,
-      "setlistId": "2be4c08e"
+      "setlistId": "2be4c08e",
+      "attendees": [
+        "Papa"
+      ]
     },
     {
       "artist": "JETHRO TULL",
@@ -450,21 +489,30 @@
       "venue": "LA RIVIERA",
       "date": "26/02/2022",
       "bought": true,
-      "setlistId": "4388bf8b"
+      "setlistId": "4388bf8b",
+      "attendees": [
+        "Saray"
+      ]
     },
     {
       "artist": "LA MARAVILLOSA ORQUESTA DEL ALCOHOL",
       "venue": "GRANADA SOUND",
       "date": "15/09/2023",
       "bought": true,
-      "setlistId": "5ba27f00"
+      "setlistId": "5ba27f00",
+      "attendees": [
+        "Saray"
+      ]
     },
     {
       "artist": "LA MARAVILLOSA ORQUESTA DEL ALCOHOL",
       "venue": "RAZZMATAZZ",
       "date": "13/02/2026",
       "bought": true,
-      "setlistId": "7b5a7238"
+      "setlistId": "7b5a7238",
+      "attendees": [
+        "Saray"
+      ]
     },
     {
       "artist": "LEPROUS",
@@ -478,7 +526,10 @@
       "venue": "BE PROG! MY FRIEND",
       "date": "01/07/2017",
       "bought": true,
-      "setlistId": "53e43f21"
+      "setlistId": "53e43f21",
+      "attendees": [
+        "Papa"
+      ]
     },
     {
       "artist": "LEPROUS",
@@ -510,14 +561,14 @@
     },
     {
       "artist": "LEPROUS",
-      "venue": "SALA APOLO - 20 ANNIVERSARY TOUR",
+      "venue": "SALA APOLO",
       "date": "10/12/2021",
       "bought": true,
       "setlistId": "1b8b91f4"
     },
     {
       "artist": "LEPROUS",
-      "venue": "LES DOCKS - LAUSANNE",
+      "venue": "LES DOCKS",
       "date": "26/02/2023",
       "bought": true,
       "setlistId": "6bbab66a"
@@ -541,7 +592,10 @@
       "venue": "BE PROG! MY FRIEND",
       "date": "30/06/2017",
       "bought": true,
-      "setlistId": "73e4c6c5"
+      "setlistId": "73e4c6c5",
+      "attendees": [
+        "Papa"
+      ]
     },
     {
       "artist": "MASTODON",
@@ -593,7 +647,7 @@
     },
     {
       "artist": "MESHUGGAH",
-      "venue": "SALE MÉTROPOLE",
+      "venue": "SALLE MÉTROPOLE LAUSANNE",
       "date": "21/03/2024",
       "bought": true,
       "setlistId": "13ab2d51"
@@ -617,7 +671,10 @@
       "venue": "BE PROG! MY FRIEND",
       "date": "30/06/2017",
       "bought": true,
-      "setlistId": "13e4c525"
+      "setlistId": "13e4c525",
+      "attendees": [
+        "Papa"
+      ]
     },
     {
       "artist": "MORCHEEBA",
@@ -645,14 +702,20 @@
       "venue": "SÓNAR 2025",
       "date": "14/06/2025",
       "bought": true,
-      "setlistId": "535d5f05"
+      "setlistId": "535d5f05",
+      "attendees": [
+        "Saray"
+      ]
     },
     {
       "artist": "NATHY PELUSO",
       "venue": "PALAU SANT JORDI",
       "date": "14/02/2026",
       "bought": true,
-      "setlistId": "5341fb6d"
+      "setlistId": "5341fb6d",
+      "attendees": [
+        "Saray"
+      ]
     },
     {
       "artist": "NICK JOHNSTON",
@@ -680,14 +743,20 @@
       "venue": "BE PROG! MY FRIEND",
       "date": "29/06/2018",
       "bought": true,
-      "setlistId": "43ea17f7"
+      "setlistId": "43ea17f7",
+      "attendees": [
+        "Papa"
+      ]
     },
     {
       "artist": "PAIN OF SALVATION",
-      "venue": "BE PROG MY FRIEND",
+      "venue": "BE PROG! MY FRIEND",
       "date": "28/09/2024",
       "bought": true,
-      "setlistId": "2b537c9a"
+      "setlistId": "2b537c9a",
+      "attendees": [
+        "Papa"
+      ]
     },
     {
       "artist": "PANTERA",
@@ -721,7 +790,10 @@
       "venue": "BE PROG! MY FRIEND",
       "date": "30/06/2018",
       "bought": true,
-      "setlistId": "1bea0d2c"
+      "setlistId": "1bea0d2c",
+      "attendees": [
+        "Papa"
+      ]
     },
     {
       "artist": "PLINI",
@@ -753,7 +825,7 @@
     },
     {
       "artist": "PORCUPINE TREE",
-      "venue": "HALLE 622 ZURICH",
+      "venue": "HALLE 622 ZÜRICH",
       "date": "09/11/2022",
       "bought": true,
       "setlistId": "43be73bf"
@@ -812,14 +884,20 @@
       "venue": "BRAGA",
       "date": "25/11/2022",
       "bought": true,
-      "setlistId": "2bbfd432"
+      "setlistId": "2bbfd432",
+      "attendees": [
+        "Saray"
+      ]
     },
     {
       "artist": "ROSALIA",
       "venue": "PALAU SANT JORDI",
       "date": "18/04/2026",
       "bought": true,
-      "setlistId": "634c2207"
+      "setlistId": "634c2207",
+      "attendees": [
+        "Saray"
+      ]
     },
     {
       "artist": "SOEN",
@@ -847,7 +925,10 @@
       "venue": "BE PROG! MY FRIEND",
       "date": "30/06/2018",
       "bought": true,
-      "setlistId": "13ea0d29"
+      "setlistId": "13ea0d29",
+      "attendees": [
+        "Papa"
+      ]
     },
     {
       "artist": "SOULFLY",
@@ -861,7 +942,10 @@
       "venue": "BE PROG! MY FRIEND",
       "date": "30/06/2018",
       "bought": true,
-      "setlistId": "bea0d3e"
+      "setlistId": "bea0d3e",
+      "attendees": [
+        "Papa"
+      ]
     },
     {
       "artist": "STEVEN WILSON",
@@ -935,7 +1019,7 @@
     },
     {
       "artist": "TESSERACT",
-      "venue": "Les Docks Lausanne",
+      "venue": "LES DOCKS",
       "date": "11/01/2025",
       "bought": true,
       "setlistId": "4b546f9e"
@@ -945,7 +1029,10 @@
       "venue": "BE PROG! MY FRIEND",
       "date": "26/09/2025",
       "bought": true,
-      "setlistId": "346f153"
+      "setlistId": "346f153",
+      "attendees": [
+        "Papa"
+      ]
     },
     {
       "artist": "THE GHOST INSIDE",
@@ -1008,7 +1095,10 @@
       "venue": "RIYADH AIR METROPOLITANO",
       "date": "06/06/2026",
       "bought": true,
-      "setlistId": "1b47991c"
+      "setlistId": "1b47991c",
+      "attendees": [
+        "Saray"
+      ]
     },
     {
       "artist": "LIMP BIZKIT",
@@ -1081,10 +1171,13 @@
     },
     {
       "artist": "BE PROG! MY FRIEND",
-      "venue": "",
+      "venue": "BE PROG! MY FRIEND",
       "date": "25/09/2026 - 26/09/2026",
       "bought": true,
-      "ticketUrl": "https://www.madnesslive.es/es/conciertos-en-barcelona/1918-comprar-entrada-abono-be-prog-my-friend-2026-barcelona.html"
+      "ticketUrl": "https://www.madnesslive.es/es/conciertos-en-barcelona/1918-comprar-entrada-abono-be-prog-my-friend-2026-barcelona.html",
+      "attendees": [
+        "Papa"
+      ]
     },
     {
       "artist": "DEVIN TOWNSEND",
@@ -1129,7 +1222,7 @@
       "ticketUrl": "https://palausantjordi.barcelona/es/amaia2026"
     },
     {
-      "artist": "Sylosis",
+      "artist": "SYLOSIS",
       "venue": "RAZZMATAZZ 2",
       "date": "06/02/2027",
       "bought": false,
@@ -1151,14 +1244,14 @@
     },
     {
       "artist": "Fontaines D.C.",
-      "venue": "Les Docks",
+      "venue": "LES DOCKS",
       "date": "17/08/2026",
       "bought": false,
       "ticketUrl": "https://www.docks.ch/evenement/concerts/20260817/fontaines-d-c-2/"
     },
     {
       "artist": "Fontaines D.C.",
-      "venue": "Les Docks",
+      "venue": "LES DOCKS",
       "date": "18/08/2026",
       "bought": false,
       "ticketUrl": "https://www.docks.ch/evenement/concerts/20260818/fontaines-d-c-3/"
@@ -1179,14 +1272,14 @@
     },
     {
       "artist": "Perturbator",
-      "venue": "Razzmatazz",
+      "venue": "RAZZMATAZZ",
       "date": "22/11/2026",
       "bought": false,
       "ticketUrl": "https://www.salarazzmatazz.com/agenda/22-11-2026-polyphia/"
     },
     {
       "artist": "Eluveitie",
-      "venue": "Razzmatazz",
+      "venue": "RAZZMATAZZ",
       "date": "02/12/2026",
       "bought": false,
       "ticketUrl": "https://www.resurrectionfest.es/route/eluveitie-tour-2026/"
