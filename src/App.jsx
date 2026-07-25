@@ -353,6 +353,18 @@ function Icon({ type }) {
   return <svg {...common} className="mt-0.5 h-4 w-4 shrink-0 text-zinc-500"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z" /><circle cx="12" cy="10" r="3" /></svg>;
 }
 
+function ModalCloseButton({ onClick, disabled = false }) {
+  return <button type="button" onClick={onClick} disabled={disabled} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-zinc-800 text-zinc-400 transition hover:border-zinc-600 hover:bg-zinc-900 hover:text-zinc-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-400 disabled:opacity-40" aria-label="Close"><i className="fa-solid fa-xmark" aria-hidden="true" /></button>;
+}
+
+function PanelHeading({ icon, title, description }) {
+  return <div className="mb-5 flex items-start gap-3"><div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-zinc-800 bg-zinc-950 text-zinc-500"><i className={`fa-solid ${icon}`} aria-hidden="true" /></div><div><h2 className="text-lg font-black uppercase tracking-tight text-zinc-100">{title}</h2>{description && <p className="mt-1 text-sm text-zinc-500">{description}</p>}</div></div>;
+}
+
+function EmptyState({ icon = "fa-music", title, description }) {
+  return <div className="rounded-2xl border border-dashed border-zinc-800 bg-zinc-950/40 px-5 py-8 text-center"><i className={`fa-solid ${icon} mb-3 text-xl text-zinc-700`} aria-hidden="true" /><p className="text-sm font-bold text-zinc-400">{title}</p>{description && <p className="mx-auto mt-1 max-w-sm text-xs text-zinc-600">{description}</p>}</div>;
+}
+
 // ─── AutoSuggestField ─────────────────────────────────────────────────────────
 
 function AutoSuggestField({ value, onChange, suggestions, placeholder }) {
@@ -453,7 +465,7 @@ function SetlistModal({ target, onClose, onEdit, onIdDiscovered }) {
           </div>
           <div className="flex shrink-0 items-center gap-2">
             {onEdit && <button type="button" onClick={() => onEdit(target)} className="flex h-8 w-8 items-center justify-center rounded-full border border-zinc-700 text-sm text-zinc-300 hover:border-zinc-500 hover:text-white" aria-label="Edit concert" title="Edit concert"><i className="fa-solid fa-pencil" aria-hidden="true" /></button>}
-            <button type="button" onClick={onClose} className="rounded-full border border-zinc-700 px-3 py-1 text-sm text-zinc-300 hover:border-zinc-500">Close</button>
+            <ModalCloseButton onClick={onClose} />
           </div>
         </div>
 
@@ -542,7 +554,7 @@ function FriendAttendeePicker({ friends, selectedIds, lockedIds = [], onChange }
   function toggle(id) { if (!locked.has(id)) onChange(selected.has(id) ? selectedIds.filter((value) => value !== id) : [...selectedIds, id]); }
   return (
     <details className="group relative">
-      <summary className="cursor-pointer list-none rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-zinc-300 [&::-webkit-details-marker]:hidden">{selectedIds.length ? `${selectedIds.length} friend${selectedIds.length === 1 ? "" : "s"} selected` : "Attended with friends"} <span className="float-right text-zinc-600">▾</span></summary>
+      <summary className="flex cursor-pointer list-none items-center gap-3 rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-zinc-300 transition hover:border-zinc-600 [&::-webkit-details-marker]:hidden"><i className="fa-solid fa-user-group text-xs text-zinc-600" aria-hidden="true" /><span className="flex-1">{selectedIds.length ? `${selectedIds.length} friend${selectedIds.length === 1 ? "" : "s"} selected` : "Select friends"}</span><i className="fa-solid fa-chevron-down text-[10px] text-zinc-600 transition-transform group-open:rotate-180" aria-hidden="true" /></summary>
       <div className="mt-2 max-h-52 space-y-1 overflow-y-auto rounded-2xl border border-zinc-700 bg-zinc-950 p-2">
         {friends.length ? friends.map((friend) => <label key={friend.id} className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-zinc-300 ${locked.has(friend.id) ? "cursor-default" : "cursor-pointer hover:bg-zinc-900"}`}><input type="checkbox" checked={selected.has(friend.id)} disabled={locked.has(friend.id)} onChange={() => toggle(friend.id)} className="accent-zinc-100" /><span>{friend.displayName}</span>{locked.has(friend.id) && <span className="text-xs text-emerald-500">Confirmed</span>}<span className="ml-auto text-xs text-zinc-600">@{friend.username}</span></label>) : <p className="px-3 py-2 text-sm text-zinc-600">Add friends from the Friends page first.</p>}
       </div>
@@ -593,16 +605,16 @@ function EditConcertModal({ isOpen, mode, initial, onClose, onSave, isSaving, sa
   }
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 px-4">
-      <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-3xl border border-zinc-700 bg-zinc-950 p-6 shadow-2xl">
-        <div className="mb-6 flex items-start justify-between gap-4">
-          <div>
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 p-4">
+      <div className="flex max-h-[calc(100dvh-2rem)] w-full max-w-lg flex-col overflow-hidden rounded-3xl border border-zinc-700 bg-zinc-950 shadow-2xl md:max-h-[90dvh]">
+        <div className="flex shrink-0 items-start justify-between gap-4 border-b border-zinc-900 px-6 py-5">
+          <div className="min-w-0">
             <h2 className="text-2xl font-black uppercase tracking-tight">Edit concert</h2>
-            <p className="mt-1 text-sm text-zinc-500">{isNextMode ? "Edit upcoming concert details." : "Edit concert details."}</p>
+            <p className="mt-1 truncate text-sm text-zinc-500">{artist || "Concert"}{venue ? ` · ${venue}` : ""}{date ? ` · ${date}` : ""}</p>
           </div>
-          <button type="button" onClick={onClose} className="rounded-full border border-zinc-700 px-3 py-1 text-sm text-zinc-300 hover:border-zinc-500">Close</button>
+          <ModalCloseButton onClick={onClose} />
         </div>
-        <div className="space-y-4">
+        <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-6 py-5 overscroll-contain">
           {!canEditEvent && <p className="rounded-2xl border border-blue-900 bg-blue-950/30 px-4 py-3 text-sm text-blue-200">This is a shared concert. You can update your ticket and attendees; the creator manages artist, venue and date.</p>}
           <label className="block">
             <span className="mb-2 block text-xs font-bold uppercase tracking-widest text-zinc-500">Artist</span>
@@ -625,18 +637,20 @@ function EditConcertModal({ isOpen, mode, initial, onClose, onSave, isSaving, sa
           <label className="block">
             <span className="mb-2 block text-xs font-bold uppercase tracking-widest text-zinc-500">Attended with <span className="normal-case tracking-normal text-zinc-600">(optional)</span></span>
             <FriendAttendeePicker friends={friends} selectedIds={attendeeUserIds} lockedIds={(initial.attendeeUsers || []).filter((person) => person.status === "confirmed").map((person) => person.id)} onChange={setAttendeeUserIds} />
-            <input type="text" value={guestAttendees} onChange={(e) => setGuestAttendees(e.target.value)} placeholder="Other attendees (comma separated)" className="w-full rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-zinc-100 outline-none focus:border-zinc-400" />
+            <input type="text" value={guestAttendees} onChange={(e) => setGuestAttendees(e.target.value)} placeholder="Other attendees (comma separated)" className="mt-2 w-full rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-zinc-100 outline-none focus:border-zinc-400" />
             <span className="mt-1 block text-xs text-zinc-600">Separate multiple names with commas.</span>
           </label>
           {isNextMode && (
             <label className="flex items-center gap-3 rounded-2xl border border-zinc-800 bg-zinc-900 px-4 py-3 text-sm text-zinc-300">
               <input type="checkbox" checked={bought} onChange={(e) => setBought(e.target.checked)} />
-              <span>💰 Ticket bought</span>
+              <i className="fa-solid fa-ticket text-zinc-500" aria-hidden="true" /><span>Ticket bought</span>
             </label>
           )}
         </div>
-        <button onClick={submit} disabled={isSaving} className="mt-6 w-full rounded-2xl bg-zinc-100 px-5 py-3 font-black text-zinc-950 transition hover:bg-white disabled:opacity-50">{isSaving ? "Saving..." : "Save changes"}</button>
-        {saveError && <div className="mt-3 rounded-2xl border border-red-900 bg-red-950/40 px-4 py-3 text-sm text-red-200">{saveError}</div>}
+        <div className="shrink-0 border-t border-zinc-900 bg-zinc-950 px-6 py-4">
+          <button onClick={submit} disabled={isSaving} className="w-full rounded-2xl bg-zinc-100 px-5 py-3 font-black text-zinc-950 transition hover:bg-white disabled:opacity-50">{isSaving ? "Saving..." : "Save changes"}</button>
+          {saveError && <div className="mt-3 rounded-2xl border border-red-900 bg-red-950/40 px-4 py-3 text-sm text-red-200">{saveError}</div>}
+        </div>
       </div>
     </div>
   );
@@ -693,15 +707,16 @@ function AddConcertModal({ isOpen, initial, stagingSuggestion = false, onClose, 
   }
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 px-4">
-      <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-3xl border border-zinc-700 bg-zinc-950 p-6 shadow-2xl">
-        <div className="mb-6 flex items-start justify-between gap-4">
-          <div>
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 p-4">
+      <div className="flex max-h-[calc(100dvh-2rem)] w-full max-w-lg flex-col overflow-hidden rounded-3xl border border-zinc-700 bg-zinc-950 shadow-2xl md:max-h-[90dvh]">
+        <div className="flex shrink-0 items-start justify-between gap-4 border-b border-zinc-900 px-6 py-5">
+          <div className="min-w-0">
             <h2 className="text-2xl font-black uppercase tracking-tight">Add concert</h2>
-            <p className="mt-1 text-sm text-zinc-500">{stagingSuggestion ? "Choose whether you already bought the ticket." : "Add a past or upcoming concert."}</p>
+            <p className="mt-1 truncate text-sm text-zinc-500">{stagingSuggestion ? `${initial?.artist || "Concert"}${initial?.date ? ` · ${initial.date}` : ""}` : "Add a past or upcoming concert."}</p>
           </div>
-          <button type="button" onClick={onClose} className="rounded-full border border-zinc-700 px-3 py-1 text-sm text-zinc-300 hover:border-zinc-500">Close</button>
+          <ModalCloseButton onClick={onClose} />
         </div>
+        <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5 overscroll-contain">
         {stagingSuggestion ? (
           <div>
             <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-4">
@@ -736,18 +751,21 @@ function AddConcertModal({ isOpen, initial, stagingSuggestion = false, onClose, 
           <label className="block">
             <span className="mb-2 block text-xs font-bold uppercase tracking-widest text-zinc-500">Attended with <span className="normal-case tracking-normal text-zinc-600">(optional)</span></span>
             <FriendAttendeePicker friends={friends} selectedIds={attendeeUserIds} onChange={setAttendeeUserIds} />
-            <input type="text" value={guestAttendees} onChange={(e) => setGuestAttendees(e.target.value)} placeholder="Other attendees (comma separated)" className="w-full rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-zinc-100 outline-none focus:border-zinc-400" />
+            <input type="text" value={guestAttendees} onChange={(e) => setGuestAttendees(e.target.value)} placeholder="Other attendees (comma separated)" className="mt-2 w-full rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-zinc-100 outline-none focus:border-zinc-400" />
             <span className="mt-1 block text-xs text-zinc-600">Separate multiple names with commas.</span>
           </label>
           {!isPastDate && (
             <label className="flex items-center gap-3 rounded-2xl border border-zinc-800 bg-zinc-900 px-4 py-3 text-sm text-zinc-300">
               <input type="checkbox" checked={bought} onChange={(e) => setBought(e.target.checked)} />
-              <span>💰 Ticket bought</span>
+              <i className="fa-solid fa-ticket text-zinc-500" aria-hidden="true" /><span>Ticket bought</span>
             </label>
           )}
         </div>}
-        {!stagingSuggestion && <button onClick={submit} disabled={isSaving} className="mt-6 w-full rounded-2xl bg-zinc-100 px-5 py-3 font-black text-zinc-950 transition hover:bg-white disabled:opacity-50">{isSaving ? "Saving..." : "Add concert"}</button>}
-        {saveError && <div className="mt-3 rounded-2xl border border-red-900 bg-red-950/40 px-4 py-3 text-sm text-red-200">{saveError}</div>}
+        </div>
+        {(!stagingSuggestion || saveError) && <div className="shrink-0 border-t border-zinc-900 bg-zinc-950 px-6 py-4">
+          {!stagingSuggestion && <button onClick={submit} disabled={isSaving} className="w-full rounded-2xl bg-zinc-100 px-5 py-3 font-black text-zinc-950 transition hover:bg-white disabled:opacity-50">{isSaving ? "Saving..." : "Add concert"}</button>}
+          {saveError && <div className="mt-3 rounded-2xl border border-red-900 bg-red-950/40 px-4 py-3 text-sm text-red-200">{saveError}</div>}
+        </div>}
       </div>
     </div>
   );
@@ -1200,7 +1218,7 @@ function CalendarConcertModal({ target, onClose, onEdit }) {
           <h2 className="min-w-0 break-words text-2xl font-black uppercase leading-none tracking-tight text-zinc-100">{target.artist}</h2>
           <div className="flex shrink-0 items-center gap-2">
             {onEdit && <button type="button" onClick={() => onEdit(target)} className="flex h-8 w-8 items-center justify-center rounded-full border border-zinc-700 text-sm text-zinc-300 transition hover:border-zinc-500 hover:text-white" aria-label="Edit concert" title="Edit concert"><i className="fa-solid fa-pencil" aria-hidden="true" /></button>}
-            <button type="button" onClick={onClose} className="rounded-full border border-zinc-700 px-3 py-1 text-sm text-zinc-300 transition hover:border-zinc-500">Close</button>
+            <ModalCloseButton onClick={onClose} />
           </div>
         </div>
         <div className="mt-4 overflow-hidden rounded-2xl bg-zinc-950">
@@ -1978,13 +1996,13 @@ function FriendsPage({ friends, requests, invitations, onSearch, onSendRequest, 
   return (
     <div className="space-y-8">
       {invitations.length > 0 && (
-        <section className="rounded-3xl border border-amber-900/70 bg-amber-950/20 p-5 md:p-7">
-          <h2 className="mb-4 text-xl font-black text-zinc-100">Concert invitations</h2>
+        <section className="rounded-3xl border border-amber-900/60 bg-gradient-to-br from-amber-950/30 to-zinc-950 p-5 md:p-7">
+          <PanelHeading icon="fa-ticket" title="Concert invitations" description="Choose your ticket status to add the concert to your archive." />
           <div className="space-y-3">
             {invitations.map((invitation) => (
-              <div key={invitation.concertId} className="flex flex-col gap-4 rounded-2xl border border-zinc-800 bg-zinc-950 p-4 sm:flex-row sm:items-center sm:justify-between">
-                <div><p className="font-black text-zinc-100">{invitation.artist}</p><p className="mt-1 text-sm text-zinc-500">{invitation.venue} · {invitation.date} · invited by {invitation.invitedBy}</p></div>
-                <div className="flex flex-wrap gap-2"><button onClick={() => act(() => onRespondInvitation(invitation.concertId, true, true))} className="rounded-full bg-emerald-200 px-4 py-2 text-sm font-black text-emerald-950">Bought</button><button onClick={() => act(() => onRespondInvitation(invitation.concertId, true, false))} className="rounded-full bg-orange-200 px-4 py-2 text-sm font-black text-orange-950">Not bought</button><button onClick={() => act(() => onRespondInvitation(invitation.concertId, false, false))} className="rounded-full border border-zinc-700 px-4 py-2 text-sm font-bold text-zinc-400">Decline</button></div>
+              <div key={invitation.concertId} className="flex flex-col gap-4 rounded-2xl border border-zinc-800 bg-zinc-950/90 p-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0"><p className="truncate font-black uppercase tracking-tight text-zinc-100">{invitation.artist}</p><p className="mt-1 text-sm text-zinc-500"><i className="fa-solid fa-location-dot mr-1.5 text-zinc-700" aria-hidden="true" />{invitation.venue || "Venue not specified"}</p><p className="mt-1 text-xs text-zinc-600">{invitation.date} · invited by <span className="text-zinc-400">{invitation.invitedBy}</span></p></div>
+                <div className="grid grid-cols-2 gap-2 sm:flex"><button onClick={() => act(() => onRespondInvitation(invitation.concertId, true, true))} className="rounded-xl bg-emerald-200 px-4 py-2.5 text-xs font-black text-emerald-950 transition hover:bg-emerald-100">Bought</button><button onClick={() => act(() => onRespondInvitation(invitation.concertId, true, false))} className="rounded-xl bg-amber-200 px-4 py-2.5 text-xs font-black text-amber-950 transition hover:bg-amber-100">Not bought</button><button onClick={() => act(() => onRespondInvitation(invitation.concertId, false, false))} className="col-span-2 rounded-xl border border-zinc-700 px-4 py-2.5 text-xs font-bold text-zinc-400 transition hover:border-red-900 hover:text-red-300">Decline</button></div>
               </div>
             ))}
           </div>
@@ -1992,15 +2010,15 @@ function FriendsPage({ friends, requests, invitations, onSearch, onSendRequest, 
       )}
 
       <section className="rounded-3xl border border-zinc-800 bg-zinc-900 p-5 md:p-7">
-        <h2 className="mb-4 text-xl font-black text-zinc-100">Find people</h2>
-        <form onSubmit={submitSearch} className="flex gap-2"><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search by name or username" className="min-w-0 flex-1 rounded-full border border-zinc-700 bg-zinc-950 px-5 py-3 text-zinc-100 outline-none focus:border-zinc-500" /><button disabled={loading || search.trim().length < 2} className="rounded-full bg-zinc-100 px-5 py-3 font-black text-zinc-950 disabled:opacity-40">{loading ? "Searching…" : "Search"}</button></form>
+        <PanelHeading icon="fa-user-plus" title="Find people" description="Search by display name or username." />
+        <form onSubmit={submitSearch} className="flex flex-col gap-2 sm:flex-row"><div className="flex min-w-0 flex-1 items-center gap-3 rounded-2xl border border-zinc-700 bg-zinc-950 px-4 py-3 focus-within:border-zinc-500"><Icon type="search" /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Name or username" className="min-w-0 flex-1 bg-transparent text-zinc-100 outline-none placeholder:text-zinc-600" /></div><button disabled={loading || search.trim().length < 2} className="rounded-2xl bg-zinc-100 px-6 py-3 font-black text-zinc-950 transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-40">{loading ? "Searching…" : "Search"}</button></form>
         {error && <p className="mt-4 rounded-2xl border border-red-900 bg-red-950/30 px-4 py-3 text-sm text-red-300">{error}</p>}
-        {results.length > 0 && <div className="mt-5 space-y-2">{results.map((person) => <div key={person.id} className="flex items-center justify-between rounded-2xl bg-zinc-950 px-4 py-3"><div><p className="font-bold text-zinc-100">{person.displayName}</p><p className="text-xs text-zinc-600">@{person.username}</p></div>{person.relationship === "accepted" ? <span className="text-xs font-bold text-emerald-400">Friends</span> : person.relationship === "pending" ? <span className="text-xs font-bold text-zinc-500">Request pending</span> : <button onClick={() => act(() => onSendRequest(person.id))} className="rounded-full border border-zinc-700 px-4 py-2 text-xs font-black text-zinc-200">Add friend</button>}</div>)}</div>}
+        {results.length > 0 && <div className="mt-5 divide-y divide-zinc-900 overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950">{results.map((person) => <div key={person.id} className="flex items-center gap-3 px-4 py-3.5"><div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-zinc-800 bg-zinc-900 text-xs font-black text-zinc-400">{person.displayName.slice(0, 1).toUpperCase()}</div><div className="min-w-0 flex-1"><p className="truncate font-bold text-zinc-100">{person.displayName}</p><p className="truncate text-xs text-zinc-600">@{person.username}</p></div>{person.relationship === "accepted" ? <span className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-400"><i className="fa-solid fa-check" aria-hidden="true" />Friends</span> : person.relationship === "pending" ? <span className="text-xs font-bold text-zinc-500">Pending</span> : <button onClick={() => act(() => onSendRequest(person.id))} className="rounded-xl border border-zinc-700 px-3 py-2 text-xs font-black text-zinc-200 transition hover:border-zinc-500 hover:bg-zinc-900">Add</button>}</div>)}</div>}
       </section>
 
-      {requests.filter((request) => request.direction === "incoming").length > 0 && <section className="rounded-3xl border border-zinc-800 bg-zinc-900 p-5 md:p-7"><h2 className="mb-4 text-xl font-black">Friend requests</h2><div className="space-y-2">{requests.filter((request) => request.direction === "incoming").map((request) => <div key={request.id} className="flex items-center justify-between rounded-2xl bg-zinc-950 px-4 py-3"><div><p className="font-bold">{request.displayName}</p><p className="text-xs text-zinc-600">@{request.username}</p></div><div className="flex gap-2"><button onClick={() => act(() => onRespondRequest(request.id, true))} className="rounded-full bg-zinc-100 px-4 py-2 text-xs font-black text-zinc-950">Accept</button><button onClick={() => act(() => onRespondRequest(request.id, false))} className="rounded-full border border-zinc-700 px-4 py-2 text-xs font-bold text-zinc-400">Decline</button></div></div>)}</div></section>}
+      {requests.filter((request) => request.direction === "incoming").length > 0 && <section className="rounded-3xl border border-zinc-800 bg-zinc-900 p-5 md:p-7"><PanelHeading icon="fa-user-clock" title="Friend requests" description="Requests waiting for your response." /><div className="space-y-2">{requests.filter((request) => request.direction === "incoming").map((request) => <div key={request.id} className="flex flex-col gap-3 rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-3 sm:flex-row sm:items-center"><div className="min-w-0 flex-1"><p className="truncate font-bold">{request.displayName}</p><p className="truncate text-xs text-zinc-600">@{request.username}</p></div><div className="flex gap-2"><button onClick={() => act(() => onRespondRequest(request.id, true))} className="flex-1 rounded-xl bg-zinc-100 px-4 py-2 text-xs font-black text-zinc-950 transition hover:bg-white">Accept</button><button onClick={() => act(() => onRespondRequest(request.id, false))} className="flex-1 rounded-xl border border-zinc-700 px-4 py-2 text-xs font-bold text-zinc-400 transition hover:border-red-900 hover:text-red-300">Decline</button></div></div>)}</div></section>}
 
-      <section className="rounded-3xl border border-zinc-800 bg-zinc-900 p-5 md:p-7"><h2 className="mb-4 text-xl font-black">Friends</h2>{friends.length ? <div className="grid gap-3 sm:grid-cols-2">{friends.map((friend) => <div key={friend.id} className="flex items-center justify-between rounded-2xl bg-zinc-950 px-4 py-4"><div><p className="font-bold">{friend.displayName}</p><p className="text-xs text-zinc-600">@{friend.username}</p></div><button onClick={() => act(() => onRemoveFriend(friend.id))} className="text-xs font-semibold text-zinc-600 hover:text-red-300">Remove</button></div>)}</div> : <p className="text-sm text-zinc-500">No friends yet.</p>}</section>
+      <section className="rounded-3xl border border-zinc-800 bg-zinc-900 p-5 md:p-7"><PanelHeading icon="fa-user-group" title="Your friends" description="Friends can be invited when adding or editing a concert." />{friends.length ? <div className="grid gap-3 sm:grid-cols-2">{friends.map((friend) => <div key={friend.id} className="flex items-center gap-3 rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-4"><div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-zinc-800 bg-zinc-900 text-sm font-black text-zinc-400">{friend.displayName.slice(0, 1).toUpperCase()}</div><div className="min-w-0 flex-1"><p className="truncate font-bold">{friend.displayName}</p><p className="truncate text-xs text-zinc-600">@{friend.username}</p></div><button onClick={() => act(() => onRemoveFriend(friend.id))} className="flex h-8 w-8 items-center justify-center rounded-full text-zinc-700 transition hover:bg-red-950/40 hover:text-red-300" aria-label={`Remove ${friend.displayName}`}><i className="fa-solid fa-user-minus text-xs" aria-hidden="true" /></button></div>)}</div> : <EmptyState icon="fa-user-group" title="No friends yet" description="Use the search above to find people you know." />}</section>
     </div>
   );
 }
@@ -2178,7 +2196,7 @@ function ChangePasswordModal({ mode, email, onClose }) {
             <p className="mb-2 text-xs font-bold uppercase tracking-[0.25em] text-zinc-600">{isRecovery ? "Account recovery" : "Account security"}</p>
             <h2 id="change-password-title" className="text-2xl font-black text-zinc-100">{step === "request" && !saved ? "Verify your email" : "Choose a new password"}</h2>
           </div>
-          <button type="button" onClick={onClose} disabled={saving} className="rounded-full border border-zinc-700 px-3 py-1.5 text-sm text-zinc-400 transition hover:border-zinc-500 hover:text-white disabled:opacity-40" aria-label="Close">Close</button>
+          <ModalCloseButton onClick={onClose} disabled={saving} />
         </div>
         {saved ? (
           <div>
@@ -2863,7 +2881,7 @@ export default function App() {
                       <h2 className="text-xl font-black uppercase leading-none tracking-tight md:text-3xl">{item.artist}</h2>
                     )}
                     {isNext ? (
-                      item.bought ? <span className="rounded-full border border-zinc-700 px-3 py-1 text-xs font-bold text-zinc-300">💰 Bought</span> : <span className="rounded-full border border-zinc-800 px-3 py-1 text-xs font-bold text-zinc-500">Pending</span>
+                      item.bought ? <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-900/70 bg-emerald-950/30 px-3 py-1 text-xs font-bold text-emerald-300"><i className="fa-solid fa-check text-[9px]" aria-hidden="true" />Bought</span> : <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-900/60 bg-amber-950/20 px-3 py-1 text-xs font-bold text-amber-300"><i className="fa-solid fa-clock text-[9px]" aria-hidden="true" />Not bought</span>
                     ) : (
                       <span className="rounded-full border border-zinc-700 px-3 py-1 text-xs font-bold text-zinc-400">{item.shows.length}</span>
                     )}
@@ -2902,7 +2920,7 @@ export default function App() {
               ))}
             </section>
             )}
-            {filtered.length === 0 && <div className="mt-16 text-center text-zinc-500">No concerts found.</div>}
+            {filtered.length === 0 && <div className="mt-12"><EmptyState icon="fa-magnifying-glass" title="No concerts found" description="Try another artist, venue, city or date." /></div>}
           </>
         )}
       </section>
@@ -2916,11 +2934,12 @@ export default function App() {
 
       {confirmDelete && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 px-4">
-          <div className="w-full max-w-sm rounded-3xl border border-zinc-700 bg-zinc-950 p-6 shadow-2xl">
-            <h2 className="text-xl font-black uppercase tracking-tight mb-2">Delete concert</h2>
-            <p className="text-sm text-zinc-400 mb-6">Are you sure you want to delete <span className="text-zinc-100 font-semibold">{confirmDelete.artist}</span>{confirmDelete.venue ? ` — ${confirmDelete.venue}` : ""} ({confirmDelete.date})? This can't be undone.</p>
+          <div role="alertdialog" aria-modal="true" aria-labelledby="delete-concert-title" className="w-full max-w-sm rounded-3xl border border-red-950 bg-zinc-950 p-6 shadow-2xl">
+            <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-2xl border border-red-900/60 bg-red-950/30 text-red-300"><i className="fa-solid fa-trash-can" aria-hidden="true" /></div>
+            <h2 id="delete-concert-title" className="mb-2 text-xl font-black uppercase tracking-tight">Delete concert?</h2>
+            <p className="mb-6 text-sm leading-relaxed text-zinc-400"><span className="font-semibold text-zinc-100">{confirmDelete.artist}</span>{confirmDelete.venue ? ` · ${confirmDelete.venue}` : ""}<span className="block text-zinc-600">{confirmDelete.date}</span>This action cannot be undone.</p>
             <div className="flex gap-3">
-              <button onClick={() => setConfirmDelete(null)} className="flex-1 rounded-2xl border border-zinc-700 px-5 py-3 font-black text-zinc-300 transition hover:border-zinc-500">Cancel</button>
+              <button onClick={() => setConfirmDelete(null)} className="flex-1 rounded-2xl border border-zinc-700 px-5 py-3 font-black text-zinc-300 transition hover:border-zinc-500 hover:bg-zinc-900">Cancel</button>
               <button onClick={async () => {
                 const t = confirmDelete; setConfirmDelete(null); setIsSaving(true);
                 try {
@@ -2934,7 +2953,7 @@ export default function App() {
                   }
                 } catch (e) { setSaveError(e.message || "Could not delete"); }
                 finally { setIsSaving(false); }
-              }} className="flex-1 rounded-2xl border border-red-900 bg-red-950/40 px-5 py-3 font-black text-red-200 transition hover:bg-red-950/60">Delete</button>
+              }} className="flex-1 rounded-2xl bg-red-200 px-5 py-3 font-black text-red-950 transition hover:bg-red-100">Delete</button>
             </div>
           </div>
         </div>
