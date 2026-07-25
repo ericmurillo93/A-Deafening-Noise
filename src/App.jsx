@@ -71,6 +71,35 @@ function useAuthEmailCooldown() {
   return { seconds, refresh, start };
 }
 
+function usePageScrollLock(locked) {
+  useEffect(() => {
+    if (!locked) return undefined;
+
+    const scrollY = window.scrollY;
+    const body = document.body;
+    const root = document.documentElement;
+    const previousBodyStyles = {
+      overflow: body.style.overflow,
+      position: body.style.position,
+      top: body.style.top,
+      width: body.style.width,
+    };
+    const previousRootOverflow = root.style.overflow;
+
+    root.style.overflow = "hidden";
+    body.style.overflow = "hidden";
+    body.style.position = "fixed";
+    body.style.top = `-${scrollY}px`;
+    body.style.width = "100%";
+
+    return () => {
+      root.style.overflow = previousRootOverflow;
+      Object.assign(body.style, previousBodyStyles);
+      window.scrollTo(0, scrollY);
+    };
+  }, [locked]);
+}
+
 async function sessionHeaders() {
   if (!supabaseEnabled) return {};
   const { data } = await supabase.auth.getSession();
@@ -885,12 +914,6 @@ function NextConcertCalendar({ items, onOpen, onContextMenu, onContextMenuAt }) 
     [items]
   );
   const [visibleMonth, setVisibleMonth] = useState(() => {
-    const savedMonth = localStorage.getItem("adn_calendar_month");
-    const match = savedMonth?.match(/^(\d{4})-(\d{1,2})$/);
-    if (match) {
-      const saved = new Date(Number(match[1]), Number(match[2]) - 1, 1);
-      if (!Number.isNaN(saved.getTime())) return saved;
-    }
     const today = new Date();
     return new Date(today.getFullYear(), today.getMonth(), 1);
   });
@@ -900,10 +923,6 @@ function NextConcertCalendar({ items, onOpen, onContextMenu, onContextMenuAt }) 
   const leadingDays = (new Date(year, month, 1).getDay() + 6) % 7;
   const monthLabel = new Intl.DateTimeFormat("en", { month: "long", year: "numeric" }).format(visibleMonth);
   const weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-
-  useEffect(() => {
-    localStorage.setItem("adn_calendar_month", `${visibleMonth.getFullYear()}-${visibleMonth.getMonth() + 1}`);
-  }, [visibleMonth]);
 
   useEffect(() => {
     if (!monthPickerOpen) return undefined;
@@ -961,7 +980,7 @@ function NextConcertCalendar({ items, onOpen, onContextMenu, onContextMenuAt }) 
         <button onClick={() => { const today = new Date(); setVisibleMonth(new Date(today.getFullYear(), today.getMonth(), 1)); setMonthPickerOpen(false); }} className="rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-2.5 text-sm font-black text-zinc-100 transition hover:border-zinc-500">Today</button>
         <button onClick={() => moveMonth(-1)} className="rounded-xl px-3 py-2.5 text-sm text-zinc-400 transition hover:bg-zinc-800 hover:text-white" aria-label="Previous month"><i className="fa-solid fa-chevron-up" aria-hidden="true" /></button>
         <button onClick={() => moveMonth(1)} className="rounded-xl px-3 py-2.5 text-sm text-zinc-400 transition hover:bg-zinc-800 hover:text-white" aria-label="Next month"><i className="fa-solid fa-chevron-down" aria-hidden="true" /></button>
-        <button onClick={() => setMonthPickerOpen((open) => !open)} className="rounded-xl px-4 py-2 text-xl font-black text-zinc-100 transition hover:bg-zinc-800 md:text-2xl" aria-expanded={monthPickerOpen}>
+        <button onClick={() => setMonthPickerOpen((open) => !open)} className="rounded-xl px-4 py-2 text-xl font-black text-zinc-100 transition hover:bg-zinc-800 md:text-2xl" aria-label={`Choose month, ${monthLabel}`} aria-expanded={monthPickerOpen}>
           {monthLabel} <i className="fa-solid fa-chevron-down ml-2 text-xs text-zinc-500" aria-hidden="true" />
         </button>
         {monthPickerOpen && (
@@ -2281,6 +2300,7 @@ export default function App() {
   const passwordModalModeRef = useRef(null);
   passwordModalModeRef.current = passwordModalMode;
   const anyDialogOpen = modalOpen || Boolean(editTarget) || Boolean(setlistTarget) || Boolean(calendarTarget) || Boolean(confirmDelete) || Boolean(passwordModalMode);
+  const anyPageOverlayOpen = sidebarOpen || contextMenu.open || anyDialogOpen;
   const currentUserId = session?.user?.id || "";
   const currentEmail = session?.user?.email?.toLowerCase() || "";
   const currentUserName = appProfile?.displayName || "";
@@ -2293,14 +2313,13 @@ export default function App() {
   const isYearReview = activePage === "year-review";
   const isFriends = activePage === "friends";
 
+  usePageScrollLock(anyPageOverlayOpen);
+
   useEffect(() => {
     if (!sidebarOpen) return undefined;
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
     const closeOnEscape = (event) => { if (event.key === "Escape") setSidebarOpen(false); };
     window.addEventListener("keydown", closeOnEscape);
     return () => {
-      document.body.style.overflow = previousOverflow;
       window.removeEventListener("keydown", closeOnEscape);
     };
   }, [sidebarOpen]);

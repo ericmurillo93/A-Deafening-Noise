@@ -99,6 +99,41 @@ test("Menu closes with Escape and restores page scrolling", async ({ page }) => 
   await expect.poll(() => page.evaluate(() => document.body.style.overflow)).not.toBe("hidden");
 });
 
+test("Open dialogs lock the page behind them and preserve its scroll position", async ({ page }) => {
+  await page.goto("/history");
+  await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+  const initialScrollY = await page.evaluate(() => window.scrollY);
+
+  await openMenu(page);
+  await page.getByRole("button", { name: "Add concert" }).click();
+  await expect(page.getByTestId("add-concert-modal")).toBeVisible();
+  await expect.poll(() => page.evaluate(() => ({
+    bodyOverflow: document.body.style.overflow,
+    bodyPosition: document.body.style.position,
+    rootOverflow: document.documentElement.style.overflow,
+  }))).toEqual({ bodyOverflow: "hidden", bodyPosition: "fixed", rootOverflow: "hidden" });
+
+  await page.getByRole("button", { name: "Close" }).click();
+  await expect(page.getByTestId("add-concert-modal")).toBeHidden();
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(initialScrollY);
+});
+
+test("Calendar opens on the current month on every visit", async ({ page }) => {
+  const currentMonth = new Intl.DateTimeFormat("en", { month: "long", year: "numeric" }).format(new Date());
+  await page.goto("/calendar");
+  const monthButton = page.locator('button[aria-label^="Choose month"]');
+  await expect(monthButton).toContainText(currentMonth);
+
+  await page.getByRole("button", { name: "Next month" }).click();
+  await expect(monthButton).not.toContainText(currentMonth);
+  await openMenu(page);
+  await page.getByRole("button", { name: "Concert history" }).click();
+  await openMenu(page);
+  await page.getByRole("button", { name: "Concert calendar" }).click();
+
+  await expect(monthButton).toContainText(currentMonth);
+});
+
 test("Core pages do not create viewport-level horizontal overflow", async ({ page }) => {
   for (const route of ["/history", "/calendar", "/timeline", "/stats", "/year-review", "/friends"]) {
     await page.goto(route);
