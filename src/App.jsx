@@ -2902,8 +2902,12 @@ export default function App() {
                       return (
                         <div
                           key={`${item.artist}-${show}`}
-                          className="select-none rounded-2xl bg-zinc-950 p-4 transition hover:bg-zinc-900"
+                          role="button"
+                          tabIndex={0}
+                          aria-label={`Open ${item.artist} at ${venue || "venue not specified"} on ${date}`}
+                          className="cursor-pointer select-none rounded-2xl border border-transparent bg-zinc-950 p-4 transition duration-200 hover:border-zinc-700 hover:bg-zinc-800/80 hover:shadow-lg focus-visible:border-zinc-500 focus-visible:bg-zinc-800/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-500/40"
                           onClick={() => { if (!longPressed) openConcertDetails(concertTarget); }}
+                          onKeyDown={(event) => { if (event.target !== event.currentTarget || !["Enter", " "].includes(event.key)) return; event.preventDefault(); openConcertDetails(concertTarget); }}
                           onContextMenu={(e) => openContextMenu(e, concertTarget)}
                           onTouchStart={(e) => { touchMoved = false; longPressed = false; const t = e.touches[0]; const sx = t.clientX, sy = t.clientY; touchTimer = setTimeout(() => { if (!touchMoved) { longPressed = true; if (navigator.vibrate) navigator.vibrate(20); openContextMenuAt(sx, sy, concertTarget); } }, 500); }}
                           onTouchMove={() => { touchMoved = true; if (touchTimer) { clearTimeout(touchTimer); touchTimer = null; } }}
