@@ -30,6 +30,17 @@ button {
   cursor: pointer;
 }
 
+/* Secondary copy must remain readable against both zinc-900 and zinc-950. */
+.text-zinc-500,
+.text-zinc-600 {
+  color: #a1a1aa;
+}
+
+input::placeholder {
+  color: #a1a1aa;
+  opacity: 1;
+}
+
 .menu-button-desktop {
   display: none;
 }

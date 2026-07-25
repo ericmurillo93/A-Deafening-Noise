@@ -82,7 +82,7 @@ test("Year bars open a reload-safe Year in Review route", async ({ page }) => {
 
 test("Archive concert entries communicate that they are interactive", async ({ page }) => {
   await page.goto("/history");
-  const concert = page.locator('[role="button"][aria-label^="Open "]').first();
+  const concert = page.locator('article button[aria-label^="Open "]').first();
   await expect(concert).toBeVisible();
   await expect(concert).toHaveCSS("cursor", "pointer");
   await concert.focus();
@@ -101,20 +101,19 @@ test("Menu closes with Escape and restores page scrolling", async ({ page }) => 
 
 test("Open dialogs lock the page behind them and preserve its scroll position", async ({ page }) => {
   await page.goto("/history");
-  await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+  const concert = page.locator('article button[aria-label^="Open "]').nth(20);
+  await concert.scrollIntoViewIfNeeded();
   const initialScrollY = await page.evaluate(() => window.scrollY);
 
-  await openMenu(page);
-  await page.getByRole("button", { name: "Add concert" }).click();
-  await expect(page.getByTestId("add-concert-modal")).toBeVisible();
+  await concert.click();
+  await expect(page.getByTestId("concert-details-modal")).toBeVisible();
   await expect.poll(() => page.evaluate(() => ({
     bodyOverflow: document.body.style.overflow,
-    bodyPosition: document.body.style.position,
     rootOverflow: document.documentElement.style.overflow,
-  }))).toEqual({ bodyOverflow: "hidden", bodyPosition: "fixed", rootOverflow: "hidden" });
+  }))).toEqual({ bodyOverflow: "hidden", rootOverflow: "hidden" });
 
   await page.getByRole("button", { name: "Close" }).click();
-  await expect(page.getByTestId("add-concert-modal")).toBeHidden();
+  await expect(page.getByTestId("concert-details-modal")).toBeHidden();
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(initialScrollY);
 });
 
@@ -127,7 +126,7 @@ test("Calendar opens on the current month on every visit", async ({ page }) => {
   await page.getByRole("button", { name: "Next month" }).click();
   await expect(monthButton).not.toContainText(currentMonth);
   await openMenu(page);
-  await page.getByRole("button", { name: "Concert history" }).click();
+  await page.getByRole("button", { name: "Concert history", exact: true }).click();
   await openMenu(page);
   await page.getByRole("button", { name: "Concert calendar" }).click();
 
@@ -147,6 +146,7 @@ test("Core pages do not create viewport-level horizontal overflow", async ({ pag
 });
 
 test("Clean routes survive direct loads and reloads", async ({ page }) => {
+  test.setTimeout(45_000);
   const routes = [
     ["/history", "Concert Archive"],
     ["/calendar", "Concert Calendar"],

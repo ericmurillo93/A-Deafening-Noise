@@ -77,7 +77,7 @@ npm run build
 git diff --check
 ```
 
-Run `npm run test:e2e` only when Eric explicitly requests the local UI suite. Playwright covers selected high-risk and previously regressed flows in desktop, phone portrait, and phone landscape using isolated fallback data; it must never authenticate against or write to production Supabase. Do not add an E2E test for every feature: extend the suite only when a behavior is important, reusable, difficult to verify manually, or has already regressed.
+Run `npm run test:quality` only when Eric explicitly requests the complete local quality suite. It combines functional Playwright checks, Axe accessibility rules, visual baselines in desktop/phone layouts, and Lighthouse thresholds. The suites use isolated fallback data and must never authenticate against or write to production Supabase. Individual commands are documented in `docs/DEVELOPMENT.md`. Do not add a test for every feature: extend functional coverage only for important, reusable, difficult-to-verify, or previously regressed behavior; extend visual baselines only for representative layouts.
 
 For scraper changes, also run:
 

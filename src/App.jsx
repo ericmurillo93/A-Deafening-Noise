@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { ComposableMap, Geographies, Geography, ZoomableGroup } from "react-simple-maps";
 import worldGeography from "world-atlas/countries-110m.json";
 import whatsappIcon from "@fortawesome/fontawesome-free/svgs/brands/whatsapp.svg";
@@ -34,7 +34,7 @@ function groupHistoryFromJson(rows) {
 const fallbackConcerts = concertsData.concerts;
 const fallbackDismissedSuggestions = concertsData.dismissedSuggestions || [];
 
-const IS_LOCAL = import.meta.env.DEV;
+const IS_LOCAL = import.meta.env.DEV || import.meta.env.VITE_QUALITY_AUDIT === "true";
 const AUTH_EMAIL_COOLDOWN_KEY = "adn_auth_email_cooldown_until";
 const AUTH_EMAIL_COOLDOWN_MS = 60_000;
 
@@ -72,32 +72,36 @@ function useAuthEmailCooldown() {
 }
 
 function usePageScrollLock(locked) {
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!locked) return undefined;
 
-    const scrollY = window.scrollY;
     const body = document.body;
     const root = document.documentElement;
-    const previousBodyStyles = {
-      overflow: body.style.overflow,
-      position: body.style.position,
-      top: body.style.top,
-      width: body.style.width,
-    };
+    const previousBodyOverflow = body.style.overflow;
+    const previousBodyOverscroll = body.style.overscrollBehavior;
     const previousRootOverflow = root.style.overflow;
+    const previousRootOverscroll = root.style.overscrollBehavior;
 
     root.style.overflow = "hidden";
+    root.style.overscrollBehavior = "none";
     body.style.overflow = "hidden";
-    body.style.position = "fixed";
-    body.style.top = `-${scrollY}px`;
-    body.style.width = "100%";
+    body.style.overscrollBehavior = "none";
 
     return () => {
       root.style.overflow = previousRootOverflow;
-      Object.assign(body.style, previousBodyStyles);
-      window.scrollTo(0, scrollY);
+      root.style.overscrollBehavior = previousRootOverscroll;
+      body.style.overflow = previousBodyOverflow;
+      body.style.overscrollBehavior = previousBodyOverscroll;
     };
   }, [locked]);
+}
+
+function restorePageScroll(scrollY) {
+  const root = document.documentElement;
+  const previousScrollBehavior = root.style.scrollBehavior;
+  root.style.scrollBehavior = "auto";
+  window.scrollTo(0, scrollY);
+  root.style.scrollBehavior = previousScrollBehavior;
 }
 
 async function sessionHeaders() {
@@ -491,7 +495,7 @@ function SetlistModal({ target, onClose, onEdit, onIdDiscovered }) {
   }
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 px-4">
+    <div data-testid="concert-details-modal" className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 px-4">
       <div className="w-full max-w-lg rounded-3xl border border-zinc-700 bg-zinc-950 p-6 shadow-2xl max-h-[90vh] flex flex-col">
         <div className="mb-5 flex items-start justify-between gap-4 shrink-0">
           <div>
@@ -1511,7 +1515,7 @@ function StatsPage({ historyItems, onOpenVenue, onOpenYearReview }) {
 
 // ─── Artist detail ────────────────────────────────────────────────────────────
 
-function ArtistDetailPage({ item, upcoming = [], onBack, onOpenSetlist, onOpenVenue }) {
+function ArtistDetailPage({ item, upcoming = [], onOpenSetlist, onOpenVenue }) {
   const shows = useMemo(
     () => [...item.shows]
       .map((show) => ({ show, ...parseShow(show, "history") }))
@@ -1532,12 +1536,7 @@ function ArtistDetailPage({ item, upcoming = [], onBack, onOpenSetlist, onOpenVe
 
   return (
     <div className="mx-auto max-w-5xl">
-      <div className="mb-8 flex flex-wrap items-center justify-between gap-3">
-        <button onClick={onBack} className="rounded-full border border-zinc-700 bg-zinc-900 px-5 py-2.5 text-sm font-bold text-zinc-200 transition hover:border-zinc-500 hover:text-white">
-          ← Go back
-        </button>
-        {latestShow && <p className="text-sm text-zinc-500">Most recently seen {latestShow.date}</p>}
-      </div>
+      {latestShow && <p className="mb-8 text-right text-sm text-zinc-500">Most recently seen {latestShow.date}</p>}
 
       <div className="mb-10 grid grid-cols-2 gap-3 md:grid-cols-4">
         {summaryCards.map(({ label, value }) => (
@@ -1598,7 +1597,7 @@ function ArtistDetailPage({ item, upcoming = [], onBack, onOpenSetlist, onOpenVe
 
 // ─── Venue detail ─────────────────────────────────────────────────────────────
 
-function VenueDetailPage({ venue, historyItems, onBack, onOpenArtist, onOpenSetlist }) {
+function VenueDetailPage({ venue, historyItems, onOpenArtist, onOpenSetlist }) {
   const shows = useMemo(
     () => historyItems.flatMap(({ artist, shows }) =>
       shows
@@ -1625,12 +1624,7 @@ function VenueDetailPage({ venue, historyItems, onBack, onOpenArtist, onOpenSetl
 
   return (
     <div className="mx-auto max-w-5xl">
-      <div className="mb-8 flex flex-wrap items-center justify-between gap-3">
-        <button onClick={onBack} className="rounded-full border border-zinc-700 bg-zinc-900 px-5 py-2.5 text-sm font-bold text-zinc-200 transition hover:border-zinc-500 hover:text-white">
-          ← Go back
-        </button>
-        {latestVisit && <p className="text-sm text-zinc-500">Last visited {latestVisit.date}</p>}
-      </div>
+      {latestVisit && <p className="mb-8 text-right text-sm text-zinc-500">Last visited {latestVisit.date}</p>}
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         {summaryCards.map(({ label, value }) => (
@@ -1694,7 +1688,7 @@ function VenueDetailPage({ venue, historyItems, onBack, onOpenArtist, onOpenSetl
 
 // ─── Concert timeline ─────────────────────────────────────────────────────────
 
-function ConcertTimelinePage({ historyItems, onBack, onOpenArtist, onOpenSetlist, onOpenVenue }) {
+function ConcertTimelinePage({ historyItems, onShowCardView, onOpenArtist, onOpenSetlist, onOpenVenue }) {
   const [artistFilter, setArtistFilter] = useState("all");
   const [venueFilter, setVenueFilter] = useState("all");
 
@@ -1765,7 +1759,7 @@ function ConcertTimelinePage({ historyItems, onBack, onOpenArtist, onOpenSetlist
               menuAlign="left"
               options={groupedYears.map(([year, yearShows]) => ({ value: year, label: `${year} · ${yearShows.length} ${yearShows.length === 1 ? "concert" : "concerts"}` }))}
             />
-            <button onClick={onBack} className="rounded-full border border-zinc-700 bg-zinc-900 px-4 py-3 text-zinc-200 transition hover:border-zinc-500 hover:text-white" aria-label="Back to concert archive" title="Back to concert archive">
+            <button onClick={onShowCardView} className="rounded-full border border-zinc-700 bg-zinc-900 px-4 py-3 text-zinc-200 transition hover:border-zinc-500 hover:text-white" aria-label="Show concert cards" title="Card view">
               <i className="fa-solid fa-table-cells-large" aria-hidden="true" />
             </button>
           </div>
@@ -1774,7 +1768,7 @@ function ConcertTimelinePage({ historyItems, onBack, onOpenArtist, onOpenSetlist
           <DropdownMenu value={artistFilter} onChange={setArtistFilter} ariaLabel="Filter timeline by artist" groupName="timeline-filters" menuAlign="left" options={[{ value: "all", label: "All artists" }, ...artists.map((artist) => ({ value: artist, label: artist }))]} />
           <DropdownMenu value={venueFilter} onChange={setVenueFilter} ariaLabel="Filter timeline by venue" groupName="timeline-filters" options={[{ value: "all", label: "All venues" }, ...venues.map((venue) => ({ value: venue, label: venue }))]} />
           <DropdownMenu value="" onChange={jumpToYear} ariaLabel="Jump to timeline year" buttonLabel="Years" groupName="timeline-filters" menuAlign="left" options={groupedYears.map(([year, yearShows]) => ({ value: year, label: `${year} · ${yearShows.length} ${yearShows.length === 1 ? "concert" : "concerts"}` }))} />
-          <button onClick={onBack} className="rounded-full border border-zinc-700 bg-zinc-900 px-4 py-3 text-zinc-200 transition hover:border-zinc-500 hover:text-white" aria-label="Back to concert archive" title="Back to concert archive"><i className="fa-solid fa-table-cells-large" aria-hidden="true" /></button>
+          <button onClick={onShowCardView} className="rounded-full border border-zinc-700 bg-zinc-900 px-4 py-3 text-zinc-200 transition hover:border-zinc-500 hover:text-white" aria-label="Show concert cards" title="Card view"><i className="fa-solid fa-table-cells-large" aria-hidden="true" /></button>
         </div>
         {hasFilters && (
           <button onClick={() => { setArtistFilter("all"); setVenueFilter("all"); }} className="mt-3 rounded-full border border-zinc-700 px-3 py-1.5 text-xs font-bold text-zinc-300 hover:border-zinc-500">
@@ -2297,10 +2291,16 @@ export default function App() {
   const [passwordModalMode, setPasswordModalMode] = useState(null);
   const dialogHistoryOpenRef = useRef(false);
   const closingDialogWithBackRef = useRef(false);
+  const overlayScrollYRef = useRef(0);
+  const pageOverlayWasOpenRef = useRef(false);
+  const dialogScrollYRef = useRef(0);
+  const scrollRestorationRef = useRef("auto");
   const passwordModalModeRef = useRef(null);
   passwordModalModeRef.current = passwordModalMode;
   const anyDialogOpen = modalOpen || Boolean(editTarget) || Boolean(setlistTarget) || Boolean(calendarTarget) || Boolean(confirmDelete) || Boolean(passwordModalMode);
   const anyPageOverlayOpen = sidebarOpen || contextMenu.open || anyDialogOpen;
+  if (anyPageOverlayOpen && !pageOverlayWasOpenRef.current) overlayScrollYRef.current = window.scrollY;
+  pageOverlayWasOpenRef.current = anyPageOverlayOpen;
   const currentUserId = session?.user?.id || "";
   const currentEmail = session?.user?.email?.toLowerCase() || "";
   const currentUserName = appProfile?.displayName || "";
@@ -2491,6 +2491,7 @@ export default function App() {
 
     function restoreRoute() {
       if (dialogHistoryOpenRef.current || closingDialogWithBackRef.current) {
+        const scrollY = dialogScrollYRef.current;
         dialogHistoryOpenRef.current = false;
         closingDialogWithBackRef.current = false;
         setModalOpen(false);
@@ -2502,6 +2503,10 @@ export default function App() {
         setConfirmDelete(null);
         if (passwordModalModeRef.current === "recovery") void supabase.auth.signOut();
         setPasswordModalMode(null);
+        window.setTimeout(() => {
+          restorePageScroll(scrollY);
+          window.history.scrollRestoration = scrollRestorationRef.current;
+        }, 150);
         return;
       }
       const route = readRouteFromLocation();
@@ -2522,6 +2527,9 @@ export default function App() {
 
   useEffect(() => {
     if (anyDialogOpen && !dialogHistoryOpenRef.current) {
+      dialogScrollYRef.current = overlayScrollYRef.current;
+      scrollRestorationRef.current = window.history.scrollRestoration;
+      window.history.scrollRestoration = "manual";
       window.history.pushState({ ...window.history.state, adnModal: true }, "", window.location.href);
       dialogHistoryOpenRef.current = true;
       return;
@@ -2590,10 +2598,6 @@ export default function App() {
     const route = { page: "year-review", artist: null, venue: null, year: String(year) };
     window.history.pushState({ adnRoute: true, canGoBack: true }, "", routeToPath(route));
     setSelectedReviewYear(String(year));
-  }
-  function goBackFromDetail() {
-    if (window.history.state?.canGoBack) window.history.back();
-    else changePage("history");
   }
   function openConcertDetails(target) {
     const storedConcert = concertItems.find((concert) => concertMatches(concert, target));
@@ -2814,7 +2818,6 @@ export default function App() {
           <VenueDetailPage
             venue={selectedVenue}
             historyItems={historyItems}
-            onBack={goBackFromDetail}
             onOpenArtist={openArtistDetail}
             onOpenSetlist={openConcertDetails}
           />
@@ -2822,14 +2825,13 @@ export default function App() {
           <ArtistDetailPage
             item={artistDetail}
             upcoming={artistUpcoming}
-            onBack={goBackFromDetail}
             onOpenSetlist={openConcertDetails}
             onOpenVenue={openVenueDetail}
           />
         ) : isTimeline ? (
           <ConcertTimelinePage
             historyItems={historyItems}
-            onBack={() => changePage("history")}
+            onShowCardView={() => changePage("history")}
             onOpenArtist={openArtistDetail}
             onOpenSetlist={openConcertDetails}
             onOpenVenue={openVenueDetail}
@@ -2940,12 +2942,7 @@ export default function App() {
                       return (
                         <div
                           key={`${item.artist}-${show}`}
-                          role="button"
-                          tabIndex={0}
-                          aria-label={`Open ${item.artist} at ${venue || "venue not specified"} on ${date}`}
-                          className="cursor-pointer select-none rounded-2xl border border-transparent bg-zinc-950 p-4 transition duration-200 hover:border-zinc-700 hover:bg-zinc-800/80 hover:shadow-lg focus-visible:border-zinc-500 focus-visible:bg-zinc-800/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-500/40"
-                          onClick={() => { if (!longPressed) openConcertDetails(concertTarget); }}
-                          onKeyDown={(event) => { if (event.target !== event.currentTarget || !["Enter", " "].includes(event.key)) return; event.preventDefault(); openConcertDetails(concertTarget); }}
+                          className="group/concert relative cursor-pointer select-none rounded-2xl border border-transparent bg-zinc-950 p-4 transition duration-200 hover:border-zinc-700 hover:bg-zinc-800/80 hover:shadow-lg"
                           onContextMenu={(e) => openContextMenu(e, concertTarget)}
                           onTouchStart={(e) => { touchMoved = false; longPressed = false; const t = e.touches[0]; const sx = t.clientX, sy = t.clientY; touchTimer = setTimeout(() => { if (!touchMoved) { longPressed = true; if (navigator.vibrate) navigator.vibrate(20); openContextMenuAt(sx, sy, concertTarget); } }, 500); }}
                           onTouchMove={() => { touchMoved = true; if (touchTimer) { clearTimeout(touchTimer); touchTimer = null; } }}
@@ -2953,8 +2950,9 @@ export default function App() {
                           onTouchCancel={() => { if (touchTimer) { clearTimeout(touchTimer); touchTimer = null; } }}
                           style={{ WebkitTouchCallout: "none" }}
                         >
-                          <div className="space-y-2">
-                            {!isNext && <div className="flex gap-2 text-sm font-semibold text-zinc-100"><Icon type="map" /><button onClick={(event) => { event.stopPropagation(); openVenueDetail(venue); }} className="truncate text-left hover:underline hover:decoration-zinc-600 hover:underline-offset-4">{venue}</button></div>}
+                          <button type="button" aria-label={`Open ${item.artist} at ${venue || "venue not specified"} on ${date}`} onClick={() => { if (!longPressed) openConcertDetails(concertTarget); }} className="absolute inset-0 rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-zinc-400" />
+                          <div className="pointer-events-none relative space-y-2">
+                            {!isNext && <div className="flex gap-2 text-sm font-semibold text-zinc-100"><Icon type="map" /><button onClick={() => openVenueDetail(venue)} className="pointer-events-auto truncate text-left hover:underline hover:decoration-zinc-600 hover:underline-offset-4">{venue}</button></div>}
                             {isNext && item.venue && <div className="flex gap-2 text-sm font-semibold text-zinc-100"><Icon type="map" /><span className="truncate">{item.venue}</span></div>}
                             <div className="flex gap-2 text-sm text-zinc-400"><Icon type="calendar" /><span>{date}</span></div>
                           </div>

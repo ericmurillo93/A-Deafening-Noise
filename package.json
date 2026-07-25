@@ -15,7 +15,12 @@
     "dev:network": "vite --host 0.0.0.0",
     "build": "vite build",
     "preview": "vite preview --host 0.0.0.0",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "test:a11y": "playwright test --config=playwright.a11y.config.js",
+    "test:visual": "playwright test --config=playwright.visual.config.js",
+    "test:visual:update": "playwright test --config=playwright.visual.config.js --update-snapshots",
+    "test:lighthouse": "node scripts/run-lighthouse.mjs",
+    "test:quality": "npm run test:e2e && npm run test:a11y && npm run test:visual && npm run test:lighthouse"
   },
   "dependencies": {
     "@fortawesome/fontawesome-free": "^7.3.1",
@@ -28,8 +33,11 @@
     "world-atlas": "^2.0.2"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.12.1",
     "@playwright/test": "^1.62.0",
     "autoprefixer": "10.4.20",
+    "chrome-launcher": "^1.2.1",
+    "lighthouse": "^13.4.1",
     "postcss": "^8.5.14",
     "supabase": "^2.109.1",
     "tailwindcss": "3.4.17"

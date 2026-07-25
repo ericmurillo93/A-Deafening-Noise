@@ -155,8 +155,23 @@ npm run dev:network
 # Production build
 npm run build
 
-# Run the local desktop/phone UI regression suite when requested
+# Functional behavior in desktop and phone layouts
 npm run test:e2e
+
+# Serious/critical Axe accessibility rules
+npm run test:a11y
+
+# Compare representative pages with checked-in visual baselines
+npm run test:visual
+
+# Deliberately accept intended visual changes
+npm run test:visual:update
+
+# Production-build performance, accessibility, best-practice and SEO thresholds
+npm run test:lighthouse
+
+# Run the complete professional baseline when requested
+npm run test:quality
 
 # Preview the production build
 npm run preview
@@ -164,7 +179,9 @@ npm run preview
 
 Only use `dev:network` on a trusted network. The legacy JSON fallback save endpoint is localhost-only and intentionally has no password gate.
 
-Playwright starts its own isolated Vite server with Supabase disabled and uses `data/concerts.json`; E2E tests never authenticate against or mutate production. The suite is intentionally local and manual: it does not run in GitHub Actions. Add tests selectively for high-risk interactions, reusable behavior, or bugs worth protecting against rather than for every feature.
+The quality suites are intentionally local and manual: none run in GitHub Actions. Playwright and Axe start an isolated Vite server with Supabase disabled and use `data/concerts.json`; they never authenticate against or mutate production. Lighthouse creates an isolated production build with the same fallback boundary, audits archive and calendar, and fails below the checked-in category thresholds. Visual snapshots cover representative pages in desktop, phone portrait, and phone landscape and are stored in Git; use `test:visual:update` only after reviewing and intentionally accepting the new images.
+
+Add functional tests selectively for high-risk interactions, reusable behavior, or bugs worth protecting against rather than for every feature. Axe provides broad standards-based coverage without feature-specific tests. Visual baselines should remain representative rather than exhaustive so ordinary concert-data changes do not create unnecessary snapshot churn.
 
 ## Production behavior
 
