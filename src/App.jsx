@@ -477,10 +477,14 @@ function SetlistModal({ target, onClose, onEdit, onIdDiscovered }) {
 
         <div className="overflow-y-auto flex-1">
           {target.attendees?.length > 0 && (
-            <section className="mb-5 rounded-2xl border border-zinc-800 bg-zinc-900 p-4">
-              <div className="text-[11px] font-bold uppercase tracking-widest text-zinc-500">Attended with</div>
-              <div className="mt-3 flex flex-wrap gap-2">
-                {target.attendees.map((person) => <span key={person} className="rounded-full border border-zinc-700 bg-zinc-950 px-3 py-1 text-sm font-semibold text-zinc-200">{person}</span>)}
+            <section className="mb-5 flex items-center gap-3 border-b border-zinc-900 pb-4">
+              <div className="flex shrink-0 -space-x-2" aria-hidden="true">
+                {target.attendees.slice(0, 3).map((person, index) => <span key={`${person}-${index}`} className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-zinc-950 bg-zinc-800 text-[10px] font-black text-zinc-300">{String(person).trim().slice(0, 1).toUpperCase()}</span>)}
+                {target.attendees.length > 3 && <span className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-zinc-950 bg-zinc-900 text-[9px] font-black text-zinc-500">+{target.attendees.length - 3}</span>}
+              </div>
+              <div className="min-w-0">
+                <div className="text-[10px] font-bold uppercase tracking-widest text-zinc-600">Attended with</div>
+                <p className="mt-0.5 break-words text-sm font-semibold text-zinc-300">{target.attendees.join(" · ")}</p>
               </div>
             </section>
           )}
