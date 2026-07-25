@@ -5,8 +5,14 @@ import whatsappIcon from "@fortawesome/fontawesome-free/svgs/brands/whatsapp.svg
 import concertsData from "../data/concerts.json";
 import suggestionsData from "../data/suggestions.json";
 import {
+  adminListUsers,
+  adminUpdateUser,
+  deleteMyAccount,
   deleteMyConcert,
+  exportMyData,
+  leaveSharedConcert,
   loadConcertData,
+  markNotificationsRead,
   removeFriend,
   respondConcertInvitation,
   respondFriendRequest,
@@ -18,6 +24,7 @@ import {
   supabase,
   supabaseEnabled,
   upsertMyConcert,
+  updateMyProfile,
 } from "./lib/supabase";
 
 // ─── Data bootstrap ───────────────────────────────────────────────────────────
@@ -190,7 +197,7 @@ function parseRouteParts(pagePart = "history", valueParts = []) {
   if (pagePart === "artist" && value) return { page: "artist", artist: value, venue: null };
   if (pagePart === "venue" && value) return { page: "venue", artist: null, venue: value };
   if (pagePart === "year-review" && /^\d{4}$/.test(value || "")) return { page: "year-review", artist: null, venue: null, year: value };
-  const pageAliases = { calendar: "next", history: "history", timeline: "timeline", stats: "stats", "year-review": "year-review", friends: "friends" };
+  const pageAliases = { calendar: "next", history: "history", timeline: "timeline", stats: "stats", "year-review": "year-review", friends: "friends", activity: "activity", profile: "profile", admin: "admin" };
   return { page: pageAliases[pagePart] || "history", artist: null, venue: null, year: null };
 }
 
@@ -468,7 +475,7 @@ function ConcertCatalogField({ field, value, onChange, onPick, onSearch, placeho
 
 // ─── SetlistModal ─────────────────────────────────────────────────────────────
 
-function SetlistModal({ target, onClose, onEdit, onIdDiscovered }) {
+function SetlistModal({ target, onClose, onEdit, onLeave, onIdDiscovered }) {
   const [state, setState] = useState({ status: "idle", data: null, error: null });
 
   useEffect(() => {
@@ -509,6 +516,7 @@ function SetlistModal({ target, onClose, onEdit, onIdDiscovered }) {
         </div>
 
         <div className="overflow-y-auto flex-1">
+          {target.creator?.displayName && <section className="mb-5 rounded-2xl border border-zinc-800 bg-zinc-900/60 px-4 py-3 text-sm text-zinc-400"><span className="text-[10px] font-bold uppercase tracking-widest text-zinc-600">Created by</span><p className="mt-1 font-semibold text-zinc-200">{target.creator.displayName}</p>{target.attendeeUsers?.some((person) => person.status === "confirmed") && <p className="mt-1 text-xs text-zinc-500">Confirmed: {target.attendeeUsers.filter((person) => person.status === "confirmed").map((person) => person.displayName).join(", ")}</p>}</section>}
           {target.attendees?.length > 0 && (
             <section className="mb-5 flex items-center gap-3 border-b border-zinc-900 pb-4">
               <div className="flex shrink-0 -space-x-2" aria-hidden="true">
@@ -560,6 +568,7 @@ function SetlistModal({ target, onClose, onEdit, onIdDiscovered }) {
               </ol>
             </div>
           )}
+          {onLeave && target.createdBy && target.createdBy !== target.currentUserId && <button type="button" onClick={() => onLeave(target)} className="mt-6 w-full rounded-2xl border border-red-900/70 px-4 py-3 text-sm font-bold text-red-300 transition hover:bg-red-950/30">Leave this shared concert</button>}
         </div>
       </div>
     </div>
@@ -2017,6 +2026,7 @@ function FriendsPage({ friends, requests, invitations, onSearch, onSendRequest, 
 
   return (
     <div className="space-y-8">
+      <div className="grid grid-cols-3 gap-3"><div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-4 text-center"><strong className="block text-2xl text-zinc-100">{friends.length}</strong><span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Friends</span></div><div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-4 text-center"><strong className="block text-2xl text-zinc-100">{requests.filter((item) => item.direction === "incoming").length}</strong><span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Requests</span></div><div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-4 text-center"><strong className="block text-2xl text-zinc-100">{invitations.length}</strong><span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Invites</span></div></div>
       {invitations.length > 0 && (
         <section className="rounded-3xl border border-amber-900/60 bg-gradient-to-br from-amber-950/30 to-zinc-950 p-5 md:p-7">
           <PanelHeading icon="fa-ticket" title="Concert invitations" description="Choose your ticket status to add the concert to your archive." />
@@ -2039,10 +2049,63 @@ function FriendsPage({ friends, requests, invitations, onSearch, onSendRequest, 
       </section>
 
       {requests.filter((request) => request.direction === "incoming").length > 0 && <section className="rounded-3xl border border-zinc-800 bg-zinc-900 p-5 md:p-7"><PanelHeading icon="fa-user-clock" title="Friend requests" description="Requests waiting for your response." /><div className="space-y-2">{requests.filter((request) => request.direction === "incoming").map((request) => <div key={request.id} className="flex flex-col gap-3 rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-3 sm:flex-row sm:items-center"><div className="min-w-0 flex-1"><p className="truncate font-bold">{request.displayName}</p><p className="truncate text-xs text-zinc-600">@{request.username}</p></div><div className="flex gap-2"><button onClick={() => act(() => onRespondRequest(request.id, true))} className="flex-1 rounded-xl bg-zinc-100 px-4 py-2 text-xs font-black text-zinc-950 transition hover:bg-white">Accept</button><button onClick={() => act(() => onRespondRequest(request.id, false))} className="flex-1 rounded-xl border border-zinc-700 px-4 py-2 text-xs font-bold text-zinc-400 transition hover:border-red-900 hover:text-red-300">Decline</button></div></div>)}</div></section>}
+      {requests.some((request) => request.direction === "outgoing") && <section className="rounded-3xl border border-zinc-800 bg-zinc-900 p-5 md:p-7"><PanelHeading icon="fa-paper-plane" title="Sent requests" description="Waiting for the other person to respond." /><div className="flex flex-wrap gap-2">{requests.filter((request) => request.direction === "outgoing").map((request) => <span key={request.id} className="rounded-full border border-zinc-700 bg-zinc-950 px-3 py-2 text-xs text-zinc-400">{request.displayName} · Pending</span>)}</div></section>}
 
       <section className="rounded-3xl border border-zinc-800 bg-zinc-900 p-5 md:p-7"><PanelHeading icon="fa-user-group" title="Your friends" description="Friends can be invited when adding or editing a concert." />{friends.length ? <div className="grid gap-3 sm:grid-cols-2">{friends.map((friend) => <div key={friend.id} className="flex items-center gap-3 rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-4"><div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-zinc-800 bg-zinc-900 text-sm font-black text-zinc-400">{friend.displayName.slice(0, 1).toUpperCase()}</div><div className="min-w-0 flex-1"><p className="truncate font-bold">{friend.displayName}</p><p className="truncate text-xs text-zinc-600">@{friend.username}</p></div><button onClick={() => act(() => onRemoveFriend(friend.id))} className="flex h-8 w-8 items-center justify-center rounded-full text-zinc-700 transition hover:bg-red-950/40 hover:text-red-300" aria-label={`Remove ${friend.displayName}`}><i className="fa-solid fa-user-minus text-xs" aria-hidden="true" /></button></div>)}</div> : <EmptyState icon="fa-user-group" title="No friends yet" description="Use the search above to find people you know." />}</section>
     </div>
   );
+}
+
+function UserAvatar({ person, size = "h-10 w-10" }) {
+  const name = person?.displayName || "User";
+  return person?.avatarUrl
+    ? <img src={person.avatarUrl} alt="" className={`${size} shrink-0 rounded-full border border-zinc-700 object-cover`} />
+    : <div aria-hidden="true" className={`${size} flex shrink-0 items-center justify-center rounded-full border border-zinc-700 bg-zinc-950 text-sm font-black text-zinc-300`}>{name.slice(0, 1).toUpperCase()}</div>;
+}
+
+function ProfilePage({ profile, onSave, onExport, onDelete, onPassword }) {
+  const [form, setForm] = useState({ displayName: "", avatarUrl: "", city: "", country: "", discoverable: true });
+  const [status, setStatus] = useState("");
+  const [saving, setSaving] = useState(false);
+  useEffect(() => setForm({ displayName: profile?.displayName || "", avatarUrl: profile?.avatarUrl || "", city: profile?.city || "", country: profile?.country || "", discoverable: profile?.discoverable !== false }), [profile]);
+  const field = (key) => (event) => setForm((current) => ({ ...current, [key]: event.target.value }));
+  async function submit(event) {
+    event.preventDefault(); setSaving(true); setStatus("");
+    try { await onSave(form); setStatus("Profile saved."); } catch (error) { setStatus(error.message || "Could not save your profile."); } finally { setSaving(false); }
+  }
+  async function removeAccount() {
+    if (window.prompt("Type DELETE to permanently delete your account and personal data.") !== "DELETE") return;
+    await onDelete();
+  }
+  return <div className="mx-auto max-w-3xl space-y-6">
+    <form onSubmit={submit} className="rounded-3xl border border-zinc-800 bg-zinc-900 p-5 md:p-7">
+      <PanelHeading icon="fa-id-card" title="Public profile" description="This information helps friends recognise you." />
+      <div className="mb-6 flex items-center gap-4"><UserAvatar person={{ ...profile, ...form }} size="h-16 w-16" /><div><p className="font-bold text-zinc-100">{form.displayName || "Your name"}</p><p className="text-sm text-zinc-500">@{profile?.username}</p></div></div>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <label className="text-xs font-bold text-zinc-400">Display name<input required maxLength="80" value={form.displayName} onChange={field("displayName")} className="mt-2 w-full rounded-2xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-sm text-zinc-100 outline-none focus:border-zinc-400" /></label>
+        <label className="text-xs font-bold text-zinc-400">Avatar URL<input type="url" value={form.avatarUrl} onChange={field("avatarUrl")} placeholder="https://…" className="mt-2 w-full rounded-2xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-sm text-zinc-100 outline-none focus:border-zinc-400" /></label>
+        <label className="text-xs font-bold text-zinc-400">City<input value={form.city} onChange={field("city")} className="mt-2 w-full rounded-2xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-sm text-zinc-100 outline-none focus:border-zinc-400" /></label>
+        <label className="text-xs font-bold text-zinc-400">Country<input value={form.country} onChange={field("country")} className="mt-2 w-full rounded-2xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-sm text-zinc-100 outline-none focus:border-zinc-400" /></label>
+      </div>
+      <label className="mt-5 flex items-center gap-3 text-sm text-zinc-300"><input type="checkbox" checked={form.discoverable} onChange={(event) => setForm((current) => ({ ...current, discoverable: event.target.checked }))} className="h-4 w-4 accent-zinc-100" />Allow other users to find me</label>
+      {status && <p className="mt-4 text-sm text-zinc-300" role="status">{status}</p>}
+      <button disabled={saving} className="mt-6 rounded-2xl bg-zinc-100 px-5 py-3 text-sm font-black text-zinc-950 disabled:opacity-50">{saving ? "Saving…" : "Save profile"}</button>
+    </form>
+    <section className="rounded-3xl border border-zinc-800 bg-zinc-900 p-5 md:p-7"><PanelHeading icon="fa-shield-halved" title="Account and privacy" description="Control your credentials and personal data." /><div className="grid gap-3 sm:grid-cols-2"><button onClick={onPassword} className="rounded-2xl border border-zinc-700 px-4 py-3 text-sm font-bold text-zinc-200 hover:border-zinc-500">Change password</button><button onClick={onExport} className="rounded-2xl border border-zinc-700 px-4 py-3 text-sm font-bold text-zinc-200 hover:border-zinc-500">Export my data</button></div><button onClick={removeAccount} className="mt-6 text-sm font-bold text-red-400 hover:text-red-300">Delete my account</button></section>
+  </div>;
+}
+
+function ActivityPage({ notifications, onRead, onOpenFriends }) {
+  useEffect(() => { const unread = notifications.filter((item) => !item.readAt).map((item) => item.id); if (unread.length) onRead(unread); }, []);
+  return <div className="mx-auto max-w-3xl"><section className="rounded-3xl border border-zinc-800 bg-zinc-900 p-5 md:p-7"><PanelHeading icon="fa-bell" title="Activity" description="Invitations, requests and shared concert updates." />{notifications.length ? <div className="space-y-2">{notifications.map((item) => <button key={item.id} onClick={onOpenFriends} className={`flex w-full items-start gap-3 rounded-2xl border p-4 text-left transition hover:border-zinc-600 ${item.readAt ? "border-zinc-800 bg-zinc-950/50" : "border-amber-900/60 bg-amber-950/20"}`}><i className={`fa-solid ${item.kind === "friend_request" ? "fa-user-plus" : "fa-ticket"} mt-1 w-5 text-center text-zinc-500`} aria-hidden="true" /><span><span className="block font-bold text-zinc-100">{item.kind === "friend_request" ? `${item.actorName} sent you a friend request` : item.kind === "invitation_accepted" ? `${item.actorName} confirmed attendance` : `${item.actorName} invited you to a concert`}</span>{item.artist && <span className="mt-1 block text-sm text-zinc-500">{item.artist} · {item.date}</span>}</span></button>)}</div> : <EmptyState icon="fa-bell" title="No activity yet" description="New friend requests and concert invitations will appear here." />}</section></div>;
+}
+
+function AdminPage({ currentUserId, onChanged }) {
+  const [users, setUsers] = useState([]); const [error, setError] = useState("");
+  async function load() { try { setUsers(await adminListUsers()); } catch (e) { setError(e.message); } }
+  useEffect(() => { load(); }, []);
+  async function update(user, changes) { try { await adminUpdateUser(user.id, changes.role || user.role, changes.status || user.status); await load(); onChanged(); } catch (e) { setError(e.message); } }
+  return <div className="mx-auto max-w-5xl"><section className="rounded-3xl border border-zinc-800 bg-zinc-900 p-5 md:p-7"><PanelHeading icon="fa-user-shield" title="User administration" description="Manage roles and access without exposing private credentials." />{error && <p className="mb-4 text-sm text-red-300">{error}</p>}<div className="space-y-3">{users.map((user) => <div key={user.id} className="grid gap-3 rounded-2xl border border-zinc-800 bg-zinc-950 p-4 md:grid-cols-[1fr_auto_auto] md:items-center"><div className="min-w-0"><p className="truncate font-bold">{user.displayName}</p><p className="truncate text-xs text-zinc-500">{user.email} · {user.concertCount} concerts</p></div><select aria-label={`Role for ${user.displayName}`} value={user.role} disabled={user.id === currentUserId} onChange={(e) => update(user, { role: e.target.value })} className="rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm"><option value="user">User</option><option value="admin">Admin</option></select><button disabled={user.id === currentUserId} onClick={() => update(user, { status: user.status === "active" ? "blocked" : "active" })} className={`rounded-xl border px-4 py-2 text-xs font-black disabled:opacity-40 ${user.status === "active" ? "border-red-900 text-red-300" : "border-emerald-900 text-emerald-300"}`}>{user.status === "active" ? "Block" : "Restore"}</button></div>)}</div></section></div>;
 }
 
 // ─── LoginGate ────────────────────────────────────────────────────────────────
@@ -2278,6 +2341,8 @@ export default function App() {
   const [friends, setFriends] = useState([]);
   const [friendRequests, setFriendRequests] = useState([]);
   const [concertInvitations, setConcertInvitations] = useState([]);
+  const [notifications, setNotifications] = useState([]);
+  const [statsFriendId, setStatsFriendId] = useState("");
   const [pendingSuggestionReviews, setPendingSuggestionReviews] = useState(() => {
     try {
       const stored = JSON.parse(localStorage.getItem("adn_pending_suggestion_reviews") || "{}");
@@ -2312,6 +2377,9 @@ export default function App() {
   const isTimeline = activePage === "timeline";
   const isYearReview = activePage === "year-review";
   const isFriends = activePage === "friends";
+  const isActivity = activePage === "activity";
+  const isProfile = activePage === "profile";
+  const isAdminPage = isAdmin && activePage === "admin";
 
   usePageScrollLock(anyPageOverlayOpen);
 
@@ -2332,6 +2400,8 @@ export default function App() {
     [concertItems]
   );
   const historyItems = useMemo(() => groupHistoryFromJson(historyConcerts), [historyConcerts]);
+  const scopedHistoryConcerts = useMemo(() => statsFriendId ? historyConcerts.filter((concert) => concert.attendeeUsers?.some((person) => person.id === statsFriendId && person.status === "confirmed")) : historyConcerts, [historyConcerts, statsFriendId]);
+  const scopedHistoryItems = useMemo(() => groupHistoryFromJson(scopedHistoryConcerts), [scopedHistoryConcerts]);
   const nextItems = useMemo(
     () => concertItems.filter((concert) => !isPastConcert(concert)),
     [concertItems]
@@ -2348,11 +2418,14 @@ export default function App() {
     ? nextItems.filter((item) => normalize(item.artist) === normalize(artistDetail.artist))
     : [];
   const mode = isNext ? "next" : "history";
-  const title = isVenueDetail ? selectedVenue : isArtistDetail ? artistDetail.artist : isFriends ? "Friends" : isYearReview ? "Year in Review" : isTimeline ? "Timeline" : isStats ? "Archive Overview" : isNext ? "Concert Calendar" : "Concert Archive";
+  const title = isVenueDetail ? selectedVenue : isArtistDetail ? artistDetail.artist : isAdminPage ? "Administration" : isProfile ? "Profile" : isActivity ? "Activity" : isFriends ? "Friends" : isYearReview ? "Year in Review" : isTimeline ? "Timeline" : isStats ? "Archive Overview" : isNext ? "Concert Calendar" : "Concert Archive";
   const description = isVenueDetail
     ? `${venueShows.length} archived ${venueShows.length === 1 ? "visit" : "visits"} to this venue.`
     : isArtistDetail
     ? `${artistDetail.shows.length} live ${artistDetail.shows.length === 1 ? "performance" : "performances"} in the archive.`
+    : isAdminPage ? "Users, roles and access controls."
+    : isProfile ? "Your identity, privacy and account settings."
+    : isActivity ? "Everything that needs your attention."
     : isYearReview
     ? "The artists, venues and moments that defined each year."
     : isTimeline
@@ -2466,6 +2539,7 @@ export default function App() {
           setFriends(archive.friends || []);
           setFriendRequests(archive.friendRequests || []);
           setConcertInvitations(archive.concertInvitations || []);
+          setNotifications(archive.notifications || []);
         }
       } catch (error) {
         if (!cancelled) setDataLoadError(error.message || "Could not load the archive");
@@ -2482,6 +2556,12 @@ export default function App() {
     window.history.replaceState({ adnRoute: true, canGoBack: false }, "", routeToPath({ page: "history" }));
     setActivePage("history");
   }, [activePage, canEdit, authReady, currentUserId, dataReady]);
+
+  useEffect(() => {
+    if (!dataReady || activePage !== "admin" || isAdmin) return;
+    window.history.replaceState({ adnRoute: true, canGoBack: false }, "", "/history");
+    setActivePage("history");
+  }, [activePage, dataReady, isAdmin]);
 
   useEffect(() => {
     const initial = readRouteFromLocation();
@@ -2609,6 +2689,9 @@ export default function App() {
       bought: storedConcert?.bought ?? target.bought,
       attendees: storedConcert?.attendees || [],
       attendeeUsers: storedConcert?.attendeeUsers || [],
+      creator: storedConcert?.creator || target.creator,
+      createdBy: storedConcert?.createdBy || target.createdBy,
+      currentUserId,
       guestAttendees: storedConcert?.guestAttendees || [],
       setlistId: storedConcert?.setlistId || target.setlistId || "",
       ticketUrl: storedConcert?.ticketUrl || target.ticketUrl || "",
@@ -2626,6 +2709,7 @@ export default function App() {
     setFriends(archive.friends || []);
     setFriendRequests(archive.friendRequests || []);
     setConcertInvitations(archive.concertInvitations || []);
+    setNotifications(archive.notifications || []);
   }
 
   async function reloadAppData() {
@@ -2767,6 +2851,14 @@ export default function App() {
     await reloadAppData();
   }
 
+  async function handleProfileExport() {
+    const data = await exportMyData();
+    const url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: "application/json" }));
+    const link = document.createElement("a"); link.href = url; link.download = `a-deafening-noise-${new Date().toISOString().slice(0, 10)}.json`; link.click(); URL.revokeObjectURL(url);
+  }
+
+  const statsScopeControl = (isStats || isYearReview) && friends.length > 0 ? <div className="mx-auto mb-6 max-w-xs"><DropdownMenu value={statsFriendId} onChange={setStatsFriendId} ariaLabel="Stats scope" centered options={[{ value: "", label: "My complete archive" }, ...friends.map((friend) => ({ value: friend.id, label: `Concerts with ${friend.displayName}` }))]} /></div> : null;
+
   return (
     <>
     {passwordModal}
@@ -2774,7 +2866,7 @@ export default function App() {
       {/* Desktop-only fixed Menu button */}
       <button onClick={() => setSidebarOpen(true)} className="menu-button-desktop fixed left-4 top-4 z-40 rounded-full border border-zinc-700 bg-zinc-900 px-4 py-2 text-sm font-bold text-zinc-100 shadow-2xl transition hover:border-zinc-500" aria-label="Open menu" aria-expanded={sidebarOpen} aria-controls="main-navigation"><i className="fa-solid fa-bars mr-2 text-xs" aria-hidden="true" />Menu</button>
       {/* Touch-device Menu starts at the top of the page and scrolls away with it */}
-      <button onClick={() => setSidebarOpen(true)} className="menu-button-touch absolute left-4 top-6 z-40 rounded-full border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-sm font-bold text-zinc-100 shadow-2xl transition hover:border-zinc-500" aria-label="Open menu" aria-expanded={sidebarOpen} aria-controls="main-navigation"><i className="fa-solid fa-bars mr-2 text-xs" aria-hidden="true" />Menu</button>
+      <button onClick={() => setSidebarOpen(true)} className="menu-button-touch absolute left-4 top-6 z-40 h-10 w-10 rounded-full border border-zinc-700 bg-zinc-900 text-sm text-zinc-100 shadow-2xl transition hover:border-zinc-500" aria-label="Open menu" title="Menu" aria-expanded={sidebarOpen} aria-controls="main-navigation"><i className="fa-solid fa-bars text-xs" aria-hidden="true" /></button>
 
       {sidebarOpen && <button className="fixed inset-0 z-40 bg-black/60" onClick={() => setSidebarOpen(false)} aria-label="Close menu overlay" />}
 
@@ -2796,14 +2888,16 @@ export default function App() {
               <button onClick={() => changePage("history")} aria-current={["history", "artist", "timeline", "venue"].includes(activePage) ? "page" : undefined} className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left font-bold transition ${["history", "artist", "timeline", "venue"].includes(activePage) ? "bg-zinc-900 text-zinc-100" : "text-zinc-400 hover:bg-zinc-900/70 hover:text-zinc-100"}`}><i className="fa-solid fa-layer-group w-5 text-center text-zinc-500" aria-hidden="true" /><span>Concert history</span></button>
               {canEdit && <button onClick={() => changePage("next")} aria-current={activePage === "next" ? "page" : undefined} className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left font-bold transition ${activePage === "next" ? "bg-zinc-900 text-zinc-100" : "text-zinc-400 hover:bg-zinc-900/70 hover:text-zinc-100"}`}><i className="fa-solid fa-calendar-days w-5 text-center text-zinc-500" aria-hidden="true" /><span>Concert calendar</span></button>}
               <button onClick={() => changePage("friends")} aria-current={activePage === "friends" ? "page" : undefined} className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left font-bold transition ${activePage === "friends" ? "bg-zinc-900 text-zinc-100" : "text-zinc-400 hover:bg-zinc-900/70 hover:text-zinc-100"}`}><i className="fa-solid fa-user-group w-5 text-center text-zinc-500" aria-hidden="true" /><span>Friends</span>{friendRequests.filter((request) => request.direction === "incoming").length + concertInvitations.length > 0 && <span className="ml-auto min-w-6 rounded-full bg-amber-900 px-2 py-0.5 text-center text-[10px] font-black text-amber-100">{friendRequests.filter((request) => request.direction === "incoming").length + concertInvitations.length}</span>}</button>
+              <button onClick={() => changePage("activity")} aria-current={activePage === "activity" ? "page" : undefined} className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left font-bold transition ${activePage === "activity" ? "bg-zinc-900 text-zinc-100" : "text-zinc-400 hover:bg-zinc-900/70 hover:text-zinc-100"}`}><i className="fa-solid fa-bell w-5 text-center text-zinc-500" aria-hidden="true" /><span>Activity</span>{notifications.filter((item) => !item.readAt).length > 0 && <span className="ml-auto min-w-6 rounded-full bg-amber-900 px-2 py-0.5 text-center text-[10px] font-black text-amber-100">{notifications.filter((item) => !item.readAt).length}</span>}</button>
               <div data-testid="stats-menu-group" className={`rounded-xl ${statsMenuOpen ? "pb-2" : ""} ${activePage === "stats" || activePage === "year-review" ? "bg-zinc-900" : ""}`}>
                 <button onClick={() => setStatsMenuOpen((open) => !open)} className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left font-bold transition hover:bg-zinc-900/70 hover:text-zinc-100 ${activePage === "stats" || activePage === "year-review" ? "text-zinc-100" : "text-zinc-400"}`} aria-expanded={statsMenuOpen} aria-controls="stats-navigation"><i className="fa-solid fa-chart-simple w-5 text-center text-zinc-500" aria-hidden="true" /><span>Stats</span><i className={`fa-solid fa-chevron-down ml-auto text-[10px] text-zinc-600 transition-transform ${statsMenuOpen ? "rotate-180" : ""}`} aria-hidden="true" /></button>
                 {statsMenuOpen && <div id="stats-navigation" data-testid="stats-navigation" className="ml-5 border-l border-zinc-800 pl-3 pr-2"><button onClick={() => changePage("stats")} aria-current={activePage === "stats" ? "page" : undefined} className={`block w-full rounded-lg px-3 py-2.5 text-left text-xs font-semibold transition hover:bg-zinc-800 hover:text-zinc-100 ${activePage === "stats" ? "bg-zinc-800 text-zinc-100" : "text-zinc-500"}`}>Archive overview</button><button onClick={() => changePage("year-review")} aria-current={activePage === "year-review" ? "page" : undefined} className={`mt-1 block w-full rounded-lg px-3 py-2.5 text-left text-xs font-semibold transition hover:bg-zinc-800 hover:text-zinc-100 ${activePage === "year-review" ? "bg-zinc-800 text-zinc-100" : "text-zinc-500"}`}>Year in review</button></div>}
               </div>
+              {isAdmin && <button onClick={() => changePage("admin")} aria-current={activePage === "admin" ? "page" : undefined} className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left font-bold transition ${activePage === "admin" ? "bg-zinc-900 text-zinc-100" : "text-zinc-400 hover:bg-zinc-900/70 hover:text-zinc-100"}`}><i className="fa-solid fa-user-shield w-5 text-center text-zinc-500" aria-hidden="true" /><span>Administration</span></button>}
             </nav>
           </div>
 
-          {currentUserName && <div className="mt-4 border-t border-zinc-900 pt-4"><div className="flex items-center gap-3 rounded-2xl bg-zinc-900/60 p-3"><div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-zinc-700 bg-zinc-950 text-sm font-black text-zinc-200" aria-hidden="true">{currentUserName.slice(0, 1).toUpperCase()}</div><div className="min-w-0 flex-1"><div className="flex items-center gap-2"><span className="truncate text-sm font-bold text-zinc-200">{currentUserName}</span>{isAdmin && <span className="rounded-full border border-zinc-700 px-1.5 py-0.5 text-[8px] font-black uppercase tracking-wider text-zinc-500">Admin</span>}</div><span className="block truncate text-[11px] text-zinc-600">{currentEmail}</span></div></div><div className="mt-2 grid grid-cols-2 gap-2"><button type="button" onClick={() => { setSidebarOpen(false); setPasswordModalMode("change"); }} className="rounded-xl px-3 py-2 text-xs font-semibold text-zinc-500 transition hover:bg-zinc-900 hover:text-zinc-200"><i className="fa-solid fa-key mr-2" aria-hidden="true" />Password</button><button type="button" onClick={() => supabase.auth.signOut()} className="rounded-xl px-3 py-2 text-xs font-semibold text-zinc-500 transition hover:bg-zinc-900 hover:text-red-300"><i className="fa-solid fa-arrow-right-from-bracket mr-2" aria-hidden="true" />Sign out</button></div></div>}
+          {currentUserName && <div className="mt-4 border-t border-zinc-900 pt-4"><button onClick={() => changePage("profile")} className="flex w-full items-center gap-3 rounded-2xl bg-zinc-900/60 p-3 text-left transition hover:bg-zinc-900"><UserAvatar person={appProfile} /><div className="min-w-0 flex-1"><div className="flex items-center gap-2"><span className="truncate text-sm font-bold text-zinc-200">{currentUserName}</span>{isAdmin && <span className="rounded-full border border-zinc-700 px-1.5 py-0.5 text-[8px] font-black uppercase tracking-wider text-zinc-500">Admin</span>}</div><span className="block truncate text-[11px] text-zinc-600">View profile</span></div><i className="fa-solid fa-chevron-right text-[10px] text-zinc-700" aria-hidden="true" /></button><button type="button" onClick={() => supabase.auth.signOut()} className="mt-2 w-full rounded-xl px-3 py-2 text-xs font-semibold text-zinc-500 transition hover:bg-zinc-900 hover:text-red-300"><i className="fa-solid fa-arrow-right-from-bracket mr-2" aria-hidden="true" />Sign out</button></div>}
         </div>
       </aside>
 
@@ -2837,15 +2931,18 @@ export default function App() {
             onOpenVenue={openVenueDetail}
           />
         ) : isYearReview ? (
-          <YearInReviewPage
-            historyItems={historyItems}
+          <>{statsScopeControl}<YearInReviewPage
+            historyItems={scopedHistoryItems}
             selectedYear={selectedReviewYear}
             onYearChange={changeReviewYear}
             onOpenArtist={openArtistDetail}
             onOpenSetlist={openConcertDetails}
             onOpenVenue={openVenueDetail}
-          />
-        ) : isFriends ? <FriendsPage friends={friends} requests={friendRequests} invitations={concertInvitations} onSearch={searchProfiles} onSendRequest={(userId) => runSocialAction(() => sendFriendRequest(userId))} onRespondRequest={(requestId, accept) => runSocialAction(() => respondFriendRequest(requestId, accept))} onRemoveFriend={(userId) => runSocialAction(() => removeFriend(userId))} onRespondInvitation={(concertId, accept, bought) => runSocialAction(() => respondConcertInvitation(concertId, accept, bought))} /> : isStats ? <StatsPage historyItems={historyItems} onOpenVenue={openVenueDetail} onOpenYearReview={openYearReview} /> : (
+          /></>
+        ) : isAdminPage ? <AdminPage currentUserId={currentUserId} onChanged={reloadAppData} />
+        : isProfile ? <ProfilePage profile={appProfile} onSave={async (payload) => { await updateMyProfile(payload); await reloadAppData(); }} onExport={handleProfileExport} onDelete={async () => { await deleteMyAccount(); await supabase.auth.signOut(); }} onPassword={() => setPasswordModalMode("change")} />
+        : isActivity ? <ActivityPage notifications={notifications} onRead={async (ids) => { await markNotificationsRead(ids); await reloadAppData(); }} onOpenFriends={() => changePage("friends")} />
+        : isFriends ? <FriendsPage friends={friends} requests={friendRequests} invitations={concertInvitations} onSearch={searchProfiles} onSendRequest={(userId) => runSocialAction(() => sendFriendRequest(userId))} onRespondRequest={(requestId, accept) => runSocialAction(() => respondFriendRequest(requestId, accept))} onRemoveFriend={(userId) => runSocialAction(() => removeFriend(userId))} onRespondInvitation={(concertId, accept, bought) => runSocialAction(() => respondConcertInvitation(concertId, accept, bought))} /> : isStats ? <>{statsScopeControl}<StatsPage historyItems={scopedHistoryItems} onOpenVenue={openVenueDetail} onOpenYearReview={openYearReview} /></> : (
           <>
             <div className="sticky top-0 z-10 mb-8 border-y border-zinc-800 bg-zinc-950/90 py-3 backdrop-blur">
               <div className="mx-auto max-w-6xl space-y-2 px-4 md:space-y-0 md:px-0">
@@ -3010,6 +3107,7 @@ export default function App() {
         target={setlistTarget}
         onClose={() => setSetlistTarget(null)}
         onEdit={canEdit ? (target) => { setSetlistTarget(null); setEditTarget(target); } : null}
+        onLeave={supabaseEnabled ? async (target) => { if (!window.confirm("Leave this concert? It will stay in the creator's archive.")) return; await leaveSharedConcert(target.concertId); setSetlistTarget(null); await reloadAppData(); } : null}
         onIdDiscovered={canEdit ? handleSetlistIdDiscovered : null}
       />
       <CalendarConcertModal

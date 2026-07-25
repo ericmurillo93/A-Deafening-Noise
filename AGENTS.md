@@ -9,7 +9,7 @@ Read `README.md` for the quick start and `docs/DEVELOPMENT.md` for production co
 ## Architecture
 
 - React/Vite single-page application; most UI and state live in `src/App.jsx`.
-- Supabase is the production source of truth for profiles, concerts, participants, and dismissed suggestions.
+- Supabase is the production source of truth for profiles, concerts, participants, friendships, notifications, and dismissed suggestions.
 - `data/concerts.json` is the local fallback and GitHub backup dataset.
 - `data/listened-artists.json` is the privacy-reduced Spotify artist catalog used for suggestion affinity.
 - `data/suggestions.json` is generated discovery output, never canonical concert data.
@@ -17,7 +17,7 @@ Read `README.md` for the quick start and `docs/DEVELOPMENT.md` for production co
 - `netlify/functions/save-concerts.js` is retained as a protected legacy/backup writer.
 - `netlify/functions/get-setlist.js` proxies setlist.fm in production.
 - `vite.config.js` emulates those functions locally and writes concert edits directly to the working tree.
-- Clean History API routes provide direct URLs and browser history for archive, calendar, timeline, stats, year review, artist, and venue views; Netlify's SPA fallback serves direct requests.
+- Clean History API routes provide direct URLs and browser history for archive, calendar, timeline, stats, year review, artist, venue, friends, activity, profile, and admin views; Netlify's SPA fallback serves direct requests.
 
 ## Local versus production boundaries
 
@@ -39,6 +39,8 @@ Read `README.md` for the quick start and `docs/DEVELOPMENT.md` for production co
 - Every user manages their own archive and calendar. Eric alone has the `admin` role and suggestion access.
 - A concert is a canonical catalog event that several users may independently reference; this never implies that they attended together. `bought`, guest attendees, and invitation status belong to each participant.
 - Friends are mutual after acceptance. Selecting a friend on a concert sends an invitation; only accepted attendance appears in that person's archive.
+- A non-creator can leave a shared concert without deleting it for its creator. Concert details identify the creator and confirmed friends.
+- Profile/account controls include editable public metadata, password recovery, personal-data export, and confirmed account deletion. Eric's admin panel manages roles and blocked access.
 - Artist, venue, and date fields suggest canonical catalog events and fill the remaining fields when selected. Adding the same normalized artist, venue, and date reuses the event without exposing unrelated users to one another.
 - If attendees are empty, do not render the attendee section in concert details.
 - Setlist lookup prefers stored ID, falls back to artist/date, then persists a discovered ID.

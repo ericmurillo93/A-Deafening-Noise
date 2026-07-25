@@ -46,7 +46,9 @@ input::placeholder {
 }
 
 .menu-button-touch {
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 @media (min-width: 768px) and (pointer: fine) {

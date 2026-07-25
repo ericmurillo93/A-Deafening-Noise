@@ -18,7 +18,7 @@ export const supabase = supabaseEnabled
 export async function loadConcertData() {
   const { data, error } = await supabase.rpc("get_app_data");
   if (error) throw error;
-  return data || { profile: null, concerts: [], friends: [], friendRequests: [], concertInvitations: [], dismissedSuggestions: [] };
+  return data || { profile: null, concerts: [], friends: [], friendRequests: [], concertInvitations: [], notifications: [], dismissedSuggestions: [] };
 }
 
 async function rpc(name, args = {}) {
@@ -37,3 +37,10 @@ export const sendFriendRequest = (userId) => rpc("send_friend_request", { target
 export const respondFriendRequest = (requestId, accept) => rpc("respond_friend_request", { request_id: requestId, accept_request: accept });
 export const removeFriend = (userId) => rpc("remove_friend", { friend_user: userId });
 export const respondConcertInvitation = (concertId, accept, bought = true) => rpc("respond_concert_invitation", { target_concert: concertId, accept_invitation: accept, response_bought: bought });
+export const updateMyProfile = (payload) => rpc("update_my_profile", { payload });
+export const markNotificationsRead = (ids = null) => rpc("mark_notifications_read", { notification_ids: ids });
+export const leaveSharedConcert = (concertId) => rpc("leave_shared_concert", { target_concert: concertId });
+export const exportMyData = () => rpc("export_my_data");
+export const deleteMyAccount = () => rpc("delete_my_account");
+export const adminListUsers = () => rpc("admin_list_users");
+export const adminUpdateUser = (userId, role, status) => rpc("admin_update_user", { target_user: userId, new_role: role, new_status: status });

@@ -277,7 +277,7 @@ gh auth setup-git
 
 ## Data model
 
-Supabase is the production source of truth. The normalized model uses `profiles`, canonical `concerts`, per-user `concert_participants`, mutual `friendships`, and `dismissed_suggestions`. Each authenticated user manages their own archive and calendar; Eric's `admin` role additionally grants suggestion access. `data/concerts.json` remains Eric's compatible local fallback and GitHub backup:
+Supabase is the production source of truth. The normalized model uses `profiles`, canonical `concerts`, per-user `concert_participants`, mutual `friendships`, durable `notifications`, and `dismissed_suggestions`. Each authenticated user manages their own archive and calendar; Eric's `admin` role additionally grants suggestion access and user administration. Profiles include a display name, optional avatar URL and location, discoverability, role, and account status. `data/concerts.json` remains Eric's compatible local fallback and GitHub backup:
 
 ```json
 {
@@ -300,6 +300,8 @@ Classification rules:
 - Today's date or a future date exposes ticket-bought status and the optional ticket link.
 
 Concert identity is canonical: artist, venue, and date inputs search the complete event catalog and selecting a suggestion fills the other fields. An exact normalized match reuses that event record, but does not mean that its users attended together and never exposes unrelated attendees. Ticket state and guest attendees remain personal. Selecting an accepted friend while adding or editing sends a pending invitation; only after acceptance does the concert enter that friend's archive and both users appear as companions. Accepted attendance cannot be removed by another user.
+
+Users can leave a shared concert without changing the creator's copy, export their personal data as JSON, or delete their account. The activity view records friend requests, concert invitations, and accepted invitations. Admins can change roles and block or restore access; blocked accounts are rejected by both application bootstrap and database mutation guards. Stats can be scoped to the complete personal archive or concerts explicitly attended with one accepted friend.
 
 Artist and venue labels are canonical uppercase values. The UI uppercases them while typing and the database trigger enforces the same rule for every writer.
 
