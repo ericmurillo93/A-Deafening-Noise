@@ -276,6 +276,8 @@ Classification rules:
 
 Concert identity is canonical: artist, venue, and date inputs search the complete event catalog and selecting a suggestion fills the other fields. An exact normalized match reuses that event record, but does not mean that its users attended together and never exposes unrelated attendees. Ticket state and guest attendees remain personal. Selecting an accepted friend while adding or editing sends a pending invitation; only after acceptance does the concert enter that friend's archive and both users appear as companions. Accepted attendance cannot be removed by another user.
 
+Artist and venue labels are canonical uppercase values. The UI uppercases them while typing and the database trigger enforces the same rule for every writer.
+
 Setlist lookup first uses a stored `setlistId`. If no ID exists, the proxy searches by artist and date; when an ID is discovered, the application persists it for later lookups.
 
 ## Navigation and interaction conventions

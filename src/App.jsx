@@ -126,6 +126,10 @@ function normalize(value) {
   return String(value).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 }
 
+function uppercaseConcertLabel(value) {
+  return String(value || "").toLocaleUpperCase();
+}
+
 function suggestionDecisionKey({ artist, date }) {
   const normalizedArtist = normalize(artist).replace(/[^a-z0-9]+/g, " ").trim();
   return `${normalizedArtist}|${date}`;
@@ -267,8 +271,8 @@ function updateConcert(items, target, data) {
     updated = true;
     return {
       ...concert,
-      artist: data.artist.trim(),
-      venue: data.venue?.trim() || "",
+      artist: uppercaseConcertLabel(data.artist.trim()),
+      venue: uppercaseConcertLabel(data.venue?.trim()),
       date: data.date.trim(),
       bought: target.mode === "history" ? true : Boolean(data.bought),
       ...(data.setlistId?.trim() ? { setlistId: data.setlistId.trim() } : {}),
@@ -574,8 +578,8 @@ function EditConcertModal({ isOpen, mode, initial, onClose, onSave, isSaving, sa
 
   useEffect(() => {
     if (isOpen && initial) {
-      setArtist(initial.artist || "");
-      setVenue(initial.venue || "");
+      setArtist(uppercaseConcertLabel(initial.artist));
+      setVenue(uppercaseConcertLabel(initial.venue));
       setDate(initial.date || "");
       setBought(!!initial.bought);
       setSetlistId(initial.setlistId || "");
@@ -593,8 +597,8 @@ function EditConcertModal({ isOpen, mode, initial, onClose, onSave, isSaving, sa
     if (!artist.trim() || !date.trim()) return;
     if (!isNextMode && !venue.trim()) return;
     onSave({
-      artist: artist.trim(),
-      venue: venue.trim(),
+      artist: uppercaseConcertLabel(artist.trim()),
+      venue: uppercaseConcertLabel(venue.trim()),
       date: date.trim(),
       bought,
       setlistId: setlistId.trim(),
@@ -618,11 +622,11 @@ function EditConcertModal({ isOpen, mode, initial, onClose, onSave, isSaving, sa
           {!canEditEvent && <p className="rounded-2xl border border-blue-900 bg-blue-950/30 px-4 py-3 text-sm text-blue-200">This is a shared concert. You can update your ticket and attendees; the creator manages artist, venue and date.</p>}
           <label className="block">
             <span className="mb-2 block text-xs font-bold uppercase tracking-widest text-zinc-500">Artist</span>
-            {canEditEvent ? <AutoSuggestField value={artist} onChange={setArtist} suggestions={artistSuggestions} placeholder="Artist name" /> : <div className="rounded-2xl border border-zinc-800 bg-zinc-900 px-4 py-3 text-zinc-500">{artist}</div>}
+            {canEditEvent ? <AutoSuggestField value={artist} onChange={(value) => setArtist(uppercaseConcertLabel(value))} suggestions={artistSuggestions} placeholder="Artist name" /> : <div className="rounded-2xl border border-zinc-800 bg-zinc-900 px-4 py-3 text-zinc-500">{artist}</div>}
           </label>
           <label className="block">
             <span className="mb-2 block text-xs font-bold uppercase tracking-widest text-zinc-500">Venue {isNextMode && <span className="ml-1 normal-case tracking-normal text-zinc-600">(optional)</span>}</span>
-            {canEditEvent ? <AutoSuggestField value={venue} onChange={setVenue} suggestions={venueSuggestions} placeholder="Venue or festival" /> : <div className="rounded-2xl border border-zinc-800 bg-zinc-900 px-4 py-3 text-zinc-500">{venue || "—"}</div>}
+            {canEditEvent ? <AutoSuggestField value={venue} onChange={(value) => setVenue(uppercaseConcertLabel(value))} suggestions={venueSuggestions} placeholder="Venue or festival" /> : <div className="rounded-2xl border border-zinc-800 bg-zinc-900 px-4 py-3 text-zinc-500">{venue || "—"}</div>}
           </label>
           <label className="block">
             <span className="mb-2 block text-xs font-bold uppercase tracking-widest text-zinc-500">Date</span>
@@ -669,8 +673,8 @@ function AddConcertModal({ isOpen, initial, stagingSuggestion = false, onClose, 
 
   useEffect(() => {
     if (!isOpen) return;
-    setArtist(initial?.artist || "");
-    setVenue(initial?.venue || "");
+    setArtist(uppercaseConcertLabel(initial?.artist));
+    setVenue(uppercaseConcertLabel(initial?.venue));
     setDate(initial?.date || "");
     setBought(Boolean(initial?.bought));
     setAttendeeUserIds((initial?.attendeeUsers || []).map((person) => person.id));
@@ -689,8 +693,8 @@ function AddConcertModal({ isOpen, initial, stagingSuggestion = false, onClose, 
 
   function stageSuggestion(ticketBought) {
     onSave({
-      artist: initial?.artist || "",
-      venue: initial?.venue || "",
+      artist: uppercaseConcertLabel(initial?.artist),
+      venue: uppercaseConcertLabel(initial?.venue),
       date: initial?.date || "",
       bought: ticketBought,
       ticketUrl: normalizeTicketUrl(initial?.ticketUrl),
@@ -700,8 +704,8 @@ function AddConcertModal({ isOpen, initial, stagingSuggestion = false, onClose, 
   }
 
   function pickCatalogConcert(concert) {
-    setArtist(concert.artist || "");
-    setVenue(concert.venue || "");
+    setArtist(uppercaseConcertLabel(concert.artist));
+    setVenue(uppercaseConcertLabel(concert.venue));
     setDate(concert.date || "");
     if (!ticketUrl && concert.ticketUrl) setTicketUrl(concert.ticketUrl);
   }
@@ -712,7 +716,7 @@ function AddConcertModal({ isOpen, initial, stagingSuggestion = false, onClose, 
         <div className="flex shrink-0 items-start justify-between gap-4 border-b border-zinc-900 px-6 py-5">
           <div className="min-w-0">
             <h2 className="text-2xl font-black uppercase tracking-tight">Add concert</h2>
-            <p className="mt-1 truncate text-sm text-zinc-500">{stagingSuggestion ? `${initial?.artist || "Concert"}${initial?.date ? ` · ${initial.date}` : ""}` : "Add a past or upcoming concert."}</p>
+            <p className="mt-1 truncate text-sm text-zinc-500">{stagingSuggestion ? `${uppercaseConcertLabel(initial?.artist) || "Concert"}${initial?.date ? ` · ${initial.date}` : ""}` : "Add a past or upcoming concert."}</p>
           </div>
           <ModalCloseButton onClick={onClose} />
         </div>
@@ -720,8 +724,8 @@ function AddConcertModal({ isOpen, initial, stagingSuggestion = false, onClose, 
         {stagingSuggestion ? (
           <div>
             <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-4">
-              <div className="font-black uppercase tracking-tight text-zinc-100">{initial?.artist}</div>
-              <div className="mt-1 text-sm text-zinc-400">{initial?.date}{initial?.venue ? ` · ${initial.venue}` : ""}</div>
+              <div className="font-black uppercase tracking-tight text-zinc-100">{uppercaseConcertLabel(initial?.artist)}</div>
+              <div className="mt-1 text-sm text-zinc-400">{initial?.date}{initial?.venue ? ` · ${uppercaseConcertLabel(initial.venue)}` : ""}</div>
             </div>
             <p className="mb-3 mt-5 text-center text-xs font-bold uppercase tracking-widest text-zinc-500">Ticket status</p>
             <div className="grid grid-cols-2 gap-3">
@@ -732,11 +736,11 @@ function AddConcertModal({ isOpen, initial, stagingSuggestion = false, onClose, 
         ) : <div className="space-y-4">
           <label className="block">
             <span className="mb-2 block text-xs font-bold uppercase tracking-widest text-zinc-500">Artist</span>
-            <ConcertCatalogField field="artist" value={artist} onChange={setArtist} onPick={pickCatalogConcert} onSearch={onSearchCatalog} placeholder="Artist name" />
+            <ConcertCatalogField field="artist" value={artist} onChange={(value) => setArtist(uppercaseConcertLabel(value))} onPick={pickCatalogConcert} onSearch={onSearchCatalog} placeholder="Artist name" />
           </label>
           <label className="block">
             <span className="mb-2 block text-xs font-bold uppercase tracking-widest text-zinc-500">Venue {!isPastDate && <span className="ml-1 normal-case tracking-normal text-zinc-600">(optional)</span>}</span>
-            <ConcertCatalogField field="venue" value={venue} onChange={setVenue} onPick={pickCatalogConcert} onSearch={onSearchCatalog} placeholder="Venue or festival" />
+            <ConcertCatalogField field="venue" value={venue} onChange={(value) => setVenue(uppercaseConcertLabel(value))} onPick={pickCatalogConcert} onSearch={onSearchCatalog} placeholder="Venue or festival" />
           </label>
           <label className="block">
             <span className="mb-2 block text-xs font-bold uppercase tracking-widest text-zinc-500">Date</span>
@@ -1161,9 +1165,9 @@ function ConcertSuggestions({ suggestions, reviews, onInterested, onNotIntereste
                 <article key={suggestion.id} className="rounded-2xl border border-zinc-800 bg-zinc-950 p-4">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div className="min-w-0">
-                      <h3 className="truncate font-black uppercase tracking-tight text-zinc-100">{suggestion.artist}</h3>
+                      <h3 className="truncate font-black uppercase tracking-tight text-zinc-100">{uppercaseConcertLabel(suggestion.artist)}</h3>
                       <p className="mt-1 text-sm text-zinc-400">
-                        {suggestion.date}{suggestion.venue ? ` · ${suggestion.venue}` : ""}{suggestion.city ? ` · ${suggestion.city}` : ""}
+                        {suggestion.date}{suggestion.venue ? ` · ${uppercaseConcertLabel(suggestion.venue)}` : ""}{suggestion.city ? ` · ${suggestion.city}` : ""}
                       </p>
                       <a href={suggestion.sourceUrl} target="_blank" rel="noreferrer" className="mt-1 inline-block text-xs text-zinc-600 transition hover:text-zinc-300">
                         {suggestion.source} <span aria-hidden="true">↗</span>
@@ -2448,11 +2452,11 @@ export default function App() {
   }, [currentUserId, currentEmail]);
 
   useEffect(() => {
-    if (supabaseEnabled && (!authReady || !currentUserId)) return;
+    if (supabaseEnabled && (!authReady || !currentUserId || !dataReady)) return;
     if (canEdit || activePage !== "next") return;
     window.history.replaceState({ adnRoute: true, canGoBack: false }, "", routeToPath({ page: "history" }));
     setActivePage("history");
-  }, [activePage, canEdit, authReady, currentUserId]);
+  }, [activePage, canEdit, authReady, currentUserId, dataReady]);
 
   useEffect(() => {
     const initial = readRouteFromLocation();
@@ -2593,8 +2597,8 @@ export default function App() {
     const pastConcert = isPastConcert({ date: data.date });
     const newConcert = {
       concertId: data.concertId || null,
-      artist: data.artist.trim(),
-      venue: data.venue?.trim() || "",
+      artist: uppercaseConcertLabel(data.artist.trim()),
+      venue: uppercaseConcertLabel(data.venue?.trim()),
       date: data.date.trim(),
       bought: pastConcert ? true : Boolean(data.bought),
       attendeeUserIds: data.attendeeUserIds || [],

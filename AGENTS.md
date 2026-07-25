@@ -34,6 +34,7 @@ Read `README.md` for the quick start and `docs/DEVELOPMENT.md` for production co
 - Future + `bought: false` is an unpurchased possibility.
 - Add Concert is a single global action in the main menu. Past dates are automatically bought and hide ticket fields; today/future dates expose bought status and ticket link.
 - Date format is `DD/MM/YYYY`; preserve existing date-range support.
+- Artist and venue labels are stored and displayed in uppercase; normalize them on every write regardless of user input.
 - Optional fields: `setlistId`, friend attendees, guest attendees, and `ticketUrl`.
 - Every user manages their own archive and calendar. Eric alone has the `admin` role and suggestion access.
 - A concert is a canonical catalog event that several users may independently reference; this never implies that they attended together. `bought`, guest attendees, and invitation status belong to each participant.

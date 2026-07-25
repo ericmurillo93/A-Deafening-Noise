@@ -949,7 +949,7 @@
     },
     {
       "date": "12/06/2025",
-      "venue": "Sala Paral·lel 62",
+      "venue": "SALA PARAL·LEL 62",
       "artist": "STEVEN WILSON",
       "bought": true,
       "setlistId": "1b570598"
@@ -1085,7 +1085,7 @@
     },
     {
       "date": "05/06/2026",
-      "venue": "Noches del Botánico - Madrid",
+      "venue": "NOCHES DEL BOTÁNICO - MADRID",
       "artist": "RIGOBERTA BANDINI",
       "bought": true,
       "setlistId": "7b4c5224"
@@ -1151,14 +1151,14 @@
     },
     {
       "date": "19/04/2007",
-      "venue": "La Farga",
-      "artist": "Mägo de Oz",
+      "venue": "LA FARGA",
+      "artist": "MÄGO DE OZ",
       "bought": true
     },
     {
       "date": "10/09/2026",
       "venue": "PALAU SANT JORDI",
-      "artist": "CA7RIEL & Paco Amoroso",
+      "artist": "CA7RIEL & PACO AMOROSO",
       "bought": true,
       "ticketUrl": "https://www.livenation.es/event/ca7riel-and-paco-amoroso-free-spirits-world-tour-barcelona-tickets-edp1660583"
     },
@@ -1189,7 +1189,7 @@
     {
       "date": "06/11/2026",
       "venue": "SALAMANDRA",
-      "artist": "Archspire",
+      "artist": "ARCHSPIRE",
       "bought": false,
       "ticketUrl": "https://www.madnesslive.es/es/pagina/359-archspire-anuncian-su-regreso-a-espana-con-el-nuevo-album-too-fast-to-die"
     },
@@ -1203,7 +1203,7 @@
     {
       "date": "11/12/2026",
       "venue": "RAZZMATAZZ 2",
-      "artist": "Toundra",
+      "artist": "TOUNDRA",
       "bought": false,
       "ticketUrl": "https://www.salarazzmatazz.com/agenda/11-12-2026-toundra/"
     },
@@ -1217,7 +1217,7 @@
     {
       "date": "20/12/2026",
       "venue": "PALAU SANT JORDI",
-      "artist": "Amaia",
+      "artist": "AMAIA",
       "bought": false,
       "ticketUrl": "https://palausantjordi.barcelona/es/amaia2026"
     },
@@ -1230,7 +1230,7 @@
     },
     {
       "date": "26/02/2027",
-      "venue": "Sala Paral·lel 62",
+      "venue": "SALA PARAL·LEL 62",
       "artist": "MORGAN",
       "bought": false,
       "ticketUrl": "https://tickets.oneboxtds.com/farotickets/select/2880063"
@@ -1238,49 +1238,49 @@
     {
       "date": "06/02/2027",
       "venue": "RAZZMATAZZ 2",
-      "artist": "Whitechapel",
+      "artist": "WHITECHAPEL",
       "bought": false,
       "ticketUrl": "https://www.resurrectionfest.es/route/whitechapel-tour-2027/"
     },
     {
       "date": "17/08/2026",
       "venue": "LES DOCKS",
-      "artist": "Fontaines D.C.",
+      "artist": "FONTAINES D.C.",
       "bought": false,
       "ticketUrl": "https://www.docks.ch/evenement/concerts/20260817/fontaines-d-c-2/"
     },
     {
       "date": "18/08/2026",
       "venue": "LES DOCKS",
-      "artist": "Fontaines D.C.",
+      "artist": "FONTAINES D.C.",
       "bought": false,
       "ticketUrl": "https://www.docks.ch/evenement/concerts/20260818/fontaines-d-c-3/"
     },
     {
       "date": "30/08/2026",
-      "venue": "Gran Teatre del Liceu",
-      "artist": "Hermanos Gutiérrez",
+      "venue": "GRAN TEATRE DEL LICEU",
+      "artist": "HERMANOS GUTIÉRREZ",
       "bought": false,
       "ticketUrl": "https://www.ticketmaster.es/artist/hermanos-gutierrez-entradas/1158644"
     },
     {
       "date": "31/08/2026",
-      "venue": "Gran Teatre del Liceu",
-      "artist": "Hermanos Gutiérrez",
+      "venue": "GRAN TEATRE DEL LICEU",
+      "artist": "HERMANOS GUTIÉRREZ",
       "bought": false,
       "ticketUrl": "https://www.ticketmaster.es/artist/hermanos-gutierrez-entradas/1158644"
     },
     {
       "date": "22/11/2026",
       "venue": "RAZZMATAZZ",
-      "artist": "Perturbator",
+      "artist": "PERTURBATOR",
       "bought": false,
       "ticketUrl": "https://www.salarazzmatazz.com/agenda/22-11-2026-polyphia/"
     },
     {
       "date": "02/12/2026",
       "venue": "RAZZMATAZZ",
-      "artist": "Eluveitie",
+      "artist": "ELUVEITIE",
       "bought": false,
       "ticketUrl": "https://www.resurrectionfest.es/route/eluveitie-tour-2026/"
     }
