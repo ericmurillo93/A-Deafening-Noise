@@ -8,6 +8,7 @@ It provides:
 - a timeline, lifetime statistics, year reviews, and geographic views;
 - an upcoming-concert calendar with bought and unpurchased states;
 - concert details, attendees, setlist.fm integration, and calendar export;
+- friend discovery, shared concerts, and attendance invitations;
 - automated concert suggestions from promoters, venues, and festivals in Spain and Switzerland;
 - responsive desktop, phone portrait, and phone landscape layouts.
 

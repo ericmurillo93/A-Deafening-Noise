@@ -252,7 +252,7 @@ gh auth setup-git
 
 ## Data model
 
-Supabase is the production source of truth. The normalized model uses `profiles`, `concerts`, `concert_participants`, and `dismissed_suggestions`. `data/concerts.json` remains the compatible local fallback and GitHub backup:
+Supabase is the production source of truth. The normalized model uses `profiles`, canonical `concerts`, per-user `concert_participants`, mutual `friendships`, and `dismissed_suggestions`. Each authenticated user manages their own archive and calendar; Eric's `admin` role additionally grants suggestion access. `data/concerts.json` remains Eric's compatible local fallback and GitHub backup:
 
 ```json
 {
@@ -270,14 +270,17 @@ Classification rules:
 - `bought: true` and a past date → concert history.
 - `bought: true` and a future date → upcoming bought concert.
 - `bought: false` and a future date → possible/unpurchased concert.
-- Adding from Concert Archive automatically sets `bought: true`.
-- Adding from Concert Calendar exposes the ticket-bought checkbox.
+- Add Concert is a global action at the top of the main menu, independent of the current page.
+- A past date automatically sets `bought: true` and hides ticket status and ticket link.
+- Today's date or a future date exposes ticket-bought status and the optional ticket link.
+
+Concert identity is canonical: artist, venue, and date inputs search the complete event catalog and selecting a suggestion fills the other fields. An exact normalized match reuses that event record, but does not mean that its users attended together and never exposes unrelated attendees. Ticket state and guest attendees remain personal. Selecting an accepted friend while adding or editing sends a pending invitation; only after acceptance does the concert enter that friend's archive and both users appear as companions. Accepted attendance cannot be removed by another user.
 
 Setlist lookup first uses a stored `setlistId`. If no ID exists, the proxy searches by artist and date; when an ID is discovered, the application persists it for later lookups.
 
 ## Navigation and interaction conventions
 
-- Browser back/forward participates in page navigation through URL hashes.
+- Browser back/forward participates in page navigation through clean History API routes.
 - Browser back closes an open modal before leaving the current page.
 - A normal concert click opens its details.
 - Right-click or long-press opens Edit/Delete actions.

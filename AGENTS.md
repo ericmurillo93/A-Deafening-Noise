@@ -13,7 +13,7 @@ Read `README.md` for the quick start and `docs/DEVELOPMENT.md` for production co
 - `data/concerts.json` is the local fallback and GitHub backup dataset.
 - `data/listened-artists.json` is the privacy-reduced Spotify artist catalog used for suggestion affinity.
 - `data/suggestions.json` is generated discovery output, never canonical concert data.
-- Supabase Auth and RLS provide per-user visibility; only Eric can write.
+- Supabase Auth and security-definer RPCs provide per-user visibility and writes. Eric is the admin; suggestions remain admin-only.
 - `netlify/functions/save-concerts.js` is retained as a protected legacy/backup writer.
 - `netlify/functions/get-setlist.js` proxies setlist.fm in production.
 - `vite.config.js` emulates those functions locally and writes concert edits directly to the working tree.
@@ -32,10 +32,13 @@ Read `README.md` for the quick start and `docs/DEVELOPMENT.md` for production co
 - Past + `bought: true` is history.
 - Future + `bought: true` is an upcoming bought concert.
 - Future + `bought: false` is an unpurchased possibility.
-- Archive additions are automatically bought; calendar additions expose the bought checkbox.
+- Add Concert is a single global action in the main menu. Past dates are automatically bought and hide ticket fields; today/future dates expose bought status and ticket link.
 - Date format is `DD/MM/YYYY`; preserve existing date-range support.
-- Optional fields: `setlistId`, `attendees`, and `ticketUrl`.
-- Eric sees and edits the complete archive. Saray and Papa are read-only, see only linked concerts, and have no calendar or suggestion access.
+- Optional fields: `setlistId`, friend attendees, guest attendees, and `ticketUrl`.
+- Every user manages their own archive and calendar. Eric alone has the `admin` role and suggestion access.
+- A concert is a canonical catalog event that several users may independently reference; this never implies that they attended together. `bought`, guest attendees, and invitation status belong to each participant.
+- Friends are mutual after acceptance. Selecting a friend on a concert sends an invitation; only accepted attendance appears in that person's archive.
+- Artist, venue, and date fields suggest canonical catalog events and fill the remaining fields when selected. Adding the same normalized artist, venue, and date reuses the event without exposing unrelated users to one another.
 - If attendees are empty, do not render the attendee section in concert details.
 - Setlist lookup prefers stored ID, falls back to artist/date, then persists a discovered ID.
 
