@@ -156,8 +156,9 @@ function parseRouteParts(pagePart = "history", valueParts = []) {
   }
   if (pagePart === "artist" && value) return { page: "artist", artist: value, venue: null };
   if (pagePart === "venue" && value) return { page: "venue", artist: null, venue: value };
+  if (pagePart === "year-review" && /^\d{4}$/.test(value || "")) return { page: "year-review", artist: null, venue: null, year: value };
   const pageAliases = { calendar: "next", history: "history", timeline: "timeline", stats: "stats", "year-review": "year-review", friends: "friends" };
-  return { page: pageAliases[pagePart] || "history", artist: null, venue: null };
+  return { page: pageAliases[pagePart] || "history", artist: null, venue: null, year: null };
 }
 
 function readRouteFromLocation() {
@@ -170,9 +171,10 @@ function readRouteFromLocation() {
   return legacyParts.length ? parseRouteParts(legacyParts[0], legacyParts.slice(1)) : parseRouteParts();
 }
 
-function routeToPath({ page, artist, venue }) {
+function routeToPath({ page, artist, venue, year }) {
   if (page === "artist" && artist) return `/artist/${encodeURIComponent(artist)}`;
   if (page === "venue" && venue) return `/venue/${encodeURIComponent(venue)}`;
+  if (page === "year-review" && year) return `/year-review/${encodeURIComponent(year)}`;
   if (page === "next") return "/calendar";
   return `/${page || "history"}`;
 }
@@ -1392,7 +1394,7 @@ function StatsBar({ data, max, accent = "bg-zinc-100", label }) {
   );
 }
 
-function StatsPage({ historyItems, onOpenVenue }) {
+function StatsPage({ historyItems, onOpenVenue, onOpenYearReview }) {
   const geographyShows = useMemo(
     () => historyItems.flatMap(({ shows }) => shows.map((show) => parseShow(show, "history"))),
     [historyItems]
@@ -1468,13 +1470,13 @@ function StatsPage({ historyItems, onOpenVenue }) {
             {stats.years.map(([year, count]) => {
               const heightPct = stats.maxYear ? (count / stats.maxYear) * 100 : 0;
               return (
-                <div key={year} className="flex min-w-[36px] flex-1 flex-col items-center gap-2">
+                <button type="button" key={year} onClick={() => onOpenYearReview(year)} className="group flex min-w-[36px] flex-1 cursor-pointer flex-col items-center gap-2 rounded-xl px-1 py-2 transition hover:bg-zinc-800 focus-visible:bg-zinc-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-600" aria-label={`Open ${year} year in review: ${count} ${count === 1 ? "concert" : "concerts"}`}>
                   <div className="flex h-44 w-full items-end">
-                    <div className="w-full rounded-t-md bg-zinc-100 transition-all hover:bg-white" style={{ height: `${count === 0 ? 2 : heightPct}%`, opacity: count === 0 ? 0.15 : 1 }} title={`${count} ${count === 1 ? "show" : "shows"} in ${year}`} />
+                    <div className="w-full rounded-t-md bg-zinc-300 transition-all group-hover:bg-white" style={{ height: `${count === 0 ? 2 : heightPct}%`, opacity: count === 0 ? 0.15 : 1 }} title={`${count} ${count === 1 ? "show" : "shows"} in ${year}`} />
                   </div>
-                  <div className="text-[10px] font-semibold text-zinc-500">'{year.slice(-2)}</div>
-                  <div className="text-[11px] font-bold text-zinc-300">{count}</div>
-                </div>
+                  <div className="text-[10px] font-semibold text-zinc-500 transition group-hover:text-zinc-300">'{year.slice(-2)}</div>
+                  <div className="text-[11px] font-bold text-zinc-300 transition group-hover:text-white">{count}</div>
+                </button>
               );
             })}
           </div>
@@ -1803,7 +1805,7 @@ function ConcertTimelinePage({ historyItems, onBack, onOpenArtist, onOpenSetlist
 
 // ─── Year in review ───────────────────────────────────────────────────────────
 
-function YearInReviewPage({ historyItems, onOpenArtist, onOpenSetlist, onOpenVenue }) {
+function YearInReviewPage({ historyItems, selectedYear, onYearChange, onOpenArtist, onOpenSetlist, onOpenVenue }) {
   const allShows = useMemo(
     () => historyItems.flatMap(({ artist, shows }) =>
       shows.map((show) => ({ artist, show, ...parseShow(show, "history") }))
@@ -1815,7 +1817,6 @@ function YearInReviewPage({ historyItems, onOpenArtist, onOpenSetlist, onOpenVen
       .sort((a, b) => Number(b) - Number(a)),
     [allShows]
   );
-  const [selectedYear, setSelectedYear] = useState(() => years[0] || "");
   const activeYear = years.includes(selectedYear) ? selectedYear : years[0] || "";
 
   const review = useMemo(() => {
@@ -1881,7 +1882,7 @@ function YearInReviewPage({ historyItems, onOpenArtist, onOpenSetlist, onOpenVen
       <div className="mb-8 flex justify-center">
         <DropdownMenu
           value={activeYear}
-          onChange={setSelectedYear}
+          onChange={onYearChange}
           ariaLabel="Choose review year"
           className="w-40"
           centered
@@ -2244,6 +2245,7 @@ export default function App() {
   const [activePage, setActivePage] = useState(initialRoute.page);
   const [selectedArtist, setSelectedArtist] = useState(initialRoute.artist);
   const [selectedVenue, setSelectedVenue] = useState(initialRoute.venue);
+  const [selectedReviewYear, setSelectedReviewYear] = useState(initialRoute.year || "");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [statsMenuOpen, setStatsMenuOpen] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
@@ -2483,6 +2485,7 @@ export default function App() {
       setActivePage(route.page);
       setSelectedArtist(route.artist);
       setSelectedVenue(route.venue);
+      setSelectedReviewYear(route.year || "");
       setQuery("");
       setSortMode("artist");
       setSidebarOpen(false);
@@ -2528,6 +2531,7 @@ export default function App() {
     setActivePage(route.page);
     setSelectedArtist(route.artist || null);
     setSelectedVenue(route.venue || null);
+    setSelectedReviewYear(route.year || "");
     setQuery("");
     setSortMode("artist");
     setSidebarOpen(false);
@@ -2541,6 +2545,7 @@ export default function App() {
     setActivePage("history");
     setSelectedArtist(null);
     setSelectedVenue(null);
+    setSelectedReviewYear("");
     setQuery("");
     setSortMode("artist");
     setSidebarOpen(false);
@@ -2554,6 +2559,14 @@ export default function App() {
   function openVenueDetail(venue) {
     if (!venue || venue === "Date confirmed") return;
     navigateTo({ page: "venue", artist: null, venue });
+  }
+  function openYearReview(year) {
+    navigateTo({ page: "year-review", artist: null, venue: null, year: String(year) });
+  }
+  function changeReviewYear(year) {
+    const route = { page: "year-review", artist: null, venue: null, year: String(year) };
+    window.history.pushState({ adnRoute: true, canGoBack: true }, "", routeToPath(route));
+    setSelectedReviewYear(String(year));
   }
   function goBackFromDetail() {
     if (window.history.state?.canGoBack) window.history.back();
@@ -2801,11 +2814,13 @@ export default function App() {
         ) : isYearReview ? (
           <YearInReviewPage
             historyItems={historyItems}
+            selectedYear={selectedReviewYear}
+            onYearChange={changeReviewYear}
             onOpenArtist={openArtistDetail}
             onOpenSetlist={openConcertDetails}
             onOpenVenue={openVenueDetail}
           />
-        ) : isFriends ? <FriendsPage friends={friends} requests={friendRequests} invitations={concertInvitations} onSearch={searchProfiles} onSendRequest={(userId) => runSocialAction(() => sendFriendRequest(userId))} onRespondRequest={(requestId, accept) => runSocialAction(() => respondFriendRequest(requestId, accept))} onRemoveFriend={(userId) => runSocialAction(() => removeFriend(userId))} onRespondInvitation={(concertId, accept, bought) => runSocialAction(() => respondConcertInvitation(concertId, accept, bought))} /> : isStats ? <StatsPage historyItems={historyItems} onOpenVenue={openVenueDetail} /> : (
+        ) : isFriends ? <FriendsPage friends={friends} requests={friendRequests} invitations={concertInvitations} onSearch={searchProfiles} onSendRequest={(userId) => runSocialAction(() => sendFriendRequest(userId))} onRespondRequest={(requestId, accept) => runSocialAction(() => respondFriendRequest(requestId, accept))} onRemoveFriend={(userId) => runSocialAction(() => removeFriend(userId))} onRespondInvitation={(concertId, accept, bought) => runSocialAction(() => respondConcertInvitation(concertId, accept, bought))} /> : isStats ? <StatsPage historyItems={historyItems} onOpenVenue={openVenueDetail} onOpenYearReview={openYearReview} /> : (
           <>
             <div className="sticky top-0 z-10 mb-8 border-y border-zinc-800 bg-zinc-950/90 py-3 backdrop-blur">
               <div className="mx-auto max-w-6xl space-y-2 px-4 md:space-y-0 md:px-0">
