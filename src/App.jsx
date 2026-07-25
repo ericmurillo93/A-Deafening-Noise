@@ -718,15 +718,15 @@ function AddConcertModal({ isOpen, initial, stagingSuggestion = false, onClose, 
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 p-4">
-      <div className="flex max-h-[calc(100dvh-2rem)] w-full max-w-lg flex-col overflow-hidden rounded-3xl border border-zinc-700 bg-zinc-950 shadow-2xl md:max-h-[90dvh]">
-        <div className="flex shrink-0 items-start justify-between gap-4 border-b border-zinc-900 px-6 py-5">
+      <div data-testid="add-concert-modal" className="flex max-h-[calc(100dvh-2rem)] w-full max-w-lg flex-col overflow-hidden rounded-3xl border border-zinc-700 bg-zinc-950 shadow-2xl md:max-h-[90dvh]">
+        <div data-testid="add-concert-header" className="flex shrink-0 items-start justify-between gap-4 border-b border-zinc-900 px-6 py-5">
           <div className="min-w-0">
             <h2 className="text-2xl font-black uppercase tracking-tight">Add concert</h2>
             <p className="mt-1 truncate text-sm text-zinc-500">{stagingSuggestion ? `${uppercaseConcertLabel(initial?.artist) || "Concert"}${initial?.date ? ` · ${initial.date}` : ""}` : "Add a past or upcoming concert."}</p>
           </div>
           <ModalCloseButton onClick={onClose} />
         </div>
-        <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5 overscroll-contain">
+        <div data-testid="add-concert-scroll" className="min-h-0 flex-1 overflow-y-auto px-6 py-5 overscroll-contain">
         {stagingSuggestion ? (
           <div>
             <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-4">
@@ -2773,9 +2773,9 @@ export default function App() {
               <button onClick={() => changePage("history")} aria-current={["history", "artist", "timeline", "venue"].includes(activePage) ? "page" : undefined} className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left font-bold transition ${["history", "artist", "timeline", "venue"].includes(activePage) ? "bg-zinc-900 text-zinc-100" : "text-zinc-400 hover:bg-zinc-900/70 hover:text-zinc-100"}`}><i className="fa-solid fa-layer-group w-5 text-center text-zinc-500" aria-hidden="true" /><span>Concert history</span></button>
               {canEdit && <button onClick={() => changePage("next")} aria-current={activePage === "next" ? "page" : undefined} className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left font-bold transition ${activePage === "next" ? "bg-zinc-900 text-zinc-100" : "text-zinc-400 hover:bg-zinc-900/70 hover:text-zinc-100"}`}><i className="fa-solid fa-calendar-days w-5 text-center text-zinc-500" aria-hidden="true" /><span>Concert calendar</span></button>}
               <button onClick={() => changePage("friends")} aria-current={activePage === "friends" ? "page" : undefined} className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left font-bold transition ${activePage === "friends" ? "bg-zinc-900 text-zinc-100" : "text-zinc-400 hover:bg-zinc-900/70 hover:text-zinc-100"}`}><i className="fa-solid fa-user-group w-5 text-center text-zinc-500" aria-hidden="true" /><span>Friends</span>{friendRequests.filter((request) => request.direction === "incoming").length + concertInvitations.length > 0 && <span className="ml-auto min-w-6 rounded-full bg-amber-900 px-2 py-0.5 text-center text-[10px] font-black text-amber-100">{friendRequests.filter((request) => request.direction === "incoming").length + concertInvitations.length}</span>}</button>
-              <div className={`rounded-xl ${activePage === "stats" || activePage === "year-review" ? "bg-zinc-900" : ""}`}>
+              <div data-testid="stats-menu-group" className={`rounded-xl ${statsMenuOpen ? "pb-2" : ""} ${activePage === "stats" || activePage === "year-review" ? "bg-zinc-900" : ""}`}>
                 <button onClick={() => setStatsMenuOpen((open) => !open)} className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left font-bold transition hover:bg-zinc-900/70 hover:text-zinc-100 ${activePage === "stats" || activePage === "year-review" ? "text-zinc-100" : "text-zinc-400"}`} aria-expanded={statsMenuOpen} aria-controls="stats-navigation"><i className="fa-solid fa-chart-simple w-5 text-center text-zinc-500" aria-hidden="true" /><span>Stats</span><i className={`fa-solid fa-chevron-down ml-auto text-[10px] text-zinc-600 transition-transform ${statsMenuOpen ? "rotate-180" : ""}`} aria-hidden="true" /></button>
-                {statsMenuOpen && <div id="stats-navigation" className="mb-2 ml-5 border-l border-zinc-800 pl-3 pr-2"><button onClick={() => changePage("stats")} aria-current={activePage === "stats" ? "page" : undefined} className={`block w-full rounded-lg px-3 py-2.5 text-left text-xs font-semibold transition hover:bg-zinc-800 hover:text-zinc-100 ${activePage === "stats" ? "bg-zinc-800 text-zinc-100" : "text-zinc-500"}`}>Archive overview</button><button onClick={() => changePage("year-review")} aria-current={activePage === "year-review" ? "page" : undefined} className={`mt-1 block w-full rounded-lg px-3 py-2.5 text-left text-xs font-semibold transition hover:bg-zinc-800 hover:text-zinc-100 ${activePage === "year-review" ? "bg-zinc-800 text-zinc-100" : "text-zinc-500"}`}>Year in review</button></div>}
+                {statsMenuOpen && <div id="stats-navigation" data-testid="stats-navigation" className="ml-5 border-l border-zinc-800 pl-3 pr-2"><button onClick={() => changePage("stats")} aria-current={activePage === "stats" ? "page" : undefined} className={`block w-full rounded-lg px-3 py-2.5 text-left text-xs font-semibold transition hover:bg-zinc-800 hover:text-zinc-100 ${activePage === "stats" ? "bg-zinc-800 text-zinc-100" : "text-zinc-500"}`}>Archive overview</button><button onClick={() => changePage("year-review")} aria-current={activePage === "year-review" ? "page" : undefined} className={`mt-1 block w-full rounded-lg px-3 py-2.5 text-left text-xs font-semibold transition hover:bg-zinc-800 hover:text-zinc-100 ${activePage === "year-review" ? "bg-zinc-800 text-zinc-100" : "text-zinc-500"}`}>Year in review</button></div>}
               </div>
             </nav>
           </div>

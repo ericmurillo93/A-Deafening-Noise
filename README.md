@@ -24,7 +24,7 @@ nvm use
 npm run setup:auth
 ```
 
-`setup:auth` installs locked dependencies, safely creates `.env.local`, and guides GitHub/Codex authentication. Browser confirmation is still required. To prepare only the website without authentication, use:
+`setup:auth` installs locked dependencies, Chromium and its Linux system libraries for local UI tests, safely creates `.env.local`, and guides GitHub/Codex authentication. Browser confirmation is still required. On Linux, the Chromium dependency step may request the computer password through `sudo`. To prepare only the website and test browser without authentication, use:
 
 ```bash
 npm run setup

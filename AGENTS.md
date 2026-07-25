@@ -77,6 +77,8 @@ npm run build
 git diff --check
 ```
 
+Run `npm run test:e2e` only when Eric explicitly requests the local UI suite. Playwright covers selected high-risk and previously regressed flows in desktop, phone portrait, and phone landscape using isolated fallback data; it must never authenticate against or write to production Supabase. Do not add an E2E test for every feature: extend the suite only when a behavior is important, reusable, difficult to verify manually, or has already regressed.
+
 For scraper changes, also run:
 
 ```bash
