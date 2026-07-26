@@ -509,14 +509,16 @@ function SetlistModal({ target, onClose, onEdit, onLeave, onIdDiscovered }) {
             <h2 className="text-2xl font-black uppercase tracking-tight">{artist}</h2>
             <p className="mt-1 text-sm text-zinc-400">{venue || "Venue not specified"} · {date}</p>
           </div>
-          <div className="flex shrink-0 items-center gap-2">
-            {onEdit && <button type="button" onClick={() => onEdit(target)} className="flex h-8 w-8 items-center justify-center rounded-full border border-zinc-700 text-sm text-zinc-300 hover:border-zinc-500 hover:text-white" aria-label="Edit concert" title="Edit concert"><i className="fa-solid fa-pencil" aria-hidden="true" /></button>}
-            <ModalCloseButton onClick={onClose} />
+          <div className="shrink-0 text-right">
+            <div className="flex items-center justify-end gap-2">
+              {onEdit && <button type="button" onClick={() => onEdit(target)} className="flex h-8 w-8 items-center justify-center rounded-full border border-zinc-700 text-sm text-zinc-300 hover:border-zinc-500 hover:text-white" aria-label="Edit concert" title="Edit concert"><i className="fa-solid fa-pencil" aria-hidden="true" /></button>}
+              <ModalCloseButton onClick={onClose} />
+            </div>
+            {target.creator?.displayName && <p className="mt-1.5 max-w-28 truncate text-[9px] font-semibold text-zinc-600" title={`Created by ${target.creator.displayName}`}>Created by {target.creator.displayName}</p>}
           </div>
         </div>
 
         <div className="overflow-y-auto flex-1">
-          {target.creator?.displayName && <section className="mb-5 rounded-2xl border border-zinc-800 bg-zinc-900/60 px-4 py-3 text-sm text-zinc-400"><span className="text-[10px] font-bold uppercase tracking-widest text-zinc-600">Created by</span><p className="mt-1 font-semibold text-zinc-200">{target.creator.displayName}</p>{target.attendeeUsers?.some((person) => person.status === "confirmed") && <p className="mt-1 text-xs text-zinc-500">Confirmed: {target.attendeeUsers.filter((person) => person.status === "confirmed").map((person) => person.displayName).join(", ")}</p>}</section>}
           {target.attendees?.length > 0 && (
             <section className="mb-5 flex items-center gap-3 border-b border-zinc-900 pb-4">
               <div className="flex shrink-0 -space-x-2" aria-hidden="true">
@@ -1285,6 +1287,7 @@ function CalendarConcertModal({ target, onClose, onEdit }) {
             </div>
           )}
         </div>
+        {!isPast && target.attendeeUsers?.length > 0 && <section className="mt-4 rounded-2xl border border-zinc-800 bg-zinc-950/60 p-4"><p className="mb-3 text-[10px] font-bold uppercase tracking-widest text-zinc-500">Coming with</p><div className="space-y-2">{target.attendeeUsers.map((person) => <div key={person.id} className="flex items-center justify-between gap-3 text-sm"><span className="font-semibold text-zinc-200">{person.displayName}</span><span className={`rounded-full border px-2.5 py-1 text-[10px] font-bold ${person.status === "confirmed" ? "border-emerald-900 bg-emerald-950/40 text-emerald-300" : "border-amber-900 bg-amber-950/40 text-amber-300"}`}>{person.status === "confirmed" ? "Confirmed" : "Pending"}</span></div>)}</div></section>}
       </article>
     </div>
   );
