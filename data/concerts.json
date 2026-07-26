@@ -5,21 +5,33 @@
       "venue": "PALAU SANT JORDI",
       "artist": "ADELE",
       "bought": true,
-      "setlistId": "1bfe9508"
+      "setlistId": "1bfe9508",
+      "attendees": [
+        "Ainoa",
+        "Ester",
+        "Lin Yu"
+      ]
     },
     {
       "date": "10/11/2017",
       "venue": "SALA BIKINI",
       "artist": "AGENT FRESCO",
       "bought": true,
-      "setlistId": "63e09e47"
+      "setlistId": "63e09e47",
+      "attendees": [
+        "Papa"
+      ]
     },
     {
       "date": "28/06/2023",
       "venue": "RESURRECTION FEST",
       "artist": "ALCEST",
       "bought": true,
-      "setlistId": "6ba7b612"
+      "setlistId": "6ba7b612",
+      "attendees": [
+        "Dimas",
+        "Jano"
+      ]
     },
     {
       "date": "01/07/2017",
@@ -46,83 +58,127 @@
       "venue": "DOWNLOAD FESTIVAL MADRID",
       "artist": "ARCHITECTS",
       "bought": true,
-      "setlistId": "73916a79"
+      "setlistId": "73916a79",
+      "attendees": [
+        "Papa"
+      ]
     },
     {
       "date": "01/07/2023",
       "venue": "RESURRECTION FEST",
       "artist": "ARCHITECTS",
       "bought": true,
-      "setlistId": "13a78d09"
+      "setlistId": "13a78d09",
+      "attendees": [
+        "Dimas",
+        "Jano"
+      ]
     },
     {
       "date": "21/06/2026",
       "venue": "HELLFEST 2026",
       "artist": "ARCHITECTS",
-      "bought": true
+      "bought": true,
+      "attendees": [
+        "Luca",
+        "Jano"
+      ]
     },
     {
       "date": "25/11/2013",
       "venue": "PALAU OLÍMPIC",
       "artist": "AVATAR",
       "bought": true,
-      "setlistId": "23c4c01b"
+      "setlistId": "23c4c01b",
+      "attendees": [
+        "Papa",
+        "Galcerán",
+        "Rubén"
+      ]
     },
     {
       "date": "24/06/2017",
       "venue": "DOWNLOAD FESTIVAL MADRID",
       "artist": "AVATAR",
       "bought": true,
-      "setlistId": "4be4f706"
+      "setlistId": "4be4f706",
+      "attendees": [
+        "Claudia"
+      ]
     },
     {
       "date": "25/03/2018",
       "venue": "SALA BIKINI",
       "artist": "AVATAR",
       "bought": true,
-      "setlistId": "23ef08b7"
+      "setlistId": "23ef08b7",
+      "attendees": [
+        "Papa"
+      ]
     },
     {
       "date": "05/07/2025",
       "venue": "RIYADH AIR METROPOLITANO",
       "artist": "AVATAR",
       "bought": true,
-      "setlistId": "4353db9f"
+      "setlistId": "4353db9f",
+      "attendees": [
+        "Raúl"
+      ]
     },
     {
       "date": "24/02/2026",
       "venue": "RAZZMATAZZ",
       "artist": "AVATAR",
       "bought": true,
-      "setlistId": "534697c5"
+      "setlistId": "534697c5",
+      "attendees": [
+        "Papa"
+      ]
     },
     {
       "date": "20/10/2010",
       "venue": "SANT JORDI CLUB",
       "artist": "AVENGED SEVENFOLD",
       "bought": true,
-      "setlistId": "6bd50ed6"
+      "setlistId": "6bd50ed6",
+      "attendees": [
+        "Papa"
+      ]
     },
     {
       "date": "25/11/2013",
       "venue": "PALAU OLÍMPIC",
       "artist": "AVENGED SEVENFOLD",
       "bought": true,
-      "setlistId": "1bc4c5b4"
+      "setlistId": "1bc4c5b4",
+      "attendees": [
+        "Papa",
+        "Galcerán",
+        "Rubén"
+      ]
     },
     {
       "date": "11/06/2024",
       "venue": "ST. JAKOBSHALLE BASEL",
       "artist": "AVENGED SEVENFOLD",
       "bought": true,
-      "setlistId": "3bab9848"
+      "setlistId": "3bab9848",
+      "attendees": [
+        "Saray",
+        "Papa"
+      ]
     },
     {
       "date": "29/06/2024",
       "venue": "RESURRECTION FEST",
       "artist": "AVENGED SEVENFOLD",
       "bought": true,
-      "setlistId": "2babd8ca"
+      "setlistId": "2babd8ca",
+      "attendees": [
+        "Dimas",
+        "Jano"
+      ]
     },
     {
       "date": "29/06/2018",
@@ -139,7 +195,11 @@
       "venue": "HELLFEST 2026",
       "artist": "A PERFECT CIRCLE",
       "bought": true,
-      "setlistId": "1b4f3dec"
+      "setlistId": "1b4f3dec",
+      "attendees": [
+        "Luca",
+        "Jano"
+      ]
     },
     {
       "date": "29/06/2018",
@@ -156,68 +216,104 @@
       "venue": "RESURRECTION FEST",
       "artist": "BEHEMOTH",
       "bought": true,
-      "setlistId": "6ba7b61a"
+      "setlistId": "6ba7b61a",
+      "attendees": [
+        "Dimas",
+        "Jano"
+      ]
     },
     {
       "date": "20/06/2026",
       "venue": "HELLFEST 2026",
       "artist": "BEHEMOTH",
-      "bought": true
+      "bought": true,
+      "attendees": [
+        "Luca",
+        "Jano"
+      ]
     },
     {
       "date": "04/02/2017",
       "venue": "RAZZMATAZZ",
       "artist": "BETWEEN THE BURIED AND ME",
       "bought": true,
-      "setlistId": "73f826f9"
+      "setlistId": "73f826f9",
+      "attendees": [
+        "Papa"
+      ]
     },
     {
       "date": "06/07/2022",
       "venue": "MONTREUX JAZZ FESTIVAL",
       "artist": "BLACK PUMAS",
       "bought": true,
-      "setlistId": "73b522ed"
+      "setlistId": "73b522ed",
+      "attendees": [
+        "Saray"
+      ]
     },
     {
       "date": "11/12/2024",
       "venue": "HALLENSTADION ZÜRICH",
       "artist": "BLEED FROM WITHIN",
       "bought": true,
-      "setlistId": "235e44ab"
+      "setlistId": "235e44ab",
+      "attendees": [
+        "Luca"
+      ]
     },
     {
       "date": "09/06/2023",
       "venue": "RESURRECTION FEST",
       "artist": "BORN OF OSIRIS",
       "bought": true,
-      "setlistId": "13b97d81"
+      "setlistId": "13b97d81",
+      "attendees": [
+        "Dimas",
+        "Jano"
+      ]
     },
     {
       "date": "30/10/2016",
       "venue": "O2 ARENA",
       "artist": "BRING ME THE HORIZON",
       "bought": true,
-      "setlistId": "3bf6ec54"
+      "setlistId": "3bf6ec54",
+      "attendees": [
+        "Claudia"
+      ]
     },
     {
       "date": "03/07/2022",
       "venue": "RESURRECTION FEST",
       "artist": "BRING ME THE HORIZON",
       "bought": true,
-      "setlistId": "33b5c8d1"
+      "setlistId": "33b5c8d1",
+      "attendees": [
+        "Dimas",
+        "Jano"
+      ]
     },
     {
       "date": "27/06/2024",
       "venue": "RESURRECTION FEST",
       "artist": "BRING ME THE HORIZON",
       "bought": true,
-      "setlistId": "bab892e"
+      "setlistId": "bab892e",
+      "attendees": [
+        "Dimas",
+        "Jano"
+      ]
     },
     {
       "date": "18/06/2026",
       "venue": "HELLFEST 2026",
       "artist": "BRING ME THE HORIZON",
-      "bought": true
+      "bought": true,
+      "attendees": [
+        "Luca",
+        "Jano"
+      ]
     },
     {
       "date": "30/06/2017",
@@ -234,21 +330,31 @@
       "venue": "DOWNLOAD FESTIVAL MADRID",
       "artist": "CODE ORANGE",
       "bought": true,
-      "setlistId": "13e481a1"
+      "setlistId": "13e481a1",
+      "attendees": [
+        "Claudia"
+      ]
     },
     {
       "date": "01/07/2023",
       "venue": "RESURRECTION FEST",
       "artist": "DESAKATO",
       "bought": true,
-      "setlistId": "1ba78d0c"
+      "setlistId": "1ba78d0c",
+      "attendees": [
+        "Dimas",
+        "Jano"
+      ]
     },
     {
       "date": "04/02/2017",
       "venue": "RAZZMATAZZ",
       "artist": "DEVIN TOWNSEND",
       "bought": true,
-      "setlistId": "4bf827f2"
+      "setlistId": "4bf827f2",
+      "attendees": [
+        "Papa"
+      ]
     },
     {
       "date": "01/07/2017",
@@ -265,42 +371,61 @@
       "venue": "SANT JORDI CLUB",
       "artist": "DREAM THEATER",
       "bought": true,
-      "setlistId": "53deffc1"
+      "setlistId": "53deffc1",
+      "attendees": [
+        "Raúl",
+        "Iván"
+      ]
     },
     {
       "date": "28/04/2017",
       "venue": "RAZZMATAZZ",
       "artist": "DREAM THEATER",
       "bought": true,
-      "setlistId": "be6057e"
+      "setlistId": "be6057e",
+      "attendees": [
+        "Papa"
+      ]
     },
     {
       "date": "14/02/2020",
       "venue": "SAMSUNG HALL, ZÚRICH",
       "artist": "DREAM THEATER",
       "bought": true,
-      "setlistId": "2b9824ea"
+      "setlistId": "2b9824ea",
+      "attendees": [
+        "Papa"
+      ]
     },
     {
       "date": "20/03/2016",
       "venue": "SALA APOLO",
       "artist": "ENTER SHIKARI",
       "bought": true,
-      "setlistId": "1bf02d0c"
+      "setlistId": "1bf02d0c",
+      "attendees": [
+        "Claudia"
+      ]
     },
     {
       "date": "30/10/2016",
       "venue": "O2 ARENA",
       "artist": "ENTER SHIKARI",
       "bought": true,
-      "setlistId": "5bfaefe4"
+      "setlistId": "5bfaefe4",
+      "attendees": [
+        "Claudia"
+      ]
     },
     {
       "date": "06/11/2025",
       "venue": "RAZZMATAZZ",
       "artist": "ENTER SHIKARI",
       "bought": true,
-      "setlistId": "1b423944"
+      "setlistId": "1b423944",
+      "attendees": [
+        "Papa"
+      ]
     },
     {
       "date": "03/06/2022",
@@ -337,14 +462,21 @@
       "venue": "RESURRECTION FEST",
       "artist": "FEVER 333",
       "bought": true,
-      "setlistId": "4ba7b7da"
+      "setlistId": "4ba7b7da",
+      "attendees": [
+        "Dimas",
+        "Jano"
+      ]
     },
     {
       "date": "02/07/2025",
       "venue": "POBLE ESPANYOL",
       "artist": "GUITARRICADELAFUENTE",
       "bought": true,
-      "setlistId": "1b5fa908"
+      "setlistId": "1b5fa908",
+      "attendees": [
+        "Saray"
+      ]
     },
     {
       "date": "27/09/2024",
@@ -361,7 +493,11 @@
       "venue": "RESURRECTION FEST",
       "artist": "HEAVEN SHALL BURN",
       "bought": true,
-      "setlistId": "6bb5d24e"
+      "setlistId": "6bb5d24e",
+      "attendees": [
+        "Dimas",
+        "Jano"
+      ]
     },
     {
       "date": "30/06/2018",
@@ -378,56 +514,82 @@
       "venue": "RESURRECTION FEST",
       "artist": "GHOST",
       "bought": true,
-      "setlistId": "33a7b4f1"
+      "setlistId": "33a7b4f1",
+      "attendees": [
+        "Dimas",
+        "Jano"
+      ]
     },
     {
       "date": "22/06/2017",
       "venue": "DOWNLOAD FESTIVAL MADRID",
       "artist": "GOJIRA",
       "bought": true,
-      "setlistId": "23e4845f"
+      "setlistId": "23e4845f",
+      "attendees": [
+        "Claudia"
+      ]
     },
     {
       "date": "02/07/2022",
       "venue": "RESURRECTION FEST",
       "artist": "GOJIRA",
       "bought": true,
-      "setlistId": "43b5db8f"
+      "setlistId": "43b5db8f",
+      "attendees": [
+        "Dimas",
+        "Jano"
+      ]
     },
     {
       "date": "01/07/2018",
       "venue": "ESTADI OLÍMPIC LLUÍS COMPANYS",
       "artist": "GUNS N' ROSES",
       "bought": true,
-      "setlistId": "2bea0456"
+      "setlistId": "2bea0456",
+      "attendees": [
+        "Raúl"
+      ]
     },
     {
       "date": "24/06/2017",
       "venue": "DOWNLOAD FESTIVAL MADRID",
       "artist": "IN FLAMES",
       "bought": true,
-      "setlistId": "53e4f711"
+      "setlistId": "53e4f711",
+      "attendees": [
+        "Claudia"
+      ]
     },
     {
       "date": "22/11/2017",
       "venue": "RAZZMATAZZ 3",
       "artist": "INTERVALS",
       "bought": true,
-      "setlistId": "3be0d0a0"
+      "setlistId": "3be0d0a0",
+      "attendees": [
+        "Guille"
+      ]
     },
     {
       "date": "05/07/2025",
       "venue": "RIYADH AIR METROPOLITANO",
       "artist": "IRON MAIDEN",
       "bought": true,
-      "setlistId": "1353d949"
+      "setlistId": "1353d949",
+      "attendees": [
+        "Raúl"
+      ]
     },
     {
       "date": "22/06/2017",
       "venue": "DOWNLOAD FESTIVAL MADRID",
       "artist": "JARDIN DE LA CROIX",
       "bought": true,
-      "setlistId": "3be4844c"
+      "setlistId": "3be4844c",
+      "attendees": [
+        "Claudia"
+      ]
     },
     {
       "date": "01/07/2017",
@@ -461,28 +623,41 @@
       "venue": "RESURRECTION FEST",
       "artist": "JINJER",
       "bought": true,
-      "setlistId": "2bb59c9a"
+      "setlistId": "2bb59c9a",
+      "attendees": [
+        "Dimas",
+        "Jano"
+      ]
     },
     {
       "date": "01/08/2022",
       "venue": "GENEVE ARENA",
       "artist": "JINJER",
       "bought": true,
-      "setlistId": "43b207eb"
+      "setlistId": "43b207eb",
+      "attendees": [
+        "Luca"
+      ]
     },
     {
       "date": "24/06/2017",
       "venue": "DOWNLOAD FESTIVAL MADRID",
       "artist": "KVELERTAK",
       "bought": true,
-      "setlistId": "7be4f6b8"
+      "setlistId": "7be4f6b8",
+      "attendees": [
+        "Claudia"
+      ]
     },
     {
       "date": "15/02/2019",
       "venue": "RAZZMATAZZ",
       "artist": "KVELERTAK",
       "bought": true,
-      "setlistId": "63924a8b"
+      "setlistId": "63924a8b",
+      "attendees": [
+        "Papa"
+      ]
     },
     {
       "date": "26/02/2022",
@@ -519,7 +694,10 @@
       "venue": "RAZZMATAZZ",
       "artist": "LEPROUS",
       "bought": true,
-      "setlistId": "5bf827f0"
+      "setlistId": "5bf827f0",
+      "attendees": [
+        "Papa"
+      ]
     },
     {
       "date": "01/07/2017",
@@ -536,56 +714,84 @@
       "venue": "SALA BIKINI",
       "artist": "LEPROUS",
       "bought": true,
-      "setlistId": "73e0ae75"
+      "setlistId": "73e0ae75",
+      "attendees": [
+        "Papa"
+      ]
     },
     {
       "date": "29/06/2019",
       "venue": "DOWNLOAD FESTIVAL MADRID",
       "artist": "LEPROUS",
       "bought": true,
-      "setlistId": "5b916b84"
+      "setlistId": "5b916b84",
+      "attendees": [
+        "Papa"
+      ]
     },
     {
       "date": "16/11/2019",
       "venue": "SALA APOLO",
       "artist": "LEPROUS",
       "bought": true,
-      "setlistId": "239ad06b"
+      "setlistId": "239ad06b",
+      "attendees": [
+        "Papa"
+      ]
     },
     {
       "date": "11/02/2020",
       "venue": "FRI-SON, FRIBOURG",
       "artist": "LEPROUS",
       "bought": true,
-      "setlistId": "2b983046"
+      "setlistId": "2b983046",
+      "attendees": [
+        "Luca",
+        "Saray"
+      ]
     },
     {
       "date": "10/12/2021",
       "venue": "SALA APOLO",
       "artist": "LEPROUS",
       "bought": true,
-      "setlistId": "1b8b91f4"
+      "setlistId": "1b8b91f4",
+      "attendees": [
+        "Papa"
+      ]
     },
     {
       "date": "26/02/2023",
       "venue": "LES DOCKS",
       "artist": "LEPROUS",
       "bought": true,
-      "setlistId": "6bbab66a"
+      "setlistId": "6bbab66a",
+      "attendees": [
+        "Luca",
+        "Saray",
+        "Vivien"
+      ]
     },
     {
       "date": "22/06/2017",
       "venue": "DOWNLOAD FESTIVAL MADRID",
       "artist": "LINKIN PARK",
       "bought": true,
-      "setlistId": "63e0ee4b"
+      "setlistId": "63e0ee4b",
+      "attendees": [
+        "Claudia"
+      ]
     },
     {
       "date": "26/06/2024",
       "venue": "RESURRECTION FEST",
       "artist": "MACHINE HEAD",
       "bought": true,
-      "setlistId": "13ab890d"
+      "setlistId": "13ab890d",
+      "attendees": [
+        "Dimas",
+        "Jano"
+      ]
     },
     {
       "date": "30/06/2017",
@@ -602,69 +808,103 @@
       "venue": "DOWNLOAD FESTIVAL MADRID",
       "artist": "MASTODON",
       "bought": true,
-      "setlistId": "3be48c88"
+      "setlistId": "3be48c88",
+      "attendees": [
+        "Claudia"
+      ]
     },
     {
       "date": "15/02/2019",
       "venue": "RAZZMATAZZ",
       "artist": "MASTODON",
       "bought": true,
-      "setlistId": "3956d1f"
+      "setlistId": "3956d1f",
+      "attendees": [
+        "Papa"
+      ]
     },
     {
       "date": "02/07/2022",
       "venue": "RESURRECTION FEST",
       "artist": "MASTODON",
       "bought": true,
-      "setlistId": "43b5db57"
+      "setlistId": "43b5db57",
+      "attendees": [
+        "Dimas",
+        "Jano"
+      ]
     },
     {
       "date": "19/06/2026",
       "venue": "HELLFEST 2026",
       "artist": "MASTODON",
-      "bought": true
+      "bought": true,
+      "attendees": [
+        "Luca",
+        "Jano"
+      ]
     },
     {
       "date": "15/07/2024",
       "venue": "MONTREUX JAZZ FESTIVAL",
       "artist": "MASSIVE ATTACK",
       "bought": true,
-      "setlistId": "5ba91708"
+      "setlistId": "5ba91708",
+      "attendees": [
+        "Luca"
+      ]
     },
     {
       "date": "29/06/2024",
       "venue": "RESURRECTION FEST",
       "artist": "MEGADETH",
       "bought": true,
-      "setlistId": "5babd3dc"
+      "setlistId": "5babd3dc",
+      "attendees": [
+        "Dimas",
+        "Jano"
+      ]
     },
     {
       "date": "30/06/2023",
       "venue": "RESURRECTION FEST",
       "artist": "MESHUGGAH",
       "bought": true,
-      "setlistId": "7ba7ba40"
+      "setlistId": "7ba7ba40",
+      "attendees": [
+        "Dimas",
+        "Jano"
+      ]
     },
     {
       "date": "21/03/2024",
       "venue": "SALLE MÉTROPOLE LAUSANNE",
       "artist": "MESHUGGAH",
       "bought": true,
-      "setlistId": "13ab2d51"
+      "setlistId": "13ab2d51",
+      "attendees": [
+        "Vivien"
+      ]
     },
     {
       "date": "06/07/2022",
       "venue": "MONTREUX JAZZ FESTIVAL",
       "artist": "MICHAEL KIWANUKA",
       "bought": true,
-      "setlistId": "7bb522ec"
+      "setlistId": "7bb522ec",
+      "attendees": [
+        "Saray"
+      ]
     },
     {
       "date": "19/07/2024",
       "venue": "MONTREUX JAZZ FESTIVAL",
       "artist": "MICHAEL KIWANUKA",
       "bought": true,
-      "setlistId": "6bab5e7a"
+      "setlistId": "6bab5e7a",
+      "attendees": [
+        "Saray"
+      ]
     },
     {
       "date": "30/06/2017",
@@ -681,21 +921,30 @@
       "venue": "LES NITS DE BARCELONA 2025 - JARDINS DEL PALAU DE PEDRALBES",
       "artist": "MORCHEEBA",
       "bought": true,
-      "setlistId": "35d656f"
+      "setlistId": "35d656f",
+      "attendees": [
+        "Papa"
+      ]
     },
     {
       "date": "25/04/2025",
       "venue": "PALAU DE LA MÚSICA CATALANA",
       "artist": "MORGAN",
       "bought": true,
-      "setlistId": "635f0e13"
+      "setlistId": "635f0e13",
+      "attendees": [
+        "Papa"
+      ]
     },
     {
       "date": "12/07/2023",
       "venue": "BERN",
       "artist": "MUSE",
       "bought": true,
-      "setlistId": "4ba71f46"
+      "setlistId": "4ba71f46",
+      "attendees": [
+        "Papa"
+      ]
     },
     {
       "date": "14/06/2025",
@@ -722,21 +971,30 @@
       "venue": "RAZZMATAZZ 3",
       "artist": "NICK JOHNSTON",
       "bought": true,
-      "setlistId": "23e038f7"
+      "setlistId": "23e038f7",
+      "attendees": [
+        "Guille"
+      ]
     },
     {
       "date": "23/06/2017",
       "venue": "DOWNLOAD FESTIVAL MADRID",
       "artist": "OPETH",
       "bought": true,
-      "setlistId": "be4fd1e"
+      "setlistId": "be4fd1e",
+      "attendees": [
+        "Claudia"
+      ]
     },
     {
       "date": "08/04/2017",
       "venue": "SALA BIKINI",
       "artist": "PAIN OF SALVATION",
       "bought": true,
-      "setlistId": "53e68365"
+      "setlistId": "53e68365",
+      "attendees": [
+        "Papa"
+      ]
     },
     {
       "date": "29/06/2018",
@@ -763,27 +1021,43 @@
       "venue": "RESURRECTION FEST",
       "artist": "PANTERA",
       "bought": true,
-      "setlistId": "13a7b915"
+      "setlistId": "13a7b915",
+      "attendees": [
+        "Dimas",
+        "Jano"
+      ]
     },
     {
       "date": "30/06/2023",
       "venue": "RESURRECTION FEST",
       "artist": "PAPA ROACH",
       "bought": true,
-      "setlistId": "13a79d15"
+      "setlistId": "13a79d15",
+      "attendees": [
+        "Dimas",
+        "Jano"
+      ]
     },
     {
       "date": "18/06/2026",
       "venue": "HELLFEST 2026",
       "artist": "PAPA ROACH",
-      "bought": true
+      "bought": true,
+      "attendees": [
+        "Luca",
+        "Jano"
+      ]
     },
     {
       "date": "01/07/2023",
       "venue": "RESURRECTION FEST",
       "artist": "PARKWAY DRIVE",
       "bought": true,
-      "setlistId": "1ba78d04"
+      "setlistId": "1ba78d04",
+      "attendees": [
+        "Dimas",
+        "Jano"
+      ]
     },
     {
       "date": "30/06/2018",
@@ -800,84 +1074,122 @@
       "venue": "LES DOCKS",
       "artist": "PLINI",
       "bought": true,
-      "setlistId": "4b57b78a"
+      "setlistId": "4b57b78a",
+      "attendees": [
+        "Luca"
+      ]
     },
     {
       "date": "22/11/2017",
       "venue": "RAZZMATAZZ 3",
       "artist": "POLYPHIA",
       "bought": true,
-      "setlistId": "23e038f3"
+      "setlistId": "23e038f3",
+      "attendees": [
+        "Guille"
+      ]
     },
     {
       "date": "24/05/2023",
       "venue": "KOMPLEX 457 ZURICH",
       "artist": "POLYPHIA",
       "bought": true,
-      "setlistId": "4bb91f4e"
+      "setlistId": "4bb91f4e",
+      "attendees": [
+        "Jeremiah"
+      ]
     },
     {
       "date": "12/06/2024",
       "venue": "LES DOCKS",
       "artist": "POLYPHIA",
       "bought": true,
-      "setlistId": "5357b799"
+      "setlistId": "5357b799",
+      "attendees": [
+        "Luca"
+      ]
     },
     {
       "date": "09/11/2022",
       "venue": "HALLE 622 ZÜRICH",
       "artist": "PORCUPINE TREE",
       "bought": true,
-      "setlistId": "43be73bf"
+      "setlistId": "43be73bf",
+      "attendees": [
+        "Vivien"
+      ]
     },
     {
       "date": "19/07/2018",
       "venue": "POBLE ESPANYOL",
       "artist": "RESIDENTE",
       "bought": true,
-      "setlistId": "13ebd941"
+      "setlistId": "13ebd941",
+      "attendees": [
+        "Saray"
+      ]
     },
     {
       "date": "14/09/2024",
       "venue": "PALAU SANT JORDI",
       "artist": "RESIDENTE",
       "bought": true,
-      "setlistId": "7ba89ed8"
+      "setlistId": "7ba89ed8",
+      "attendees": [
+        "Saray"
+      ]
     },
     {
       "date": "14/07/2025",
       "venue": "POBLE ESPANYOL",
       "artist": "RESIDENTE",
       "bought": true,
-      "setlistId": "135f1d09"
+      "setlistId": "135f1d09",
+      "attendees": [
+        "Saray"
+      ]
     },
     {
       "date": "01/07/2022",
       "venue": "RESURRECTION FEST",
       "artist": "RISE AGAINST",
       "bought": true,
-      "setlistId": "1bb5dd74"
+      "setlistId": "1bb5dd74",
+      "attendees": [
+        "Dimas",
+        "Jano"
+      ]
     },
     {
       "date": "13/05/2017",
       "venue": "SALAMANDRA",
       "artist": "RIVERSIDE",
       "bought": true,
-      "setlistId": "73e65661"
+      "setlistId": "73e65661",
+      "attendees": [
+        "Papa"
+      ]
     },
     {
       "date": "05/11/2018",
       "venue": "SALAMANDRA",
       "artist": "RIVERSIDE",
       "bought": true,
-      "setlistId": "3396a0d5"
+      "setlistId": "3396a0d5",
+      "attendees": [
+        "Papa"
+      ]
     },
     {
       "date": "13/04/2018",
       "venue": "PALAU SANT JORDI",
       "artist": "ROGER WATERS",
       "bought": true,
-      "setlistId": "bec81fe"
+      "setlistId": "bec81fe",
+      "attendees": [
+        "Papa",
+        "Raúl"
+      ]
     },
     {
       "date": "25/11/2022",
@@ -904,21 +1216,30 @@
       "venue": "Z7 - PRATTELN",
       "artist": "SOEN",
       "bought": true,
-      "setlistId": "4bb8c32e"
+      "setlistId": "4bb8c32e",
+      "attendees": [
+        "Papa"
+      ]
     },
     {
       "date": "24/06/2017",
       "venue": "DOWNLOAD FESTIVAL MADRID",
       "artist": "SÓLSTAFIR",
       "bought": true,
-      "setlistId": "5be4f714"
+      "setlistId": "5be4f714",
+      "attendees": [
+        "Claudia"
+      ]
     },
     {
       "date": "25/11/2017",
       "venue": "RAZZMATAZZ 2",
       "artist": "SÓLSTAFIR",
       "bought": true,
-      "setlistId": "63e0e6f3"
+      "setlistId": "63e0e6f3",
+      "attendees": [
+        "Papa"
+      ]
     },
     {
       "date": "30/06/2018",
@@ -935,7 +1256,11 @@
       "venue": "RESURRECTION FEST",
       "artist": "SOULFLY",
       "bought": true,
-      "setlistId": "2ba790c2"
+      "setlistId": "2ba790c2",
+      "attendees": [
+        "Dimas",
+        "Jano"
+      ]
     },
     {
       "date": "30/06/2018",
@@ -952,7 +1277,10 @@
       "venue": "SALA PARAL·LEL 62",
       "artist": "STEVEN WILSON",
       "bought": true,
-      "setlistId": "1b570598"
+      "setlistId": "1b570598",
+      "attendees": [
+        "Papa"
+      ]
     },
     {
       "date": "05/11/2024",
@@ -966,63 +1294,94 @@
       "venue": "DOWNLOAD FESTIVAL MADRID",
       "artist": "SLIPKNOT",
       "bought": true,
-      "setlistId": "1b916de4"
+      "setlistId": "1b916de4",
+      "attendees": [
+        "Papa"
+      ]
     },
     {
       "date": "01/08/2022",
       "venue": "GENEVE ARENA",
       "artist": "SLIPKNOT",
       "bought": true,
-      "setlistId": "5bb207fc"
+      "setlistId": "5bb207fc",
+      "attendees": [
+        "Luca"
+      ]
     },
     {
       "date": "30/06/2023",
       "venue": "RESURRECTION FEST",
       "artist": "SLIPKNOT",
       "bought": true,
-      "setlistId": "3a79d17"
+      "setlistId": "3a79d17",
+      "attendees": [
+        "Dimas",
+        "Jano"
+      ]
     },
     {
       "date": "11/12/2024",
       "venue": "HALLENSTADION ZÜRICH",
       "artist": "SLIPKNOT",
       "bought": true,
-      "setlistId": "2babc85a"
+      "setlistId": "2babc85a",
+      "attendees": [
+        "Luca"
+      ]
     },
     {
       "date": "09/02/2026",
       "venue": "L'AUDITORI",
       "artist": "SNARKY PUPPY",
       "bought": true,
-      "setlistId": "6b400e06"
+      "setlistId": "6b400e06",
+      "attendees": [
+        "Ibai",
+        "Pau"
+      ]
     },
     {
       "date": "23/06/2017",
       "venue": "DOWNLOAD FESTIVAL MADRID",
       "artist": "SYSTEM OF A DOWN",
       "bought": true,
-      "setlistId": "1be4fd08"
+      "setlistId": "1be4fd08",
+      "attendees": [
+        "Claudia"
+      ]
     },
     {
       "date": "26/06/2024",
       "venue": "RESURRECTION FEST",
       "artist": "SUM41",
       "bought": true,
-      "setlistId": "13ab8935"
+      "setlistId": "13ab8935",
+      "attendees": [
+        "Dimas",
+        "Jano"
+      ]
     },
     {
       "date": "20/01/2024",
       "venue": "SALA APOLO",
       "artist": "TESSERACT",
       "bought": true,
-      "setlistId": "53aca7e9"
+      "setlistId": "53aca7e9",
+      "attendees": [
+        "Papa",
+        "Luca"
+      ]
     },
     {
       "date": "11/01/2025",
       "venue": "LES DOCKS",
       "artist": "TESSERACT",
       "bought": true,
-      "setlistId": "4b546f9e"
+      "setlistId": "4b546f9e",
+      "attendees": [
+        "Luca"
+      ]
     },
     {
       "date": "26/09/2025",
@@ -1039,35 +1398,51 @@
       "venue": "RESURRECTION FEST",
       "artist": "THE GHOST INSIDE",
       "bought": true,
-      "setlistId": "33a7b4fd"
+      "setlistId": "33a7b4fd",
+      "attendees": [
+        "Dimas",
+        "Jano"
+      ]
     },
     {
       "date": "29/01/2022",
       "venue": "THÉÂTRE BENNO BESSON, YVERDON-LES-BAINS",
       "artist": "TIGRAN HAMASYAN",
       "bought": true,
-      "setlistId": "3388c0f1"
+      "setlistId": "3388c0f1",
+      "attendees": [
+        "Vivien"
+      ]
     },
     {
       "date": "30/06/2019",
       "venue": "DOWNLOAD FESTIVAL MADRID",
       "artist": "TOOL",
       "bought": true,
-      "setlistId": "339168cd"
+      "setlistId": "339168cd",
+      "attendees": [
+        "Papa"
+      ]
     },
     {
       "date": "08/04/2018",
       "venue": "RAZZMATAZZ 2",
       "artist": "TRIVIUM",
       "bought": true,
-      "setlistId": "23eca02b"
+      "setlistId": "23eca02b",
+      "attendees": [
+        "Papa"
+      ]
     },
     {
       "date": "16/09/2023",
       "venue": "GRANADA SOUND",
       "artist": "VETUSTA MORLA",
       "bought": true,
-      "setlistId": "43a27ff7"
+      "setlistId": "43a27ff7",
+      "attendees": [
+        "Saray"
+      ]
     },
     {
       "date": "18/01/2018",
@@ -1081,14 +1456,20 @@
       "venue": "PALAU DE LA MÚSICA CATALANA",
       "artist": "YERAI CORTÉS",
       "bought": true,
-      "setlistId": "2b4fbcd2"
+      "setlistId": "2b4fbcd2",
+      "attendees": [
+        "Raúl"
+      ]
     },
     {
       "date": "05/06/2026",
       "venue": "NOCHES DEL BOTÁNICO - MADRID",
       "artist": "RIGOBERTA BANDINI",
       "bought": true,
-      "setlistId": "7b4c5224"
+      "setlistId": "7b4c5224",
+      "attendees": [
+        "Saray"
+      ]
     },
     {
       "date": "06/06/2026",
@@ -1104,56 +1485,91 @@
       "date": "20/06/2026",
       "venue": "HELLFEST 2026",
       "artist": "LIMP BIZKIT",
-      "bought": true
+      "bought": true,
+      "attendees": [
+        "Luca",
+        "Jano"
+      ]
     },
     {
       "date": "18/06/2026",
       "venue": "HELLFEST 2026",
       "artist": "THE PLOT IN YOU",
-      "bought": true
+      "bought": true,
+      "attendees": [
+        "Luca",
+        "Jano"
+      ]
     },
     {
       "date": "18/06/2026",
       "venue": "HELLFEST 2026",
       "artist": "DEEP PURPLE",
-      "bought": true
+      "bought": true,
+      "attendees": [
+        "Luca",
+        "Jano"
+      ]
     },
     {
       "date": "19/06/2026",
       "venue": "HELLFEST 2026",
       "artist": "SYLOSIS",
-      "bought": true
+      "bought": true,
+      "attendees": [
+        "Luca",
+        "Jano"
+      ]
     },
     {
       "date": "19/06/2026",
       "venue": "HELLFEST 2026",
       "artist": "LOATHE",
-      "bought": true
+      "bought": true,
+      "attendees": [
+        "Luca",
+        "Jano"
+      ]
     },
     {
       "date": "19/06/2026",
       "venue": "HELLFEST 2026",
       "artist": "PERIPHERY",
-      "bought": true
+      "bought": true,
+      "attendees": [
+        "Luca",
+        "Jano"
+      ]
     },
     {
       "date": "20/06/2026",
       "venue": "HELLFEST 2026",
       "artist": "GAEREA",
-      "bought": true
+      "bought": true,
+      "attendees": [
+        "Luca",
+        "Jano"
+      ]
     },
     {
       "date": "21/06/2026",
       "venue": "HELLFEST 2026",
       "artist": "BAD OMENS",
       "bought": true,
-      "setlistId": "1b4f3dfc"
+      "setlistId": "1b4f3dfc",
+      "attendees": [
+        "Luca",
+        "Jano"
+      ]
     },
     {
       "date": "19/04/2007",
       "venue": "LA FARGA",
       "artist": "MÄGO DE OZ",
-      "bought": true
+      "bought": true,
+      "attendees": [
+        "Papa"
+      ]
     },
     {
       "date": "10/09/2026",
