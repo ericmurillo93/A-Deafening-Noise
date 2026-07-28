@@ -26,6 +26,8 @@ Read `README.md` for the quick start and `docs/DEVELOPMENT.md` for production co
 - Local function emulation must remain `apply: "serve"`; it must never become production runtime code.
 - Never commit `.env.local`, passwords, GitHub tokens, Supabase secret/service-role keys, or setlist.fm keys.
 - Supabase-enabled local UI edits write to Supabase and do not update or commit the JSON fallback automatically.
+- Repeat visits render a per-user IndexedDB snapshot and revalidate silently. Preserve cache isolation, schema versioning, background refresh, and complete cache removal on logout.
+- Keep page-specific heavy features lazy-loaded; the geographic map must not return to the initial application bundle.
 
 ## Concert rules
 

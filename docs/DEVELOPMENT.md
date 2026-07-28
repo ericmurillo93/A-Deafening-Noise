@@ -303,6 +303,12 @@ Concert identity is canonical: artist, venue, and date inputs search the complet
 
 Users can leave a shared concert without changing the creator's copy, export their personal data as JSON, or delete their account. The activity view records friend requests, concert invitations, and accepted invitations. Admins can change roles and block or restore access; blocked accounts are rejected by both application bootstrap and database mutation guards. Stats can be scoped to the complete personal archive or concerts explicitly attended with one accepted friend.
 
+### Client cache and synchronization
+
+Authenticated application data is cached per user in IndexedDB. On repeat visits the cached archive renders first and `get_app_data()` revalidates it silently; returning to a visible tab refreshes data at most once every 30 seconds. Successful mutations refresh both Supabase state and the local cache. Logout clears every cached user snapshot so data is not exposed to the next person using a shared browser. Cache records carry an explicit schema version in `src/lib/app-cache.js`; increment it whenever an incompatible response shape is deployed.
+
+The geographic map is a lazy-loaded chunk and must remain outside the initial archive/calendar bundle. New page-specific heavy dependencies should follow the same pattern.
+
 Artist and venue labels are canonical uppercase values. The UI uppercases them while typing and the database trigger enforces the same rule for every writer.
 
 Setlist lookup first uses a stored `setlistId`. If no ID exists, the proxy searches by artist and date; when an ID is discovered, the application persists it for later lookups.
