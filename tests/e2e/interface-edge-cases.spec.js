@@ -153,6 +153,7 @@ test("Clean routes survive direct loads and reloads", async ({ page }) => {
   const routes = [
     ["/history", "Concert Archive"],
     ["/calendar", "Concert Calendar"],
+    ["/suggestions", "Concert Suggestions"],
     ["/timeline", "Timeline"],
     ["/stats", "Archive Overview"],
     ["/year-review", "Year in Review"],
@@ -165,4 +166,38 @@ test("Clean routes survive direct loads and reloads", async ({ page }) => {
     await expect(page.getByRole("heading", { name: heading, exact: true })).toBeVisible();
     await expect(page).toHaveURL(new RegExp(`${route.replace("/", "\\/")}$`));
   }
+});
+
+test("Profile offers Spotify connection through the UI", async ({ page }) => {
+  let authorizationUrl = "";
+  await page.route("https://accounts.spotify.com/authorize**", async (route) => {
+    authorizationUrl = route.request().url();
+    await route.abort();
+  });
+  await page.goto("/profile");
+  await expect(page.getByRole("heading", { name: "Spotify", exact: true })).toBeVisible();
+  const connect = page.getByRole("button", { name: "Connect Spotify" });
+  await expect(connect).toBeVisible();
+  await expect(connect.locator("img")).toBeVisible();
+  await connect.click();
+  await expect.poll(() => new URL(authorizationUrl).searchParams.get("show_dialog")).toBe("true");
+});
+
+test("Spotify callback is consumed once under React Strict Mode", async ({ page }) => {
+  let tokenRequests = 0;
+  await page.route("https://accounts.spotify.com/api/token", async (route) => {
+    tokenRequests += 1;
+    await route.fulfill({ json: { access_token: "test-token" } });
+  });
+  await page.route("https://api.spotify.com/v1/**", async (route) => {
+    await route.fulfill({ json: route.request().url().endsWith("/me") ? { id: "eric", display_name: "Eric" } : { items: [] } });
+  });
+  await page.goto("/profile");
+  await page.evaluate(() => {
+    sessionStorage.setItem("adn_spotify_code_verifier", "verifier");
+    sessionStorage.setItem("adn_spotify_oauth_state", "state");
+  });
+  await page.goto("/spotify/callback?code=code&state=state");
+  await expect.poll(() => tokenRequests).toBe(1);
+  await expect(page.getByText("Spotify could not verify this connection. Please try again.")).toHaveCount(0);
 });

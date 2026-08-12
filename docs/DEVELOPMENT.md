@@ -46,6 +46,7 @@ Authenticated development also requires the public Supabase configuration:
 ```text
 VITE_SUPABASE_URL=https://your-development-project.supabase.co
 VITE_SUPABASE_PUBLISHABLE_KEY=your_publishable_key
+VITE_SPOTIFY_CLIENT_ID=your_spotify_client_id
 ```
 
 The publishable key is designed for browser use and is protected by Supabase Auth and RLS. Never put a Supabase secret or `service_role` key in a `VITE_` variable.
@@ -298,6 +299,17 @@ npm run import:spotify -- path/to/my_spotify_data.zip
 ```
 
 The importer writes `data/listened-artists.json`. It retains only artist-level aggregates: artist name, number of listening records, total milliseconds, and first/last timestamps. Raw track names, IP addresses, devices, and other private export fields are not retained. The `.gitignore` protects the expected ZIP filename and a `spotify-data/` import directory; never commit the raw export under another name.
+
+### Spotify account connection
+
+Users connect Spotify from **Profile** using OAuth Authorization Code with PKCE and the single `user-top-read` scope. Configure these exact redirect URIs in the Spotify Developer Dashboard:
+
+```text
+https://adeafeningnoise.com/spotify/callback
+http://127.0.0.1:5173/spotify/callback
+```
+
+Set `VITE_SPOTIFY_CLIENT_ID` locally and in Netlify. The Client ID is public configuration; no Spotify Client Secret is used. The browser fetches up to 50 top artists for short-, medium-, and long-term affinity, sends only artist IDs, names, and matching ranges to the authenticated Supabase RPC, then discards the access token. Spotify tokens, tracks, and raw listening history are never stored. Development Mode users must be added to the Spotify app allowlist.
 
 Select **Interested** to open the normal Add Concert modal with artist, venue, and date prefilled, or **Not interested** to dismiss a suggestion. These choices are staged in browser storage, so you can review the complete list without creating a write per concert. Use **Save decisions** once at the end: interested concerts and dismissed artist/date keys are written together to Supabase. Persisted dismissals are excluded from later scraper runs.
 

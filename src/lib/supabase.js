@@ -44,3 +44,6 @@ export const exportMyData = () => rpc("export_my_data");
 export const deleteMyAccount = () => rpc("delete_my_account");
 export const adminListUsers = () => rpc("admin_list_users");
 export const adminUpdateUser = (userId, role, status) => rpc("admin_update_user", { target_user: userId, new_role: role, new_status: status });
+export const getMySpotifyStatus = () => rpc("get_my_spotify_status");
+export const syncMySpotifyArtists = (payload) => rpc("sync_my_spotify_artists", { payload });
+export const disconnectMySpotify = () => rpc("disconnect_my_spotify");

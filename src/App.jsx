@@ -228,7 +228,8 @@ function parseRouteParts(pagePart = "history", valueParts = []) {
   if (pagePart === "artist" && value) return { page: "artist", artist: value, venue: null };
   if (pagePart === "venue" && value) return { page: "venue", artist: null, venue: value };
   if (pagePart === "year-review" && /^\d{4}$/.test(value || "")) return { page: "year-review", artist: null, venue: null, year: value };
-  const pageAliases = { calendar: "next", history: "history", timeline: "timeline", stats: "stats", "year-review": "year-review", friends: "friends", activity: "activity", profile: "profile", admin: "admin" };
+  if (pagePart === "spotify" && value === "callback") return { page: "profile", artist: null, venue: null, year: null };
+  const pageAliases = { calendar: "next", suggestions: "suggestions", history: "history", timeline: "timeline", stats: "stats", "year-review": "year-review", friends: "friends", activity: "activity", profile: "profile", admin: "admin" };
   return { page: pageAliases[pagePart] || "history", artist: null, venue: null, year: null };
 }
 
@@ -1134,14 +1135,12 @@ function NextConcertCalendar({ items, onOpen, onContextMenu, onContextMenuAt }) 
 }
 
 function ConcertSuggestions({ suggestions, reviews, onInterested, onNotInterested, onSave, isSaving, saveError }) {
-  const [open, setOpen] = useState(false);
   const [refresh, setRefresh] = useState({ status: "idle", conclusion: null });
   const [refreshError, setRefreshError] = useState("");
   const refreshRequestedAtRef = useRef(0);
   const pendingCount = Object.keys(reviews).length;
 
   useEffect(() => {
-    if (!open) return undefined;
     let cancelled = false;
     let timer;
     const check = async () => {
@@ -1167,7 +1166,7 @@ function ConcertSuggestions({ suggestions, reviews, onInterested, onNotIntereste
     };
     check();
     return () => { cancelled = true; window.clearTimeout(timer); };
-  }, [open, refresh.status === "queued"]);
+  }, [refresh.status === "queued"]);
 
   const startRefresh = async () => {
     setRefreshError("");
@@ -1198,23 +1197,8 @@ function ConcertSuggestions({ suggestions, reviews, onInterested, onNotIntereste
         : "";
 
   return (
-    <section className="mt-5 rounded-3xl border border-zinc-800 bg-zinc-900 p-2">
-      <button
-        type="button"
-        onClick={() => setOpen((current) => !current)}
-        className="flex w-full items-center justify-between rounded-2xl px-4 py-3 text-left font-bold text-zinc-100 transition hover:bg-zinc-800"
-        aria-expanded={open}
-      >
-        <span className="flex items-center gap-3">
-          <i className="fa-solid fa-wand-magic-sparkles text-zinc-400" aria-hidden="true" />
-          <span>Concert suggestions</span>
-          <span className="rounded-full border border-zinc-700 px-2 py-0.5 text-xs text-zinc-400">{suggestions.length}</span>
-        </span>
-        <i className={`fa-solid fa-chevron-down text-xs text-zinc-600 transition-transform ${open ? "rotate-180" : ""}`} aria-hidden="true" />
-      </button>
-
-      {open && (
-        <div className="mx-3 mb-3 mt-1 border-l border-zinc-700 pl-3">
+    <section className="mx-auto max-w-5xl rounded-3xl border border-zinc-800 bg-zinc-900 p-4 md:p-6">
+        <div>
           <div className="mb-3 flex flex-col gap-2 rounded-2xl border border-zinc-800 bg-zinc-950 p-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="min-w-0 text-xs text-zinc-500">
               <p>Last updated {formatEuropeanDateTime(suggestionsData.generatedAt)}</p>
@@ -1264,7 +1248,6 @@ function ConcertSuggestions({ suggestions, reviews, onInterested, onNotIntereste
             </div>
           )}
         </div>
-      )}
     </section>
   );
 }
@@ -2271,6 +2254,7 @@ export default function App() {
   const isActivity = activePage === "activity";
   const isProfile = activePage === "profile";
   const isAdminPage = isAdmin && activePage === "admin";
+  const isSuggestions = isAdmin && activePage === "suggestions";
 
   usePageScrollLock(anyPageOverlayOpen);
 
@@ -2309,12 +2293,13 @@ export default function App() {
     ? nextItems.filter((item) => normalize(item.artist) === normalize(artistDetail.artist))
     : [];
   const mode = isNext ? "next" : "history";
-  const title = isVenueDetail ? selectedVenue : isArtistDetail ? artistDetail.artist : isAdminPage ? "Administration" : isProfile ? "Profile" : isActivity ? "Activity" : isFriends ? "Friends" : isYearReview ? "Year in Review" : isTimeline ? "Timeline" : isStats ? "Archive Overview" : isNext ? "Concert Calendar" : "Concert Archive";
+  const title = isVenueDetail ? selectedVenue : isArtistDetail ? artistDetail.artist : isAdminPage ? "Administration" : isSuggestions ? "Concert Suggestions" : isProfile ? "Profile" : isActivity ? "Activity" : isFriends ? "Friends" : isYearReview ? "Year in Review" : isTimeline ? "Timeline" : isStats ? "Archive Overview" : isNext ? "Concert Calendar" : "Concert Archive";
   const description = isVenueDetail
     ? `${venueShows.length} archived ${venueShows.length === 1 ? "visit" : "visits"} to this venue.`
     : isArtistDetail
     ? `${artistDetail.shows.length} live ${artistDetail.shows.length === 1 ? "performance" : "performances"} in the archive.`
     : isAdminPage ? "Users, roles and access controls."
+    : isSuggestions ? "Discover upcoming concerts from artists you already listen to."
     : isProfile ? "Your identity, privacy and account settings."
     : isActivity ? "Everything that needs your attention."
     : isYearReview
@@ -2485,7 +2470,7 @@ export default function App() {
     const initial = readRouteFromLocation();
     const isPasswordRecovery = new URLSearchParams(window.location.search).get("password-recovery") === "1";
     const isLoggedOutRoot = window.location.pathname === "/" && !window.location.hash;
-    if (!isPasswordRecovery && !isLoggedOutRoot) window.history.replaceState({ adnRoute: true, canGoBack: false }, "", routeToPath(initial));
+    if (!isPasswordRecovery && !isLoggedOutRoot && window.location.pathname !== "/spotify/callback") window.history.replaceState({ adnRoute: true, canGoBack: false }, "", routeToPath(initial));
 
     function restoreRoute() {
       if (dialogHistoryOpenRef.current || closingDialogWithBackRef.current) {
@@ -2783,6 +2768,27 @@ export default function App() {
   }
 
   const statsScopeControl = (isStats || isYearReview) && friends.length > 0 ? <div className="mx-auto mb-6 max-w-xs"><DropdownMenu value={statsFriendId} onChange={setStatsFriendId} ariaLabel="Stats scope" centered options={[{ value: "", label: "My complete archive" }, ...friends.map((friend) => ({ value: friend.id, label: `Concerts with ${friend.displayName}` }))]} /></div> : null;
+  const suggestionsPage = isSuggestions ? <ConcertSuggestions
+    suggestions={availableSuggestions}
+    reviews={pendingSuggestionReviews}
+    onInterested={(suggestion) => {
+      const pendingConcert = pendingSuggestionReviews[suggestion.id]?.concert;
+      setSaveError("");
+      setActiveSuggestionId(suggestion.id);
+      setAddInitial(pendingConcert || { artist: suggestion.artist, venue: suggestion.venue, date: suggestion.date, bought: false, ticketUrl: suggestion.sourceUrl || "" });
+      setModalOpen(true);
+    }}
+    onNotInterested={(suggestion) => {
+      setSaveError("");
+      setPendingSuggestionReviews((current) => ({
+        ...current,
+        [suggestion.id]: { decision: "not-interested", key: suggestionDecisionKey(suggestion) },
+      }));
+    }}
+    onSave={saveSuggestionReviews}
+    isSaving={isSaving}
+    saveError={saveError}
+  /> : null;
 
   return (
     <>
@@ -2813,7 +2819,7 @@ export default function App() {
             <p className="mb-2 px-3 text-[10px] font-black uppercase tracking-[0.2em] text-zinc-600">Explore</p>
             <nav className="space-y-1 text-sm">
               <button onClick={() => changePage("history")} aria-current={["history", "artist", "timeline", "venue"].includes(activePage) ? "page" : undefined} className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left font-bold transition ${["history", "artist", "timeline", "venue"].includes(activePage) ? "bg-zinc-900 text-zinc-100" : "text-zinc-400 hover:bg-zinc-900/70 hover:text-zinc-100"}`}><i className="fa-solid fa-layer-group w-5 text-center text-zinc-500" aria-hidden="true" /><span>Concert history</span></button>
-              {canEdit && <button onClick={() => changePage("next")} aria-current={activePage === "next" ? "page" : undefined} className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left font-bold transition ${activePage === "next" ? "bg-zinc-900 text-zinc-100" : "text-zinc-400 hover:bg-zinc-900/70 hover:text-zinc-100"}`}><i className="fa-solid fa-calendar-days w-5 text-center text-zinc-500" aria-hidden="true" /><span>Concert calendar</span></button>}
+              {canEdit && <div className={`rounded-xl ${activePage === "next" || activePage === "suggestions" ? "bg-zinc-900 pb-2" : ""}`}><button onClick={() => changePage("next")} aria-current={activePage === "next" ? "page" : undefined} className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left font-bold transition ${activePage === "next" ? "text-zinc-100" : "text-zinc-400 hover:bg-zinc-900/70 hover:text-zinc-100"}`}><i className="fa-solid fa-calendar-days w-5 text-center text-zinc-500" aria-hidden="true" /><span>Concert calendar</span></button>{isAdmin && <div className="ml-5 border-l border-zinc-800 pl-3 pr-2"><button onClick={() => changePage("suggestions")} aria-current={activePage === "suggestions" ? "page" : undefined} className={`flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-xs font-semibold transition hover:bg-zinc-800 hover:text-zinc-100 ${activePage === "suggestions" ? "bg-zinc-800 text-zinc-100" : "text-zinc-500"}`}><span>Concert suggestions</span><span className="ml-auto rounded-full border border-zinc-700 px-1.5 py-0.5 text-[10px]">{availableSuggestions.length}</span></button></div>}</div>}
               <button onClick={() => changePage("friends")} aria-current={activePage === "friends" ? "page" : undefined} className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left font-bold transition ${activePage === "friends" ? "bg-zinc-900 text-zinc-100" : "text-zinc-400 hover:bg-zinc-900/70 hover:text-zinc-100"}`}><i className="fa-solid fa-user-group w-5 text-center text-zinc-500" aria-hidden="true" /><span>Friends</span>{friendRequests.filter((request) => request.direction === "incoming").length + concertInvitations.length > 0 && <span className="ml-auto min-w-6 rounded-full bg-amber-900 px-2 py-0.5 text-center text-[10px] font-black text-amber-100">{friendRequests.filter((request) => request.direction === "incoming").length + concertInvitations.length}</span>}</button>
               <button onClick={() => changePage("activity")} aria-current={activePage === "activity" ? "page" : undefined} className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left font-bold transition ${activePage === "activity" ? "bg-zinc-900 text-zinc-100" : "text-zinc-400 hover:bg-zinc-900/70 hover:text-zinc-100"}`}><i className="fa-solid fa-bell w-5 text-center text-zinc-500" aria-hidden="true" /><span>Activity</span>{notifications.filter((item) => !item.readAt).length > 0 && <span className="ml-auto min-w-6 rounded-full bg-amber-900 px-2 py-0.5 text-center text-[10px] font-black text-amber-100">{notifications.filter((item) => !item.readAt).length}</span>}</button>
               <div data-testid="stats-menu-group" className={`rounded-xl ${statsMenuOpen ? "pb-2" : ""} ${activePage === "stats" || activePage === "year-review" ? "bg-zinc-900" : ""}`}>
@@ -2866,7 +2872,8 @@ export default function App() {
             onOpenSetlist={openConcertDetails}
             onOpenVenue={openVenueDetail}
           /></>
-        ) : isAdminPage ? <DeferredPage><AdminPage currentUserId={currentUserId} onChanged={reloadAppData} /></DeferredPage>
+        ) : isSuggestions ? suggestionsPage
+        : isAdminPage ? <DeferredPage><AdminPage currentUserId={currentUserId} onChanged={reloadAppData} /></DeferredPage>
         : isProfile ? <DeferredPage><ProfilePage profile={appProfile} onSave={async (payload) => { await updateMyProfile(payload); await reloadAppData(); }} onExport={handleProfileExport} onDelete={async () => { await deleteMyAccount(); await supabase.auth.signOut(); }} onPassword={() => setPasswordModalMode("change")} /></DeferredPage>
         : isActivity ? <DeferredPage><ActivityPage notifications={notifications} onRead={async (ids) => { await markNotificationsRead(ids); await reloadAppData(); }} onOpenFriends={() => changePage("friends")} /></DeferredPage>
         : isFriends ? <FriendsPage friends={friends} requests={friendRequests} invitations={concertInvitations} onSearch={searchProfiles} onSendRequest={(userId) => runSocialAction(() => sendFriendRequest(userId))} onRespondRequest={(requestId, accept) => runSocialAction(() => respondFriendRequest(requestId, accept))} onRemoveFriend={(userId) => runSocialAction(() => removeFriend(userId))} onRespondInvitation={(concertId, accept, bought) => runSocialAction(() => respondConcertInvitation(concertId, accept, bought))} /> : isStats ? <>{statsScopeControl}<StatsPage historyItems={scopedHistoryItems} onOpenVenue={openVenueDetail} onOpenYearReview={openYearReview} /></> : (
@@ -2914,27 +2921,6 @@ export default function App() {
                   onContextMenu={(event, concert) => openContextMenu(event, { ...concert, mode: concert.source === "history" ? "history" : "next" })}
                   onContextMenuAt={(x, y, concert) => openContextMenuAt(x, y, { ...concert, mode: concert.source === "history" ? "history" : "next" })}
                 />
-                {isAdmin && <ConcertSuggestions
-                  suggestions={availableSuggestions}
-                  reviews={pendingSuggestionReviews}
-                  onInterested={(suggestion) => {
-                    const pendingConcert = pendingSuggestionReviews[suggestion.id]?.concert;
-                    setSaveError("");
-                    setActiveSuggestionId(suggestion.id);
-                    setAddInitial(pendingConcert || { artist: suggestion.artist, venue: suggestion.venue, date: suggestion.date, bought: false, ticketUrl: suggestion.sourceUrl || "" });
-                    setModalOpen(true);
-                  }}
-                  onNotInterested={(suggestion) => {
-                    setSaveError("");
-                    setPendingSuggestionReviews((current) => ({
-                      ...current,
-                      [suggestion.id]: { decision: "not-interested", key: suggestionDecisionKey(suggestion) },
-                    }));
-                  }}
-                  onSave={saveSuggestionReviews}
-                  isSaving={isSaving}
-                  saveError={saveError}
-                />}
               </>
             ) : (
             <><div className="mb-4 flex items-center justify-between text-xs font-bold uppercase tracking-widest text-zinc-500"><span>{filtered.length} {filtered.length === 1 ? "artist" : "artists"}</span><span>{filtered.reduce((total, item) => total + (item.shows?.length || 0), 0)} concerts</span></div><section className="grid w-full gap-4 md:grid-cols-2 xl:grid-cols-3">

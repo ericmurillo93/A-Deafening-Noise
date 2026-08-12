@@ -1,11 +1,14 @@
 import React, { useEffect, useState } from "react";
-import { adminListUsers, adminUpdateUser } from "../lib/supabase";
+import spotifyIcon from "@fortawesome/fontawesome-free/svgs/brands/spotify.svg";
+import { adminListUsers, adminUpdateUser, disconnectMySpotify, getMySpotifyStatus, syncMySpotifyArtists } from "../lib/supabase";
+import { connectSpotify, finishSpotifyConnection } from "../lib/spotify";
 import { EmptyState, PanelHeading, UserAvatar } from "../components/SharedUi";
 
 export function ProfilePage({ profile, onSave, onExport, onDelete, onPassword }) {
   const [form, setForm] = useState({ displayName: "", avatarUrl: "", city: "", country: "", discoverable: true });
   const [status, setStatus] = useState("");
   const [saving, setSaving] = useState(false);
+  const [spotify, setSpotify] = useState({ loading: true, connected: false, error: "" });
   useEffect(() => setForm({ displayName: profile?.displayName || "", avatarUrl: profile?.avatarUrl || "", city: profile?.city || "", country: profile?.country || "", discoverable: profile?.discoverable !== false }), [profile]);
   const field = (key) => (event) => setForm((current) => ({ ...current, [key]: event.target.value }));
   async function submit(event) {
@@ -16,6 +19,28 @@ export function ProfilePage({ profile, onSave, onExport, onDelete, onPassword })
     if (window.prompt("Type DELETE to permanently delete your account and personal data.") !== "DELETE") return;
     await onDelete();
   }
+  async function disconnectSpotify() {
+    if (!window.confirm("Disconnect Spotify and remove your synced artists?")) return;
+    setSpotify((current) => ({ ...current, loading: true, error: "" }));
+    try { await disconnectMySpotify(); setSpotify({ loading: false, connected: false, error: "" }); }
+    catch (error) { setSpotify((current) => ({ ...current, loading: false, error: error.message || "Spotify could not be disconnected." })); }
+  }
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const status = window.location.pathname === "/spotify/callback"
+          ? await syncMySpotifyArtists(await finishSpotifyConnection())
+          : await getMySpotifyStatus();
+        if (window.location.pathname === "/spotify/callback") window.history.replaceState({ adnRoute: true, canGoBack: false }, "", "/profile");
+        if (!cancelled) setSpotify({ loading: false, error: "", ...status });
+      } catch (error) {
+        if (window.location.pathname === "/spotify/callback") window.history.replaceState({ adnRoute: true, canGoBack: false }, "", "/profile");
+        if (!cancelled) setSpotify({ loading: false, connected: false, error: error.message || "Spotify could not be connected." });
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
   return <div className="mx-auto max-w-3xl space-y-6">
     <form onSubmit={submit} className="rounded-3xl border border-zinc-800 bg-zinc-900 p-5 md:p-7">
       <PanelHeading icon="fa-id-card" title="Public profile" description="This information helps friends recognise you." />
@@ -30,6 +55,11 @@ export function ProfilePage({ profile, onSave, onExport, onDelete, onPassword })
       {status && <p className="mt-4 text-sm text-zinc-300" role="status">{status}</p>}
       <button disabled={saving} className="mt-6 rounded-2xl bg-zinc-100 px-5 py-3 text-sm font-black text-zinc-950 disabled:opacity-50">{saving ? "Saving…" : "Save profile"}</button>
     </form>
+    <section className="rounded-3xl border border-zinc-800 bg-zinc-900 p-5 md:p-7">
+      <div className="mb-5 flex items-start gap-3"><div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-zinc-800 bg-zinc-950"><img src={spotifyIcon} alt="" className="h-4 w-4 brightness-0 invert" /></div><div><h2 className="text-lg font-black uppercase tracking-tight text-zinc-100">Spotify</h2><p className="mt-1 text-sm text-zinc-500">Use your top artists to personalise concert suggestions.</p></div></div>
+      {spotify.loading ? <p className="text-sm text-zinc-400" role="status">Updating Spotify connection…</p> : spotify.connected ? <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"><div className="min-w-0"><p className="truncate font-bold text-zinc-100">Connected as {spotify.displayName}</p><p className="mt-1 text-sm text-zinc-500">{spotify.artistCount} top artists synced</p></div><div className="flex flex-wrap gap-2"><button type="button" onClick={() => connectSpotify().catch((error) => setSpotify((current) => ({ ...current, error: error.message })))} className="rounded-2xl border border-zinc-700 px-4 py-3 text-sm font-bold text-zinc-200 hover:border-zinc-500">Refresh Spotify</button><button type="button" onClick={disconnectSpotify} className="rounded-2xl px-4 py-3 text-sm font-bold text-red-400 hover:bg-red-950/30 hover:text-red-300">Disconnect</button></div></div> : <button type="button" onClick={() => connectSpotify().catch((error) => setSpotify((current) => ({ ...current, error: error.message })))} className="inline-flex items-center rounded-2xl bg-[#1ed760] px-5 py-3 text-sm font-black text-zinc-950 transition hover:bg-[#3be477] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1ed760]"><img src={spotifyIcon} alt="" className="mr-2 h-4 w-4" />Connect Spotify</button>}
+      {spotify.error && <p className="mt-4 rounded-2xl border border-red-900 bg-red-950/30 px-4 py-3 text-sm text-red-200" role="alert">{spotify.error}</p>}
+    </section>
     <section className="rounded-3xl border border-zinc-800 bg-zinc-900 p-5 md:p-7"><PanelHeading icon="fa-shield-halved" title="Account and privacy" description="Control your credentials and personal data." /><div className="grid gap-3 sm:grid-cols-2"><button onClick={onPassword} className="rounded-2xl border border-zinc-700 px-4 py-3 text-sm font-bold text-zinc-200 hover:border-zinc-500">Change password</button><button onClick={onExport} className="rounded-2xl border border-zinc-700 px-4 py-3 text-sm font-bold text-zinc-200 hover:border-zinc-500">Export my data</button></div><button onClick={removeAccount} className="mt-6 text-sm font-bold text-red-400 hover:text-red-300">Delete my account</button></section>
   </div>;
 }
