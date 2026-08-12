@@ -59,7 +59,7 @@ Read `README.md` for the quick start and `docs/DEVELOPMENT.md` for production co
 
 ## Suggestion pipeline
 
-- Scrapers: Resurrection Fest Route, Live Nation Spain, Madness Live, Sala Razzmatazz, Sala Apolo, Sala Bikini, Paral·lel 62, Palau de la Música Catalana, Les Docks, and Montreux Jazz Festival.
+- Scrapers: Resurrection Fest Route, Live Nation Spain, Madness Live, Sala Razzmatazz, Sala Apolo, Sala Bikini, Paral·lel 62, Palau de la Música Catalana, Les Docks, Montreux Jazz Festival, and DICE.
 - Match only billed artists that exist in `data/listened-artists.json`.
 - Exclude an artist/date already present in `data/concerts.json`.
 - Generate the listened catalog with `npm run import:spotify`; never commit raw Spotify exports.
@@ -98,6 +98,7 @@ node --check scripts/scrape-docks.mjs
 node --check scripts/scrape-montreux-jazz-festival.mjs
 node --check scripts/scrape-sala-apolo.mjs
 node --check scripts/scrape-bikini-barcelona.mjs
+node --check scripts/scrape-dice.mjs
 ```
 
 Validate JSON files with `JSON.parse` before committing. Test high-risk calendar/modal changes on both desktop and phone-sized layouts when possible.

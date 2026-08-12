@@ -275,7 +275,7 @@ Functions directory: netlify/functions
 
 ## Concert suggestion automation
 
-The workflow `.github/workflows/concert-suggestions.yml` runs only on demand. Open **Concert suggestions** below the calendar and select **Find concerts**. The browser sends Eric's Supabase session token to a Netlify function; the function backs the current Supabase archive up to `data/concerts.json`, keeps `GITHUB_TOKEN` server-side, and dispatches GitHub Actions. The UI then polls a second authenticated function for progress. GitHub Actions refreshes Resurrection Fest Route, Live Nation Spain, Madness Live, Sala Razzmatazz, Sala Apolo, Sala Bikini, Paral·lel 62, Palau de la Música Catalana, Les Docks, and Montreux Jazz Festival.
+The workflow `.github/workflows/concert-suggestions.yml` runs only on demand. Open **Concert suggestions** below the calendar and select **Find concerts**. The browser sends Eric's Supabase session token to a Netlify function; the function backs the current Supabase archive up to `data/concerts.json`, keeps `GITHUB_TOKEN` server-side, and dispatches GitHub Actions. The UI then polls a second authenticated function for progress. GitHub Actions refreshes Resurrection Fest Route, Live Nation Spain, Madness Live, Sala Razzmatazz, Sala Apolo, Sala Bikini, Paral·lel 62, Palau de la Música Catalana, Les Docks, Montreux Jazz Festival, and DICE listings in Spain and Switzerland.
 
 GitHub's Actions UI remains a fallback:
 
