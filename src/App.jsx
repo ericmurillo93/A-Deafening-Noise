@@ -3,8 +3,6 @@ import whatsappIcon from "@fortawesome/fontawesome-free/svgs/brands/whatsapp.svg
 import concertsData from "../data/concerts.json";
 import suggestionsData from "../data/suggestions.json";
 import {
-  adminListUsers,
-  adminUpdateUser,
   deleteMyAccount,
   deleteMyConcert,
   exportMyData,
@@ -25,6 +23,11 @@ import {
   updateMyProfile,
 } from "./lib/supabase";
 import { clearAppCache, readAppCache, writeAppCache } from "./lib/app-cache";
+import { EmptyState, PanelHeading, UserAvatar } from "./components/SharedUi";
+
+const ProfilePage = React.lazy(() => import("./pages/AccountPages").then(({ ProfilePage: Page }) => ({ default: Page })));
+const ActivityPage = React.lazy(() => import("./pages/AccountPages").then(({ ActivityPage: Page }) => ({ default: Page })));
+const AdminPage = React.lazy(() => import("./pages/AccountPages").then(({ AdminPage: Page }) => ({ default: Page })));
 
 // ─── Data bootstrap ───────────────────────────────────────────────────────────
 
@@ -432,14 +435,6 @@ function Icon({ type }) {
 
 function ModalCloseButton({ onClick, disabled = false }) {
   return <button type="button" onClick={onClick} disabled={disabled} className="touch-target flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-zinc-800 text-zinc-400 transition hover:border-zinc-600 hover:bg-zinc-900 hover:text-zinc-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-400 disabled:opacity-40" aria-label="Close"><i className="fa-solid fa-xmark" aria-hidden="true" /></button>;
-}
-
-function PanelHeading({ icon, title, description }) {
-  return <div className="mb-5 flex items-start gap-3"><div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-zinc-800 bg-zinc-950 text-zinc-500"><i className={`fa-solid ${icon}`} aria-hidden="true" /></div><div><h2 className="text-lg font-black uppercase tracking-tight text-zinc-100">{title}</h2>{description && <p className="mt-1 text-sm text-zinc-500">{description}</p>}</div></div>;
-}
-
-function EmptyState({ icon = "fa-music", title, description }) {
-  return <div className="rounded-2xl border border-dashed border-zinc-800 bg-zinc-950/40 px-5 py-8 text-center"><i className={`fa-solid ${icon} mb-3 text-xl text-zinc-700`} aria-hidden="true" /><p className="text-sm font-bold text-zinc-400">{title}</p>{description && <p className="mx-auto mt-1 max-w-sm text-xs text-zinc-600">{description}</p>}</div>;
 }
 
 // ─── AutoSuggestField ─────────────────────────────────────────────────────────
@@ -1983,58 +1978,6 @@ function FriendsPage({ friends, requests, invitations, onSearch, onSendRequest, 
   );
 }
 
-function UserAvatar({ person, size = "h-10 w-10" }) {
-  const name = person?.displayName || "User";
-  return person?.avatarUrl
-    ? <img src={person.avatarUrl} alt="" className={`${size} shrink-0 rounded-full border border-zinc-700 object-cover`} />
-    : <div aria-hidden="true" className={`${size} flex shrink-0 items-center justify-center rounded-full border border-zinc-700 bg-zinc-950 text-sm font-black text-zinc-300`}>{name.slice(0, 1).toUpperCase()}</div>;
-}
-
-function ProfilePage({ profile, onSave, onExport, onDelete, onPassword }) {
-  const [form, setForm] = useState({ displayName: "", avatarUrl: "", city: "", country: "", discoverable: true });
-  const [status, setStatus] = useState("");
-  const [saving, setSaving] = useState(false);
-  useEffect(() => setForm({ displayName: profile?.displayName || "", avatarUrl: profile?.avatarUrl || "", city: profile?.city || "", country: profile?.country || "", discoverable: profile?.discoverable !== false }), [profile]);
-  const field = (key) => (event) => setForm((current) => ({ ...current, [key]: event.target.value }));
-  async function submit(event) {
-    event.preventDefault(); setSaving(true); setStatus("");
-    try { await onSave(form); setStatus("Profile saved."); } catch (error) { setStatus(error.message || "Could not save your profile."); } finally { setSaving(false); }
-  }
-  async function removeAccount() {
-    if (window.prompt("Type DELETE to permanently delete your account and personal data.") !== "DELETE") return;
-    await onDelete();
-  }
-  return <div className="mx-auto max-w-3xl space-y-6">
-    <form onSubmit={submit} className="rounded-3xl border border-zinc-800 bg-zinc-900 p-5 md:p-7">
-      <PanelHeading icon="fa-id-card" title="Public profile" description="This information helps friends recognise you." />
-      <div className="mb-6 flex items-center gap-4"><UserAvatar person={{ ...profile, ...form }} size="h-16 w-16" /><div><p className="font-bold text-zinc-100">{form.displayName || "Your name"}</p><p className="text-sm text-zinc-500">@{profile?.username}</p></div></div>
-      <div className="grid gap-4 sm:grid-cols-2">
-        <label className="text-xs font-bold text-zinc-400">Display name<input required maxLength="80" value={form.displayName} onChange={field("displayName")} className="mt-2 w-full rounded-2xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-sm text-zinc-100 outline-none focus:border-zinc-400" /></label>
-        <label className="text-xs font-bold text-zinc-400">Avatar URL<input type="url" value={form.avatarUrl} onChange={field("avatarUrl")} placeholder="https://…" className="mt-2 w-full rounded-2xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-sm text-zinc-100 outline-none focus:border-zinc-400" /></label>
-        <label className="text-xs font-bold text-zinc-400">City<input value={form.city} onChange={field("city")} className="mt-2 w-full rounded-2xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-sm text-zinc-100 outline-none focus:border-zinc-400" /></label>
-        <label className="text-xs font-bold text-zinc-400">Country<input value={form.country} onChange={field("country")} className="mt-2 w-full rounded-2xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-sm text-zinc-100 outline-none focus:border-zinc-400" /></label>
-      </div>
-      <label className="mt-5 flex items-center gap-3 text-sm text-zinc-300"><input type="checkbox" checked={form.discoverable} onChange={(event) => setForm((current) => ({ ...current, discoverable: event.target.checked }))} className="h-4 w-4 accent-zinc-100" />Allow other users to find me</label>
-      {status && <p className="mt-4 text-sm text-zinc-300" role="status">{status}</p>}
-      <button disabled={saving} className="mt-6 rounded-2xl bg-zinc-100 px-5 py-3 text-sm font-black text-zinc-950 disabled:opacity-50">{saving ? "Saving…" : "Save profile"}</button>
-    </form>
-    <section className="rounded-3xl border border-zinc-800 bg-zinc-900 p-5 md:p-7"><PanelHeading icon="fa-shield-halved" title="Account and privacy" description="Control your credentials and personal data." /><div className="grid gap-3 sm:grid-cols-2"><button onClick={onPassword} className="rounded-2xl border border-zinc-700 px-4 py-3 text-sm font-bold text-zinc-200 hover:border-zinc-500">Change password</button><button onClick={onExport} className="rounded-2xl border border-zinc-700 px-4 py-3 text-sm font-bold text-zinc-200 hover:border-zinc-500">Export my data</button></div><button onClick={removeAccount} className="mt-6 text-sm font-bold text-red-400 hover:text-red-300">Delete my account</button></section>
-  </div>;
-}
-
-function ActivityPage({ notifications, onRead, onOpenFriends }) {
-  useEffect(() => { const unread = notifications.filter((item) => !item.readAt).map((item) => item.id); if (unread.length) onRead(unread); }, []);
-  return <div className="mx-auto max-w-3xl"><section className="rounded-3xl border border-zinc-800 bg-zinc-900 p-5 md:p-7"><PanelHeading icon="fa-bell" title="Activity" description="Invitations, requests and shared concert updates." />{notifications.length ? <div className="space-y-2">{notifications.map((item) => <button key={item.id} onClick={onOpenFriends} className={`flex w-full items-start gap-3 rounded-2xl border p-4 text-left transition hover:border-zinc-600 ${item.readAt ? "border-zinc-800 bg-zinc-950/50" : "border-amber-900/60 bg-amber-950/20"}`}><i className={`fa-solid ${item.kind === "friend_request" ? "fa-user-plus" : "fa-ticket"} mt-1 w-5 text-center text-zinc-500`} aria-hidden="true" /><span><span className="block font-bold text-zinc-100">{item.kind === "friend_request" ? `${item.actorName} sent you a friend request` : item.kind === "invitation_accepted" ? `${item.actorName} confirmed attendance` : `${item.actorName} invited you to a concert`}</span>{item.artist && <span className="mt-1 block text-sm text-zinc-500">{item.artist} · {item.date}</span>}</span></button>)}</div> : <EmptyState icon="fa-bell" title="No activity yet" description="New friend requests and concert invitations will appear here." />}</section></div>;
-}
-
-function AdminPage({ currentUserId, onChanged }) {
-  const [users, setUsers] = useState([]); const [error, setError] = useState("");
-  async function load() { try { setUsers(await adminListUsers()); } catch (e) { setError(e.message); } }
-  useEffect(() => { load(); }, []);
-  async function update(user, changes) { try { await adminUpdateUser(user.id, changes.role || user.role, changes.status || user.status); await load(); onChanged(); } catch (e) { setError(e.message); } }
-  return <div className="mx-auto max-w-5xl"><section className="rounded-3xl border border-zinc-800 bg-zinc-900 p-5 md:p-7"><PanelHeading icon="fa-user-shield" title="User administration" description="Manage roles and access without exposing private credentials." />{error && <p className="mb-4 text-sm text-red-300">{error}</p>}<div className="space-y-3">{users.map((user) => <div key={user.id} className="grid gap-3 rounded-2xl border border-zinc-800 bg-zinc-950 p-4 md:grid-cols-[1fr_auto_auto] md:items-center"><div className="min-w-0"><p className="truncate font-bold">{user.displayName}</p><p className="truncate text-xs text-zinc-500">{user.email} · {user.concertCount} concerts</p></div><select aria-label={`Role for ${user.displayName}`} value={user.role} disabled={user.id === currentUserId} onChange={(e) => update(user, { role: e.target.value })} className="rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm"><option value="user">User</option><option value="admin">Admin</option></select><button disabled={user.id === currentUserId} onClick={() => update(user, { status: user.status === "active" ? "blocked" : "active" })} className={`rounded-xl border px-4 py-2 text-xs font-black disabled:opacity-40 ${user.status === "active" ? "border-red-900 text-red-300" : "border-emerald-900 text-emerald-300"}`}>{user.status === "active" ? "Block" : "Restore"}</button></div>)}</div></section></div>;
-}
-
 // ─── LoginGate ────────────────────────────────────────────────────────────────
 
 function LoginGate({ onSignedIn }) {
@@ -2125,6 +2068,10 @@ function AppBootstrapShell() {
       </div>
     </div>
   </div>;
+}
+
+function DeferredPage({ children }) {
+  return <React.Suspense fallback={<div className="h-64 animate-pulse rounded-3xl border border-zinc-800 bg-zinc-900" role="status" aria-label="Opening page" />}>{children}</React.Suspense>;
 }
 
 function ChangePasswordModal({ mode, email, onClose }) {
@@ -2919,9 +2866,9 @@ export default function App() {
             onOpenSetlist={openConcertDetails}
             onOpenVenue={openVenueDetail}
           /></>
-        ) : isAdminPage ? <AdminPage currentUserId={currentUserId} onChanged={reloadAppData} />
-        : isProfile ? <ProfilePage profile={appProfile} onSave={async (payload) => { await updateMyProfile(payload); await reloadAppData(); }} onExport={handleProfileExport} onDelete={async () => { await deleteMyAccount(); await supabase.auth.signOut(); }} onPassword={() => setPasswordModalMode("change")} />
-        : isActivity ? <ActivityPage notifications={notifications} onRead={async (ids) => { await markNotificationsRead(ids); await reloadAppData(); }} onOpenFriends={() => changePage("friends")} />
+        ) : isAdminPage ? <DeferredPage><AdminPage currentUserId={currentUserId} onChanged={reloadAppData} /></DeferredPage>
+        : isProfile ? <DeferredPage><ProfilePage profile={appProfile} onSave={async (payload) => { await updateMyProfile(payload); await reloadAppData(); }} onExport={handleProfileExport} onDelete={async () => { await deleteMyAccount(); await supabase.auth.signOut(); }} onPassword={() => setPasswordModalMode("change")} /></DeferredPage>
+        : isActivity ? <DeferredPage><ActivityPage notifications={notifications} onRead={async (ids) => { await markNotificationsRead(ids); await reloadAppData(); }} onOpenFriends={() => changePage("friends")} /></DeferredPage>
         : isFriends ? <FriendsPage friends={friends} requests={friendRequests} invitations={concertInvitations} onSearch={searchProfiles} onSendRequest={(userId) => runSocialAction(() => sendFriendRequest(userId))} onRespondRequest={(requestId, accept) => runSocialAction(() => respondFriendRequest(requestId, accept))} onRemoveFriend={(userId) => runSocialAction(() => removeFriend(userId))} onRespondInvitation={(concertId, accept, bought) => runSocialAction(() => respondConcertInvitation(concertId, accept, bought))} /> : isStats ? <>{statsScopeControl}<StatsPage historyItems={scopedHistoryItems} onOpenVenue={openVenueDetail} onOpenYearReview={openYearReview} /></> : (
           <>
             <div className="sticky top-0 z-10 mb-8 border-y border-zinc-800 bg-zinc-950/90 py-3 backdrop-blur">
