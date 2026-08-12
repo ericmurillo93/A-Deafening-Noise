@@ -106,7 +106,10 @@ test("Open dialogs lock the page behind them and preserve its scroll position", 
   const initialScrollY = await page.evaluate(() => window.scrollY);
 
   await concert.click();
-  await expect(page.getByTestId("concert-details-modal")).toBeVisible();
+  const modal = page.getByTestId("concert-details-modal");
+  await expect(modal).toBeVisible();
+  await expect(modal.getByRole("dialog")).toBeVisible();
+  await expect.poll(() => modal.evaluate((element) => element.contains(document.activeElement))).toBe(true);
   await expect.poll(() => page.evaluate(() => ({
     bodyOverflow: document.body.style.overflow,
     rootOverflow: document.documentElement.style.overflow,

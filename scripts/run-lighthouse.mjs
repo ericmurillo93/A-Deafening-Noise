@@ -1,5 +1,5 @@
 import { spawn } from "node:child_process";
-import { rm } from "node:fs/promises";
+import { mkdir, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import process from "node:process";
@@ -47,6 +47,7 @@ const preview = spawn("npm", ["run", "preview", "--", "--host", "127.0.0.1", "--
 let chrome;
 try {
   await waitForServer(`${baseUrl}/history`);
+  await mkdir(chromeProfile, { recursive: true });
   chrome = await launchChrome({
     chromePath: chromium.executablePath(),
     chromeFlags: ["--headless", "--no-sandbox", "--disable-dev-shm-usage"],

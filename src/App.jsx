@@ -102,6 +102,35 @@ function usePageScrollLock(locked) {
   }, [locked]);
 }
 
+function useDialogFocus(open) {
+  const dialogRef = useRef(null);
+  const returnFocusRef = useRef(null);
+
+  useEffect(() => {
+    if (!open) return undefined;
+    returnFocusRef.current = document.activeElement;
+    const dialog = dialogRef.current;
+    const focusable = dialog?.querySelector("button, [href], input, select, textarea, [tabindex]:not([tabindex='-1'])");
+    focusable?.focus();
+    function keepFocusInside(event) {
+      if (event.key !== "Tab" || !dialog) return;
+      const items = [...dialog.querySelectorAll("button:not(:disabled), [href], input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex='-1'])")];
+      if (!items.length) return;
+      const first = items[0];
+      const last = items.at(-1);
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+    }
+    document.addEventListener("keydown", keepFocusInside);
+    return () => {
+      document.removeEventListener("keydown", keepFocusInside);
+      returnFocusRef.current?.focus?.();
+    };
+  }, [open]);
+
+  return dialogRef;
+}
+
 function restorePageScroll(scrollY) {
   const root = document.documentElement;
   const previousScrollBehavior = root.style.scrollBehavior;
@@ -402,7 +431,7 @@ function Icon({ type }) {
 }
 
 function ModalCloseButton({ onClick, disabled = false }) {
-  return <button type="button" onClick={onClick} disabled={disabled} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-zinc-800 text-zinc-400 transition hover:border-zinc-600 hover:bg-zinc-900 hover:text-zinc-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-400 disabled:opacity-40" aria-label="Close"><i className="fa-solid fa-xmark" aria-hidden="true" /></button>;
+  return <button type="button" onClick={onClick} disabled={disabled} className="touch-target flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-zinc-800 text-zinc-400 transition hover:border-zinc-600 hover:bg-zinc-900 hover:text-zinc-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-400 disabled:opacity-40" aria-label="Close"><i className="fa-solid fa-xmark" aria-hidden="true" /></button>;
 }
 
 function PanelHeading({ icon, title, description }) {
@@ -418,6 +447,7 @@ function EmptyState({ icon = "fa-music", title, description }) {
 function AutoSuggestField({ value, onChange, suggestions, placeholder }) {
   const [open, setOpen] = useState(false);
   const [highlight, setHighlight] = useState(-1);
+  const listId = React.useId();
   const matches = useMemo(() => {
     const q = normalize(value || "").trim();
     if (!q) return [];
@@ -433,11 +463,11 @@ function AutoSuggestField({ value, onChange, suggestions, placeholder }) {
   }
   return (
     <div className="relative">
-      <input type="text" value={value} onChange={(e) => { onChange(e.target.value); setOpen(true); setHighlight(-1); }} onFocus={() => setOpen(true)} onBlur={() => setTimeout(() => setOpen(false), 150)} onKeyDown={handleKey} placeholder={placeholder} autoComplete="off" className="w-full rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-zinc-100 outline-none focus:border-zinc-400" />
+      <input role="combobox" aria-autocomplete="list" aria-expanded={open && matches.length > 0} aria-controls={listId} aria-activedescendant={highlight >= 0 ? `${listId}-${highlight}` : undefined} type="text" value={value} onChange={(e) => { onChange(e.target.value); setOpen(true); setHighlight(-1); }} onFocus={() => setOpen(true)} onBlur={() => setTimeout(() => setOpen(false), 150)} onKeyDown={handleKey} placeholder={placeholder} autoComplete="off" className="w-full rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-zinc-100 outline-none focus:border-zinc-400" />
       {open && matches.length > 0 && (
-        <ul className="absolute left-0 right-0 top-full z-20 mt-1 max-h-60 overflow-auto rounded-2xl border border-zinc-700 bg-zinc-950 shadow-2xl">
+        <ul id={listId} role="listbox" className="absolute left-0 right-0 top-full z-20 mt-1 max-h-60 overflow-auto rounded-2xl border border-zinc-700 bg-zinc-950 shadow-2xl">
           {matches.map((m, i) => (
-            <li key={m} onMouseDown={(e) => { e.preventDefault(); pick(m); }} onMouseEnter={() => setHighlight(i)} className={`cursor-pointer px-4 py-2 text-sm ${i === highlight ? "bg-zinc-800 text-zinc-100" : "text-zinc-300 hover:bg-zinc-900"}`}>{m}</li>
+            <li id={`${listId}-${i}`} role="option" aria-selected={i === highlight} key={m} onMouseDown={(e) => { e.preventDefault(); pick(m); }} onMouseEnter={() => setHighlight(i)} className={`cursor-pointer px-4 py-2 text-sm ${i === highlight ? "bg-zinc-800 text-zinc-100" : "text-zinc-300 hover:bg-zinc-900"}`}>{m}</li>
           ))}
         </ul>
       )}
@@ -448,6 +478,7 @@ function AutoSuggestField({ value, onChange, suggestions, placeholder }) {
 function ConcertCatalogField({ field, value, onChange, onPick, onSearch, placeholder }) {
   const [open, setOpen] = useState(false);
   const [results, setResults] = useState([]);
+  const listId = React.useId();
 
   useEffect(() => {
     const query = value.trim();
@@ -469,8 +500,8 @@ function ConcertCatalogField({ field, value, onChange, onPick, onSearch, placeho
 
   return (
     <div className="relative">
-      <input type="text" value={value} onChange={(event) => { onChange(event.target.value); setOpen(true); }} onFocus={() => setOpen(true)} onBlur={() => window.setTimeout(() => setOpen(false), 150)} placeholder={placeholder} autoComplete="off" className="w-full rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-zinc-100 outline-none focus:border-zinc-400" />
-      {open && results.length > 0 && <ul className="absolute left-0 right-0 top-full z-30 mt-1 max-h-64 overflow-auto rounded-2xl border border-zinc-700 bg-zinc-950 p-1 shadow-2xl">{results.map((concert) => <li key={concert.concertId}><button type="button" onMouseDown={(event) => { event.preventDefault(); onPick(concert); setOpen(false); }} className="block w-full rounded-xl px-3 py-2.5 text-left hover:bg-zinc-900"><span className="block text-sm font-bold text-zinc-100">{concert.artist}</span><span className="mt-0.5 block text-xs text-zinc-500">{concert.venue || "Venue not specified"} · {concert.date}</span></button></li>)}</ul>}
+      <input role="combobox" aria-autocomplete="list" aria-expanded={open && results.length > 0} aria-controls={listId} type="text" value={value} onChange={(event) => { onChange(event.target.value); setOpen(true); }} onFocus={() => setOpen(true)} onBlur={() => window.setTimeout(() => setOpen(false), 150)} placeholder={placeholder} autoComplete="off" className="w-full rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-zinc-100 outline-none focus:border-zinc-400" />
+      {open && results.length > 0 && <ul id={listId} role="listbox" className="absolute left-0 right-0 top-full z-30 mt-1 max-h-64 overflow-auto rounded-2xl border border-zinc-700 bg-zinc-950 p-1 shadow-2xl">{results.map((concert) => <li role="presentation" key={concert.concertId}><button role="option" aria-selected="false" type="button" onMouseDown={(event) => { event.preventDefault(); onPick(concert); setOpen(false); }} className="block w-full rounded-xl px-3 py-2.5 text-left hover:bg-zinc-900"><span className="block text-sm font-bold text-zinc-100">{concert.artist}</span><span className="mt-0.5 block text-xs text-zinc-500">{concert.venue || "Venue not specified"} · {concert.date}</span></button></li>)}</ul>}
     </div>
   );
 }
@@ -479,6 +510,7 @@ function ConcertCatalogField({ field, value, onChange, onPick, onSearch, placeho
 
 function SetlistModal({ target, onClose, onEdit, onLeave, onIdDiscovered }) {
   const [state, setState] = useState({ status: "idle", data: null, error: null });
+  const dialogRef = useDialogFocus(Boolean(target));
 
   useEffect(() => {
     if (!target) return;
@@ -505,15 +537,15 @@ function SetlistModal({ target, onClose, onEdit, onLeave, onIdDiscovered }) {
 
   return (
     <div data-testid="concert-details-modal" className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 px-4">
-      <div className="w-full max-w-lg rounded-3xl border border-zinc-700 bg-zinc-950 p-6 shadow-2xl max-h-[90vh] flex flex-col">
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="concert-details-title" className="w-full max-w-lg rounded-3xl border border-zinc-700 bg-zinc-950 p-6 shadow-2xl max-h-[90vh] flex flex-col">
         <div className="mb-5 flex items-start justify-between gap-4 shrink-0">
           <div>
-            <h2 className="text-2xl font-black uppercase tracking-tight">{artist}</h2>
+            <h2 id="concert-details-title" className="text-2xl font-black uppercase tracking-tight">{artist}</h2>
             <p className="mt-1 text-sm text-zinc-400">{venue || "Venue not specified"} · {date}</p>
           </div>
           <div className="shrink-0 text-right">
             <div className="flex items-center justify-end gap-2">
-              {onEdit && <button type="button" onClick={() => onEdit(target)} className="flex h-8 w-8 items-center justify-center rounded-full border border-zinc-700 text-sm text-zinc-300 hover:border-zinc-500 hover:text-white" aria-label="Edit concert" title="Edit concert"><i className="fa-solid fa-pencil" aria-hidden="true" /></button>}
+              {onEdit && <button type="button" onClick={() => onEdit(target)} className="touch-target flex h-8 w-8 items-center justify-center rounded-full border border-zinc-700 text-sm text-zinc-300 hover:border-zinc-500 hover:text-white" aria-label="Edit concert" title="Edit concert"><i className="fa-solid fa-pencil" aria-hidden="true" /></button>}
               <ModalCloseButton onClick={onClose} />
             </div>
             {target.creator?.displayName && <p className="mt-1.5 max-w-28 truncate text-[9px] font-semibold text-zinc-600" title={`Created by ${target.creator.displayName}`}>Created by {target.creator.displayName}</p>}
@@ -535,13 +567,13 @@ function SetlistModal({ target, onClose, onEdit, onLeave, onIdDiscovered }) {
           )}
           <h3 className="mb-3 text-xs font-bold uppercase tracking-widest text-zinc-500">Setlist</h3>
           {status === "loading" && (
-            <div className="flex flex-col items-center justify-center py-12 gap-3">
+            <div className="flex flex-col items-center justify-center py-12 gap-3" role="status" aria-live="polite">
               <span className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-zinc-600 border-t-zinc-200" />
               <span className="text-sm text-zinc-500">Loading setlist…</span>
             </div>
           )}
           {status === "error" && (
-            <div className="rounded-2xl border border-red-900 bg-red-950/40 px-5 py-4 text-sm text-red-200">
+            <div className="rounded-2xl border border-red-900 bg-red-950/40 px-5 py-4 text-sm text-red-200" role="alert">
               <p className="font-bold mb-1">Could not load setlist</p>
               <p className="text-red-300/80">{error}</p>
               <p className="mt-2 text-xs text-red-400/60">The setlist may not be available on setlist.fm yet.</p>
@@ -627,6 +659,8 @@ function EditConcertModal({ isOpen, mode, initial, onClose, onSave, isSaving, sa
   const [attendeeUserIds, setAttendeeUserIds] = useState([]);
   const [guestAttendees, setGuestAttendees] = useState("");
   const [ticketUrl, setTicketUrl] = useState("");
+  const [validationError, setValidationError] = useState("");
+  const dialogRef = useDialogFocus(isOpen);
 
   useEffect(() => {
     if (isOpen && initial) {
@@ -638,6 +672,7 @@ function EditConcertModal({ isOpen, mode, initial, onClose, onSave, isSaving, sa
       setAttendeeUserIds((initial.attendeeUsers || []).filter((person) => person.status === "confirmed" || person.status === "pending").map((person) => person.id));
       setGuestAttendees((initial.guestAttendees || []).join(", "));
       setTicketUrl(initial.ticketUrl || "");
+      setValidationError("");
     }
   }, [isOpen, initial]);
 
@@ -646,8 +681,9 @@ function EditConcertModal({ isOpen, mode, initial, onClose, onSave, isSaving, sa
   const canEditEvent = initial.canEditEvent !== false;
 
   function submit() {
-    if (!artist.trim() || !date.trim()) return;
-    if (!isNextMode && !venue.trim()) return;
+    if (!artist.trim() || !date.trim()) { setValidationError("Add an artist and date before saving."); return; }
+    if (!isNextMode && !venue.trim()) { setValidationError("Add a venue for this past concert."); return; }
+    setValidationError("");
     onSave({
       artist: uppercaseConcertLabel(artist.trim()),
       venue: uppercaseConcertLabel(venue.trim()),
@@ -662,10 +698,10 @@ function EditConcertModal({ isOpen, mode, initial, onClose, onSave, isSaving, sa
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 p-4">
-      <div className="flex max-h-[calc(100dvh-2rem)] w-full max-w-lg flex-col overflow-hidden rounded-3xl border border-zinc-700 bg-zinc-950 shadow-2xl md:max-h-[90dvh]">
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="edit-concert-title" className="flex max-h-[calc(100dvh-2rem)] w-full max-w-lg flex-col overflow-hidden rounded-3xl border border-zinc-700 bg-zinc-950 shadow-2xl md:max-h-[90dvh]">
         <div className="flex shrink-0 items-start justify-between gap-4 border-b border-zinc-900 px-6 py-5">
           <div className="min-w-0">
-            <h2 className="text-2xl font-black uppercase tracking-tight">Edit concert</h2>
+            <h2 id="edit-concert-title" className="text-2xl font-black uppercase tracking-tight">Edit concert</h2>
             <p className="mt-1 truncate text-sm text-zinc-500">{artist || "Concert"}{venue ? ` · ${venue}` : ""}{date ? ` · ${date}` : ""}</p>
           </div>
           <ModalCloseButton onClick={onClose} />
@@ -705,6 +741,7 @@ function EditConcertModal({ isOpen, mode, initial, onClose, onSave, isSaving, sa
         </div>
         <div className="shrink-0 border-t border-zinc-900 bg-zinc-950 px-6 py-4">
           <button onClick={submit} disabled={isSaving} className="w-full rounded-2xl bg-zinc-100 px-5 py-3 font-black text-zinc-950 transition hover:bg-white disabled:opacity-50">{isSaving ? "Saving..." : "Save changes"}</button>
+          {validationError && <div className="mt-3 rounded-2xl border border-amber-900 bg-amber-950/30 px-4 py-3 text-sm font-semibold text-amber-200" role="alert">{validationError}</div>}
           {saveError && <div className="mt-3 rounded-2xl border border-red-900 bg-red-950/40 px-4 py-3 text-sm text-red-200">{saveError}</div>}
         </div>
       </div>
@@ -722,6 +759,8 @@ function AddConcertModal({ isOpen, initial, stagingSuggestion = false, onClose, 
   const [attendeeUserIds, setAttendeeUserIds] = useState([]);
   const [guestAttendees, setGuestAttendees] = useState("");
   const [ticketUrl, setTicketUrl] = useState("");
+  const [validationError, setValidationError] = useState("");
+  const dialogRef = useDialogFocus(isOpen);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -732,14 +771,16 @@ function AddConcertModal({ isOpen, initial, stagingSuggestion = false, onClose, 
     setAttendeeUserIds((initial?.attendeeUsers || []).map((person) => person.id));
     setGuestAttendees((initial?.guestAttendees || []).join(", "));
     setTicketUrl(initial?.ticketUrl || "");
+    setValidationError("");
   }, [isOpen, initial]);
 
   if (!isOpen) return null;
   const isPastDate = isPastConcert({ date });
 
   function submit() {
-    if (!artist.trim() || !date.trim()) return;
-    if (isPastDate && !venue.trim()) return;
+    if (!artist.trim() || !date.trim()) { setValidationError("Add an artist and date before saving."); return; }
+    if (isPastDate && !venue.trim()) { setValidationError("Add a venue for this past concert."); return; }
+    setValidationError("");
     onSave({ concertId: initial?.concertId || null, artist, venue, date, bought: isPastDate ? true : bought, ticketUrl: isPastDate ? "" : normalizeTicketUrl(ticketUrl), attendeeUserIds, guestAttendees: [...new Set(guestAttendees.split(",").map((name) => name.trim()).filter(Boolean))] });
   }
 
@@ -764,10 +805,10 @@ function AddConcertModal({ isOpen, initial, stagingSuggestion = false, onClose, 
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 p-4">
-      <div data-testid="add-concert-modal" className="flex max-h-[calc(100dvh-2rem)] w-full max-w-lg flex-col overflow-hidden rounded-3xl border border-zinc-700 bg-zinc-950 shadow-2xl md:max-h-[90dvh]">
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="add-concert-title" data-testid="add-concert-modal" className="flex max-h-[calc(100dvh-2rem)] w-full max-w-lg flex-col overflow-hidden rounded-3xl border border-zinc-700 bg-zinc-950 shadow-2xl md:max-h-[90dvh]">
         <div data-testid="add-concert-header" className="flex shrink-0 items-start justify-between gap-4 border-b border-zinc-900 px-6 py-5">
           <div className="min-w-0">
-            <h2 className="text-2xl font-black uppercase tracking-tight">Add concert</h2>
+            <h2 id="add-concert-title" className="text-2xl font-black uppercase tracking-tight">Add concert</h2>
             <p className="mt-1 truncate text-sm text-zinc-500">{stagingSuggestion ? `${uppercaseConcertLabel(initial?.artist) || "Concert"}${initial?.date ? ` · ${initial.date}` : ""}` : "Add a past or upcoming concert."}</p>
           </div>
           <ModalCloseButton onClick={onClose} />
@@ -820,6 +861,7 @@ function AddConcertModal({ isOpen, initial, stagingSuggestion = false, onClose, 
         </div>
         {(!stagingSuggestion || saveError) && <div className="shrink-0 border-t border-zinc-900 bg-zinc-950 px-6 py-4">
           {!stagingSuggestion && <button onClick={submit} disabled={isSaving} className="w-full rounded-2xl bg-zinc-100 px-5 py-3 font-black text-zinc-950 transition hover:bg-white disabled:opacity-50">{isSaving ? "Saving..." : "Add concert"}</button>}
+          {validationError && <div className="mt-3 rounded-2xl border border-amber-900 bg-amber-950/30 px-4 py-3 text-sm font-semibold text-amber-200" role="alert">{validationError}</div>}
           {saveError && <div className="mt-3 rounded-2xl border border-red-900 bg-red-950/40 px-4 py-3 text-sm text-red-200">{saveError}</div>}
         </div>}
       </div>
@@ -1034,7 +1076,8 @@ function NextConcertCalendar({ items, onOpen, onContextMenu, onContextMenuAt }) 
           const calendarDay = new Date(year, month, day);
           const concerts = datedItems.filter(({ range }) => calendarDay >= range.start && calendarDay <= range.end);
           return (
-            <div key={day} onClick={() => concerts.length && setSelectedDay({ date: calendarDay, concerts })} className={`h-20 overflow-hidden rounded-xl border p-1.5 md:h-auto md:min-h-32 md:overflow-visible md:rounded-2xl md:p-2 ${concerts.length ? "cursor-pointer border-zinc-700 bg-zinc-950" : "border-zinc-800/60 bg-zinc-950/40"}`}>
+            <div key={day} className={`relative h-20 overflow-hidden rounded-xl border p-1.5 md:h-auto md:min-h-32 md:overflow-visible md:rounded-2xl md:p-2 ${concerts.length ? "border-zinc-700 bg-zinc-950" : "border-zinc-800/60 bg-zinc-950/40"}`}>
+              {concerts.length > 0 && <button type="button" onClick={() => setSelectedDay({ date: calendarDay, concerts })} className="absolute inset-0 z-10 rounded-xl md:hidden" aria-label={`Show ${concerts.length} ${concerts.length === 1 ? "concert" : "concerts"} on ${new Intl.DateTimeFormat("en", { day: "numeric", month: "long" }).format(calendarDay)}`} />}
               <div className="mb-1 text-right text-[10px] font-bold text-zinc-600 md:text-xs">{day}</div>
               {concerts.length > 0 && (
                 <div className="md:hidden">
@@ -1232,6 +1275,7 @@ function ConcertSuggestions({ suggestions, reviews, onInterested, onNotIntereste
 }
 
 function CalendarConcertModal({ target, onClose, onEdit }) {
+  const dialogRef = useDialogFocus(Boolean(target));
   if (!target) return null;
   const isPast = isPastConcert(target);
   const ticketUrl = normalizeTicketUrl(target.ticketUrl);
@@ -1246,11 +1290,11 @@ function CalendarConcertModal({ target, onClose, onEdit }) {
   const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(whatsappMessage)}`;
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/75 px-4" onClick={onClose}>
-      <article className="w-full max-w-md rounded-3xl border border-zinc-700 bg-zinc-900 p-5 shadow-2xl" onClick={(event) => event.stopPropagation()}>
+      <article ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="calendar-concert-title" className="w-full max-w-md rounded-3xl border border-zinc-700 bg-zinc-900 p-5 shadow-2xl" onClick={(event) => event.stopPropagation()}>
         <div className="flex items-start justify-between gap-4 border-b border-zinc-800 pb-4">
-          <h2 className="min-w-0 break-words text-2xl font-black uppercase leading-none tracking-tight text-zinc-100">{target.artist}</h2>
+          <h2 id="calendar-concert-title" className="min-w-0 break-words text-2xl font-black uppercase leading-none tracking-tight text-zinc-100">{target.artist}</h2>
           <div className="flex shrink-0 items-center gap-2">
-            {onEdit && <button type="button" onClick={() => onEdit(target)} className="flex h-8 w-8 items-center justify-center rounded-full border border-zinc-700 text-sm text-zinc-300 transition hover:border-zinc-500 hover:text-white" aria-label="Edit concert" title="Edit concert"><i className="fa-solid fa-pencil" aria-hidden="true" /></button>}
+            {onEdit && <button type="button" onClick={() => onEdit(target)} className="touch-target flex h-8 w-8 items-center justify-center rounded-full border border-zinc-700 text-sm text-zinc-300 transition hover:border-zinc-500 hover:text-white" aria-label="Edit concert" title="Edit concert"><i className="fa-solid fa-pencil" aria-hidden="true" /></button>}
             <ModalCloseButton onClick={onClose} />
           </div>
         </div>
@@ -2802,7 +2846,7 @@ export default function App() {
       {/* Desktop-only fixed Menu button */}
       <button onClick={() => setSidebarOpen(true)} className="menu-button-desktop fixed left-4 top-4 z-40 rounded-full border border-zinc-700 bg-zinc-900 px-4 py-2 text-sm font-bold text-zinc-100 shadow-2xl transition hover:border-zinc-500" aria-label="Open menu" aria-expanded={sidebarOpen} aria-controls="main-navigation"><i className="fa-solid fa-bars mr-2 text-xs" aria-hidden="true" />Menu</button>
       {/* Touch-device Menu starts at the top of the page and scrolls away with it */}
-      <button onClick={() => setSidebarOpen(true)} className="menu-button-touch absolute left-4 top-6 z-40 h-10 w-10 rounded-full border border-zinc-700 bg-zinc-900 text-sm text-zinc-100 shadow-2xl transition hover:border-zinc-500" aria-label="Open menu" title="Menu" aria-expanded={sidebarOpen} aria-controls="main-navigation"><i className="fa-solid fa-bars text-xs" aria-hidden="true" /></button>
+      <button onClick={() => setSidebarOpen(true)} className="menu-button-touch touch-target absolute left-4 top-4 z-40 h-11 w-11 rounded-full border border-zinc-700 bg-zinc-900 text-sm text-zinc-100 shadow-2xl transition hover:border-zinc-500" aria-label="Open menu" title="Menu" aria-expanded={sidebarOpen} aria-controls="main-navigation"><i className="fa-solid fa-bars text-xs" aria-hidden="true" /></button>
 
       {sidebarOpen && <button className="fixed inset-0 z-40 bg-black/60" onClick={() => setSidebarOpen(false)} aria-label="Close menu overlay" />}
 
@@ -2837,11 +2881,11 @@ export default function App() {
         </div>
       </aside>
 
-      <section className="mx-auto w-full max-w-7xl px-4 pt-6 pb-8 md:px-8 md:py-14 overflow-x-hidden">
-        <header className="mb-10 text-center">
-          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.45em] text-zinc-400">A Deafening Noise</p>
-          <h1 className="break-words text-5xl font-black uppercase tracking-tight md:text-8xl">{title}</h1>
-          <p className="mx-auto mt-5 max-w-2xl text-base text-zinc-400 md:text-lg">{description}</p>
+      <section className="mx-auto w-full max-w-7xl overflow-x-hidden px-4 pb-8 pt-5 md:px-8 md:py-14">
+        <header className="mb-8 min-h-32 pt-12 text-center md:mb-12 md:min-h-0 md:pt-0">
+          <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.42em] text-zinc-400 md:mb-3 md:text-xs">A Deafening Noise</p>
+          <h1 className="break-words text-5xl font-black uppercase leading-none tracking-tight text-zinc-50 md:text-8xl">{title}</h1>
+          <p className="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-zinc-400 md:mt-5 md:text-lg">{description}</p>
         </header>
 
         {isVenueDetail ? (
@@ -2946,7 +2990,7 @@ export default function App() {
                 />}
               </>
             ) : (
-            <section className="grid w-full gap-4 md:grid-cols-2 xl:grid-cols-3">
+            <><div className="mb-4 flex items-center justify-between text-xs font-bold uppercase tracking-widest text-zinc-500"><span>{filtered.length} {filtered.length === 1 ? "artist" : "artists"}</span><span>{filtered.reduce((total, item) => total + (item.shows?.length || 0), 0)} concerts</span></div><section className="grid w-full gap-4 md:grid-cols-2 xl:grid-cols-3">
               {filtered.map((item) => (
                 <article key={item.artist + (isNext ? item.date : "")} className="group rounded-3xl border border-zinc-800 bg-zinc-900 p-5 shadow-xl transition hover:-translate-y-1 hover:border-zinc-500 w-full min-w-0">
                   <div className="flex items-start justify-between gap-4 border-b border-zinc-800 pb-4">
@@ -2995,7 +3039,7 @@ export default function App() {
                   </div>
                 </article>
               ))}
-            </section>
+            </section></>
             )}
             {filtered.length === 0 && <div className="mt-12"><EmptyState icon="fa-magnifying-glass" title="No concerts found" description="Try another artist, venue, city or date." /></div>}
           </>

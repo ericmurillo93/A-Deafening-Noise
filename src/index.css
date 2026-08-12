@@ -5,6 +5,7 @@
 :root {
   color-scheme: dark;
   background: #09090b;
+  --adn-focus: #e4e4e7;
 }
 
 html {
@@ -28,6 +29,11 @@ select {
 
 button {
   cursor: pointer;
+}
+
+:where(button, a, input, select, summary):focus-visible {
+  outline: 2px solid var(--adn-focus);
+  outline-offset: 3px;
 }
 
 /* Secondary copy must remain readable against both zinc-900 and zinc-950. */
@@ -58,5 +64,27 @@ input::placeholder {
 
   .menu-button-touch {
     display: none;
+  }
+}
+
+@media (pointer: coarse) {
+  .touch-target {
+    min-width: 44px;
+    min-height: 44px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
   }
 }
