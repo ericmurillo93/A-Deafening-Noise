@@ -6,6 +6,8 @@ This is Eric's private concert archive. Preserve the existing dark, compact visu
 
 Read `README.md` for the quick start and `docs/DEVELOPMENT.md` for production configuration and operational commands.
 
+Keep the project's existing **A Deafening Noise** Notion page current when a change introduces a durable product decision, architecture or data-model change, setup or deployment requirement, operational workflow, security boundary, or other information future contributors need. Do not document routine fixes, transient investigation, or implementation detail already clear from the repository. Preserve existing Notion content, never copy secrets there, and treat the checked-in repository documentation as the technical source of truth.
+
 ## Architecture
 
 - React/Vite single-page application; most UI and state live in `src/App.jsx`.
@@ -60,7 +62,7 @@ Read `README.md` for the quick start and `docs/DEVELOPMENT.md` for production co
 ## Suggestion pipeline
 
 - Scrapers: Resurrection Fest Route, Live Nation Spain, Madness Live, Sala Razzmatazz, Sala Apolo, Sala Bikini, Paral·lel 62, Palau de la Música Catalana, Les Docks, Montreux Jazz Festival, and DICE.
-- Match only billed artists that exist in `data/listened-artists.json`.
+- Match only billed artists in `data/listened-artists.json` with at least 3 listening records or 10 total minutes played.
 - Exclude an artist/date already present in `data/concerts.json`.
 - Generate the listened catalog with `npm run import:spotify`; never commit raw Spotify exports.
 - Prefer missing a structurally ambiguous festival over inventing an artist-to-day mapping.

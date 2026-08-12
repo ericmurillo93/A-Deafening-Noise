@@ -287,7 +287,7 @@ To run the complete pipeline locally:
 npm run suggestions:refresh
 ```
 
-Scraped lineups are matched against `data/listened-artists.json`, which contains artists heard at least once in the imported Spotify Extended Streaming History. Existing artist/date pairs in `data/concerts.json` and previously dismissed artist/date pairs are excluded. The workflow combines and deduplicates results into `data/suggestions.json`. Suggestions never appear directly as calendar events; the expandable **Concert suggestions** panel below the calendar presents them for review.
+Scraped lineups are matched against `data/listened-artists.json`. Artists qualify after at least 3 listening records or 10 total minutes played, avoiding accidental plays while retaining long listens. Existing artist/date pairs in `data/concerts.json` and previously dismissed artist/date pairs are excluded. The workflow combines and deduplicates results into `data/suggestions.json`. Suggestions never appear directly as calendar events; the expandable **Concert suggestions** panel below the calendar presents them for review.
 
 ### Import Spotify listening history
 
