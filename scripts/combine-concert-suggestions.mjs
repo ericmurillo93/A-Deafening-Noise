@@ -1,15 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
-
-function normalize(value) {
-  return String(value || "")
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-z0-9]+/g, " ")
-    .trim();
-}
+import { normalize } from "./lib/suggestion-scraper-utils.mjs";
 
 function slug(value) {
   return normalize(value).replaceAll(" ", "-");

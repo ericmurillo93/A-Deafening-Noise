@@ -4,21 +4,13 @@ import os from "node:os";
 import path from "node:path";
 import process from "node:process";
 import { spawnSync } from "node:child_process";
+import { normalize } from "./lib/suggestion-scraper-utils.mjs";
 
 const inputPath = path.resolve(process.argv.slice(2).find((argument) => !argument.startsWith("--")) || "my_spotify_data.zip");
 const outputPath = path.resolve(
   process.argv.find((argument) => argument.startsWith("--output="))?.slice("--output=".length)
     || "data/listened-artists.json",
 );
-
-function normalize(value) {
-  return String(value || "")
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-z0-9]+/g, " ")
-    .trim();
-}
 
 async function findAudioFiles(directory) {
   const files = [];

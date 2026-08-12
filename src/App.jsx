@@ -391,11 +391,14 @@ function downloadConcertCalendar(items, filename, calendarName) {
 // ─── Icons ────────────────────────────────────────────────────────────────────
 
 function Icon({ type }) {
-  const common = { width: "16", height: "16", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" };
-  if (type === "search") return <svg {...common} className="h-5 w-5 shrink-0 text-zinc-500"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" /></svg>;
-  if (type === "calendar") return <svg {...common} className="mt-0.5 h-4 w-4 shrink-0 text-zinc-600"><path d="M8 2v4" /><path d="M16 2v4" /><rect width="18" height="18" x="3" y="4" rx="2" /><path d="M3 10h18" /></svg>;
-  if (type === "music") return <svg {...common} className="h-4 w-4 shrink-0" style={{color:"inherit"}}><path d="M9 18V5l12-2v13" /><circle cx="6" cy="18" r="3" /><circle cx="18" cy="16" r="3" /></svg>;
-  return <svg {...common} className="mt-0.5 h-4 w-4 shrink-0 text-zinc-500"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z" /><circle cx="12" cy="10" r="3" /></svg>;
+  const icons = {
+    search: ["fa-magnifying-glass", "h-5 w-5 text-zinc-500"],
+    calendar: ["fa-calendar-days", "mt-0.5 h-4 w-4 text-zinc-600"],
+    music: ["fa-music", "h-4 w-4"],
+    map: ["fa-location-dot", "mt-0.5 h-4 w-4 text-zinc-500"],
+  };
+  const [icon, className] = icons[type] || icons.map;
+  return <i className={`fa-solid ${icon} shrink-0 text-center ${className}`} aria-hidden="true" />;
 }
 
 function ModalCloseButton({ onClick, disabled = false }) {
@@ -827,32 +830,17 @@ function AddConcertModal({ isOpen, initial, stagingSuggestion = false, onClose, 
 // ─── Upcoming concert calendar ────────────────────────────────────────────────
 
 function CalendarExportMenu({ items, compact = false }) {
-  const detailsRef = useRef(null);
-
-  useEffect(() => {
-    function dismiss(event) {
-      if (detailsRef.current?.open && !detailsRef.current.contains(event.target)) detailsRef.current.removeAttribute("open");
-    }
-    document.addEventListener("pointerdown", dismiss);
-    return () => document.removeEventListener("pointerdown", dismiss);
-  }, []);
-
-  function runExport(event, concerts, filename, calendarName) {
-    downloadConcertCalendar(concerts, filename, calendarName);
-    event.currentTarget.closest("details")?.removeAttribute("open");
-  }
-
   return (
-    <details ref={detailsRef} className="group relative">
-      <summary className={`cursor-pointer list-none rounded-full border border-zinc-700 bg-zinc-900 text-center text-sm font-black text-zinc-100 shadow-2xl transition hover:border-zinc-500 [&::-webkit-details-marker]:hidden ${compact ? "px-3 py-2.5" : "px-5 py-3"}`}>
-        Export <span className="ml-1 text-zinc-500 transition group-open:rotate-180">▾</span>
-      </summary>
-      <div className="absolute right-0 top-full z-30 mt-2 w-56 overflow-hidden rounded-2xl border border-zinc-700 bg-zinc-950 p-2 shadow-2xl">
-        <button onClick={(event) => runExport(event, items, "concerts.ics", "Próximos conciertos")} disabled={items.length === 0} className="block w-full rounded-xl px-3 py-2.5 text-left text-sm font-semibold text-zinc-300 transition hover:bg-zinc-900 hover:text-white disabled:opacity-40">All concerts</button>
-        <button onClick={(event) => runExport(event, items.filter((item) => item.bought), "concerts-bought.ics", "Conciertos comprados")} disabled={!items.some((item) => item.bought)} className="block w-full rounded-xl px-3 py-2.5 text-left text-sm font-semibold text-zinc-300 transition hover:bg-zinc-900 hover:text-white disabled:opacity-40">Bought concerts</button>
-        <button onClick={(event) => runExport(event, items.filter((item) => !item.bought), "concerts-not-bought.ics", "Conciertos no comprados")} disabled={!items.some((item) => !item.bought)} className="block w-full rounded-xl px-3 py-2.5 text-left text-sm font-semibold text-zinc-300 transition hover:bg-zinc-900 hover:text-white disabled:opacity-40">Not bought concerts</button>
-      </div>
-    </details>
+    <DropdownMenu
+      compact={compact}
+      ariaLabel="Export concerts"
+      buttonLabel="Export"
+      options={[
+        { value: "all", label: "All concerts", disabled: items.length === 0, onSelect: () => downloadConcertCalendar(items, "concerts.ics", "Próximos conciertos") },
+        { value: "bought", label: "Bought concerts", disabled: !items.some((item) => item.bought), onSelect: () => downloadConcertCalendar(items.filter((item) => item.bought), "concerts-bought.ics", "Conciertos comprados") },
+        { value: "not-bought", label: "Not bought concerts", disabled: !items.some((item) => !item.bought), onSelect: () => downloadConcertCalendar(items.filter((item) => !item.bought), "concerts-not-bought.ics", "Conciertos no comprados") },
+      ]}
+    />
   );
 }
 
@@ -869,8 +857,9 @@ function DropdownMenu({ value, onChange, options, compact = false, ariaLabel, cl
     return () => document.removeEventListener("pointerdown", dismiss);
   }, []);
 
-  function selectOption(event, nextValue) {
-    onChange(nextValue);
+  function selectOption(event, option) {
+    if (option.onSelect) option.onSelect();
+    else onChange?.(option.value);
     event.currentTarget.closest("details")?.removeAttribute("open");
   }
 
@@ -882,9 +871,10 @@ function DropdownMenu({ value, onChange, options, compact = false, ariaLabel, cl
       <div className={`absolute top-full z-30 mt-2 max-h-72 w-64 max-w-[calc(100vw-2rem)] overflow-y-auto rounded-2xl border border-zinc-700 bg-zinc-950 p-2 shadow-2xl ${menuAlign === "left" ? "left-0" : "right-0"}`}>
         {normalizedOptions.map((option) => (
           <button
-            key={option.value}
-            onClick={(event) => selectOption(event, option.value)}
-            className={`block w-full rounded-xl px-3 py-2.5 text-left text-sm font-semibold transition hover:bg-zinc-900 hover:text-white ${value === option.value ? "bg-zinc-900 text-zinc-100" : "text-zinc-400"}`}
+            key={option.value ?? option.label}
+            onClick={(event) => selectOption(event, option)}
+            disabled={option.disabled}
+            className={`block w-full rounded-xl px-3 py-2.5 text-left text-sm font-semibold transition hover:bg-zinc-900 hover:text-white disabled:cursor-not-allowed disabled:opacity-40 ${value === option.value ? "bg-zinc-900 text-zinc-100" : "text-zinc-400"}`}
           >
             {option.label}
           </button>

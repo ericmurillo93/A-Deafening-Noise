@@ -12,7 +12,6 @@
     "import:spotify": "node scripts/import-spotify-history.mjs",
     "suggestions:refresh": "node scripts/refresh-concert-suggestions.mjs",
     "dev": "vite --host 127.0.0.1",
-    "dev:local": "vite --host 127.0.0.1",
     "dev:network": "vite --host 0.0.0.0",
     "build": "vite build",
     "preview": "vite preview --host 0.0.0.0",

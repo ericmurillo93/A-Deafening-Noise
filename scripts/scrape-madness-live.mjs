@@ -1,11 +1,7 @@
-import fs from "node:fs/promises";
-import path from "node:path";
-import process from "node:process";
+import { context, fetchText, normalize, textContent, writeResult } from "./lib/suggestion-scraper-utils.mjs";
 
 const BASE_URL = "https://www.madnesslive.es";
 const LISTING_URL = `${BASE_URL}/es/`;
-const USER_AGENT = "A-Deafening-Noise/1.0 (+personal concert calendar; contact via repository)";
-const outputPath = process.argv.find((argument) => argument.startsWith("--output="))?.slice("--output=".length);
 const cityFilter = process.argv.find((argument) => argument.startsWith("--city="))?.slice("--city=".length);
 
 const MONTHS = new Map(Object.entries({
@@ -24,47 +20,8 @@ const MONTHS = new Map(Object.entries({
   diciembre: 12,
 }));
 
-function decodeEntities(value) {
-  return String(value)
-    .replace(/&#x([0-9a-f]+);/gi, (_, code) => String.fromCodePoint(Number.parseInt(code, 16)))
-    .replace(/&#(\d+);/g, (_, code) => String.fromCodePoint(Number(code)))
-    .replace(/&nbsp;/gi, " ")
-    .replace(/&amp;/gi, "&")
-    .replace(/&quot;/gi, '"')
-    .replace(/&#039;|&apos;/gi, "'")
-    .replace(/&aacute;/gi, "á")
-    .replace(/&eacute;/gi, "é")
-    .replace(/&iacute;/gi, "í")
-    .replace(/&oacute;/gi, "ó")
-    .replace(/&uacute;/gi, "ú")
-    .replace(/&ntilde;/gi, "ñ")
-    .replace(/&lt;/gi, "<")
-    .replace(/&gt;/gi, ">");
-}
-
-function textContent(html) {
-  return decodeEntities(String(html).replace(/<br\s*\/?>/gi, " | ").replace(/<[^>]+>/g, " "))
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
-function normalize(value) {
-  return String(value || "")
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-z0-9]+/g, " ")
-    .trim();
-}
-
 function titleCaseSlug(value) {
   return decodeURIComponent(value).replaceAll("-", " ").replace(/\b\p{L}/gu, (letter) => letter.toUpperCase());
-}
-
-async function fetchHtml(url) {
-  const response = await fetch(url, { headers: { "User-Agent": USER_AGENT, Accept: "text/html" } });
-  if (!response.ok) throw new Error(`${url} returned HTTP ${response.status}`);
-  return response.text();
 }
 
 function eventLinks(listingHtml) {
@@ -127,17 +84,9 @@ function tourStops(detailHtml) {
   ) === index);
 }
 
-const root = process.cwd();
-const concertData = JSON.parse(await fs.readFile(path.join(root, "data/concerts.json"), "utf8"));
-const listenedArtistData = JSON.parse(await fs.readFile(path.join(root, "data/listened-artists.json"), "utf8"));
-const listenedArtistsByKey = new Map(
-  listenedArtistData.artists.filter(({ artist }) => artist).map(({ artist }) => [normalize(artist), artist]),
-);
-const existingArtistDates = new Set(
-  concertData.concerts.map(({ artist, date }) => `${normalize(artist)}|${date}`),
-);
+const { listened: listenedArtistsByKey, existing: existingArtistDates } = await context();
 
-const listingHtml = await fetchHtml(LISTING_URL);
+const listingHtml = await fetchText(LISTING_URL);
 const links = eventLinks(listingHtml);
 const suggestions = [];
 const alreadyTrackedMatches = [];
@@ -147,7 +96,7 @@ let matchedStops = 0;
 
 for (const [index, sourceUrl] of links.entries()) {
   if (index > 0) await new Promise((resolve) => setTimeout(resolve, 250));
-  const detailHtml = await fetchHtml(sourceUrl);
+  const detailHtml = await fetchText(sourceUrl);
   const billedKeys = billedArtistKeys(detailHtml);
   const matchedArtists = [...listenedArtistsByKey]
     .filter(([key]) => billedKeys.has(key))
@@ -177,8 +126,7 @@ for (const [index, sourceUrl] of links.entries()) {
   }
 }
 
-const result = {
-  generatedAt: new Date().toISOString(),
+await writeResult({
   source: LISTING_URL,
   city: cityFilter || null,
   pagesScanned: links.length,
@@ -188,7 +136,4 @@ const result = {
   alreadyTrackedMatches,
   pagesWithoutStops,
   suggestions,
-};
-const json = `${JSON.stringify(result, null, 2)}\n`;
-if (outputPath) await fs.writeFile(path.resolve(root, outputPath), json, "utf8");
-else process.stdout.write(json);
+});

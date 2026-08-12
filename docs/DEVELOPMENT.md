@@ -197,9 +197,6 @@ npm run import:spotify -- path/to/my_spotify_data.zip
 # Localhost-only development server (recommended)
 npm run dev
 
-# Explicit alias for the same localhost-only server
-npm run dev:local
-
 # Test from another device on the same trusted network
 npm run dev:network
 

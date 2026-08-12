@@ -1,10 +1,8 @@
-import fs from "node:fs/promises";
-import path from "node:path";
 import process from "node:process";
+import { context, normalize, USER_AGENT, writeResult } from "./lib/suggestion-scraper-utils.mjs";
 
 const BASE_URL = "https://www.livenation.es";
 const API_URL = `${BASE_URL}/api/search/events`;
-const USER_AGENT = "A-Deafening-Noise/1.0 (+personal concert calendar; contact via repository)";
 const PAGE_SIZE = 50;
 const DEFAULT_CITY_ID = "7243";
 const DEFAULT_COUNTRY_ID = "206";
@@ -21,16 +19,6 @@ function argument(name, fallback) {
 const cityId = argument("city-id", DEFAULT_CITY_ID);
 const countryId = argument("country-id", DEFAULT_COUNTRY_ID);
 const genres = argument("genres", DEFAULT_GENRES);
-const outputPath = argument("output", "");
-
-function normalize(value) {
-  return String(value || "")
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-z0-9]+/g, " ")
-    .trim();
-}
 
 function formatDate(value) {
   const match = String(value || "").match(/^(\d{4})-(\d{2})-(\d{2})/);
@@ -85,17 +73,7 @@ async function fetchEvents() {
   return { events, pageCount, total: firstPage.total || events.length };
 }
 
-const root = process.cwd();
-const concertData = JSON.parse(await fs.readFile(path.join(root, "data/concerts.json"), "utf8"));
-const listenedArtistData = JSON.parse(await fs.readFile(path.join(root, "data/listened-artists.json"), "utf8"));
-const listenedArtistsByKey = new Map(
-  listenedArtistData.artists
-    .filter(({ artist }) => artist)
-    .map(({ artist }) => [normalize(artist), artist]),
-);
-const existingArtistDates = new Set(
-  concertData.concerts.map(({ artist, date }) => `${normalize(artist)}|${date}`),
-);
+const { listened: listenedArtistsByKey, existing: existingArtistDates } = await context();
 
 const listingQuery = new URLSearchParams({ CityIds: cityId, CountryIds: countryId, Genres: genres });
 const listingUrl = `${BASE_URL}/event/allevents?${listingQuery}`;
@@ -150,8 +128,7 @@ for (const event of events) {
   });
 }
 
-const result = {
-  generatedAt: new Date().toISOString(),
+await writeResult({
   source: listingUrl,
   cityId,
   countryId,
@@ -163,7 +140,4 @@ const result = {
   alreadyTrackedMatches,
   excludedEvents,
   suggestions,
-};
-const json = `${JSON.stringify(result, null, 2)}\n`;
-if (outputPath) await fs.writeFile(path.resolve(root, outputPath), json, "utf8");
-else process.stdout.write(json);
+});
