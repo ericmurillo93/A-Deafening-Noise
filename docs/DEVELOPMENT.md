@@ -44,11 +44,16 @@ SETLIST_API_KEY=your_real_setlist_fm_key
 Authenticated development also requires the public Supabase configuration:
 
 ```text
-VITE_SUPABASE_URL=https://zhlcnidaymhaaskedbdx.supabase.co
+VITE_SUPABASE_URL=https://your-development-project.supabase.co
 VITE_SUPABASE_PUBLISHABLE_KEY=your_publishable_key
 ```
 
 The publishable key is designed for browser use and is protected by Supabase Auth and RLS. Never put a Supabase secret or `service_role` key in a `VITE_` variable.
+
+Use a dedicated non-production Supabase project in `.env.local`. The checked-in
+example and CLI configuration deliberately contain no production project
+reference. Netlify keeps its own production URL and publishable key, so changing
+`.env.local` cannot redirect the deployed website.
 
 The application otherwise works without this key; only setlist lookups are unavailable. `.env.local` and all `.env.*` files except `.env.example` are ignored by Git. Never commit real keys, passwords, or tokens.
 
@@ -82,11 +87,57 @@ Official references: [Codex CLI](https://developers.openai.com/codex/cli) and [A
 
 Local development intentionally differs from production:
 
-- With Supabase variables configured, local development uses the same Supabase Auth sessions as production.
+- With Supabase variables configured, local development uses the dedicated development/staging Supabase project.
 - Add, edit, delete, attendee, ticket-status, and discovered setlist-ID changes write to Supabase.
 - Local saves do not call GitHub and do not create commits automatically. Without Supabase configuration, the legacy Vite JSON fallback remains available for isolated development.
 - Setlist requests are handled by development-only middleware in `vite.config.js`.
 - The middleware is enabled only while Vite serves the app and is not included in the production runtime.
+
+### Prepare the hosted development database
+
+Create the non-production project and its Auth users before applying the schema.
+Then authenticate the Supabase CLI, link this checkout to that project, and push
+the checked-in migrations:
+
+```bash
+npx supabase login
+npx supabase link --project-ref your_development_project_reference
+npx supabase db push
+```
+
+The link is stored under the ignored `supabase/.temp/` directory and therefore
+remains local to the checkout. Before every remote database command, verify the
+linked target:
+
+```bash
+npx supabase status
+```
+
+Fresh development projects intentionally start without production concerts.
+Create disposable test data through the website. Never put a service-role key or
+database password in `.env.local`.
+
+### Refresh staging from production
+
+The staging database can be replaced with a snapshot of production application
+data. Auth accounts and passwords remain independent; profiles are remapped by
+email so UUID-based concert, attendee and friendship relationships stay valid.
+Historical activity notifications are deliberately omitted.
+
+Copy the ignored credential template and add a secret/server key from each
+project (never a publishable key):
+
+```bash
+cp .env.staging-sync.example .env.staging-sync.local
+npm run staging:sync
+```
+
+The command hard-codes production as a read-only source and the development
+project as the only writable destination. It requires typing the staging project
+reference before replacing data, verifies that every production user already
+has a matching staging Auth user, and checks row counts after the copy. Never
+commit `.env.staging-sync.local` or place these server-side keys in `VITE_`
+variables.
 
 Changes made through the local UI become ordinary Git working-tree changes:
 

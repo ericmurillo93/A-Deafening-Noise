@@ -5,6 +5,7 @@
 .env
 .env.*
 !.env.example
+!.env.staging-sync.example
 
 # Dependencies
 node_modules

@@ -6,6 +6,7 @@
   "scripts": {
     "setup": "node scripts/setup-local.mjs",
     "setup:auth": "node scripts/setup-local.mjs --auth",
+    "staging:sync": "node scripts/sync-production-to-staging.mjs",
     "codex": "npx --yes @openai/codex",
     "codex:login": "npx --yes @openai/codex login",
     "import:spotify": "node scripts/import-spotify-history.mjs",

@@ -29,7 +29,10 @@ declare expected_count integer; matched_count integer;
 begin
   select sum(jsonb_array_length(artists)) into expected_count from attendance_import;
   select count(*) into matched_count from attendance_targets;
-  if matched_count <> expected_count then
+  -- This migration imported Eric's reviewed attendance after the production
+  -- archive already existed. Fresh development/staging projects intentionally
+  -- start with an empty archive, so there is nothing to import there.
+  if exists (select 1 from public.concerts) and matched_count <> expected_count then
     raise exception 'Attendance import matched % of % concert rows', matched_count, expected_count;
   end if;
 end;
