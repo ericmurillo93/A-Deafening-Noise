@@ -6,11 +6,17 @@
   color-scheme: dark;
   background: #09090b;
   --adn-focus: #e4e4e7;
+  --adn-ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --adn-ease-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --adn-stage: #09090b;
+  --adn-surface: #18181b;
+  --adn-surface-raised: color-mix(in srgb, var(--adn-surface) 92%, var(--adn-focus));
+  --adn-border: color-mix(in srgb, var(--adn-surface) 86%, var(--adn-focus));
+  --adn-border-hover: color-mix(in srgb, var(--adn-surface) 66%, var(--adn-focus));
 }
 
 html {
   background: #09090b;
-  scroll-behavior: smooth;
 }
 
 body {
@@ -31,6 +37,18 @@ button {
   cursor: pointer;
 }
 
+button:disabled {
+  cursor: not-allowed;
+}
+
+:where(button, a) {
+  -webkit-tap-highlight-color: transparent;
+}
+
+:where(button:not(:disabled):not(.absolute), a[href]):active {
+  transform: scale(0.98);
+}
+
 :where(button, a, input, select, summary):focus-visible {
   outline: 2px solid var(--adn-focus);
   outline-offset: 3px;
@@ -45,6 +63,55 @@ button {
 input::placeholder {
   color: #a1a1aa;
   opacity: 1;
+}
+
+.adn-shell { background: var(--adn-stage); }
+
+.adn-navigation {
+  box-shadow: 20px 0 60px color-mix(in srgb, var(--adn-stage) 66%, transparent);
+  transition-timing-function: var(--adn-ease-expo);
+}
+
+.adn-artist-card {
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--adn-focus) 3%, transparent), 0 10px 24px color-mix(in srgb, var(--adn-stage) 84%, transparent);
+  transition: border-color 180ms var(--adn-ease-out), background-color 180ms var(--adn-ease-out);
+}
+
+.adn-concert-row {
+  transition: border-color 160ms var(--adn-ease-out), background-color 160ms var(--adn-ease-out), box-shadow 160ms var(--adn-ease-out);
+}
+
+.adn-modal-backdrop { animation: adn-backdrop-in 180ms ease-out both; }
+.adn-modal-panel { animation: adn-modal-in 360ms var(--adn-ease-expo) both; }
+.adn-popover,
+.adn-context-menu { transform-origin: top right; animation: adn-popover-in 180ms var(--adn-ease-expo) both; }
+
+.adn-saving-toast { animation: adn-toast-in 240ms var(--adn-ease-expo) both; }
+.adn-save-button:disabled { transform: scale(.985); }
+
+.adn-shell :where(input, select, textarea) {
+  transition: border-color 160ms ease-out, background-color 160ms ease-out, box-shadow 160ms ease-out;
+}
+
+.adn-shell :where(input, select, textarea):focus {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--adn-focus) 10%, transparent);
+}
+
+@keyframes adn-backdrop-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes adn-modal-in { from { opacity: 0; transform: translateY(.5rem) scale(.985); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@keyframes adn-popover-in { from { opacity: 0; transform: translateY(-.35rem) scale(.975); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@keyframes adn-toast-in { from { opacity: 0; transform: translateY(.75rem) scale(.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
+
+@media (hover: hover) and (pointer: fine) {
+  .adn-artist-card:hover {
+    border-color: var(--adn-border-hover);
+    background: var(--adn-surface-raised);
+  }
+  .adn-concert-row:hover {
+    border-color: var(--adn-border-hover);
+    background: color-mix(in srgb, var(--adn-stage) 84%, var(--adn-surface));
+    box-shadow: inset 0 1px 0 color-mix(in srgb, var(--adn-focus) 3%, transparent);
+  }
 }
 
 .menu-button-desktop {
@@ -86,5 +153,10 @@ input::placeholder {
     animation-iteration-count: 1 !important;
     scroll-behavior: auto !important;
     transition-duration: 0.01ms !important;
+  }
+
+  :where(button:not(:disabled):not(.absolute), a[href]):active,
+  .adn-save-button:disabled {
+    transform: none;
   }
 }

@@ -88,19 +88,23 @@ function usePageScrollLock(locked) {
     const root = document.documentElement;
     const previousBodyOverflow = body.style.overflow;
     const previousBodyOverscroll = body.style.overscrollBehavior;
+    const previousBodyPaddingRight = body.style.paddingRight;
     const previousRootOverflow = root.style.overflow;
     const previousRootOverscroll = root.style.overscrollBehavior;
+    const scrollbarWidth = window.innerWidth - root.clientWidth;
 
     root.style.overflow = "hidden";
     root.style.overscrollBehavior = "none";
     body.style.overflow = "hidden";
     body.style.overscrollBehavior = "none";
+    if (scrollbarWidth > 0) body.style.paddingRight = `${parseFloat(getComputedStyle(body).paddingRight) + scrollbarWidth}px`;
 
     return () => {
       root.style.overflow = previousRootOverflow;
       root.style.overscrollBehavior = previousRootOverscroll;
       body.style.overflow = previousBodyOverflow;
       body.style.overscrollBehavior = previousBodyOverscroll;
+      body.style.paddingRight = previousBodyPaddingRight;
     };
   }, [locked]);
 }
@@ -425,7 +429,18 @@ function Icon({ type }) {
 }
 
 function ModalCloseButton({ onClick, disabled = false }) {
-  return <button type="button" onClick={onClick} disabled={disabled} className="touch-target flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-zinc-800 text-zinc-400 transition hover:border-zinc-600 hover:bg-zinc-900 hover:text-zinc-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-400 disabled:opacity-40" aria-label="Close"><i className="fa-solid fa-xmark" aria-hidden="true" /></button>;
+  async function close(event) {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) { onClick(); return; }
+    const panel = event.currentTarget.closest('[role="dialog"], [role="alertdialog"]');
+    const backdrop = panel?.parentElement;
+    event.currentTarget.disabled = true;
+    await Promise.all([
+      panel?.animate([{ opacity: 1, transform: "translateY(0) scale(1)" }, { opacity: 0, transform: "translateY(8px) scale(.985)" }], { duration: 150, easing: "cubic-bezier(.4, 0, 1, 1)", fill: "forwards" }).finished,
+      backdrop?.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 150, easing: "ease-out", fill: "forwards" }).finished,
+    ].filter(Boolean)).catch(() => {});
+    onClick();
+  }
+  return <button type="button" onClick={close} disabled={disabled} className="touch-target flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-zinc-800 text-zinc-400 transition hover:border-zinc-600 hover:bg-zinc-900 hover:text-zinc-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-400 disabled:opacity-40" aria-label="Close"><i className="fa-solid fa-xmark" aria-hidden="true" /></button>;
 }
 
 // ─── AutoSuggestField ─────────────────────────────────────────────────────────
@@ -522,8 +537,8 @@ function SetlistModal({ target, onClose, onEdit, onLeave, onIdDiscovered }) {
   }
 
   return (
-    <div data-testid="concert-details-modal" className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 px-4">
-      <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="concert-details-title" className="w-full max-w-lg rounded-3xl border border-zinc-700 bg-zinc-950 p-6 shadow-2xl max-h-[90vh] flex flex-col">
+    <div data-testid="concert-details-modal" className="adn-modal-backdrop fixed inset-0 z-[60] flex items-center justify-center bg-black/70 px-4">
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="concert-details-title" className="adn-modal-panel w-full max-w-lg rounded-3xl border border-zinc-700 bg-zinc-950 p-6 shadow-2xl max-h-[90vh] flex flex-col">
         <div className="mb-5 flex items-start justify-between gap-4 shrink-0">
           <div>
             <h2 id="concert-details-title" className="text-2xl font-black uppercase tracking-tight">{artist}</h2>
@@ -612,7 +627,7 @@ function ContextMenu({ open, x, y, onEdit, onDelete, onClose }) {
   return (
     <>
       <div className="fixed inset-0 z-[55]" onClick={onClose} onContextMenu={(e) => { e.preventDefault(); onClose(); }} />
-      <div className="fixed z-[56] w-44 overflow-hidden rounded-xl border border-zinc-700 bg-zinc-950 shadow-2xl" style={{ left, top }}>
+      <div className="adn-context-menu fixed z-[56] w-44 overflow-hidden rounded-xl border border-zinc-700 bg-zinc-950 shadow-2xl" style={{ left, top }}>
         <button onClick={onEdit} className="block w-full px-4 py-2 text-left text-sm text-zinc-100 hover:bg-zinc-800">Edit</button>
         <button onClick={onDelete} className="block w-full px-4 py-2 text-left text-sm text-red-300 hover:bg-zinc-800">Delete</button>
       </div>
@@ -683,8 +698,8 @@ function EditConcertModal({ isOpen, mode, initial, onClose, onSave, isSaving, sa
   }
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 p-4">
-      <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="edit-concert-title" className="flex max-h-[calc(100dvh-2rem)] w-full max-w-lg flex-col overflow-hidden rounded-3xl border border-zinc-700 bg-zinc-950 shadow-2xl md:max-h-[90dvh]">
+    <div className="adn-modal-backdrop fixed inset-0 z-[60] flex items-center justify-center bg-black/70 p-4">
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="edit-concert-title" className="adn-modal-panel flex max-h-[calc(100dvh-2rem)] w-full max-w-lg flex-col overflow-hidden rounded-3xl border border-zinc-700 bg-zinc-950 shadow-2xl md:max-h-[90dvh]">
         <div className="flex shrink-0 items-start justify-between gap-4 border-b border-zinc-900 px-6 py-5">
           <div className="min-w-0">
             <h2 id="edit-concert-title" className="text-2xl font-black uppercase tracking-tight">Edit concert</h2>
@@ -726,7 +741,7 @@ function EditConcertModal({ isOpen, mode, initial, onClose, onSave, isSaving, sa
           )}
         </div>
         <div className="shrink-0 border-t border-zinc-900 bg-zinc-950 px-6 py-4">
-          <button onClick={submit} disabled={isSaving} className="w-full rounded-2xl bg-zinc-100 px-5 py-3 font-black text-zinc-950 transition hover:bg-white disabled:opacity-50">{isSaving ? "Saving..." : "Save changes"}</button>
+          <button onClick={submit} disabled={isSaving} className="adn-save-button w-full rounded-2xl bg-zinc-100 px-5 py-3 font-black text-zinc-950 transition hover:bg-white disabled:opacity-50">{isSaving && <i className="fa-solid fa-circle-notch fa-spin mr-2" aria-hidden="true" />}{isSaving ? "Saving..." : "Save changes"}</button>
           {validationError && <div className="mt-3 rounded-2xl border border-amber-900 bg-amber-950/30 px-4 py-3 text-sm font-semibold text-amber-200" role="alert">{validationError}</div>}
           {saveError && <div className="mt-3 rounded-2xl border border-red-900 bg-red-950/40 px-4 py-3 text-sm text-red-200">{saveError}</div>}
         </div>
@@ -790,8 +805,8 @@ function AddConcertModal({ isOpen, initial, stagingSuggestion = false, onClose, 
   }
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 p-4">
-      <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="add-concert-title" data-testid="add-concert-modal" className="flex max-h-[calc(100dvh-2rem)] w-full max-w-lg flex-col overflow-hidden rounded-3xl border border-zinc-700 bg-zinc-950 shadow-2xl md:max-h-[90dvh]">
+    <div className="adn-modal-backdrop fixed inset-0 z-[60] flex items-center justify-center bg-black/70 p-4">
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="add-concert-title" data-testid="add-concert-modal" className="adn-modal-panel flex max-h-[calc(100dvh-2rem)] w-full max-w-lg flex-col overflow-hidden rounded-3xl border border-zinc-700 bg-zinc-950 shadow-2xl md:max-h-[90dvh]">
         <div data-testid="add-concert-header" className="flex shrink-0 items-start justify-between gap-4 border-b border-zinc-900 px-6 py-5">
           <div className="min-w-0">
             <h2 id="add-concert-title" className="text-2xl font-black uppercase tracking-tight">Add concert</h2>
@@ -846,7 +861,7 @@ function AddConcertModal({ isOpen, initial, stagingSuggestion = false, onClose, 
         </div>}
         </div>
         {(!stagingSuggestion || saveError) && <div className="shrink-0 border-t border-zinc-900 bg-zinc-950 px-6 py-4">
-          {!stagingSuggestion && <button onClick={submit} disabled={isSaving} className="w-full rounded-2xl bg-zinc-100 px-5 py-3 font-black text-zinc-950 transition hover:bg-white disabled:opacity-50">{isSaving ? "Saving..." : "Add concert"}</button>}
+          {!stagingSuggestion && <button onClick={submit} disabled={isSaving} className="adn-save-button w-full rounded-2xl bg-zinc-100 px-5 py-3 font-black text-zinc-950 transition hover:bg-white disabled:opacity-50">{isSaving && <i className="fa-solid fa-circle-notch fa-spin mr-2" aria-hidden="true" />}{isSaving ? "Saving..." : "Add concert"}</button>}
           {validationError && <div className="mt-3 rounded-2xl border border-amber-900 bg-amber-950/30 px-4 py-3 text-sm font-semibold text-amber-200" role="alert">{validationError}</div>}
           {saveError && <div className="mt-3 rounded-2xl border border-red-900 bg-red-950/40 px-4 py-3 text-sm text-red-200">{saveError}</div>}
         </div>}
@@ -896,7 +911,7 @@ function DropdownMenu({ value, onChange, options, compact = false, ariaLabel, cl
       <summary aria-label={ariaLabel} className={`cursor-pointer list-none truncate rounded-full border border-zinc-700 bg-zinc-900 text-sm font-semibold text-zinc-100 shadow-2xl transition hover:border-zinc-500 [&::-webkit-details-marker]:hidden ${centered ? "text-center" : "text-left"} ${compact ? "px-4 py-2.5" : "px-5 py-3"}`}>
         {activeLabel} <span className="ml-1 text-zinc-500">▾</span>
       </summary>
-      <div className={`absolute top-full z-30 mt-2 max-h-72 w-64 max-w-[calc(100vw-2rem)] overflow-y-auto rounded-2xl border border-zinc-700 bg-zinc-950 p-2 shadow-2xl ${menuAlign === "left" ? "left-0" : "right-0"}`}>
+      <div className={`adn-popover absolute top-full z-30 mt-2 max-h-72 w-64 max-w-[calc(100vw-2rem)] overflow-y-auto rounded-2xl border border-zinc-700 bg-zinc-950 p-2 shadow-2xl ${menuAlign === "left" ? "left-0" : "right-0"}`}>
         {normalizedOptions.map((option) => (
           <button
             key={option.value ?? option.label}
@@ -1190,8 +1205,8 @@ function CalendarConcertModal({ target, onClose, onEdit }) {
   ].filter((line, index) => line || index === 4).join("\n");
   const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(whatsappMessage)}`;
   return (
-    <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/75 px-4" onClick={onClose}>
-      <article ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="calendar-concert-title" className="w-full max-w-md rounded-3xl border border-zinc-700 bg-zinc-900 p-5 shadow-2xl" onClick={(event) => event.stopPropagation()}>
+    <div className="adn-modal-backdrop fixed inset-0 z-[70] flex items-center justify-center bg-black/75 px-4" onClick={onClose}>
+      <article ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="calendar-concert-title" className="adn-modal-panel w-full max-w-md rounded-3xl border border-zinc-700 bg-zinc-900 p-5 shadow-2xl" onClick={(event) => event.stopPropagation()}>
         <div className="flex items-start justify-between gap-4 border-b border-zinc-800 pb-4">
           <h2 id="calendar-concert-title" className="min-w-0 break-words text-2xl font-black uppercase leading-none tracking-tight text-zinc-100">{target.artist}</h2>
           <div className="flex shrink-0 items-center gap-2">
@@ -2067,8 +2082,8 @@ function ChangePasswordModal({ mode, email, onClose }) {
   }
 
   return (
-    <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/75 px-4" onClick={() => { if (!saving) onClose(); }}>
-      <section role="dialog" aria-modal="true" aria-labelledby="change-password-title" className="w-full max-w-md rounded-3xl border border-zinc-700 bg-zinc-950 p-6 shadow-2xl" onClick={(event) => event.stopPropagation()}>
+    <div className="adn-modal-backdrop fixed inset-0 z-[70] flex items-center justify-center bg-black/75 px-4" onClick={() => { if (!saving) onClose(); }}>
+      <section role="dialog" aria-modal="true" aria-labelledby="change-password-title" className="adn-modal-panel w-full max-w-md rounded-3xl border border-zinc-700 bg-zinc-950 p-6 shadow-2xl" onClick={(event) => event.stopPropagation()}>
         <div className="mb-6 flex items-start justify-between gap-4">
           <div>
             <p className="mb-2 text-xs font-bold uppercase tracking-[0.25em] text-zinc-600">{isRecovery ? "Account recovery" : "Account security"}</p>
@@ -2476,7 +2491,7 @@ export default function App() {
     setQuery("");
     setSortMode("artist");
     setSidebarOpen(false);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    window.scrollTo({ top: 0, behavior: "auto" });
   }
 
   function navigateToArchive({ replace = false } = {}) {
@@ -2726,15 +2741,15 @@ export default function App() {
     {passwordModal}
     {isRefreshing && <span className="sr-only" role="status">Syncing your latest data</span>}
     {syncError && <div className="fixed bottom-4 left-1/2 z-[80] max-w-[calc(100vw-2rem)] -translate-x-1/2 rounded-full border border-amber-900 bg-zinc-950 px-4 py-2 text-center text-xs font-semibold text-amber-300 shadow-2xl" role="status">Offline · showing saved data</div>}
-    <main className="min-h-screen bg-zinc-950 text-zinc-100 md:flex">
+    <main className="adn-shell min-h-screen bg-zinc-950 text-zinc-100 md:flex">
       {/* Desktop-only fixed Menu button */}
       <button onClick={() => setSidebarOpen(true)} className="menu-button-desktop fixed left-4 top-4 z-40 rounded-full border border-zinc-700 bg-zinc-900 px-4 py-2 text-sm font-bold text-zinc-100 shadow-2xl transition hover:border-zinc-500" aria-label="Open menu" aria-expanded={sidebarOpen} aria-controls="main-navigation"><i className="fa-solid fa-bars mr-2 text-xs" aria-hidden="true" />Menu</button>
       {/* Touch-device Menu starts at the top of the page and scrolls away with it */}
       <button onClick={() => setSidebarOpen(true)} className="menu-button-touch touch-target absolute left-4 top-4 z-40 h-11 w-11 rounded-full border border-zinc-700 bg-zinc-900 text-sm text-zinc-100 shadow-2xl transition hover:border-zinc-500" aria-label="Open menu" title="Menu" aria-expanded={sidebarOpen} aria-controls="main-navigation"><i className="fa-solid fa-bars text-xs" aria-hidden="true" /></button>
 
-      {sidebarOpen && <button className="fixed inset-0 z-40 bg-black/60" onClick={() => setSidebarOpen(false)} aria-label="Close menu overlay" />}
+      <button disabled={!sidebarOpen} aria-hidden={!sidebarOpen} tabIndex={sidebarOpen ? 0 : -1} className={`fixed inset-0 z-40 bg-black/60 transition-opacity duration-150 ${sidebarOpen ? "opacity-100" : "pointer-events-none opacity-0"}`} onClick={() => setSidebarOpen(false)} aria-label="Close menu overlay" />
 
-      <aside id="main-navigation" aria-label="Main navigation" aria-hidden={!sidebarOpen} inert={!sidebarOpen ? "" : undefined} className={`fixed inset-y-0 left-0 z-50 w-[min(20rem,88vw)] border-r border-zinc-800 bg-zinc-950/95 backdrop-blur-xl transition-transform duration-300 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}>
+      <aside id="main-navigation" aria-label="Main navigation" aria-hidden={!sidebarOpen} inert={!sidebarOpen ? "" : undefined} className={`adn-navigation fixed inset-y-0 left-0 z-50 w-[min(20rem,88vw)] border-r border-zinc-800 bg-zinc-950/95 backdrop-blur-xl transition-transform duration-300 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}>
         <div className="flex h-full flex-col px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-[max(1.25rem,env(safe-area-inset-top))]">
           <div className="flex items-center justify-between gap-4 border-b border-zinc-900 pb-5">
             <button onClick={() => changePage("history")} className="min-w-0 text-left" aria-label="Go to Concert history">
@@ -2856,7 +2871,7 @@ export default function App() {
             ) : (
             <><div className="mb-4 flex items-center justify-between text-xs font-bold uppercase tracking-widest text-zinc-500"><span>{filtered.length} {filtered.length === 1 ? "artist" : "artists"}</span><span>{filtered.reduce((total, item) => total + (item.shows?.length || 0), 0)} concerts</span></div><section className="grid w-full gap-4 md:grid-cols-2 xl:grid-cols-3">
               {filtered.map((item) => (
-                <article key={item.artist + (isNext ? item.date : "")} className="group rounded-3xl border border-zinc-800 bg-zinc-900 p-5 shadow-xl transition hover:-translate-y-1 hover:border-zinc-500 w-full min-w-0">
+                <article key={item.artist + (isNext ? item.date : "")} className="adn-artist-card group w-full min-w-0 rounded-3xl border border-zinc-800 bg-zinc-900 p-5 shadow-xl">
                   <div className="flex items-start justify-between gap-4 border-b border-zinc-800 pb-4">
                     {!isNext ? (
                       <button onClick={() => openArtistDetail(item.artist)} className="min-w-0 text-left text-xl font-black uppercase leading-none tracking-tight transition hover:text-white hover:underline hover:decoration-zinc-600 hover:underline-offset-4 md:text-3xl">
@@ -2883,7 +2898,7 @@ export default function App() {
                       return (
                         <div
                           key={`${item.artist}-${show}`}
-                          className="group/concert relative cursor-pointer select-none rounded-2xl border border-transparent bg-zinc-950 p-4 transition duration-200 hover:border-zinc-700 hover:bg-zinc-800/80 hover:shadow-lg"
+                          className="adn-concert-row group/concert relative cursor-pointer select-none rounded-2xl border border-transparent bg-zinc-950 p-4"
                           onContextMenu={(e) => openContextMenu(e, concertTarget)}
                           onTouchStart={(e) => { touchMoved = false; longPressed = false; const t = e.touches[0]; const sx = t.clientX, sy = t.clientY; touchTimer = setTimeout(() => { if (!touchMoved) { longPressed = true; if (navigator.vibrate) navigator.vibrate(20); openContextMenuAt(sx, sy, concertTarget); } }, 500); }}
                           onTouchMove={() => { touchMoved = true; if (touchTimer) { clearTimeout(touchTimer); touchTimer = null; } }}
@@ -2911,15 +2926,15 @@ export default function App() {
       </section>
 
       {isSaving && (
-        <div className="pointer-events-none fixed bottom-6 right-6 z-[80] flex items-center gap-3 rounded-full border border-zinc-700 bg-zinc-900/95 px-5 py-3 shadow-2xl backdrop-blur">
+        <div className="adn-saving-toast pointer-events-none fixed bottom-6 right-6 z-[80] flex items-center gap-3 rounded-full border border-zinc-700 bg-zinc-900/95 px-5 py-3 shadow-2xl backdrop-blur" role="status" aria-live="polite">
           <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-zinc-500 border-t-zinc-100" />
           <span className="text-sm font-bold text-zinc-100">Saving…</span>
         </div>
       )}
 
       {confirmDelete && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 px-4">
-          <div role="alertdialog" aria-modal="true" aria-labelledby="delete-concert-title" className="w-full max-w-sm rounded-3xl border border-red-950 bg-zinc-950 p-6 shadow-2xl">
+        <div className="adn-modal-backdrop fixed inset-0 z-[60] flex items-center justify-center bg-black/70 px-4">
+          <div role="alertdialog" aria-modal="true" aria-labelledby="delete-concert-title" className="adn-modal-panel w-full max-w-sm rounded-3xl border border-red-950 bg-zinc-950 p-6 shadow-2xl">
             <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-2xl border border-red-900/60 bg-red-950/30 text-red-300"><i className="fa-solid fa-trash-can" aria-hidden="true" /></div>
             <h2 id="delete-concert-title" className="mb-2 text-xl font-black uppercase tracking-tight">Delete concert?</h2>
             <p className="mb-6 text-sm leading-relaxed text-zinc-400"><span className="font-semibold text-zinc-100">{confirmDelete.artist}</span>{confirmDelete.venue ? ` · ${confirmDelete.venue}` : ""}<span className="block text-zinc-600">{confirmDelete.date}</span>This action cannot be undone.</p>
