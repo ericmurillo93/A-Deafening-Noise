@@ -62,7 +62,7 @@ Keep the project's existing **A Deafening Noise** Notion page current when a cha
 ## Suggestion pipeline
 
 - Scrapers: Resurrection Fest Route, Live Nation Spain, Madness Live, Sala Razzmatazz, Sala Apolo, Sala Bikini, Paral·lel 62, Palau de la Música Catalana, Les Docks, Montreux Jazz Festival, and DICE.
-- Match only billed artists in `data/listened-artists.json` with at least 3 listening records or 10 total minutes played.
+- Match only billed artists in `data/listened-artists.json`. Historical imports ignore plays shorter than 30 seconds and require at least one accumulated listening hour per artist; connected Spotify Top Artists remain eligible directly.
 - Exclude an artist/date already present in `data/concerts.json`.
 - Generate the listened catalog with `npm run import:spotify`; never commit raw Spotify exports.
 - Prefer missing a structurally ambiguous festival over inventing an artist-to-day mapping.

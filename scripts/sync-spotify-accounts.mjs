@@ -22,13 +22,12 @@ function spotifyArtists(ranges) {
   return [...artists.values()];
 }
 
-const qualifiesHistoricalArtist = ({ listenCount = 0, totalMsPlayed = 0 }) => listenCount >= 3 || totalMsPlayed >= 600_000;
+const qualifiesHistoricalArtist = ({ totalMsPlayed = 0 }) => totalMsPlayed >= 3_600_000;
 
 if (process.argv.includes("--check")) {
   assert.deepEqual(spotifyArtists([{ items: [{ id: "1", name: "Artist" }] }, { items: [{ id: "1", name: "Artist" }] }, { items: [] }]), [{ spotifyId: "1", name: "Artist", ranges: ["short_term", "medium_term"] }]);
-  assert.equal(qualifiesHistoricalArtist({ listenCount: 1, totalMsPlayed: 262_906 }), false);
-  assert.equal(qualifiesHistoricalArtist({ listenCount: 3, totalMsPlayed: 1 }), true);
-  assert.equal(qualifiesHistoricalArtist({ listenCount: 1, totalMsPlayed: 600_000 }), true);
+  assert.equal(qualifiesHistoricalArtist({ totalMsPlayed: 3_599_999 }), false);
+  assert.equal(qualifiesHistoricalArtist({ totalMsPlayed: 3_600_000 }), true);
   process.stdout.write("Spotify sync self-check passed\n");
   process.exit(0);
 }
@@ -117,7 +116,7 @@ for (let offset = 0; ; offset += 1000) {
   if (page.length < 1000) break;
 }
 const unique = new Map(rows.map((row) => [normalize(row.artist_name), row.artist_name]));
-const artists = [...unique].map(([key, artist]) => ({ artist, spotifyId: `catalog:${createHash("sha256").update(key).digest("hex")}`, listenCount: 3, totalMsPlayed: 600000 })).sort((a, b) => a.artist.localeCompare(b.artist));
+const artists = [...unique].map(([key, artist]) => ({ artist, spotifyId: `catalog:${createHash("sha256").update(key).digest("hex")}`, listenCount: 1, totalMsPlayed: 3_600_000 })).sort((a, b) => a.artist.localeCompare(b.artist));
 let generatedAt = new Date().toISOString();
 try {
   const previous = JSON.parse(await fs.readFile(outputPath, "utf8"));

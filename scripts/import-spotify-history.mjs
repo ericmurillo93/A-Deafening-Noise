@@ -1,3 +1,4 @@
+import assert from "node:assert/strict";
 import fsSync from "node:fs";
 import fs from "node:fs/promises";
 import os from "node:os";
@@ -11,6 +12,14 @@ const outputPath = path.resolve(
   process.argv.find((argument) => argument.startsWith("--output="))?.slice("--output=".length)
     || "data/listened-artists.json",
 );
+const isQualifyingPlay = (milliseconds) => milliseconds >= 30_000;
+
+if (process.argv.includes("--check")) {
+  assert.equal(isQualifyingPlay(29_999), false);
+  assert.equal(isQualifyingPlay(30_000), true);
+  process.stdout.write("Spotify history import self-check passed\n");
+  process.exit(0);
+}
 
 async function findAudioFiles(directory) {
   const files = [];
@@ -70,7 +79,7 @@ for (const filename of audioFiles) {
     const artist = String(record.master_metadata_album_artist_name || "").trim();
     const milliseconds = Number(record.ms_played) || 0;
     const key = normalize(artist);
-    if (!key || milliseconds <= 0) continue;
+    if (!key || !isQualifyingPlay(milliseconds)) continue;
     qualifyingListens += 1;
 
     const timestamp = typeof record.ts === "string" ? record.ts : "";
@@ -100,7 +109,7 @@ const artistRows = [...artists.values()]
 const catalog = {
   generatedAt: new Date().toISOString(),
   source: "Spotify Extended Streaming History",
-  matchingRule: "At least one audio record with ms_played greater than zero",
+  matchingRule: "At least one hour accumulated from plays lasting at least 30 seconds",
   filesProcessed: audioFiles.length,
   recordsProcessed,
   qualifyingListens,

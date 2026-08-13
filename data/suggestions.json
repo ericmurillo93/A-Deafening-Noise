@@ -1,28 +1,6 @@
 {
-  "generatedAt": "2026-08-13T00:35:53.237Z",
+  "generatedAt": "2026-08-13T00:51:55.743Z",
   "suggestions": [
-    {
-      "id": "dice-69ff8cc760f3180001b0a799-grupo-canaveral-de-humberto-pabon",
-      "artist": "Grupo Cañaveral De Humberto Pabón",
-      "venue": "La Paloma",
-      "city": "Barcelona",
-      "country": "ES",
-      "date": "10/09/2026",
-      "title": "Grupo Cañaveral • Barcelona",
-      "source": "DICE",
-      "sourceUrl": "https://dice.fm/event/pydq2l-grupo-caaveral-barcelona-10th-sep-la-paloma-barcelona-tickets"
-    },
-    {
-      "id": "dice-6a0330445272b700014c8771-grupo-canaveral-de-humberto-pabon",
-      "artist": "Grupo Cañaveral De Humberto Pabón",
-      "venue": "Sala But",
-      "city": "Madrid",
-      "country": "ES",
-      "date": "11/09/2026",
-      "title": "Grupo Cañaveral • Madrid",
-      "source": "DICE",
-      "sourceUrl": "https://dice.fm/event/nv6v55-grupo-caaveral-madrid-11th-sep-sala-but-madrid-tickets"
-    },
     {
       "id": "razzmatazz-11092026-11-09-2026-rigoberta-bandini-rigoberta-bandini",
       "artist": "Rigoberta Bandini",
@@ -35,30 +13,8 @@
       "sourceUrl": "https://www.salarazzmatazz.com/agenda/11-09-2026-rigoberta-bandini/"
     },
     {
-      "id": "razzmatazz-16092026-16-09-2026-mac-demarco-mac-demarco",
-      "artist": "Mac DeMarco",
-      "venue": "Razzmatazz",
-      "city": "Barcelona",
-      "country": "ES",
-      "date": "16/09/2026",
-      "title": "Mac DeMarco",
-      "source": "Sala Razzmatazz",
-      "sourceUrl": "https://www.salarazzmatazz.com/agenda/16-09-2026-mac-demarco/"
-    },
-    {
       "id": "dice-692da6c8d7ee02000114da39-guitarricadelafuente",
       "artist": "Guitarricadelafuente",
-      "venue": "Parc del Fòrum",
-      "city": "Barcelona",
-      "country": "ES",
-      "date": "17/09/2026",
-      "title": "Festival•B 2026",
-      "source": "DICE",
-      "sourceUrl": "https://dice.fm/event/7dq2b6-festivalb-2026-17th-sep-parc-del-frum-barcelona-tickets"
-    },
-    {
-      "id": "dice-692da6c8d7ee02000114da39-jimena-amarillo",
-      "artist": "Jimena Amarillo",
       "venue": "Parc del Fòrum",
       "city": "Barcelona",
       "country": "ES",
@@ -79,28 +35,6 @@
       "sourceUrl": "https://dice.fm/event/7dq2b6-festivalb-2026-17th-sep-parc-del-frum-barcelona-tickets"
     },
     {
-      "id": "dice-692da6c8d7ee02000114da39-pablopablo",
-      "artist": "pablopablo",
-      "venue": "Parc del Fòrum",
-      "city": "Barcelona",
-      "country": "ES",
-      "date": "17/09/2026",
-      "title": "Festival•B 2026",
-      "source": "DICE",
-      "sourceUrl": "https://dice.fm/event/7dq2b6-festivalb-2026-17th-sep-parc-del-frum-barcelona-tickets"
-    },
-    {
-      "id": "dice-692da6c8d7ee02000114da39-rusowsky",
-      "artist": "rusowsky",
-      "venue": "Parc del Fòrum",
-      "city": "Barcelona",
-      "country": "ES",
-      "date": "17/09/2026",
-      "title": "Festival•B 2026",
-      "source": "DICE",
-      "sourceUrl": "https://dice.fm/event/7dq2b6-festivalb-2026-17th-sep-parc-del-frum-barcelona-tickets"
-    },
-    {
       "id": "dice-692da6c8d7ee02000114da39-yung-beef",
       "artist": "Yung Beef",
       "venue": "Parc del Fòrum",
@@ -110,39 +44,6 @@
       "title": "Festival•B 2026",
       "source": "DICE",
       "sourceUrl": "https://dice.fm/event/7dq2b6-festivalb-2026-17th-sep-parc-del-frum-barcelona-tickets"
-    },
-    {
-      "id": "sala-apolo-7347-besmaya",
-      "artist": "Besmaya",
-      "venue": "Sala Apolo",
-      "city": "Barcelona",
-      "country": "ES",
-      "date": "15/10/2026",
-      "title": "Besmaya",
-      "source": "Sala Apolo",
-      "sourceUrl": "https://www.sala-apolo.com/es/evento/besmaya-20261015-7347"
-    },
-    {
-      "id": "razzmatazz-29102026-29-10-2026-ruel-ruel",
-      "artist": "Ruel",
-      "venue": "Razzmatazz",
-      "city": "Barcelona",
-      "country": "ES",
-      "date": "29/10/2026",
-      "title": "Ruel",
-      "source": "Sala Razzmatazz",
-      "sourceUrl": "https://www.salarazzmatazz.com/agenda/29-10-2026-ruel/"
-    },
-    {
-      "id": "razzmatazz-31102026-31-10-2026-calva-louise-calva-louise",
-      "artist": "Calva Louise",
-      "venue": "Razzmatazz",
-      "city": "Barcelona",
-      "country": "ES",
-      "date": "31/10/2026",
-      "title": "Calva Louise",
-      "source": "Sala Razzmatazz",
-      "sourceUrl": "https://www.salarazzmatazz.com/agenda/31-10-2026-calva-louise/"
     },
     {
       "id": "dice-69bd2ba9b9555c000158359b-kinder-malo",
@@ -156,83 +57,6 @@
       "sourceUrl": "https://dice.fm/event/eoyp22-dora-band-pimp-flaco-kinder-malo-en-mazo-31st-oct-sala-coprnico-madrid-tickets"
     },
     {
-      "id": "dice-69bd2ba9b9555c000158359b-pimp-flaco",
-      "artist": "Pimp Flaco",
-      "venue": "Sala Copérnico",
-      "city": "Madrid",
-      "country": "ES",
-      "date": "31/10/2026",
-      "title": "Dora Band (Pimp Flaco + Kinder Malo) en MAZO",
-      "source": "DICE",
-      "sourceUrl": "https://dice.fm/event/eoyp22-dora-band-pimp-flaco-kinder-malo-en-mazo-31st-oct-sala-coprnico-madrid-tickets"
-    },
-    {
-      "id": "dice-692d712552d6ab0001ee53c6-arca",
-      "artist": "Arca",
-      "venue": "Fira Montjuïc (MIRA Festival)",
-      "city": "Barcelona",
-      "country": "ES",
-      "date": "06/11/2026",
-      "title": "MIRA 2026",
-      "source": "DICE",
-      "sourceUrl": "https://dice.fm/event/v3b8og-mira-2026-6th-nov-fira-montjuc-mira-festival-barcelona-tickets"
-    },
-    {
-      "id": "dice-6a1ea79a05faf3000187a76d-bala",
-      "artist": "Bala",
-      "venue": "Sala Shoko",
-      "city": "Madrid",
-      "country": "ES",
-      "date": "13/11/2026",
-      "title": " Bala & Niña Coyote Eta Chico Tornado en MAZO",
-      "source": "DICE",
-      "sourceUrl": "https://dice.fm/event/wwpeon--bala-nia-coyote-eta-chico-tornado-en-mazo-13th-nov-sala-shoko-madrid-tickets"
-    },
-    {
-      "id": "dice-693c513991c37d0001c4b3ac-agorazein",
-      "artist": "Agorazein",
-      "venue": "Movistar Arena",
-      "city": "Madrid",
-      "country": "ES",
-      "date": "15/11/2026",
-      "title": "AGZ \"Siempre\" 10º Aniversario",
-      "source": "DICE",
-      "sourceUrl": "https://dice.fm/event/av7wpd-agz-siempre-10-aniversario-15th-nov-movistar-arena-madrid-tickets"
-    },
-    {
-      "id": "dice-69b91a1f99fcb6000172cddf-oskar-med-k",
-      "artist": "oskar med k",
-      "venue": "Sala Wagon",
-      "city": "Madrid",
-      "country": "ES",
-      "date": "15/11/2026",
-      "title": "Oskar Med K",
-      "source": "DICE",
-      "sourceUrl": "https://dice.fm/event/eoyqq2-oskar-med-k-15th-nov-sala-wagon-madrid-tickets"
-    },
-    {
-      "id": "dice-69419f34e352c1000186b8c4-agorazein",
-      "artist": "Agorazein",
-      "venue": "Movistar Arena",
-      "city": "Madrid",
-      "country": "ES",
-      "date": "16/11/2026",
-      "title": "AGZ \"Siempre\" 10º Aniversario - 2ª fecha",
-      "source": "DICE",
-      "sourceUrl": "https://dice.fm/event/v3gnbv-agz-siempre-10-aniversario-2-fecha-16th-nov-movistar-arena-madrid-tickets"
-    },
-    {
-      "id": "dice-6943fe331c856e000131fb13-agorazein",
-      "artist": "Agorazein",
-      "venue": "Movistar Arena",
-      "city": "Madrid",
-      "country": "ES",
-      "date": "17/11/2026",
-      "title": "AGZ \"Siempre\" 10º Aniversario - 3ª fecha",
-      "source": "DICE",
-      "sourceUrl": "https://dice.fm/event/mx8yxk-agz-siempre-10-aniversario-3-fecha-17th-nov-movistar-arena-madrid-tickets"
-    },
-    {
       "id": "razzmatazz-17112026-17-11-2026-ed-maverick-ed-maverick",
       "artist": "Ed Maverick",
       "venue": "Razzmatazz",
@@ -244,50 +68,6 @@
       "sourceUrl": "https://www.salarazzmatazz.com/agenda/17-11-2026-ed-maverick/"
     },
     {
-      "id": "dice-69440435a1b6e20001f1c9a5-agorazein",
-      "artist": "Agorazein",
-      "venue": "Movistar Arena",
-      "city": "Madrid",
-      "country": "ES",
-      "date": "18/11/2026",
-      "title": "AGZ \"Siempre\" 10º Aniversario - 4ª fecha",
-      "source": "DICE",
-      "sourceUrl": "https://dice.fm/event/2w7awm-agz-siempre-10-aniversario-4-fecha-18th-nov-movistar-arena-madrid-tickets"
-    },
-    {
-      "id": "razzmatazz-28112026-28-11-2026-saint-levant-saint-levant",
-      "artist": "Saint Levant",
-      "venue": "Razzmatazz",
-      "city": "Barcelona",
-      "country": "ES",
-      "date": "28/11/2026",
-      "title": "Saint Levant",
-      "source": "Sala Razzmatazz",
-      "sourceUrl": "https://www.salarazzmatazz.com/agenda/28-11-2026-saint-levant/"
-    },
-    {
-      "id": "razzmatazz-29112026-29-11-2026-cazzu-cazzu",
-      "artist": "Cazzu",
-      "venue": "Razzmatazz",
-      "city": "Barcelona",
-      "country": "ES",
-      "date": "29/11/2026",
-      "title": "Cazzu",
-      "source": "Sala Razzmatazz",
-      "sourceUrl": "https://www.salarazzmatazz.com/agenda/29-11-2026-cazzu/"
-    },
-    {
-      "id": "razzmatazz-30112026-30-11-2026-cazzu-cazzu",
-      "artist": "Cazzu",
-      "venue": "Razzmatazz",
-      "city": "Barcelona",
-      "country": "ES",
-      "date": "30/11/2026",
-      "title": "Cazzu",
-      "source": "Sala Razzmatazz",
-      "sourceUrl": "https://www.salarazzmatazz.com/agenda/30-11-2026-cazzu/"
-    },
-    {
       "id": "dice-69f9efd045d5be0001a2c5ad-cecilio-g",
       "artist": "Cecilio G.",
       "venue": "Sala But",
@@ -297,50 +77,6 @@
       "title": "Cecilio G en MAZO",
       "source": "DICE",
       "sourceUrl": "https://dice.fm/event/oed76y-cecilio-g-en-mazo-10th-dec-sala-but-madrid-tickets"
-    },
-    {
-      "id": "razzmatazz-15012027-15-01-2027-buhos-buhos",
-      "artist": "Buhos",
-      "venue": "Razzmatazz",
-      "city": "Barcelona",
-      "country": "ES",
-      "date": "15/01/2027",
-      "title": "Buhos",
-      "source": "Sala Razzmatazz",
-      "sourceUrl": "https://www.salarazzmatazz.com/agenda/15-01-2027-buhos/"
-    },
-    {
-      "id": "razzmatazz-22012027-22-01-2027-hard-gz-hard-gz",
-      "artist": "Hard GZ",
-      "venue": "Razzmatazz",
-      "city": "Barcelona",
-      "country": "ES",
-      "date": "22/01/2027",
-      "title": "Hard GZ",
-      "source": "Sala Razzmatazz",
-      "sourceUrl": "https://www.salarazzmatazz.com/agenda/22-01-2027-hard-gz/"
-    },
-    {
-      "id": "razzmatazz-23012027-23-01-2027-hard-gz-hard-gz",
-      "artist": "Hard GZ",
-      "venue": "Razzmatazz",
-      "city": "Barcelona",
-      "country": "ES",
-      "date": "23/01/2027",
-      "title": "Hard GZ",
-      "source": "Sala Razzmatazz",
-      "sourceUrl": "https://www.salarazzmatazz.com/agenda/23-01-2027-hard-gz/"
-    },
-    {
-      "id": "razzmatazz-31012027-31-01-2027-editors-editors",
-      "artist": "Editors",
-      "venue": "Razzmatazz",
-      "city": "Barcelona",
-      "country": "ES",
-      "date": "31/01/2027",
-      "title": "Editors",
-      "source": "Sala Razzmatazz",
-      "sourceUrl": "https://www.salarazzmatazz.com/agenda/31-01-2027-editors/"
     },
     {
       "id": "razzmatazz-02032027-02-03-2027-the-halo-effect-the-halo-effect",
@@ -365,39 +101,6 @@
       "sourceUrl": "https://www.resurrectionfest.es/route/megadeth-tour-2027/"
     },
     {
-      "id": "resurrection-route-megadeth-tour-2027-10042027-testament",
-      "artist": "Testament",
-      "venue": "Olimpic Arena Badalona",
-      "city": "Barcelona",
-      "country": "ES",
-      "date": "10/04/2027",
-      "title": "Megadeth",
-      "source": "Resurrection Fest Route",
-      "sourceUrl": "https://www.resurrectionfest.es/route/megadeth-tour-2027/"
-    },
-    {
-      "id": "sala-apolo-7546-rodrigo-y-gabriela",
-      "artist": "Rodrigo y Gabriela",
-      "venue": "Sala Apolo",
-      "city": "Barcelona",
-      "country": "ES",
-      "date": "07/05/2027",
-      "title": "Rodrigo y Gabriela",
-      "source": "Sala Apolo",
-      "sourceUrl": "https://www.sala-apolo.com/es/evento/rodrigo-y-gabriela-20270507-7546"
-    },
-    {
-      "id": "dice-6a3cfa75d499f40001171314-belako",
-      "artist": "Belako",
-      "venue": "Sala Shoko",
-      "city": "Madrid",
-      "country": "ES",
-      "date": "21/05/2027",
-      "title": "Belako en Sound Isidro",
-      "source": "DICE",
-      "sourceUrl": "https://dice.fm/event/bb2m6x-belako-en-sound-isidro-21st-may-sala-shoko-madrid-tickets"
-    },
-    {
       "id": "razzmatazz-21052027-21-05-2027-el-chojin-el-chojin",
       "artist": "El Chojin",
       "venue": "Razzmatazz",
@@ -407,28 +110,6 @@
       "title": "El Chojin",
       "source": "Sala Razzmatazz",
       "sourceUrl": "https://www.salarazzmatazz.com/agenda/21-05-2027-el-chojin/"
-    },
-    {
-      "id": "dice-69e76161509fe000014a68d2-belako",
-      "artist": "Belako",
-      "venue": "La Nau",
-      "city": "Barcelona",
-      "country": "ES",
-      "date": "30/10/2027",
-      "title": "Belako",
-      "source": "DICE",
-      "sourceUrl": "https://dice.fm/event/6dkrpq-belako-30th-oct-la-nau-barcelona-tickets"
-    },
-    {
-      "id": "dice-69e33988a3c4800001142d44-belako",
-      "artist": "Belako",
-      "venue": "DOSROMBOS",
-      "city": "Badalona",
-      "country": "ES",
-      "date": "04/12/2027",
-      "title": "Belako",
-      "source": "DICE",
-      "sourceUrl": "https://dice.fm/event/2w6dep-belako-4th-dec-dosrombos-badalona-tickets"
     }
   ]
 }

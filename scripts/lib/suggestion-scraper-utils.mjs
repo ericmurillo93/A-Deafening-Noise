@@ -27,7 +27,7 @@ export async function context() {
   const listened = JSON.parse(await fs.readFile(path.join(root, "data/listened-artists.json"), "utf8"));
   return {
     root,
-    listened: new Map(listened.artists.filter(({ artist, listenCount, totalMsPlayed }) => artist && (listenCount >= 3 || totalMsPlayed >= 600_000)).map(({ artist }) => [normalize(artist), artist])),
+    listened: new Map(listened.artists.filter(({ artist, totalMsPlayed }) => artist && totalMsPlayed >= 3_600_000).map(({ artist }) => [normalize(artist), artist])),
     existing: process.argv.includes("--include-existing")
       ? new Set()
       : new Set(concerts.concerts.map(({ artist, date }) => `${normalize(artist)}|${date}`)),

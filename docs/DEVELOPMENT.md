@@ -310,7 +310,7 @@ To run the complete pipeline locally:
 npm run suggestions:refresh
 ```
 
-Scraped lineups are matched against `data/listened-artists.json`, which contains the deduplicated union of artists observed across connected accounts without identifying which user listens to whom. Eric's historical catalog requires at least three plays or ten accumulated minutes per artist; reseeding replaces the previous historical rows so artists below that threshold are removed. Run `node scripts/sync-spotify-accounts.mjs --seed-only` with the normal server-side Supabase variables to repair the historical seed without calling Spotify. Later top-artist refreshes accumulate instead of deleting older affinity. The workflow combines and deduplicates results into `data/suggestions.json`; the application then filters that shared discovery output against each user's own Supabase artist catalog, archive, and dismissals. Suggestions never appear directly as calendar events and are reviewed on the dedicated **Concert suggestions** page.
+Scraped lineups are matched against `data/listened-artists.json`, which contains the deduplicated union of artists observed across connected accounts without identifying which user listens to whom. Eric's historical import ignores plays shorter than 30 seconds and requires at least one accumulated listening hour per artist; connected Spotify Top Artists remain eligible directly. Reseeding replaces the previous historical rows so artists below that threshold are removed. Run `node scripts/sync-spotify-accounts.mjs --seed-only` with the normal server-side Supabase variables to repair the historical seed without calling Spotify. Later top-artist refreshes accumulate instead of deleting older affinity. The workflow combines and deduplicates results into `data/suggestions.json`; the application then filters that shared output against each user's own Spotify catalog, archive, and dismissals. Suggestions never appear directly as calendar events and are reviewed on the dedicated **Concert suggestions** page.
 
 ### Import Spotify listening history
 
@@ -320,7 +320,7 @@ Request the Extended Streaming History export from Spotify, keep the downloaded 
 npm run import:spotify -- path/to/my_spotify_data.zip
 ```
 
-The importer writes `data/listened-artists.json`. It retains only artist-level aggregates: artist name, number of listening records, total milliseconds, and first/last timestamps. Raw track names, IP addresses, devices, and other private export fields are not retained. The `.gitignore` protects the expected ZIP filename and a `spotify-data/` import directory; never commit the raw export under another name.
+The importer writes `data/listened-artists.json`. It ignores plays shorter than 30 seconds and retains only artist-level aggregates: artist name, number of qualifying plays, total qualifying milliseconds, and first/last timestamps. Raw track names, IP addresses, devices, and other private export fields are not retained. The `.gitignore` protects the expected ZIP filename and a `spotify-data/` import directory; never commit the raw export under another name.
 
 ### Spotify account connection
 
