@@ -41,7 +41,7 @@ async function finish(search) {
   sessionStorage.removeItem(verifierKey);
   sessionStorage.removeItem(stateKey);
   if (!tokenResponse.ok) throw new Error("Spotify authorization expired. Please connect again.");
-  const { access_token: accessToken } = await tokenResponse.json();
+  const { access_token: accessToken, refresh_token: refreshToken } = await tokenResponse.json();
   const [profile, ...ranges] = await Promise.all([
     spotifyRequest("/me", accessToken),
     ...["short_term", "medium_term", "long_term"].map((range) => spotifyRequest(`/me/top/artists?limit=50&time_range=${range}`, accessToken)),
@@ -53,7 +53,7 @@ async function finish(search) {
     current.ranges.push(["short_term", "medium_term", "long_term"][index]);
     artists.set(id, current);
   }));
-  return { spotifyUserId: profile.id, displayName: profile.display_name || "Spotify user", artists: [...artists.values()] };
+  return { spotifyUserId: profile.id, displayName: profile.display_name || "Spotify user", refreshToken, artists: [...artists.values()] };
 }
 
 export function finishSpotifyConnection(search = window.location.search) {

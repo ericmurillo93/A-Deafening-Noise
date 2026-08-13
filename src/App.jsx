@@ -166,16 +166,6 @@ async function saveConcertData(updatedData, commitMessage = "Update concerts via
   }
 }
 
-async function suggestionRefreshRequest(endpoint) {
-  const res = await fetch(`/.netlify/functions/${endpoint}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...(await sessionHeaders()) },
-    body: "{}",
-  });
-  if (!res.ok) throw new Error((await res.text()) || `Request failed (${res.status})`);
-  return res.json();
-}
-
 // ─── Setlist.fm proxy ─────────────────────────────────────────────────────────
 
 async function fetchSetlist({ setlistId, artist, date }) {
@@ -1134,82 +1124,13 @@ function NextConcertCalendar({ items, onOpen, onContextMenu, onContextMenuAt }) 
   );
 }
 
-function ConcertSuggestions({ suggestions, reviews, onInterested, onNotInterested, onSave, isSaving, saveError }) {
-  const [refresh, setRefresh] = useState({ status: "idle", conclusion: null });
-  const [refreshError, setRefreshError] = useState("");
-  const refreshRequestedAtRef = useRef(0);
+function ConcertSuggestions({ suggestions, reviews, onInterested, onNotInterested, onSave, onOpenProfile, spotifyConnected, isSaving, saveError }) {
   const pendingCount = Object.keys(reviews).length;
-
-  useEffect(() => {
-    let cancelled = false;
-    let timer;
-    const check = async () => {
-      try {
-        const result = await suggestionRefreshRequest("suggestion-refresh-status");
-        if (cancelled) return;
-        const waitingForDispatchedRun = refreshRequestedAtRef.current
-          && (!result.createdAt || new Date(result.createdAt).getTime() < refreshRequestedAtRef.current - 5000);
-        if (waitingForDispatchedRun) {
-          setRefresh({ status: "queued", conclusion: null });
-          timer = window.setTimeout(check, 5000);
-          return;
-        }
-        setRefresh(result);
-        if (["queued", "in_progress", "waiting", "pending"].includes(result.status)) {
-          timer = window.setTimeout(check, 8000);
-        } else if (refreshRequestedAtRef.current) {
-          refreshRequestedAtRef.current = 0;
-        }
-      } catch (error) {
-        if (!cancelled) setRefreshError(error.message);
-      }
-    };
-    check();
-    return () => { cancelled = true; window.clearTimeout(timer); };
-  }, [refresh.status === "queued"]);
-
-  const startRefresh = async () => {
-    setRefreshError("");
-    refreshRequestedAtRef.current = Date.now();
-    setRefresh({ status: "queued", conclusion: null });
-    try {
-      const result = await suggestionRefreshRequest("refresh-suggestions");
-      if (result.alreadyRunning) refreshRequestedAtRef.current = 0;
-      setRefresh({ status: result.status || "queued", conclusion: null, createdAt: result.createdAt });
-    } catch (error) {
-      refreshRequestedAtRef.current = 0;
-      setRefresh({ status: "completed", conclusion: "failure" });
-      setRefreshError(error.message);
-    }
-  };
-
-  const refreshRunning = ["queued", "in_progress", "waiting", "pending"].includes(refresh.status);
-  const refreshIsNewerThanPage = refresh.createdAt
-    && new Date(refresh.createdAt).getTime() > new Date(suggestionsData.generatedAt).getTime();
-  const refreshMessage = refreshRunning
-    ? "Searching for concerts…"
-    : refreshIsNewerThanPage && refresh.status === "completed" && refresh.conclusion === "success"
-      ? refresh.generatedAt === suggestionsData.generatedAt
-        ? "Search finished. No new suggestions found."
-        : "Search finished. Reload shortly to see the deployed results."
-      : refreshIsNewerThanPage && refresh.status === "completed" && refresh.conclusion
-        ? "The search did not finish successfully."
-        : "";
 
   return (
     <section className="mx-auto max-w-5xl rounded-3xl border border-zinc-800 bg-zinc-900 p-4 md:p-6">
         <div>
-          <div className="mb-3 flex flex-col gap-2 rounded-2xl border border-zinc-800 bg-zinc-950 p-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="min-w-0 text-xs text-zinc-500">
-              <p>Last updated {formatEuropeanDateTime(suggestionsData.generatedAt)}</p>
-              {refreshMessage && <p className="mt-1 font-semibold text-zinc-300">{refreshMessage}</p>}
-              {refreshError && <p className="mt-1 font-semibold text-red-300">{refreshError}</p>}
-            </div>
-            <button type="button" onClick={startRefresh} disabled={refreshRunning} className="shrink-0 rounded-full border border-zinc-700 px-4 py-2 text-sm font-bold text-zinc-100 transition hover:border-zinc-500 disabled:cursor-wait disabled:opacity-50">
-              <i className={`fa-solid fa-rotate mr-2 ${refreshRunning ? "animate-spin" : ""}`} aria-hidden="true" />
-              {refreshRunning ? "Searching" : "Find concerts"}
-            </button>
-          </div>
+          <p className="mb-3 rounded-2xl border border-zinc-800 bg-zinc-950 p-3 text-xs text-zinc-500">Updated daily · Last update {formatEuropeanDateTime(suggestionsData.generatedAt)}</p>
           {suggestions.length ? (
             <div className="space-y-2">
               {suggestions.map((suggestion) => (
@@ -1236,8 +1157,10 @@ function ConcertSuggestions({ suggestions, reviews, onInterested, onNotIntereste
                 </article>
               ))}
             </div>
-          ) : (
+          ) : spotifyConnected ? (
             <p className="rounded-2xl bg-zinc-950 px-4 py-5 text-sm text-zinc-500">No new suggestions right now.</p>
+          ) : (
+            <div className="rounded-2xl bg-zinc-950 px-4 py-5"><p className="text-sm font-bold text-zinc-200">Connect Spotify to personalise suggestions.</p><button type="button" onClick={onOpenProfile} className="mt-3 rounded-xl border border-zinc-700 px-4 py-2.5 text-sm font-bold text-zinc-100 hover:border-zinc-500">Open profile</button></div>
           )}
           {pendingCount > 0 && (
             <div className="sticky bottom-3 mt-3 rounded-2xl border border-zinc-700 bg-zinc-900/95 p-3 shadow-2xl backdrop-blur">
@@ -2210,6 +2133,8 @@ export default function App() {
   const [calendarTarget, setCalendarTarget] = useState(null);
   const [concertItems, setConcertItems] = useState(fallbackConcerts);
   const [dismissedSuggestions, setDismissedSuggestions] = useState(fallbackDismissedSuggestions);
+  const [listenedArtists, setListenedArtists] = useState([]);
+  const [spotifyStatus, setSpotifyStatus] = useState({ connected: !supabaseEnabled });
   const [appProfile, setAppProfile] = useState(null);
   const [friends, setFriends] = useState([]);
   const [friendRequests, setFriendRequests] = useState([]);
@@ -2254,7 +2179,7 @@ export default function App() {
   const isActivity = activePage === "activity";
   const isProfile = activePage === "profile";
   const isAdminPage = isAdmin && activePage === "admin";
-  const isSuggestions = isAdmin && activePage === "suggestions";
+  const isSuggestions = canEdit && activePage === "suggestions";
 
   usePageScrollLock(anyPageOverlayOpen);
 
@@ -2324,10 +2249,12 @@ export default function App() {
     return filterConcerts(visibleConcerts, query);
   }, [concertItems, query]);
 
+  const listenedArtistKeys = useMemo(() => new Set(listenedArtists.map(normalize)), [listenedArtists]);
   const availableSuggestions = useMemo(() => suggestionsData.suggestions.filter((suggestion) =>
-    !dismissedSuggestions.includes(suggestionDecisionKey(suggestion))
+    (!supabaseEnabled || listenedArtistKeys.has(normalize(suggestion.artist)))
+      && !dismissedSuggestions.includes(suggestionDecisionKey(suggestion))
       && !concertItems.some((concert) => normalize(concert.artist) === normalize(suggestion.artist) && concert.date === suggestion.date)
-  ), [concertItems, dismissedSuggestions]);
+  ), [concertItems, dismissedSuggestions, listenedArtistKeys]);
 
   const artistSuggestions = useMemo(() => {
     const set = new Set();
@@ -2608,6 +2535,8 @@ export default function App() {
   function applyAppData(archive) {
     setConcertItems(archive.concerts || []);
     setDismissedSuggestions(archive.dismissedSuggestions || []);
+    setListenedArtists(archive.listenedArtists || []);
+    setSpotifyStatus(archive.spotifyStatus || { connected: false });
     setAppProfile(archive.profile || null);
     setFriends(archive.friends || []);
     setFriendRequests(archive.friendRequests || []);
@@ -2786,6 +2715,8 @@ export default function App() {
       }));
     }}
     onSave={saveSuggestionReviews}
+    onOpenProfile={() => changePage("profile")}
+    spotifyConnected={spotifyStatus.connected}
     isSaving={isSaving}
     saveError={saveError}
   /> : null;
@@ -2819,7 +2750,7 @@ export default function App() {
             <p className="mb-2 px-3 text-[10px] font-black uppercase tracking-[0.2em] text-zinc-600">Explore</p>
             <nav className="space-y-1 text-sm">
               <button onClick={() => changePage("history")} aria-current={["history", "artist", "timeline", "venue"].includes(activePage) ? "page" : undefined} className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left font-bold transition ${["history", "artist", "timeline", "venue"].includes(activePage) ? "bg-zinc-900 text-zinc-100" : "text-zinc-400 hover:bg-zinc-900/70 hover:text-zinc-100"}`}><i className="fa-solid fa-layer-group w-5 text-center text-zinc-500" aria-hidden="true" /><span>Concert history</span></button>
-              {canEdit && <div className={`rounded-xl ${activePage === "next" || activePage === "suggestions" ? "bg-zinc-900 pb-2" : ""}`}><button onClick={() => changePage("next")} aria-current={activePage === "next" ? "page" : undefined} className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left font-bold transition ${activePage === "next" ? "text-zinc-100" : "text-zinc-400 hover:bg-zinc-900/70 hover:text-zinc-100"}`}><i className="fa-solid fa-calendar-days w-5 text-center text-zinc-500" aria-hidden="true" /><span>Concert calendar</span></button>{isAdmin && <div className="ml-5 border-l border-zinc-800 pl-3 pr-2"><button onClick={() => changePage("suggestions")} aria-current={activePage === "suggestions" ? "page" : undefined} className={`flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-xs font-semibold transition hover:bg-zinc-800 hover:text-zinc-100 ${activePage === "suggestions" ? "bg-zinc-800 text-zinc-100" : "text-zinc-500"}`}><span>Concert suggestions</span><span className="ml-auto rounded-full border border-zinc-700 px-1.5 py-0.5 text-[10px]">{availableSuggestions.length}</span></button></div>}</div>}
+              {canEdit && <div className={`rounded-xl ${activePage === "next" || activePage === "suggestions" ? "bg-zinc-900 pb-2" : ""}`}><button onClick={() => changePage("next")} aria-current={activePage === "next" ? "page" : undefined} className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left font-bold transition ${activePage === "next" ? "text-zinc-100" : "text-zinc-400 hover:bg-zinc-900/70 hover:text-zinc-100"}`}><i className="fa-solid fa-calendar-days w-5 text-center text-zinc-500" aria-hidden="true" /><span>Concert calendar</span></button><div className="ml-5 border-l border-zinc-800 pl-3 pr-2"><button onClick={() => changePage("suggestions")} aria-current={activePage === "suggestions" ? "page" : undefined} className={`flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-xs font-semibold transition hover:bg-zinc-800 hover:text-zinc-100 ${activePage === "suggestions" ? "bg-zinc-800 text-zinc-100" : "text-zinc-500"}`}><span>Concert suggestions</span><span className="ml-auto rounded-full border border-zinc-700 px-1.5 py-0.5 text-[10px]">{availableSuggestions.length}</span></button></div></div>}
               <button onClick={() => changePage("friends")} aria-current={activePage === "friends" ? "page" : undefined} className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left font-bold transition ${activePage === "friends" ? "bg-zinc-900 text-zinc-100" : "text-zinc-400 hover:bg-zinc-900/70 hover:text-zinc-100"}`}><i className="fa-solid fa-user-group w-5 text-center text-zinc-500" aria-hidden="true" /><span>Friends</span>{friendRequests.filter((request) => request.direction === "incoming").length + concertInvitations.length > 0 && <span className="ml-auto min-w-6 rounded-full bg-amber-900 px-2 py-0.5 text-center text-[10px] font-black text-amber-100">{friendRequests.filter((request) => request.direction === "incoming").length + concertInvitations.length}</span>}</button>
               <button onClick={() => changePage("activity")} aria-current={activePage === "activity" ? "page" : undefined} className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left font-bold transition ${activePage === "activity" ? "bg-zinc-900 text-zinc-100" : "text-zinc-400 hover:bg-zinc-900/70 hover:text-zinc-100"}`}><i className="fa-solid fa-bell w-5 text-center text-zinc-500" aria-hidden="true" /><span>Activity</span>{notifications.filter((item) => !item.readAt).length > 0 && <span className="ml-auto min-w-6 rounded-full bg-amber-900 px-2 py-0.5 text-center text-[10px] font-black text-amber-100">{notifications.filter((item) => !item.readAt).length}</span>}</button>
               <div data-testid="stats-menu-group" className={`rounded-xl ${statsMenuOpen ? "pb-2" : ""} ${activePage === "stats" || activePage === "year-review" ? "bg-zinc-900" : ""}`}>

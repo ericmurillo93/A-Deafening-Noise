@@ -10,7 +10,7 @@ web
 
 Concertgoers maintaining a personal archive and calendar, with a small trusted social circle who can discover one another, confirm shared attendance, and view their own concert history and statistics.
 
-Eric is the administrator and the only user with access to automated concert suggestions.
+Eric is the administrator. Every user receives concert suggestions based on their own connected Spotify taste profile; only administration is restricted by role.
 
 ## Product Purpose
 
@@ -38,7 +38,7 @@ The product combines a private concert archive, a personal upcoming calendar, fr
 - The initial authenticated experience uses a per-user IndexedDB snapshot and silent revalidation; logout removes it completely.
 - The geographic map remains lazy-loaded and must not return to the initial bundle.
 - Production deploys automatically from GitHub through Netlify. Supabase is canonical; checked-in JSON remains fallback and backup data.
-- Suggestions are admin-only, restricted to Spain and Switzerland sources, and matched against the privacy-reduced Spotify artist catalog.
+- Suggestions are restricted to Spain and Switzerland sources, refreshed daily from connected Spotify profiles, and filtered to each user's own artists and decisions.
 
 ## Brand Commitments
 

@@ -179,15 +179,22 @@ test("Profile offers Spotify connection through the UI", async ({ page }) => {
   const connect = page.getByRole("button", { name: "Connect Spotify" });
   await expect(connect).toBeVisible();
   await expect(connect.locator("img")).toBeVisible();
+  await expect(page.getByRole("checkbox", { name: "Email me when new concert suggestions are found" })).not.toBeChecked();
   await connect.click();
   await expect.poll(() => new URL(authorizationUrl).searchParams.get("show_dialog")).toBe("true");
+});
+
+test("Concert suggestions report automatic daily updates", async ({ page }) => {
+  await page.goto("/suggestions");
+  await expect(page.getByText(/Updated daily · Last update/)).toBeVisible();
+  await expect(page.getByRole("button", { name: "Find concerts" })).toHaveCount(0);
 });
 
 test("Spotify callback is consumed once under React Strict Mode", async ({ page }) => {
   let tokenRequests = 0;
   await page.route("https://accounts.spotify.com/api/token", async (route) => {
     tokenRequests += 1;
-    await route.fulfill({ json: { access_token: "test-token" } });
+    await route.fulfill({ json: { access_token: "test-token", refresh_token: "test-refresh-token" } });
   });
   await page.route("https://api.spotify.com/v1/**", async (route) => {
     await route.fulfill({ json: route.request().url().endsWith("/me") ? { id: "eric", display_name: "Eric" } : { items: [] } });

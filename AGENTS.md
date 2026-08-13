@@ -15,7 +15,7 @@ Keep the project's existing **A Deafening Noise** Notion page current when a cha
 - `data/concerts.json` is the local fallback and GitHub backup dataset.
 - `data/listened-artists.json` is the privacy-reduced Spotify artist catalog used for suggestion affinity.
 - `data/suggestions.json` is generated discovery output, never canonical concert data.
-- Supabase Auth and security-definer RPCs provide per-user visibility and writes. Eric is the admin; suggestions remain admin-only.
+- Supabase Auth and security-definer RPCs provide per-user visibility and writes. Eric is the admin; only administration remains admin-only.
 - `netlify/functions/save-concerts.js` is retained as a protected legacy/backup writer.
 - `netlify/functions/get-setlist.js` proxies setlist.fm in production.
 - `vite.config.js` emulates those functions locally and writes concert edits directly to the working tree.
@@ -40,7 +40,7 @@ Keep the project's existing **A Deafening Noise** Notion page current when a cha
 - Date format is `DD/MM/YYYY`; preserve existing date-range support.
 - Artist and venue labels are stored and displayed in uppercase; normalize them on every write regardless of user input.
 - Optional fields: `setlistId`, friend attendees, guest attendees, and `ticketUrl`.
-- Every user manages their own archive and calendar. Eric alone has the `admin` role and suggestion access.
+- Every user manages their own archive, calendar, Spotify taste profile, and suggestion decisions. Eric alone has the `admin` role and administration access.
 - A concert is a canonical catalog event that several users may independently reference; this never implies that they attended together. `bought`, guest attendees, and invitation status belong to each participant.
 - Friends are mutual after acceptance. Selecting a friend on a concert sends an invitation; only accepted attendance appears in that person's archive.
 - A non-creator can leave a shared concert without deleting it for its creator. Concert details identify the creator and confirmed friends.
@@ -72,7 +72,7 @@ Keep the project's existing **A Deafening Noise** Notion page current when a cha
 - Interested opens the normal prefilled calendar Add modal; Not Interested stages a persistent artist/date dismissal.
 - Suggestion decisions remain in browser storage until Save writes all interested concerts and dismissals together to Supabase.
 - Preserve `dismissedSuggestions` on every archive replacement. Discovery first backs Supabase up to `data/concerts.json`; the combiner excludes those keys from later scraper runs.
-- `.github/workflows/concert-suggestions.yml` runs only on demand from the website or Actions UI, committing only changed suggestions.
+- `.github/workflows/concert-suggestions.yml` runs daily or on demand, refreshes connected Spotify profiles before scraping, emails opted-in users about new matches, and commits only changed discovery data.
 
 ## Verification
 

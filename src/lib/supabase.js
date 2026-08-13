@@ -16,9 +16,11 @@ export const supabase = supabaseEnabled
   : null;
 
 export async function loadConcertData() {
-  const { data, error } = await supabase.rpc("get_app_data");
-  if (error) throw error;
-  return data || { profile: null, concerts: [], friends: [], friendRequests: [], concertInvitations: [], notifications: [], dismissedSuggestions: [] };
+  const [data, dismissedSuggestions, listenedArtists, spotifyStatus, preferences] = await Promise.all([
+    rpc("get_app_data"), rpc("get_my_dismissed_suggestions"), rpc("get_my_listened_artists"), rpc("get_my_spotify_status"), rpc("get_my_preferences"),
+  ]);
+  const archive = data || { profile: null, concerts: [], friends: [], friendRequests: [], concertInvitations: [], notifications: [] };
+  return { ...archive, profile: archive.profile ? { ...archive.profile, ...preferences } : null, dismissedSuggestions: dismissedSuggestions || [], listenedArtists: listenedArtists || [], spotifyStatus };
 }
 
 async function rpc(name, args = {}) {
