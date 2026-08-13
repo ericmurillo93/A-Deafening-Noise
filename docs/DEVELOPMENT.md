@@ -409,6 +409,15 @@ Setlist lookup first uses a stored `setlistId`. If no ID exists, the proxy searc
 
 ## Project structure
 
+`App.jsx` is the authenticated application shell: it owns session bootstrap,
+cached server state, navigation and cross-page modal orchestration. Route-level
+screens live in `src/pages` and are loaded with `React.lazy` when they are first
+visited; keep page-specific dependencies there so they do not return to the
+initial bundle. Reusable presentation belongs in `src/components`, browser
+behavior in `src/hooks`, and data or domain helpers in `src/lib`. Prefer moving
+a coherent page or shared concern over splitting small components solely to
+reduce file length.
+
 ```text
 .
 ├── AGENTS.md                         Durable guidance for coding agents
@@ -427,9 +436,13 @@ Setlist lookup first uses a stored `setlistId`. If no ID exists, the proxy searc
 │   ├── scrape-resurrection-route.mjs
 │   └── setup-local.mjs
 ├── src/
-│   ├── App.jsx                       Main application and UI
+│   ├── App.jsx                       Application shell and orchestration
+│   ├── components/                   Shared presentation components
+│   ├── hooks/                        Shared browser and interaction hooks
 │   ├── index.css
-│   └── main.jsx
+│   ├── lib/                          Data access and domain helpers
+│   ├── main.jsx
+│   └── pages/                        Lazy-loaded route-level screens
 ├── vite.config.js                    Vite plus local-only function emulation
 ├── netlify.toml
 └── package.json

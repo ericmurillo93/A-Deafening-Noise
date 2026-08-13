@@ -1,4 +1,4 @@
-import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import whatsappIcon from "@fortawesome/fontawesome-free/svgs/brands/whatsapp.svg";
 import concertsData from "../data/concerts.json";
 import suggestionsData from "../data/suggestions.json";
@@ -23,11 +23,21 @@ import {
   updateMyProfile,
 } from "./lib/supabase";
 import { clearAppCache, readAppCache, writeAppCache } from "./lib/app-cache";
+import { readRouteFromLocation, routeToPath } from "./lib/routes";
+import { getMostRecentShowDate, normalize, parseDate, parseShow } from "./lib/concerts";
 import { EmptyState, PanelHeading, UserAvatar } from "./components/SharedUi";
+import { restorePageScroll, useDialogFocus, usePageScrollLock } from "./hooks/useUi";
 
 const ProfilePage = React.lazy(() => import("./pages/AccountPages").then(({ ProfilePage: Page }) => ({ default: Page })));
 const ActivityPage = React.lazy(() => import("./pages/AccountPages").then(({ ActivityPage: Page }) => ({ default: Page })));
 const AdminPage = React.lazy(() => import("./pages/AccountPages").then(({ AdminPage: Page }) => ({ default: Page })));
+const FriendsPage = React.lazy(() => import("./pages/FriendsPage"));
+const SuggestionsPage = React.lazy(() => import("./pages/SuggestionsPage"));
+const StatsPage = React.lazy(() => import("./pages/StatsPage"));
+const YearInReviewPage = React.lazy(() => import("./pages/StatsPage").then(({ YearInReviewPage: Page }) => ({ default: Page })));
+const ArtistDetailPage = React.lazy(() => import("./pages/ArchiveDetailPages").then(({ ArtistDetailPage: Page }) => ({ default: Page })));
+const VenueDetailPage = React.lazy(() => import("./pages/ArchiveDetailPages").then(({ VenueDetailPage: Page }) => ({ default: Page })));
+const ConcertTimelinePage = React.lazy(() => import("./pages/ArchiveDetailPages").then(({ ConcertTimelinePage: Page }) => ({ default: Page })));
 
 // ─── Data bootstrap ───────────────────────────────────────────────────────────
 
@@ -80,72 +90,6 @@ function useAuthEmailCooldown() {
   return { seconds, refresh, start };
 }
 
-function usePageScrollLock(locked) {
-  useLayoutEffect(() => {
-    if (!locked) return undefined;
-
-    const body = document.body;
-    const root = document.documentElement;
-    const previousBodyOverflow = body.style.overflow;
-    const previousBodyOverscroll = body.style.overscrollBehavior;
-    const previousBodyPaddingRight = body.style.paddingRight;
-    const previousRootOverflow = root.style.overflow;
-    const previousRootOverscroll = root.style.overscrollBehavior;
-    const scrollbarWidth = window.innerWidth - root.clientWidth;
-
-    root.style.overflow = "hidden";
-    root.style.overscrollBehavior = "none";
-    body.style.overflow = "hidden";
-    body.style.overscrollBehavior = "none";
-    if (scrollbarWidth > 0) body.style.paddingRight = `${parseFloat(getComputedStyle(body).paddingRight) + scrollbarWidth}px`;
-
-    return () => {
-      root.style.overflow = previousRootOverflow;
-      root.style.overscrollBehavior = previousRootOverscroll;
-      body.style.overflow = previousBodyOverflow;
-      body.style.overscrollBehavior = previousBodyOverscroll;
-      body.style.paddingRight = previousBodyPaddingRight;
-    };
-  }, [locked]);
-}
-
-function useDialogFocus(open) {
-  const dialogRef = useRef(null);
-  const returnFocusRef = useRef(null);
-
-  useEffect(() => {
-    if (!open) return undefined;
-    returnFocusRef.current = document.activeElement;
-    const dialog = dialogRef.current;
-    const focusable = dialog?.querySelector("button, [href], input, select, textarea, [tabindex]:not([tabindex='-1'])");
-    focusable?.focus();
-    function keepFocusInside(event) {
-      if (event.key !== "Tab" || !dialog) return;
-      const items = [...dialog.querySelectorAll("button:not(:disabled), [href], input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex='-1'])")];
-      if (!items.length) return;
-      const first = items[0];
-      const last = items.at(-1);
-      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
-      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
-    }
-    document.addEventListener("keydown", keepFocusInside);
-    return () => {
-      document.removeEventListener("keydown", keepFocusInside);
-      returnFocusRef.current?.focus?.();
-    };
-  }, [open]);
-
-  return dialogRef;
-}
-
-function restorePageScroll(scrollY) {
-  const root = document.documentElement;
-  const previousScrollBehavior = root.style.scrollBehavior;
-  root.style.scrollBehavior = "auto";
-  window.scrollTo(0, scrollY);
-  root.style.scrollBehavior = previousScrollBehavior;
-}
-
 async function sessionHeaders() {
   if (!supabaseEnabled) return {};
   const { data } = await supabase.auth.getSession();
@@ -187,10 +131,6 @@ async function fetchSetlist({ setlistId, artist, date }) {
 
 // ─── Pure helpers ─────────────────────────────────────────────────────────────
 
-function normalize(value) {
-  return String(value).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-}
-
 function uppercaseConcertLabel(value) {
   return String(value || "").toLocaleUpperCase();
 }
@@ -199,82 +139,6 @@ function suggestionDecisionKey({ artist, date }) {
   const normalizedArtist = normalize(artist).replace(/[^a-z0-9]+/g, " ").trim();
   return `${normalizedArtist}|${date}`;
 }
-
-function formatEuropeanDateTime(value) {
-  return new Intl.DateTimeFormat("es-ES", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-    timeZone: "Europe/Berlin",
-  }).format(new Date(value));
-}
-
-function parseRouteParts(pagePart = "history", valueParts = []) {
-  let value = null;
-  try {
-    value = valueParts.length ? decodeURIComponent(valueParts.join("/")) : null;
-  } catch {
-    value = valueParts.join("/") || null;
-  }
-  if (pagePart === "artist" && value) return { page: "artist", artist: value, venue: null };
-  if (pagePart === "venue" && value) return { page: "venue", artist: null, venue: value };
-  if (pagePart === "year-review" && /^\d{4}$/.test(value || "")) return { page: "year-review", artist: null, venue: null, year: value };
-  if (pagePart === "spotify" && value === "callback") return { page: "profile", artist: null, venue: null, year: null };
-  const pageAliases = { calendar: "next", suggestions: "suggestions", history: "history", timeline: "timeline", stats: "stats", "year-review": "year-review", friends: "friends", activity: "activity", profile: "profile", admin: "admin" };
-  return { page: pageAliases[pagePart] || "history", artist: null, venue: null, year: null };
-}
-
-function readRouteFromLocation() {
-  if (typeof window === "undefined") return { page: "history", artist: null, venue: null };
-  const pathParts = window.location.pathname.replace(/^\/+|\/+$/g, "").split("/").filter(Boolean);
-  if (pathParts.length) return parseRouteParts(pathParts[0], pathParts.slice(1));
-
-  // Convert previously shared hash routes to clean paths on first load.
-  const legacyParts = window.location.hash.replace(/^#\/?/, "").split("/").filter(Boolean);
-  return legacyParts.length ? parseRouteParts(legacyParts[0], legacyParts.slice(1)) : parseRouteParts();
-}
-
-function routeToPath({ page, artist, venue, year }) {
-  if (page === "artist" && artist) return `/artist/${encodeURIComponent(artist)}`;
-  if (page === "venue" && venue) return `/venue/${encodeURIComponent(venue)}`;
-  if (page === "year-review" && year) return `/year-review/${encodeURIComponent(year)}`;
-  if (page === "next") return "/calendar";
-  return `/${page || "history"}`;
-}
-
-function parseDate(date) {
-  const match = String(date).match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
-  if (!match) return 0;
-  const [, day, month, year] = match;
-  return new Date(Number(year), Number(month) - 1, Number(day)).getTime();
-}
-
-function parseShow(show, mode) {
-  let body = show;
-  let setlistId = "";
-  const pipeIdx = String(show).lastIndexOf(" | ");
-  if (pipeIdx !== -1) {
-    setlistId = String(show).slice(pipeIdx + 3).trim();
-    body = String(show).slice(0, pipeIdx);
-  }
-  const dateOnly = /^(\d{1,2}\/\d{1,2}\/\d{4})(\s-\s\d{1,2}\/\d{1,2}\/\d{4})?$/.test(body);
-  if (mode === "next" || dateOnly) return { venue: "Date confirmed", date: body, setlistId };
-  const parts = body.split(" - ");
-  const hasDateRange = parts.length >= 3
-    && /^\d{1,2}\/\d{1,2}\/\d{4}$/.test(parts[parts.length - 2])
-    && /^\d{1,2}\/\d{1,2}\/\d{4}$/.test(parts[parts.length - 1]);
-  const date = hasDateRange ? parts.slice(-2).join(" - ") : parts[parts.length - 1] || "";
-  const venue = parts.slice(0, hasDateRange ? -2 : -1).join(" - ") || body;
-  return { venue, date, setlistId };
-}
-
-function getMostRecentShowDate(item, mode) {
-  return Math.max(...item.shows.map((show) => parseDate(parseShow(show, mode).date)));
-}
-
 function filterConcerts(items, query) {
   const q = normalize(query.trim());
   if (!q) return items;
@@ -1139,57 +1003,6 @@ function NextConcertCalendar({ items, onOpen, onContextMenu, onContextMenuAt }) 
   );
 }
 
-function ConcertSuggestions({ suggestions, reviews, onInterested, onNotInterested, onSave, onOpenProfile, spotifyConnected, isSaving, saveError }) {
-  const pendingCount = Object.keys(reviews).length;
-
-  return (
-    <section className="mx-auto max-w-5xl rounded-3xl border border-zinc-800 bg-zinc-900 p-4 md:p-6">
-        <div>
-          <p className="mb-3 rounded-2xl border border-zinc-800 bg-zinc-950 p-3 text-xs text-zinc-500">Updated daily · Last update {formatEuropeanDateTime(suggestionsData.generatedAt)}</p>
-          {suggestions.length ? (
-            <div className="space-y-2">
-              {suggestions.map((suggestion) => (
-                <article key={suggestion.id} className="rounded-2xl border border-zinc-800 bg-zinc-950 p-4">
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="min-w-0">
-                      <h3 className="truncate font-black uppercase tracking-tight text-zinc-100">{uppercaseConcertLabel(suggestion.artist)}</h3>
-                      <p className="mt-1 text-sm text-zinc-400">
-                        {suggestion.date}{suggestion.venue ? ` · ${uppercaseConcertLabel(suggestion.venue)}` : ""}{suggestion.city ? ` · ${suggestion.city}` : ""}
-                      </p>
-                      <a href={suggestion.sourceUrl} target="_blank" rel="noreferrer" className="mt-1 inline-block text-xs text-zinc-600 transition hover:text-zinc-300">
-                        {suggestion.source} <span aria-hidden="true">↗</span>
-                      </a>
-                    </div>
-                    <div className="flex shrink-0 gap-2">
-                      <button type="button" onClick={() => onInterested(suggestion)} className={`flex-1 rounded-full border px-4 py-2.5 text-sm font-black transition sm:flex-none ${reviews[suggestion.id]?.decision === "interested" ? "border-emerald-500 bg-emerald-950 text-emerald-200" : "border-zinc-600 bg-zinc-900 text-zinc-100 hover:border-emerald-600"}`}>
-                        Interested
-                      </button>
-                      <button type="button" onClick={() => onNotInterested(suggestion)} className={`flex-1 rounded-full border px-4 py-2.5 text-sm font-black transition sm:flex-none ${reviews[suggestion.id]?.decision === "not-interested" ? "border-red-700 bg-red-950/60 text-red-200" : "border-zinc-700 bg-zinc-900 text-zinc-400 hover:border-red-800 hover:text-red-200"}`}>
-                        Not interested
-                      </button>
-                    </div>
-                  </div>
-                </article>
-              ))}
-            </div>
-          ) : spotifyConnected ? (
-            <p className="rounded-2xl bg-zinc-950 px-4 py-5 text-sm text-zinc-500">No new suggestions right now.</p>
-          ) : (
-            <div className="rounded-2xl bg-zinc-950 px-4 py-5"><p className="text-sm font-bold text-zinc-200">Connect Spotify to personalise suggestions.</p><button type="button" onClick={onOpenProfile} className="mt-3 rounded-xl border border-zinc-700 px-4 py-2.5 text-sm font-bold text-zinc-100 hover:border-zinc-500">Open profile</button></div>
-          )}
-          {pendingCount > 0 && (
-            <div className="sticky bottom-3 mt-3 rounded-2xl border border-zinc-700 bg-zinc-900/95 p-3 shadow-2xl backdrop-blur">
-              <button type="button" onClick={onSave} disabled={isSaving} className="w-full rounded-xl bg-zinc-100 px-5 py-3 text-sm font-black text-zinc-950 transition hover:bg-white disabled:opacity-50">
-                {isSaving ? "Saving decisions..." : `Save ${pendingCount} ${pendingCount === 1 ? "decision" : "decisions"}`}
-              </button>
-              {saveError && <p className="mt-2 text-center text-xs font-semibold text-red-300">{saveError}</p>}
-            </div>
-          )}
-        </div>
-    </section>
-  );
-}
-
 function CalendarConcertModal({ target, onClose, onEdit }) {
   const dialogRef = useDialogFocus(Boolean(target));
   if (!target) return null;
@@ -1244,660 +1057,10 @@ function CalendarConcertModal({ target, onClose, onEdit }) {
 
 // ─── StatsPage ────────────────────────────────────────────────────────────────
 
-const GeographicStatsMap = React.lazy(() => import("./components/GeographicStats"));
-function GeographicStats(props) {
-  return <React.Suspense fallback={<div className="h-[32rem] animate-pulse rounded-3xl border border-zinc-800 bg-zinc-900" aria-label="Opening concert map" />}><GeographicStatsMap {...props} /></React.Suspense>;
-}
-
-function StatsBar({ data, max, accent = "bg-zinc-100", label }) {
-  if (!data.length) return <p className="text-sm text-zinc-500">No data yet.</p>;
-  return (
-    <div className="space-y-3">
-      {data.map(([name, value]) => {
-        const pct = max ? Math.max(4, (value / max) * 100) : 0;
-        return (
-          <div key={name} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4">
-            <div className="min-w-0">
-              <div className="mb-1 flex items-baseline justify-between gap-2 text-sm">
-                <span className="truncate font-semibold text-zinc-100">{name}</span>
-                <span className="text-zinc-500">{value}{label ? ` ${label}` : ""}</span>
-              </div>
-              <div className="h-2 overflow-hidden rounded-full bg-zinc-900">
-                <div className={`h-full ${accent} transition-all`} style={{ width: `${pct}%` }} />
-              </div>
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-function StatsPage({ historyItems, onOpenVenue, onOpenYearReview }) {
-  const geographyShows = useMemo(
-    () => historyItems.flatMap(({ shows }) => shows.map((show) => parseShow(show, "history"))),
-    [historyItems]
-  );
-  const stats = useMemo(() => {
-    const totalArtists = historyItems.length;
-    const totalShows = historyItems.reduce((s, i) => s + i.shows.length, 0);
-    const venueCounts = {}, yearCounts = {};
-    let earliestYear = Infinity, latestYear = -Infinity;
-    historyItems.forEach(({ shows }) => {
-      shows.forEach((show) => {
-        const { venue, date } = parseShow(show, "history");
-        if (venue && venue !== "Date confirmed") venueCounts[venue] = (venueCounts[venue] || 0) + 1;
-        const yr = String(date).match(/\/(\d{4})/);
-        if (yr) { const y = Number(yr[1]); yearCounts[y] = (yearCounts[y] || 0) + 1; if (y < earliestYear) earliestYear = y; if (y > latestYear) latestYear = y; }
-      });
-    });
-    const topArtists = historyItems.map((i) => [i.artist, i.shows.length]).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).slice(0, 10);
-    const topVenues = Object.entries(venueCounts).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).slice(0, 10);
-    const years = [];
-    if (Number.isFinite(earliestYear) && Number.isFinite(latestYear)) for (let y = earliestYear; y <= latestYear; y++) years.push([String(y), yearCounts[y] || 0]);
-    return {
-      totalArtists, totalShows, yearsActive: years.length, avgPerYear: years.length ? (totalShows / years.length).toFixed(1) : "0",
-      topArtist: topArtists[0]?.[0] || "—", topArtistShows: topArtists[0]?.[1] || 0,
-      topVenue: topVenues[0]?.[0] || "—", topVenueShows: topVenues[0]?.[1] || 0,
-      topArtists, topVenues, years,
-      maxArtist: topArtists[0]?.[1] || 1, maxVenue: topVenues[0]?.[1] || 1, maxYear: years.length ? Math.max(...years.map(([, v]) => v)) : 1,
-    };
-  }, [historyItems]);
-
-  const summaryCards = [
-    { label: "Total artists", value: stats.totalArtists },
-    { label: "Total shows", value: stats.totalShows },
-    { label: "Years active", value: stats.yearsActive },
-    { label: "Avg shows/year", value: stats.avgPerYear },
-  ];
-
-  return (
-    <div className="mx-auto max-w-5xl space-y-10">
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        {summaryCards.map(({ label, value }) => (
-          <div key={label} className="rounded-3xl border border-zinc-800 bg-zinc-900 p-5 text-center">
-            <div className="text-3xl font-black text-zinc-100 md:text-4xl">{value}</div>
-            <div className="mt-1 text-[11px] font-bold uppercase tracking-widest text-zinc-500">{label}</div>
-          </div>
-        ))}
-      </div>
-      <div className="grid gap-3 md:grid-cols-2">
-        <div className="rounded-3xl border border-zinc-800 bg-zinc-900 p-6">
-          <div className="text-[11px] font-bold uppercase tracking-widest text-zinc-500">Most-seen artist</div>
-          <div className="mt-2 text-2xl font-black uppercase text-zinc-100">{stats.topArtist}</div>
-          <div className="mt-1 text-sm text-zinc-400">{stats.topArtistShows} {stats.topArtistShows === 1 ? "show" : "shows"}</div>
-        </div>
-        <div className="rounded-3xl border border-zinc-800 bg-zinc-900 p-6">
-          <div className="text-[11px] font-bold uppercase tracking-widest text-zinc-500">Top venue</div>
-          <button onClick={() => stats.topVenue !== "—" && onOpenVenue(stats.topVenue)} className="mt-2 text-left text-2xl font-black uppercase text-zinc-100 hover:underline hover:decoration-zinc-600 hover:underline-offset-4">{stats.topVenue}</button>
-          <div className="mt-1 text-sm text-zinc-400">{stats.topVenueShows} {stats.topVenueShows === 1 ? "show" : "shows"}</div>
-        </div>
-      </div>
-      <GeographicStats shows={geographyShows} title="Lifetime geography" />
-      <div className="rounded-3xl border border-zinc-800 bg-zinc-900 p-6">
-        <h3 className="mb-5 text-lg font-black uppercase tracking-tight text-zinc-100">Top 10 artists</h3>
-        <StatsBar data={stats.topArtists} max={stats.maxArtist} label="shows" accent="bg-zinc-100" />
-      </div>
-      <div className="rounded-3xl border border-zinc-800 bg-zinc-900 p-6">
-        <h3 className="mb-5 text-lg font-black uppercase tracking-tight text-zinc-100">Top 10 venues</h3>
-        <StatsBar data={stats.topVenues} max={stats.maxVenue} label="shows" accent="bg-zinc-300" />
-      </div>
-      <div className="rounded-3xl border border-zinc-800 bg-zinc-900 p-6">
-        <h3 className="mb-5 text-lg font-black uppercase tracking-tight text-zinc-100">Concerts per year</h3>
-        {stats.years.length === 0 ? <p className="text-sm text-zinc-500">No data yet.</p> : (
-          <div className="flex items-end gap-2 overflow-x-auto pb-2">
-            {stats.years.map(([year, count]) => {
-              const heightPct = stats.maxYear ? (count / stats.maxYear) * 100 : 0;
-              return (
-                <button type="button" key={year} onClick={() => onOpenYearReview(year)} className="group flex min-w-[36px] flex-1 cursor-pointer flex-col items-center gap-2 rounded-xl px-1 py-2 transition hover:bg-zinc-800 focus-visible:bg-zinc-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-600" aria-label={`Open ${year} year in review: ${count} ${count === 1 ? "concert" : "concerts"}`}>
-                  <div className="flex h-44 w-full items-end">
-                    <div className="w-full rounded-t-md bg-zinc-300 transition-all group-hover:bg-white" style={{ height: `${count === 0 ? 2 : heightPct}%`, opacity: count === 0 ? 0.15 : 1 }} title={`${count} ${count === 1 ? "show" : "shows"} in ${year}`} />
-                  </div>
-                  <div className="text-[10px] font-semibold text-zinc-500 transition group-hover:text-zinc-300">'{year.slice(-2)}</div>
-                  <div className="text-[11px] font-bold text-zinc-300 transition group-hover:text-white">{count}</div>
-                </button>
-              );
-            })}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
 
 // ─── Artist detail ────────────────────────────────────────────────────────────
 
-function ArtistDetailPage({ item, upcoming = [], onOpenSetlist, onOpenVenue }) {
-  const shows = useMemo(
-    () => [...item.shows]
-      .map((show) => ({ show, ...parseShow(show, "history") }))
-      .sort((a, b) => parseDate(b.date) - parseDate(a.date)),
-    [item]
-  );
 
-  const venues = new Set(shows.map(({ venue }) => venue).filter((venue) => venue && venue !== "Date confirmed"));
-  const years = new Set(shows.map(({ date }) => String(date).match(/(\d{4})/)?.[1]).filter(Boolean));
-  const firstShow = shows[shows.length - 1];
-  const latestShow = shows[0];
-  const summaryCards = [
-    { label: "Shows", value: shows.length },
-    { label: "Venues", value: venues.size },
-    { label: "Years seen", value: years.size },
-    { label: "First seen", value: firstShow?.date || "—" },
-  ];
-
-  return (
-    <div className="mx-auto max-w-5xl">
-      {latestShow && <p className="mb-8 text-right text-sm text-zinc-500">Most recently seen {latestShow.date}</p>}
-
-      <div className="mb-10 grid grid-cols-2 gap-3 md:grid-cols-4">
-        {summaryCards.map(({ label, value }) => (
-          <div key={label} className="min-w-0 rounded-3xl border border-zinc-800 bg-zinc-900 p-5 text-center">
-            <div className="truncate text-2xl font-black text-zinc-100 md:text-3xl" title={String(value)}>{value}</div>
-            <div className="mt-1 text-[11px] font-bold uppercase tracking-widest text-zinc-500">{label}</div>
-          </div>
-        ))}
-      </div>
-
-      {upcoming.length > 0 && (
-        <section className="mb-10 rounded-3xl border border-zinc-700 bg-zinc-900 p-6">
-          <h2 className="mb-5 text-lg font-black uppercase tracking-tight text-zinc-100">Coming up</h2>
-          <div className="grid gap-3 md:grid-cols-2">
-            {upcoming.map((concert) => (
-              <div key={`${concert.date}-${concert.venue || ""}`} className="rounded-2xl bg-zinc-950 p-4">
-                {concert.venue && <div className="flex gap-2 text-sm font-semibold text-zinc-100"><Icon type="map" /><button onClick={() => onOpenVenue(concert.venue)} className="text-left hover:underline hover:decoration-zinc-600 hover:underline-offset-4">{concert.venue}</button></div>}
-                <div className={`${concert.venue ? "mt-2 " : ""}flex gap-2 text-sm text-zinc-400`}><Icon type="calendar" /><span>{concert.date}</span></div>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
-
-      <section>
-        <div className="mb-5 flex items-end justify-between gap-4">
-          <h2 className="text-xl font-black uppercase tracking-tight text-zinc-100">Performance history</h2>
-          <span className="text-sm text-zinc-500">{shows.length} {shows.length === 1 ? "show" : "shows"}</span>
-        </div>
-        <div className="relative space-y-4 before:absolute before:bottom-6 before:left-[19px] before:top-6 before:w-px before:bg-zinc-800 md:before:left-[27px]">
-          {shows.map(({ show, venue, date, setlistId }, index) => (
-            <article key={show} className="relative flex gap-4 md:gap-6">
-              <div className="relative z-[1] mt-6 h-10 w-10 shrink-0 rounded-full border-4 border-zinc-950 bg-zinc-700 md:h-14 md:w-14">
-                <span className="flex h-full items-center justify-center text-[10px] font-black text-zinc-200 md:text-xs">{shows.length - index}</span>
-              </div>
-              <div className="min-w-0 flex-1 rounded-3xl border border-zinc-800 bg-zinc-900 p-5 transition hover:border-zinc-600">
-                <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
-                  <div className="min-w-0">
-                    <button onClick={() => onOpenVenue(venue)} className="break-words text-left text-lg font-black text-zinc-100 hover:underline hover:decoration-zinc-600 hover:underline-offset-4 md:text-xl">{venue}</button>
-                    <div className="mt-2 flex gap-2 text-sm text-zinc-400"><Icon type="calendar" /><span>{date}</span></div>
-                  </div>
-                  <button
-                    onClick={() => onOpenSetlist({ artist: item.artist, venue, date, setlistId, show })}
-                    className="flex shrink-0 items-center gap-2 self-start rounded-full border border-zinc-700 px-4 py-2 text-sm font-semibold text-zinc-400 transition hover:border-zinc-500 hover:text-zinc-100"
-                  >
-                    <Icon type="music" />
-                    Setlist
-                  </button>
-                </div>
-              </div>
-            </article>
-          ))}
-        </div>
-      </section>
-    </div>
-  );
-}
-
-// ─── Venue detail ─────────────────────────────────────────────────────────────
-
-function VenueDetailPage({ venue, historyItems, onOpenArtist, onOpenSetlist }) {
-  const shows = useMemo(
-    () => historyItems.flatMap(({ artist, shows }) =>
-      shows
-        .map((show) => ({ artist, show, ...parseShow(show, "history") }))
-        .filter((entry) => normalize(entry.venue) === normalize(venue))
-    ).sort((a, b) => parseDate(b.date) - parseDate(a.date) || a.artist.localeCompare(b.artist)),
-    [historyItems, venue]
-  );
-  const artists = useMemo(() => {
-    const counts = {};
-    shows.forEach(({ artist }) => { counts[artist] = (counts[artist] || 0) + 1; });
-    return Object.entries(counts).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
-  }, [shows]);
-  const years = new Set(shows.map(({ date }) => String(date).match(/(\d{4})/)?.[1]).filter(Boolean));
-  const firstVisit = shows[shows.length - 1];
-  const latestVisit = shows[0];
-  const topArtist = artists[0];
-  const summaryCards = [
-    { label: "Visits", value: shows.length },
-    { label: "Artists", value: artists.length },
-    { label: "Years active", value: years.size },
-    { label: "First visit", value: firstVisit?.date || "—" },
-  ];
-
-  return (
-    <div className="mx-auto max-w-5xl">
-      {latestVisit && <p className="mb-8 text-right text-sm text-zinc-500">Last visited {latestVisit.date}</p>}
-
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        {summaryCards.map(({ label, value }) => (
-          <div key={label} className="min-w-0 rounded-3xl border border-zinc-800 bg-zinc-900 p-5 text-center">
-            <div className="truncate text-2xl font-black text-zinc-100 md:text-3xl" title={String(value)}>{value}</div>
-            <div className="mt-1 text-[11px] font-bold uppercase tracking-widest text-zinc-500">{label}</div>
-          </div>
-        ))}
-      </div>
-
-      {topArtist && (
-        <section className="mt-3 rounded-3xl border border-zinc-800 bg-zinc-900 p-6">
-          <div className="text-[11px] font-bold uppercase tracking-widest text-zinc-500">Most seen here</div>
-          <button onClick={() => onOpenArtist(topArtist[0])} className="mt-2 text-left text-2xl font-black uppercase text-zinc-100 hover:underline hover:decoration-zinc-600 hover:underline-offset-4">{topArtist[0]}</button>
-          <p className="mt-1 text-sm text-zinc-400">{topArtist[1]} {topArtist[1] === 1 ? "performance" : "performances"}</p>
-        </section>
-      )}
-
-      <section className="mt-10 rounded-3xl border border-zinc-800 bg-zinc-900 p-6">
-        <div className="mb-5 flex items-end justify-between gap-4">
-          <h2 className="text-xl font-black uppercase tracking-tight text-zinc-100">Artists at this venue</h2>
-          <span className="text-sm text-zinc-500">{artists.length}</span>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {artists.map(([artist, count]) => (
-            <button key={artist} onClick={() => onOpenArtist(artist)} className="rounded-full border border-zinc-700 bg-zinc-950 px-4 py-2 text-sm font-semibold text-zinc-300 transition hover:border-zinc-500 hover:text-white">
-              {artist} <span className="ml-1 text-zinc-600">{count}</span>
-            </button>
-          ))}
-        </div>
-      </section>
-
-      <section className="mt-12">
-        <div className="mb-6 flex items-end justify-between border-b border-zinc-800 pb-4">
-          <h2 className="text-2xl font-black uppercase tracking-tight text-zinc-100">Visit history</h2>
-          <span className="text-sm text-zinc-500">{shows.length} total</span>
-        </div>
-        <div className="relative space-y-4 before:absolute before:bottom-6 before:left-[7px] before:top-6 before:w-px before:bg-zinc-800">
-          {shows.map(({ artist, show, date, setlistId }) => (
-            <article key={`${artist}-${show}`} className="relative flex gap-4">
-              <span className="relative z-[1] mt-7 h-[15px] w-[15px] shrink-0 rounded-full border-4 border-zinc-950 bg-zinc-500" />
-              <div className="min-w-0 flex-1 rounded-3xl border border-zinc-800 bg-zinc-900 p-5 transition hover:border-zinc-600">
-                <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
-                  <div className="min-w-0">
-                    <button onClick={() => onOpenArtist(artist)} className="break-words text-left text-xl font-black uppercase text-zinc-100 hover:underline hover:decoration-zinc-600 hover:underline-offset-4">{artist}</button>
-                    <div className="mt-3 flex gap-2 text-sm text-zinc-400"><Icon type="calendar" /><span>{date}</span></div>
-                  </div>
-                  <button onClick={() => onOpenSetlist({ artist, venue, date, setlistId, show })} className="flex shrink-0 items-center gap-2 self-start rounded-full border border-zinc-700 px-4 py-2 text-sm font-semibold text-zinc-400 transition hover:border-zinc-500 hover:text-zinc-100">
-                    <Icon type="music" />
-                    Setlist
-                  </button>
-                </div>
-              </div>
-            </article>
-          ))}
-        </div>
-      </section>
-    </div>
-  );
-}
-
-// ─── Concert timeline ─────────────────────────────────────────────────────────
-
-function ConcertTimelinePage({ historyItems, onShowCardView, onOpenArtist, onOpenSetlist, onOpenVenue }) {
-  const [artistFilter, setArtistFilter] = useState("all");
-  const [venueFilter, setVenueFilter] = useState("all");
-
-  const shows = useMemo(
-    () => historyItems.flatMap(({ artist, shows }) =>
-      shows.map((show) => ({ artist, show, ...parseShow(show, "history") }))
-    ),
-    [historyItems]
-  );
-  const artists = useMemo(
-    () => [...new Set(shows.map(({ artist }) => artist))].sort((a, b) => a.localeCompare(b)),
-    [shows]
-  );
-  const venues = useMemo(
-    () => [...new Set(shows.map(({ venue }) => venue).filter((venue) => venue && venue !== "Date confirmed"))].sort((a, b) => a.localeCompare(b)),
-    [shows]
-  );
-  const filteredShows = useMemo(
-    () => shows
-      .filter(({ artist, venue }) => artistFilter === "all" || artist === artistFilter)
-      .filter(({ venue }) => venueFilter === "all" || venue === venueFilter)
-      .sort((a, b) => parseDate(b.date) - parseDate(a.date) || a.artist.localeCompare(b.artist)),
-    [shows, artistFilter, venueFilter]
-  );
-  const groupedYears = useMemo(() => {
-    const groups = new Map();
-    filteredShows.forEach((show) => {
-      const year = String(show.date).match(/(\d{4})/)?.[1] || "Unknown";
-      if (!groups.has(year)) groups.set(year, []);
-      groups.get(year).push(show);
-    });
-    return [...groups.entries()];
-  }, [filteredShows]);
-  const hasFilters = artistFilter !== "all" || venueFilter !== "all";
-
-  function jumpToYear(year) {
-    document.getElementById(`timeline-${year}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
-  }
-
-  return (
-    <div className="mx-auto max-w-5xl">
-      <section className="sticky top-0 z-10 mb-10 border-y border-zinc-800 bg-zinc-950/95 py-4 backdrop-blur">
-        <div className="space-y-2 md:hidden">
-          <div className="grid grid-cols-2 gap-2">
-            <DropdownMenu
-              value={artistFilter}
-              onChange={setArtistFilter}
-              ariaLabel="Filter timeline by artist"
-              groupName="timeline-filters"
-              menuAlign="left"
-              options={[{ value: "all", label: "All artists" }, ...artists.map((artist) => ({ value: artist, label: artist }))]}
-            />
-            <DropdownMenu
-              value={venueFilter}
-              onChange={setVenueFilter}
-              ariaLabel="Filter timeline by venue"
-              groupName="timeline-filters"
-              options={[{ value: "all", label: "All venues" }, ...venues.map((venue) => ({ value: venue, label: venue }))]}
-            />
-          </div>
-          <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2">
-            <DropdownMenu
-              value=""
-              onChange={jumpToYear}
-              ariaLabel="Jump to timeline year"
-              buttonLabel="Years"
-              groupName="timeline-filters"
-              menuAlign="left"
-              options={groupedYears.map(([year, yearShows]) => ({ value: year, label: `${year} · ${yearShows.length} ${yearShows.length === 1 ? "concert" : "concerts"}` }))}
-            />
-            <button onClick={onShowCardView} className="rounded-full border border-zinc-700 bg-zinc-900 px-4 py-3 text-zinc-200 transition hover:border-zinc-500 hover:text-white" aria-label="Show concert cards" title="Card view">
-              <i className="fa-solid fa-table-cells-large" aria-hidden="true" />
-            </button>
-          </div>
-        </div>
-        <div className="hidden gap-3 md:grid md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,0.7fr)_auto]">
-          <DropdownMenu value={artistFilter} onChange={setArtistFilter} ariaLabel="Filter timeline by artist" groupName="timeline-filters" menuAlign="left" options={[{ value: "all", label: "All artists" }, ...artists.map((artist) => ({ value: artist, label: artist }))]} />
-          <DropdownMenu value={venueFilter} onChange={setVenueFilter} ariaLabel="Filter timeline by venue" groupName="timeline-filters" options={[{ value: "all", label: "All venues" }, ...venues.map((venue) => ({ value: venue, label: venue }))]} />
-          <DropdownMenu value="" onChange={jumpToYear} ariaLabel="Jump to timeline year" buttonLabel="Years" groupName="timeline-filters" menuAlign="left" options={groupedYears.map(([year, yearShows]) => ({ value: year, label: `${year} · ${yearShows.length} ${yearShows.length === 1 ? "concert" : "concerts"}` }))} />
-          <button onClick={onShowCardView} className="rounded-full border border-zinc-700 bg-zinc-900 px-4 py-3 text-zinc-200 transition hover:border-zinc-500 hover:text-white" aria-label="Show concert cards" title="Card view"><i className="fa-solid fa-table-cells-large" aria-hidden="true" /></button>
-        </div>
-        {hasFilters && (
-          <button onClick={() => { setArtistFilter("all"); setVenueFilter("all"); }} className="mt-3 rounded-full border border-zinc-700 px-3 py-1.5 text-xs font-bold text-zinc-300 hover:border-zinc-500">
-            Clear filters
-          </button>
-        )}
-      </section>
-
-      {groupedYears.length === 0 ? (
-        <p className="py-16 text-center text-zinc-500">No concerts match these filters.</p>
-      ) : (
-        <div className="space-y-14">
-          {groupedYears.map(([year, yearShows]) => (
-            <section key={year} id={`timeline-${year}`} className="scroll-mt-36">
-              <div className="mb-6 flex items-end justify-between border-b border-zinc-800 pb-4">
-                <h2 className="text-4xl font-black tracking-tight text-zinc-100 md:text-6xl">{year}</h2>
-                <span className="text-sm font-semibold text-zinc-500">{yearShows.length} {yearShows.length === 1 ? "concert" : "concerts"}</span>
-              </div>
-              <div className="relative space-y-4 before:absolute before:bottom-6 before:left-[7px] before:top-6 before:w-px before:bg-zinc-800">
-                {yearShows.map(({ artist, show, venue, date, setlistId }) => (
-                  <article key={`${artist}-${show}`} className="relative flex gap-4">
-                    <span className="relative z-[1] mt-7 h-[15px] w-[15px] shrink-0 rounded-full border-4 border-zinc-950 bg-zinc-500" />
-                    <div className="min-w-0 flex-1 rounded-3xl border border-zinc-800 bg-zinc-900 p-5 transition hover:border-zinc-600">
-                      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
-                        <div className="min-w-0">
-                          <button onClick={() => onOpenArtist(artist)} className="break-words text-left text-xl font-black uppercase leading-tight text-zinc-100 transition hover:text-white hover:underline hover:decoration-zinc-600 hover:underline-offset-4 md:text-2xl">
-                            {artist}
-                          </button>
-                          <div className="mt-3 flex gap-2 text-sm font-semibold text-zinc-300"><Icon type="map" /><button onClick={() => onOpenVenue(venue)} className="break-words text-left hover:underline hover:decoration-zinc-600 hover:underline-offset-4">{venue}</button></div>
-                          <div className="mt-2 flex gap-2 text-sm text-zinc-400"><Icon type="calendar" /><span>{date}</span></div>
-                        </div>
-                        <button
-                          onClick={() => onOpenSetlist({ artist, venue, date, setlistId, show })}
-                          className="flex shrink-0 items-center gap-2 self-start rounded-full border border-zinc-700 px-4 py-2 text-sm font-semibold text-zinc-400 transition hover:border-zinc-500 hover:text-zinc-100"
-                        >
-                          <Icon type="music" />
-                          Setlist
-                        </button>
-                      </div>
-                    </div>
-                  </article>
-                ))}
-              </div>
-            </section>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ─── Year in review ───────────────────────────────────────────────────────────
-
-function YearInReviewPage({ historyItems, selectedYear, onYearChange, onOpenArtist, onOpenSetlist, onOpenVenue }) {
-  const allShows = useMemo(
-    () => historyItems.flatMap(({ artist, shows }) =>
-      shows.map((show) => ({ artist, show, ...parseShow(show, "history") }))
-    ),
-    [historyItems]
-  );
-  const years = useMemo(
-    () => [...new Set(allShows.map(({ date }) => String(date).match(/(\d{4})/)?.[1]).filter(Boolean))]
-      .sort((a, b) => Number(b) - Number(a)),
-    [allShows]
-  );
-  const activeYear = years.includes(selectedYear) ? selectedYear : years[0] || "";
-
-  const review = useMemo(() => {
-    if (!activeYear) return null;
-    const yearShows = allShows
-      .filter(({ date }) => String(date).match(/(\d{4})/)?.[1] === activeYear)
-      .sort((a, b) => parseDate(a.date) - parseDate(b.date) || a.artist.localeCompare(b.artist));
-    const previousYear = String(Number(activeYear) - 1);
-    const previousShows = allShows.filter(({ date }) => String(date).match(/(\d{4})/)?.[1] === previousYear);
-    const artistFirstYear = new Map();
-    allShows.forEach(({ artist, date }) => {
-      const year = String(date).match(/(\d{4})/)?.[1];
-      if (!year) return;
-      const key = normalize(artist);
-      if (!artistFirstYear.has(key) || Number(year) < Number(artistFirstYear.get(key))) artistFirstYear.set(key, year);
-    });
-    const uniqueArtists = [...new Set(yearShows.map(({ artist }) => artist))];
-    const newArtists = uniqueArtists.filter((artist) => artistFirstYear.get(normalize(artist)) === activeYear);
-    const returningArtists = uniqueArtists.filter((artist) => artistFirstYear.get(normalize(artist)) !== activeYear);
-    const venueCounts = {};
-    const monthCounts = {};
-    yearShows.forEach(({ venue, date }) => {
-      if (venue && venue !== "Date confirmed") venueCounts[venue] = (venueCounts[venue] || 0) + 1;
-      const month = String(date).match(/^\d{1,2}\/(\d{1,2})\//)?.[1];
-      if (month) monthCounts[month] = (monthCounts[month] || 0) + 1;
-    });
-    const topVenue = Object.entries(venueCounts).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))[0];
-    const busiestMonth = Object.entries(monthCounts).sort((a, b) => b[1] - a[1] || Number(a[0]) - Number(b[0]))[0];
-    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-    return {
-      shows: yearShows,
-      uniqueArtists,
-      newArtists,
-      returningArtists,
-      firstShow: yearShows[0],
-      lastShow: yearShows[yearShows.length - 1],
-      topVenue: topVenue?.[0] || "—",
-      topVenueCount: topVenue?.[1] || 0,
-      busiestMonth: busiestMonth ? monthNames[Number(busiestMonth[0]) - 1] : "—",
-      busiestMonthCount: busiestMonth?.[1] || 0,
-      previousYear,
-      previousCount: previousShows.length,
-      change: yearShows.length - previousShows.length,
-    };
-  }, [activeYear, allShows]);
-
-  if (!review) return <p className="py-16 text-center text-zinc-500">No yearly concert data yet.</p>;
-
-  const summaryCards = [
-    { label: "Concerts", value: review.shows.length },
-    { label: "Artists", value: review.uniqueArtists.length },
-    { label: "New artists", value: review.newArtists.length },
-    { label: "Returning", value: review.returningArtists.length },
-  ];
-  const comparisonText = review.previousCount === 0
-    ? `No concerts recorded in ${review.previousYear}`
-    : review.change === 0
-    ? `The same number as ${review.previousYear}`
-    : `${Math.abs(review.change)} ${review.change > 0 ? "more" : "fewer"} than ${review.previousYear}`;
-
-  return (
-    <div className="mx-auto max-w-5xl">
-      <div className="mb-8 flex justify-center">
-        <DropdownMenu
-          value={activeYear}
-          onChange={onYearChange}
-          ariaLabel="Choose review year"
-          className="w-40"
-          centered
-          options={years.map((year) => ({ value: year, label: year }))}
-        />
-      </div>
-
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        {summaryCards.map(({ label, value }) => (
-          <div key={label} className="rounded-3xl border border-zinc-800 bg-zinc-900 p-5 text-center">
-            <div className="text-3xl font-black text-zinc-100 md:text-4xl">{value}</div>
-            <div className="mt-1 text-[11px] font-bold uppercase tracking-widest text-zinc-500">{label}</div>
-          </div>
-        ))}
-      </div>
-
-      <div className="mt-3 grid gap-3 md:grid-cols-3">
-        <div className="rounded-3xl border border-zinc-800 bg-zinc-900 p-6">
-          <div className="text-[11px] font-bold uppercase tracking-widest text-zinc-500">Top venue</div>
-          <button onClick={() => review.topVenue !== "—" && onOpenVenue(review.topVenue)} className="mt-2 break-words text-left text-xl font-black text-zinc-100 hover:underline hover:decoration-zinc-600 hover:underline-offset-4">{review.topVenue}</button>
-          <div className="mt-1 text-sm text-zinc-400">{review.topVenueCount} {review.topVenueCount === 1 ? "visit" : "visits"}</div>
-        </div>
-        <div className="rounded-3xl border border-zinc-800 bg-zinc-900 p-6">
-          <div className="text-[11px] font-bold uppercase tracking-widest text-zinc-500">Busiest month</div>
-          <div className="mt-2 text-xl font-black text-zinc-100">{review.busiestMonth}</div>
-          <div className="mt-1 text-sm text-zinc-400">{review.busiestMonthCount} {review.busiestMonthCount === 1 ? "concert" : "concerts"}</div>
-        </div>
-        <div className="rounded-3xl border border-zinc-800 bg-zinc-900 p-6">
-          <div className="text-[11px] font-bold uppercase tracking-widest text-zinc-500">Year over year</div>
-          <div className={`mt-2 text-xl font-black ${review.change > 0 ? "text-emerald-400" : review.change < 0 ? "text-amber-400" : "text-zinc-100"}`}>
-            {review.change > 0 ? "+" : ""}{review.change}
-          </div>
-          <div className="mt-1 text-sm text-zinc-400">{comparisonText}</div>
-        </div>
-      </div>
-
-      <div className="mt-10">
-        <GeographicStats shows={review.shows} title={`${activeYear} geography`} />
-      </div>
-
-      <div className="mt-10 grid gap-3 md:grid-cols-2">
-        <div className="rounded-3xl border border-zinc-800 bg-zinc-900 p-6">
-          <div className="text-[11px] font-bold uppercase tracking-widest text-zinc-500">The year began with</div>
-          {review.firstShow && (
-            <>
-              <button onClick={() => onOpenArtist(review.firstShow.artist)} className="mt-2 text-left text-xl font-black uppercase text-zinc-100 hover:underline hover:decoration-zinc-600 hover:underline-offset-4">{review.firstShow.artist}</button>
-              <p className="mt-1 text-sm text-zinc-400">{review.firstShow.venue} · {review.firstShow.date}</p>
-            </>
-          )}
-        </div>
-        <div className="rounded-3xl border border-zinc-800 bg-zinc-900 p-6">
-          <div className="text-[11px] font-bold uppercase tracking-widest text-zinc-500">The year ended with</div>
-          {review.lastShow && (
-            <>
-              <button onClick={() => onOpenArtist(review.lastShow.artist)} className="mt-2 text-left text-xl font-black uppercase text-zinc-100 hover:underline hover:decoration-zinc-600 hover:underline-offset-4">{review.lastShow.artist}</button>
-              <p className="mt-1 text-sm text-zinc-400">{review.lastShow.venue} · {review.lastShow.date}</p>
-            </>
-          )}
-        </div>
-      </div>
-
-      <section className="mt-12">
-        <div className="mb-6 flex items-end justify-between border-b border-zinc-800 pb-4">
-          <h2 className="text-2xl font-black uppercase tracking-tight text-zinc-100">The year in concerts</h2>
-          <span className="text-sm text-zinc-500">{review.shows.length} total</span>
-        </div>
-        <div className="relative space-y-4 before:absolute before:bottom-6 before:left-[7px] before:top-6 before:w-px before:bg-zinc-800">
-          {review.shows.map(({ artist, show, venue, date, setlistId }) => (
-            <article key={`${artist}-${show}`} className="relative flex gap-4">
-              <span className="relative z-[1] mt-7 h-[15px] w-[15px] shrink-0 rounded-full border-4 border-zinc-950 bg-zinc-500" />
-              <div className="min-w-0 flex-1 rounded-3xl border border-zinc-800 bg-zinc-900 p-5 transition hover:border-zinc-600">
-                <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
-                  <div className="min-w-0">
-                    <button onClick={() => onOpenArtist(artist)} className="break-words text-left text-xl font-black uppercase leading-tight text-zinc-100 hover:underline hover:decoration-zinc-600 hover:underline-offset-4">{artist}</button>
-                    <div className="mt-3 flex gap-2 text-sm font-semibold text-zinc-300"><Icon type="map" /><button onClick={() => onOpenVenue(venue)} className="break-words text-left hover:underline hover:decoration-zinc-600 hover:underline-offset-4">{venue}</button></div>
-                    <div className="mt-2 flex gap-2 text-sm text-zinc-400"><Icon type="calendar" /><span>{date}</span></div>
-                  </div>
-                  <button onClick={() => onOpenSetlist({ artist, venue, date, setlistId, show })} className="flex shrink-0 items-center gap-2 self-start rounded-full border border-zinc-700 px-4 py-2 text-sm font-semibold text-zinc-400 transition hover:border-zinc-500 hover:text-zinc-100">
-                    <Icon type="music" />
-                    Setlist
-                  </button>
-                </div>
-              </div>
-            </article>
-          ))}
-        </div>
-      </section>
-    </div>
-  );
-}
-
-function FriendsPage({ friends, requests, invitations, onSearch, onSendRequest, onRespondRequest, onRemoveFriend, onRespondInvitation }) {
-  const [search, setSearch] = useState("");
-  const [results, setResults] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-
-  async function submitSearch(event) {
-    event.preventDefault();
-    if (search.trim().length < 2) return;
-    setLoading(true);
-    setError("");
-    try { setResults(await onSearch(search.trim())); }
-    catch (searchError) { setError(searchError.message || "Could not search users."); }
-    finally { setLoading(false); }
-  }
-
-  async function act(action) {
-    setError("");
-    try {
-      await action();
-      if (search.trim().length >= 2) setResults(await onSearch(search.trim()));
-    } catch (actionError) { setError(actionError.message || "Could not update friends."); }
-  }
-
-  return (
-    <div className="space-y-8">
-      <div className="grid grid-cols-3 gap-3"><div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-4 text-center"><strong className="block text-2xl text-zinc-100">{friends.length}</strong><span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Friends</span></div><div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-4 text-center"><strong className="block text-2xl text-zinc-100">{requests.filter((item) => item.direction === "incoming").length}</strong><span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Requests</span></div><div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-4 text-center"><strong className="block text-2xl text-zinc-100">{invitations.length}</strong><span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Invites</span></div></div>
-      {invitations.length > 0 && (
-        <section className="rounded-3xl border border-amber-900/60 bg-gradient-to-br from-amber-950/30 to-zinc-950 p-5 md:p-7">
-          <PanelHeading icon="fa-ticket" title="Concert invitations" description="Choose your ticket status to add the concert to your archive." />
-          <div className="space-y-3">
-            {invitations.map((invitation) => (
-              <div key={invitation.concertId} className="flex flex-col gap-4 rounded-2xl border border-zinc-800 bg-zinc-950/90 p-4 sm:flex-row sm:items-center sm:justify-between">
-                <div className="min-w-0"><p className="truncate font-black uppercase tracking-tight text-zinc-100">{invitation.artist}</p><p className="mt-1 text-sm text-zinc-500"><i className="fa-solid fa-location-dot mr-1.5 text-zinc-700" aria-hidden="true" />{invitation.venue || "Venue not specified"}</p><p className="mt-1 text-xs text-zinc-600">{invitation.date} · invited by <span className="text-zinc-400">{invitation.invitedBy}</span></p></div>
-                <div className="grid grid-cols-2 gap-2 sm:flex"><button onClick={() => act(() => onRespondInvitation(invitation.concertId, true, true))} className="rounded-xl bg-emerald-200 px-4 py-2.5 text-xs font-black text-emerald-950 transition hover:bg-emerald-100">Bought</button><button onClick={() => act(() => onRespondInvitation(invitation.concertId, true, false))} className="rounded-xl bg-amber-200 px-4 py-2.5 text-xs font-black text-amber-950 transition hover:bg-amber-100">Not bought</button><button onClick={() => act(() => onRespondInvitation(invitation.concertId, false, false))} className="col-span-2 rounded-xl border border-zinc-700 px-4 py-2.5 text-xs font-bold text-zinc-400 transition hover:border-red-900 hover:text-red-300">Decline</button></div>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
-
-      <section className="rounded-3xl border border-zinc-800 bg-zinc-900 p-5 md:p-7">
-        <PanelHeading icon="fa-user-plus" title="Find people" description="Search by display name or username." />
-        <form onSubmit={submitSearch} className="flex flex-col gap-2 sm:flex-row"><div className="flex min-w-0 flex-1 items-center gap-3 rounded-2xl border border-zinc-700 bg-zinc-950 px-4 py-3 focus-within:border-zinc-500"><Icon type="search" /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Name or username" className="min-w-0 flex-1 bg-transparent text-zinc-100 outline-none placeholder:text-zinc-600" /></div><button disabled={loading || search.trim().length < 2} className="rounded-2xl bg-zinc-100 px-6 py-3 font-black text-zinc-950 transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-40">{loading ? "Searching…" : "Search"}</button></form>
-        {error && <p className="mt-4 rounded-2xl border border-red-900 bg-red-950/30 px-4 py-3 text-sm text-red-300">{error}</p>}
-        {results.length > 0 && <div className="mt-5 divide-y divide-zinc-900 overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950">{results.map((person) => <div key={person.id} className="flex items-center gap-3 px-4 py-3.5"><div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-zinc-800 bg-zinc-900 text-xs font-black text-zinc-400">{person.displayName.slice(0, 1).toUpperCase()}</div><div className="min-w-0 flex-1"><p className="truncate font-bold text-zinc-100">{person.displayName}</p><p className="truncate text-xs text-zinc-600">@{person.username}</p></div>{person.relationship === "accepted" ? <span className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-400"><i className="fa-solid fa-check" aria-hidden="true" />Friends</span> : person.relationship === "pending" ? <span className="text-xs font-bold text-zinc-500">Pending</span> : <button onClick={() => act(() => onSendRequest(person.id))} className="rounded-xl border border-zinc-700 px-3 py-2 text-xs font-black text-zinc-200 transition hover:border-zinc-500 hover:bg-zinc-900">Add</button>}</div>)}</div>}
-      </section>
-
-      {requests.filter((request) => request.direction === "incoming").length > 0 && <section className="rounded-3xl border border-zinc-800 bg-zinc-900 p-5 md:p-7"><PanelHeading icon="fa-user-clock" title="Friend requests" description="Requests waiting for your response." /><div className="space-y-2">{requests.filter((request) => request.direction === "incoming").map((request) => <div key={request.id} className="flex flex-col gap-3 rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-3 sm:flex-row sm:items-center"><div className="min-w-0 flex-1"><p className="truncate font-bold">{request.displayName}</p><p className="truncate text-xs text-zinc-600">@{request.username}</p></div><div className="flex gap-2"><button onClick={() => act(() => onRespondRequest(request.id, true))} className="flex-1 rounded-xl bg-zinc-100 px-4 py-2 text-xs font-black text-zinc-950 transition hover:bg-white">Accept</button><button onClick={() => act(() => onRespondRequest(request.id, false))} className="flex-1 rounded-xl border border-zinc-700 px-4 py-2 text-xs font-bold text-zinc-400 transition hover:border-red-900 hover:text-red-300">Decline</button></div></div>)}</div></section>}
-      {requests.some((request) => request.direction === "outgoing") && <section className="rounded-3xl border border-zinc-800 bg-zinc-900 p-5 md:p-7"><PanelHeading icon="fa-paper-plane" title="Sent requests" description="Waiting for the other person to respond." /><div className="flex flex-wrap gap-2">{requests.filter((request) => request.direction === "outgoing").map((request) => <span key={request.id} className="rounded-full border border-zinc-700 bg-zinc-950 px-3 py-2 text-xs text-zinc-400">{request.displayName} · Pending</span>)}</div></section>}
-
-      <section className="rounded-3xl border border-zinc-800 bg-zinc-900 p-5 md:p-7"><PanelHeading icon="fa-user-group" title="Your friends" description="Friends can be invited when adding or editing a concert." />{friends.length ? <div className="grid gap-3 sm:grid-cols-2">{friends.map((friend) => <div key={friend.id} className="flex items-center gap-3 rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-4"><div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-zinc-800 bg-zinc-900 text-sm font-black text-zinc-400">{friend.displayName.slice(0, 1).toUpperCase()}</div><div className="min-w-0 flex-1"><p className="truncate font-bold">{friend.displayName}</p><p className="truncate text-xs text-zinc-600">@{friend.username}</p></div><button onClick={() => act(() => onRemoveFriend(friend.id))} className="flex h-8 w-8 items-center justify-center rounded-full text-zinc-700 transition hover:bg-red-950/40 hover:text-red-300" aria-label={`Remove ${friend.displayName}`}><i className="fa-solid fa-user-minus text-xs" aria-hidden="true" /></button></div>)}</div> : <EmptyState icon="fa-user-group" title="No friends yet" description="Use the search above to find people you know." />}</section>
-    </div>
-  );
-}
 
 // ─── LoginGate ────────────────────────────────────────────────────────────────
 
@@ -2712,7 +1875,8 @@ export default function App() {
   }
 
   const statsScopeControl = (isStats || isYearReview) && friends.length > 0 ? <div className="mx-auto mb-6 max-w-xs"><DropdownMenu value={statsFriendId} onChange={setStatsFriendId} ariaLabel="Stats scope" centered options={[{ value: "", label: "My complete archive" }, ...friends.map((friend) => ({ value: friend.id, label: `Concerts with ${friend.displayName}` }))]} /></div> : null;
-  const suggestionsPage = isSuggestions ? <ConcertSuggestions
+  const suggestionsPage = isSuggestions ? <DeferredPage><SuggestionsPage
+    generatedAt={suggestionsData.generatedAt}
     suggestions={availableSuggestions}
     reviews={pendingSuggestionReviews}
     onInterested={(suggestion) => {
@@ -2734,7 +1898,7 @@ export default function App() {
     spotifyConnected={spotifyStatus.connected}
     isSaving={isSaving}
     saveError={saveError}
-  /> : null;
+  /></DeferredPage> : null;
 
   return (
     <>
@@ -2788,41 +1952,47 @@ export default function App() {
         </header>
 
         {isVenueDetail ? (
-          <VenueDetailPage
+          <DeferredPage><VenueDetailPage
             venue={selectedVenue}
             historyItems={historyItems}
             onOpenArtist={openArtistDetail}
             onOpenSetlist={openConcertDetails}
-          />
+            Icon={Icon}
+          /></DeferredPage>
         ) : isArtistDetail ? (
-          <ArtistDetailPage
+          <DeferredPage><ArtistDetailPage
             item={artistDetail}
             upcoming={artistUpcoming}
             onOpenSetlist={openConcertDetails}
             onOpenVenue={openVenueDetail}
-          />
+            Icon={Icon}
+          /></DeferredPage>
         ) : isTimeline ? (
-          <ConcertTimelinePage
+          <DeferredPage><ConcertTimelinePage
             historyItems={historyItems}
             onShowCardView={() => changePage("history")}
             onOpenArtist={openArtistDetail}
             onOpenSetlist={openConcertDetails}
             onOpenVenue={openVenueDetail}
-          />
+            DropdownMenu={DropdownMenu}
+            Icon={Icon}
+          /></DeferredPage>
         ) : isYearReview ? (
-          <>{statsScopeControl}<YearInReviewPage
+          <>{statsScopeControl}<DeferredPage><YearInReviewPage
             historyItems={scopedHistoryItems}
             selectedYear={selectedReviewYear}
             onYearChange={changeReviewYear}
             onOpenArtist={openArtistDetail}
             onOpenSetlist={openConcertDetails}
             onOpenVenue={openVenueDetail}
-          /></>
+            DropdownMenu={DropdownMenu}
+            Icon={Icon}
+          /></DeferredPage></>
         ) : isSuggestions ? suggestionsPage
         : isAdminPage ? <DeferredPage><AdminPage currentUserId={currentUserId} onChanged={reloadAppData} /></DeferredPage>
         : isProfile ? <DeferredPage><ProfilePage profile={appProfile} onSave={async (payload) => { await updateMyProfile(payload); await reloadAppData(); }} onExport={handleProfileExport} onDelete={async () => { await deleteMyAccount(); await supabase.auth.signOut(); }} onPassword={() => setPasswordModalMode("change")} /></DeferredPage>
         : isActivity ? <DeferredPage><ActivityPage notifications={notifications} onRead={async (ids) => { await markNotificationsRead(ids); await reloadAppData(); }} onOpenFriends={() => changePage("friends")} /></DeferredPage>
-        : isFriends ? <FriendsPage friends={friends} requests={friendRequests} invitations={concertInvitations} onSearch={searchProfiles} onSendRequest={(userId) => runSocialAction(() => sendFriendRequest(userId))} onRespondRequest={(requestId, accept) => runSocialAction(() => respondFriendRequest(requestId, accept))} onRemoveFriend={(userId) => runSocialAction(() => removeFriend(userId))} onRespondInvitation={(concertId, accept, bought) => runSocialAction(() => respondConcertInvitation(concertId, accept, bought))} /> : isStats ? <>{statsScopeControl}<StatsPage historyItems={scopedHistoryItems} onOpenVenue={openVenueDetail} onOpenYearReview={openYearReview} /></> : (
+        : isFriends ? <DeferredPage><FriendsPage friends={friends} requests={friendRequests} invitations={concertInvitations} onSearch={searchProfiles} onSendRequest={(userId) => runSocialAction(() => sendFriendRequest(userId))} onRespondRequest={(requestId, accept) => runSocialAction(() => respondFriendRequest(requestId, accept))} onRemoveFriend={(userId) => runSocialAction(() => removeFriend(userId))} onRespondInvitation={(concertId, accept, bought) => runSocialAction(() => respondConcertInvitation(concertId, accept, bought))} /></DeferredPage> : isStats ? <>{statsScopeControl}<DeferredPage><StatsPage historyItems={scopedHistoryItems} onOpenVenue={openVenueDetail} onOpenYearReview={openYearReview} /></DeferredPage></> : (
           <>
             <div className="sticky top-0 z-10 mb-8 border-y border-zinc-800 bg-zinc-950/90 py-3 backdrop-blur">
               <div className="mx-auto max-w-6xl space-y-2 px-4 md:space-y-0 md:px-0">
