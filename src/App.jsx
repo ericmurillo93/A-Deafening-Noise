@@ -1055,6 +1055,35 @@ function CalendarConcertModal({ target, onClose, onEdit }) {
   );
 }
 
+function ConfirmActionModal({ confirmation, onClose, onConfirm, isSaving, error }) {
+  const [typedConfirmation, setTypedConfirmation] = useState("");
+  const dialogRef = useDialogFocus(Boolean(confirmation));
+  useEffect(() => {
+    if (!confirmation) return undefined;
+    setTypedConfirmation("");
+    const closeOnEscape = (event) => { if (event.key === "Escape" && !isSaving) onClose(); };
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [confirmation, isSaving, onClose]);
+  if (!confirmation) return null;
+  const confirmed = !confirmation.confirmationText || typedConfirmation === confirmation.confirmationText;
+  return (
+    <div className="adn-modal-backdrop fixed inset-0 z-[60] flex items-center justify-center bg-black/70 px-4" onMouseDown={(event) => { if (event.target === event.currentTarget && !isSaving) onClose(); }}>
+      <div ref={dialogRef} role="alertdialog" aria-modal="true" aria-labelledby="confirm-action-title" aria-describedby="confirm-action-description" className="adn-modal-panel w-full max-w-sm rounded-3xl border border-red-950 bg-zinc-950 p-6 shadow-2xl">
+        <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-2xl border border-red-900/60 bg-red-950/30 text-red-300"><i className={`fa-solid ${confirmation.icon || "fa-triangle-exclamation"}`} aria-hidden="true" /></div>
+        <h2 id="confirm-action-title" className="mb-2 text-xl font-black uppercase tracking-tight">{confirmation.title}</h2>
+        <p id="confirm-action-description" className={`${confirmation.confirmationText ? "mb-4" : "mb-6"} text-sm leading-relaxed text-zinc-400`}>{confirmation.description}</p>
+        {confirmation.confirmationText && <label className="mb-6 block text-xs font-bold text-zinc-400">Type <span className="text-zinc-100">{confirmation.confirmationText}</span> to continue<input value={typedConfirmation} onChange={(event) => setTypedConfirmation(event.target.value)} autoComplete="off" className="mt-2 w-full rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-sm text-zinc-100 outline-none focus:border-zinc-400" /></label>}
+        {error && <p className="mb-4 rounded-xl border border-red-900 bg-red-950/30 px-3 py-2 text-sm text-red-300" role="alert">{error}</p>}
+        <div className="flex gap-3">
+          <button type="button" onClick={onClose} disabled={isSaving} className="flex-1 rounded-2xl border border-zinc-700 px-5 py-3 font-black text-zinc-300 transition hover:border-zinc-500 hover:bg-zinc-900 disabled:opacity-50">Cancel</button>
+          <button type="button" onClick={onConfirm} disabled={isSaving || !confirmed} className="flex-1 rounded-2xl bg-red-200 px-5 py-3 font-black text-red-950 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-40">{isSaving ? "Working…" : confirmation.confirmLabel}</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── StatsPage ────────────────────────────────────────────────────────────────
 
 
@@ -1328,7 +1357,8 @@ export default function App() {
   });
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
-  const [confirmDelete, setConfirmDelete] = useState(null);
+  const [confirmRemoveFriend, setConfirmRemoveFriend] = useState(null);
+  const [confirmAction, setConfirmAction] = useState(null);
   const [passwordModalMode, setPasswordModalMode] = useState(null);
   const dialogHistoryOpenRef = useRef(false);
   const closingDialogWithBackRef = useRef(false);
@@ -1339,7 +1369,7 @@ export default function App() {
   const passwordModalModeRef = useRef(null);
   const lastRefreshRef = useRef(0);
   passwordModalModeRef.current = passwordModalMode;
-  const anyDialogOpen = modalOpen || Boolean(editTarget) || Boolean(setlistTarget) || Boolean(calendarTarget) || Boolean(confirmDelete) || Boolean(passwordModalMode);
+  const anyDialogOpen = modalOpen || Boolean(editTarget) || Boolean(setlistTarget) || Boolean(calendarTarget) || Boolean(confirmRemoveFriend) || Boolean(confirmAction) || Boolean(passwordModalMode);
   const anyPageOverlayOpen = sidebarOpen || contextMenu.open || anyDialogOpen;
   if (anyPageOverlayOpen && !pageOverlayWasOpenRef.current) overlayScrollYRef.current = window.scrollY;
   pageOverlayWasOpenRef.current = anyPageOverlayOpen;
@@ -1588,7 +1618,8 @@ export default function App() {
         setEditTarget(null);
         setSetlistTarget(null);
         setCalendarTarget(null);
-        setConfirmDelete(null);
+        setConfirmRemoveFriend(null);
+        setConfirmAction(null);
         if (passwordModalModeRef.current === "recovery") void supabase.auth.signOut();
         setPasswordModalMode(null);
         window.setTimeout(() => {
@@ -1809,7 +1840,23 @@ export default function App() {
 
   function deleteFromContext() {
     const t = contextMenu.target; closeContextMenu(); if (!t) return;
-    setConfirmDelete(t);
+    setSaveError("");
+    setConfirmAction({
+      title: "Delete concert?",
+      description: `${t.artist}${t.venue ? ` · ${t.venue}` : ""} · ${t.date}. This action cannot be undone.`,
+      confirmLabel: "Delete",
+      icon: "fa-trash-can",
+      action: async () => {
+        if (supabaseEnabled && t.concertId) {
+          await deleteMyConcert(t.concertId);
+          await reloadAppData();
+        } else {
+          const updatedConcerts = removeConcert(concertItems, t);
+          await saveConcertData(concertDataPayload(updatedConcerts), `Delete concert: ${t.artist}${t.venue ? " — " + t.venue : ""} (${t.date})`);
+          setConcertItems(updatedConcerts);
+        }
+      },
+    });
   }
 
   async function saveSuggestionReviews() {
@@ -1989,10 +2036,10 @@ export default function App() {
             Icon={Icon}
           /></DeferredPage></>
         ) : isSuggestions ? suggestionsPage
-        : isAdminPage ? <DeferredPage><AdminPage currentUserId={currentUserId} onChanged={reloadAppData} /></DeferredPage>
-        : isProfile ? <DeferredPage><ProfilePage profile={appProfile} onSave={async (payload) => { await updateMyProfile(payload); await reloadAppData(); }} onExport={handleProfileExport} onDelete={async () => { await deleteMyAccount(); await supabase.auth.signOut(); }} onPassword={() => setPasswordModalMode("change")} /></DeferredPage>
+        : isAdminPage ? <DeferredPage><AdminPage currentUserId={currentUserId} onChanged={reloadAppData} onConfirm={(confirmation) => { setSaveError(""); setConfirmAction(confirmation); }} /></DeferredPage>
+        : isProfile ? <DeferredPage><ProfilePage profile={appProfile} onSave={async (payload) => { await updateMyProfile(payload); await reloadAppData(); }} onExport={handleProfileExport} onDelete={async () => { await deleteMyAccount(); await supabase.auth.signOut(); }} onPassword={() => setPasswordModalMode("change")} onConfirm={(confirmation) => { setSaveError(""); setConfirmAction(confirmation); }} /></DeferredPage>
         : isActivity ? <DeferredPage><ActivityPage notifications={notifications} onRead={async (ids) => { await markNotificationsRead(ids); await reloadAppData(); }} onOpenFriends={() => changePage("friends")} /></DeferredPage>
-        : isFriends ? <DeferredPage><FriendsPage friends={friends} requests={friendRequests} invitations={concertInvitations} onSearch={searchProfiles} onSendRequest={(userId) => runSocialAction(() => sendFriendRequest(userId))} onRespondRequest={(requestId, accept) => runSocialAction(() => respondFriendRequest(requestId, accept))} onRemoveFriend={(userId) => runSocialAction(() => removeFriend(userId))} onRespondInvitation={(concertId, accept, bought) => runSocialAction(() => respondConcertInvitation(concertId, accept, bought))} /></DeferredPage> : isStats ? <>{statsScopeControl}<DeferredPage><StatsPage historyItems={scopedHistoryItems} onOpenVenue={openVenueDetail} onOpenYearReview={openYearReview} /></DeferredPage></> : (
+        : isFriends ? <DeferredPage><FriendsPage friends={friends} requests={friendRequests} invitations={concertInvitations} onSearch={searchProfiles} onSendRequest={(userId) => runSocialAction(() => sendFriendRequest(userId))} onRespondRequest={(requestId, accept) => runSocialAction(() => respondFriendRequest(requestId, accept))} onRequestRemoveFriend={(friend) => { setSaveError(""); setConfirmRemoveFriend(friend); }} onRespondInvitation={(concertId, accept, bought) => runSocialAction(() => respondConcertInvitation(concertId, accept, bought))} /></DeferredPage> : isStats ? <>{statsScopeControl}<DeferredPage><StatsPage historyItems={scopedHistoryItems} onOpenVenue={openVenueDetail} onOpenYearReview={openYearReview} /></DeferredPage></> : (
           <>
             <div className="sticky top-0 z-10 mb-8 border-y border-zinc-800 bg-zinc-950/90 py-3 backdrop-blur">
               <div className="mx-auto max-w-6xl space-y-2 px-4 md:space-y-0 md:px-0">
@@ -2102,32 +2149,23 @@ export default function App() {
         </div>
       )}
 
-      {confirmDelete && (
-        <div className="adn-modal-backdrop fixed inset-0 z-[60] flex items-center justify-center bg-black/70 px-4">
-          <div role="alertdialog" aria-modal="true" aria-labelledby="delete-concert-title" className="adn-modal-panel w-full max-w-sm rounded-3xl border border-red-950 bg-zinc-950 p-6 shadow-2xl">
-            <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-2xl border border-red-900/60 bg-red-950/30 text-red-300"><i className="fa-solid fa-trash-can" aria-hidden="true" /></div>
-            <h2 id="delete-concert-title" className="mb-2 text-xl font-black uppercase tracking-tight">Delete concert?</h2>
-            <p className="mb-6 text-sm leading-relaxed text-zinc-400"><span className="font-semibold text-zinc-100">{confirmDelete.artist}</span>{confirmDelete.venue ? ` · ${confirmDelete.venue}` : ""}<span className="block text-zinc-600">{confirmDelete.date}</span>This action cannot be undone.</p>
-            <div className="flex gap-3">
-              <button onClick={() => setConfirmDelete(null)} className="flex-1 rounded-2xl border border-zinc-700 px-5 py-3 font-black text-zinc-300 transition hover:border-zinc-500 hover:bg-zinc-900">Cancel</button>
-              <button onClick={async () => {
-                const t = confirmDelete; setConfirmDelete(null); setIsSaving(true);
-                try {
-                  if (supabaseEnabled && t.concertId) {
-                    await deleteMyConcert(t.concertId);
-                    await reloadAppData();
-                  } else {
-                    const updatedConcerts = removeConcert(concertItems, t);
-                    await saveConcertData(concertDataPayload(updatedConcerts), `Delete concert: ${t.artist}${t.venue ? " — " + t.venue : ""} (${t.date})`);
-                    setConcertItems(updatedConcerts);
-                  }
-                } catch (e) { setSaveError(e.message || "Could not delete"); }
-                finally { setIsSaving(false); }
-              }} className="flex-1 rounded-2xl bg-red-200 px-5 py-3 font-black text-red-950 transition hover:bg-red-100">Delete</button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmActionModal confirmation={confirmRemoveFriend ? { title: "Remove friend?", description: `${confirmRemoveFriend.displayName} will no longer appear in concert invitations. Existing concert records remain unchanged.`, confirmLabel: "Remove", icon: "fa-user-minus" } : null} onClose={() => { if (!isSaving) { setConfirmRemoveFriend(null); setSaveError(""); } }} isSaving={isSaving} error={saveError} onConfirm={async () => {
+        if (!confirmRemoveFriend) return;
+        setIsSaving(true); setSaveError("");
+        try {
+          await runSocialAction(() => removeFriend(confirmRemoveFriend.id));
+          setConfirmRemoveFriend(null);
+        } catch (error) { setSaveError(error.message || "Could not remove friend"); }
+        finally { setIsSaving(false); }
+      }} />
+
+      <ConfirmActionModal confirmation={confirmAction} onClose={() => { if (!isSaving) { setConfirmAction(null); setSaveError(""); } }} isSaving={isSaving} error={saveError} onConfirm={async () => {
+        if (!confirmAction) return;
+        setIsSaving(true); setSaveError("");
+        try { await confirmAction.action(); setConfirmAction(null); }
+        catch (error) { setSaveError(error.message || "The action could not be completed"); }
+        finally { setIsSaving(false); }
+      }} />
 
       {canEdit && <AddConcertModal isOpen={modalOpen} initial={addInitial} stagingSuggestion={Boolean(activeSuggestionId)} onClose={() => { setModalOpen(false); setAddInitial(null); setActiveSuggestionId(null); }} onSave={handleAddConcert} isSaving={isSaving} saveError={saveError} friends={friends} onSearchCatalog={supabaseEnabled ? searchConcertCatalog : null} />}
       {canEdit && <EditConcertModal isOpen={!!editTarget} mode={editTarget?.mode || mode} initial={editTarget} onClose={() => setEditTarget(null)} onSave={handleEditConcert} isSaving={isSaving} saveError={saveError} artistSuggestions={artistSuggestions} venueSuggestions={venueSuggestions} friends={friends} />}
@@ -2136,7 +2174,7 @@ export default function App() {
         target={setlistTarget}
         onClose={() => setSetlistTarget(null)}
         onEdit={canEdit ? (target) => { setSetlistTarget(null); setEditTarget(target); } : null}
-        onLeave={supabaseEnabled ? async (target) => { if (!window.confirm("Leave this concert? It will stay in the creator's archive.")) return; await leaveSharedConcert(target.concertId); setSetlistTarget(null); await reloadAppData(); } : null}
+        onLeave={supabaseEnabled ? async (target) => { setSaveError(""); setSetlistTarget(null); setConfirmAction({ title: "Leave concert?", description: "The concert will be removed from your archive but will remain in the creator's archive.", confirmLabel: "Leave", icon: "fa-arrow-right-from-bracket", action: async () => { await leaveSharedConcert(target.concertId); await reloadAppData(); } }); } : null}
         onIdDiscovered={canEdit ? handleSetlistIdDiscovered : null}
       />
       <CalendarConcertModal

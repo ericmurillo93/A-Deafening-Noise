@@ -4,7 +4,7 @@ import { adminListUsers, adminUpdateUser, disconnectMySpotify, getMySpotifyStatu
 import { connectSpotify, finishSpotifyConnection } from "../lib/spotify";
 import { EmptyState, PanelHeading, UserAvatar } from "../components/SharedUi";
 
-export function ProfilePage({ profile, onSave, onExport, onDelete, onPassword }) {
+export function ProfilePage({ profile, onSave, onExport, onDelete, onPassword, onConfirm }) {
   const [form, setForm] = useState({ displayName: "", avatarUrl: "", city: "", country: "", discoverable: true, suggestionEmailEnabled: false });
   const [status, setStatus] = useState("");
   const [saving, setSaving] = useState(false);
@@ -16,14 +16,26 @@ export function ProfilePage({ profile, onSave, onExport, onDelete, onPassword })
     try { await onSave(form); setStatus("Profile saved."); } catch (error) { setStatus(error.message || "Could not save your profile."); } finally { setSaving(false); }
   }
   async function removeAccount() {
-    if (window.prompt("Type DELETE to permanently delete your account and personal data.") !== "DELETE") return;
-    await onDelete();
+    onConfirm({
+      title: "Delete account?",
+      description: "This permanently deletes your profile and personal data. This action cannot be undone.",
+      confirmLabel: "Delete account",
+      confirmationText: "DELETE",
+      icon: "fa-user-slash",
+      action: onDelete,
+    });
   }
   async function disconnectSpotify() {
-    if (!window.confirm("Disconnect Spotify and remove your synced artists?")) return;
-    setSpotify((current) => ({ ...current, loading: true, error: "" }));
-    try { await disconnectMySpotify(); setSpotify({ loading: false, connected: false, error: "" }); }
-    catch (error) { setSpotify((current) => ({ ...current, loading: false, error: error.message || "Spotify could not be disconnected." })); }
+    onConfirm({
+      title: "Disconnect Spotify?",
+      description: "Your synced artists will be removed and concert suggestions will no longer use your Spotify taste until you reconnect.",
+      confirmLabel: "Disconnect",
+      icon: "fa-link-slash",
+      action: async () => {
+        await disconnectMySpotify();
+        setSpotify({ loading: false, connected: false, error: "" });
+      },
+    });
   }
   useEffect(() => {
     let cancelled = false;
@@ -70,10 +82,10 @@ export function ActivityPage({ notifications, onRead, onOpenFriends }) {
   return <div className="mx-auto max-w-3xl"><section className="rounded-3xl border border-zinc-800 bg-zinc-900 p-5 md:p-7"><PanelHeading icon="fa-bell" title="Activity" description="Invitations, requests and shared concert updates." />{notifications.length ? <div className="space-y-2">{notifications.map((item) => <button key={item.id} onClick={onOpenFriends} className={`flex w-full items-start gap-3 rounded-2xl border p-4 text-left transition hover:border-zinc-600 ${item.readAt ? "border-zinc-800 bg-zinc-950/50" : "border-amber-900/60 bg-amber-950/20"}`}><i className={`fa-solid ${item.kind === "friend_request" ? "fa-user-plus" : "fa-ticket"} mt-1 w-5 text-center text-zinc-500`} aria-hidden="true" /><span><span className="block font-bold text-zinc-100">{item.kind === "friend_request" ? `${item.actorName} sent you a friend request` : item.kind === "invitation_accepted" ? `${item.actorName} confirmed attendance` : `${item.actorName} invited you to a concert`}</span>{item.artist && <span className="mt-1 block text-sm text-zinc-500">{item.artist} · {item.date}</span>}</span></button>)}</div> : <EmptyState icon="fa-bell" title="No activity yet" description="New friend requests and concert invitations will appear here." />}</section></div>;
 }
 
-export function AdminPage({ currentUserId, onChanged }) {
+export function AdminPage({ currentUserId, onChanged, onConfirm }) {
   const [users, setUsers] = useState([]); const [error, setError] = useState("");
   async function load() { try { setUsers(await adminListUsers()); } catch (e) { setError(e.message); } }
   useEffect(() => { load(); }, []);
   async function update(user, changes) { try { await adminUpdateUser(user.id, changes.role || user.role, changes.status || user.status); await load(); onChanged(); } catch (e) { setError(e.message); } }
-  return <div className="mx-auto max-w-5xl"><section className="rounded-3xl border border-zinc-800 bg-zinc-900 p-5 md:p-7"><PanelHeading icon="fa-user-shield" title="User administration" description="Manage roles and access without exposing private credentials." />{error && <p className="mb-4 text-sm text-red-300">{error}</p>}<div className="space-y-3">{users.map((user) => <div key={user.id} className="grid gap-3 rounded-2xl border border-zinc-800 bg-zinc-950 p-4 md:grid-cols-[1fr_auto_auto] md:items-center"><div className="min-w-0"><p className="truncate font-bold">{user.displayName}</p><p className="truncate text-xs text-zinc-500">{user.email} · {user.concertCount} concerts</p></div><select aria-label={`Role for ${user.displayName}`} value={user.role} disabled={user.id === currentUserId} onChange={(e) => update(user, { role: e.target.value })} className="rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm"><option value="user">User</option><option value="admin">Admin</option></select><button disabled={user.id === currentUserId} onClick={() => update(user, { status: user.status === "active" ? "blocked" : "active" })} className={`rounded-xl border px-4 py-2 text-xs font-black disabled:opacity-40 ${user.status === "active" ? "border-red-900 text-red-300" : "border-emerald-900 text-emerald-300"}`}>{user.status === "active" ? "Block" : "Restore"}</button></div>)}</div></section></div>;
+  return <div className="mx-auto max-w-5xl"><section className="rounded-3xl border border-zinc-800 bg-zinc-900 p-5 md:p-7"><PanelHeading icon="fa-user-shield" title="User administration" description="Manage roles and access without exposing private credentials." />{error && <p className="mb-4 text-sm text-red-300">{error}</p>}<div className="space-y-3">{users.map((user) => <div key={user.id} className="grid gap-3 rounded-2xl border border-zinc-800 bg-zinc-950 p-4 md:grid-cols-[1fr_auto_auto] md:items-center"><div className="min-w-0"><p className="truncate font-bold">{user.displayName}</p><p className="truncate text-xs text-zinc-500">{user.email} · {user.concertCount} concerts</p></div><select aria-label={`Role for ${user.displayName}`} value={user.role} disabled={user.id === currentUserId} onChange={(e) => update(user, { role: e.target.value })} className="rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm"><option value="user">User</option><option value="admin">Admin</option></select><button disabled={user.id === currentUserId} onClick={() => user.status === "active" ? onConfirm({ title: "Block user?", description: `${user.displayName} will immediately lose access until an administrator restores the account.`, confirmLabel: "Block", icon: "fa-user-lock", action: () => update(user, { status: "blocked" }) }) : update(user, { status: "active" })} className={`rounded-xl border px-4 py-2 text-xs font-black disabled:opacity-40 ${user.status === "active" ? "border-red-900 text-red-300" : "border-emerald-900 text-emerald-300"}`}>{user.status === "active" ? "Block" : "Restore"}</button></div>)}</div></section></div>;
 }

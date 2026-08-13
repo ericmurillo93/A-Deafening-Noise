@@ -387,6 +387,14 @@ Concert identity is canonical: artist, venue, and date inputs search the complet
 
 Users can leave a shared concert without changing the creator's copy, export their personal data as JSON, or delete their account. The activity view records friend requests, concert invitations, and accepted invitations. Admins can change roles and block or restore access; blocked accounts are rejected by both application bootstrap and database mutation guards. Stats can be scoped to the complete personal archive or concerts explicitly attended with one accepted friend.
 
+The browser has no direct table access: authenticated operations use an explicit
+RPC allowlist, every exposed RPC checks the active account where applicable,
+and obsolete archive-replacement functions are revoked. Default privileges also
+keep future tables, sequences, and functions private until a migration grants
+the minimum required access. Apply and lint security migrations in staging
+before production with `npx supabase db push` and
+`npx supabase db lint --linked --level warning`.
+
 ### Client cache and synchronization
 
 Authenticated application data is cached per user in IndexedDB. On repeat visits the cached archive renders first and `get_app_data()` revalidates it silently; returning to a visible tab refreshes data at most once every 30 seconds. Successful mutations refresh both Supabase state and the local cache. Logout clears every cached user snapshot so data is not exposed to the next person using a shared browser. Cache records carry an explicit schema version in `src/lib/app-cache.js`; increment it whenever an incompatible response shape is deployed.
