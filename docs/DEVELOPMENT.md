@@ -100,6 +100,11 @@ Local development intentionally differs from production:
 - Setlist requests are handled by development-only middleware in `vite.config.js`.
 - The middleware is enabled only while Vite serves the app and is not included in the production runtime.
 
+Profile avatars are uploaded directly from the Profile page to the public
+`avatars` Supabase Storage bucket. Write policies restrict each authenticated
+user to their own folder, accept JPG, PNG, or WebP files, and enforce a 2 MB
+limit; the profile stores only the resulting public URL.
+
 ### Prepare the hosted development database
 
 Create the non-production project and its Auth users before applying the schema.
@@ -269,9 +274,9 @@ VITE_SPOTIFY_CLIENT_ID
 
 In **Supabase → Authentication → Providers → Email**, enable **Secure password change**. In **Authentication → URL Configuration**, use `https://adeafeningnoise.com` as the Site URL. Allow `https://adeafeningnoise.com/**` and the local development roots (for example `http://localhost:5173/**`) as Redirect URLs.
 
-Authenticated password changes use Supabase reauthentication: an email code is required before the new password is accepted. The login screen's **Forgot password?** action sends Supabase's recovery link back to `?password-recovery=1`; the app consumes the recovery session, asks for a new password, then signs out. The browser enforces a shared 60-second cooldown between authentication emails, including across reloads. For a larger public user base, configure custom SMTP instead of relying on Supabase's limited shared email service.
+Authenticated password changes use Supabase reauthentication: an email code is required before the new password is accepted. The login screen's **Forgot password?** action sends Supabase's recovery link back to `?password-recovery=1`; the app consumes the recovery session, asks for a new password, then signs out. The browser enforces a shared 60-second cooldown between authentication emails, including across reloads. Keep Supabase Auth responsible for these security flows; for production delivery, configure Resend as Supabase custom SMTP with a dedicated authentication sender instead of building a parallel password-email system or relying on Supabase's limited shared service.
 
-The application uses clean History API routes such as `/history`, `/calendar`, `/timeline`, `/stats`, `/year-review`, `/artist/:name`, and `/venue/:name`. Netlify's checked-in SPA fallback serves `index.html` for direct route requests. Legacy hash URLs are converted to their clean equivalent on first load.
+The application uses clean History API routes such as `/home`, `/history`, `/calendar`, `/timeline`, `/stats`, `/year-review`, `/artist/:name`, and `/venue/:name`. Authenticated sessions open on the personal `/home` dashboard. Netlify's checked-in SPA fallback serves `index.html` for direct route requests. Legacy hash URLs are converted to their clean equivalent on first load.
 
 The checked-in `netlify.toml` defines:
 
@@ -310,7 +315,7 @@ To run the complete pipeline locally:
 npm run suggestions:refresh
 ```
 
-Scraped lineups are matched against `data/listened-artists.json`, which contains the deduplicated union of artists observed across connected accounts without identifying which user listens to whom. Eric's historical import ignores plays shorter than 30 seconds and requires at least one accumulated listening hour per artist; connected Spotify Top Artists remain eligible directly. Reseeding replaces the previous historical rows so artists below that threshold are removed. Run `node scripts/sync-spotify-accounts.mjs --seed-only` with the normal server-side Supabase variables to repair the historical seed without calling Spotify. Later top-artist refreshes accumulate instead of deleting older affinity. The workflow combines and deduplicates results into `data/suggestions.json`; the application then filters that shared output against each user's own Spotify catalog, archive, and dismissals. Suggestions never appear directly as calendar events and are reviewed on the dedicated **Concert suggestions** page.
+Scraped lineups are matched against `data/listened-artists.json`, which contains the deduplicated union of artists observed across connected accounts without identifying which user listens to whom. Eric's historical import ignores plays shorter than 30 seconds and requires at least one accumulated listening hour per artist; connected Spotify Top Artists remain eligible directly. Reseeding replaces the previous historical rows so artists below that threshold are removed. Run `node scripts/sync-spotify-accounts.mjs --seed-only` with the normal server-side Supabase variables to repair the historical seed without calling Spotify. Later top-artist refreshes accumulate instead of deleting older affinity. The workflow combines and deduplicates results into `data/suggestions.json`; the application then filters that shared output against each user's own Spotify catalog and overlays their personal Interested or Not Interested state. Suggestions never appear directly as calendar events and are reviewed on the dedicated **Concert suggestions** page.
 
 ### Import Spotify listening history
 
@@ -331,11 +336,11 @@ https://adeafeningnoise.com/spotify/callback
 http://127.0.0.1:5173/spotify/callback
 ```
 
-Set `VITE_SPOTIFY_CLIENT_ID` locally and in Netlify. The Client ID is public configuration; no Spotify Client Secret is used. The browser fetches up to 50 top artists for short-, medium-, and long-term affinity, sends artist IDs, names, matching ranges, and the refresh token to an authenticated Supabase RPC, then discards the access token. Supabase Vault stores the refresh token encrypted and exposes it only to the service-role workflow. Tracks and raw listening history are never stored. Development Mode users must still be added once to Spotify's allowlist; Spotify does not provide an API for bypassing that platform restriction.
+Set `VITE_SPOTIFY_CLIENT_ID` locally and in Netlify. The Client ID is public configuration; no Spotify Client Secret is used. The browser fetches up to 50 top artists for short-, medium-, and long-term affinity, sends artist IDs, names, Spotify-hosted image URLs, matching ranges, and the refresh token to an authenticated Supabase RPC, then discards the access token. Artists attached to future concerts but absent from Top Artists are looked up by exact normalized name and stored in a separate per-user artwork catalog, so artwork never expands suggestion affinity. The same image metadata is refreshed by the daily workflow and supplies dashboard, future-concert, and suggestion artwork, with the bundled stage image as fallback. Supabase Vault stores the refresh token encrypted and exposes it only to the service-role workflow. Tracks and raw listening history are never stored. Development Mode users must still be added once to Spotify's allowlist; Spotify does not provide an API for bypassing that platform restriction.
 
-Users may opt into new-suggestion emails from Profile. The workflow compares the previous and refreshed suggestion files, applies each recipient's Spotify artists, archive, and dismissals, and sends only genuinely new matches through Resend. The free Resend tier currently supports one custom domain, 3,000 emails per month, and 100 per day.
+Users may opt into new-suggestion emails from Profile. The daily workflow compares the previous and refreshed suggestion files, applies each recipient's Spotify artists, archive, and dismissals, and sends only genuinely new matches through Resend. Every recipient receives at most one responsive digest per day containing all of that day's matches; a per-user/day Resend idempotency key prevents retries or manual reruns from duplicating delivery. The email links to each source, provides a plain-text fallback and exposes the Profile preference control. The free Resend tier currently supports one custom domain, 3,000 emails per month, and 100 per day.
 
-Select **Interested** to open the normal Add Concert modal with artist, venue, and date prefilled, or **Not interested** to dismiss a suggestion. These choices are staged in browser storage, so you can review the complete list without creating a write per concert. Use **Save decisions** once at the end: interested concerts and dismissed artist/date keys are written together to Supabase. Persisted dismissals are excluded from later scraper runs.
+Select **Interested** to open the normal Add Concert modal with artist, venue, and date prefilled, or **Not interested** to record a dismissal. Each choice is written to Supabase immediately and the suggestion remains visible with its current state. Interested suggestions are ordinary upcoming concerts and therefore appear in the calendar. Changing one to Not Interested requires confirmation and removes only that user's calendar entry. The shared discovery file is never filtered by one user's archive or dismissals.
 
 Run the complete pipeline locally:
 

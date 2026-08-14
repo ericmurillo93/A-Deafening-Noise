@@ -1,9 +1,10 @@
 import React, { useMemo } from "react";
+import { createPortal } from "react-dom";
 import { normalize, parseDate, parseShow } from "../lib/concerts";
 
 const GeographicStatsMap = React.lazy(() => import("../components/GeographicStats"));
 function GeographicStats(props) {
-  return <React.Suspense fallback={<div className="h-[32rem] animate-pulse rounded-3xl border border-zinc-800 bg-zinc-900" aria-label="Opening concert map" />}><GeographicStatsMap {...props} /></React.Suspense>;
+  return <React.Suspense fallback={<div className="flex h-[32rem] items-center justify-center rounded-3xl border border-zinc-800 bg-zinc-900" role="status"><span className="flex items-center gap-3 text-sm font-semibold text-zinc-400"><i className="fa-solid fa-circle-notch animate-spin text-blue-400" aria-hidden="true" />Opening concert map…</span></div>}><GeographicStatsMap {...props} /></React.Suspense>;
 }
 
 function StatsBar({ data, max, accent = "bg-zinc-100", label }) {
@@ -20,7 +21,7 @@ function StatsBar({ data, max, accent = "bg-zinc-100", label }) {
                 <span className="text-zinc-500">{value}{label ? ` ${label}` : ""}</span>
               </div>
               <div className="h-2 overflow-hidden rounded-full bg-zinc-900">
-                <div className={`h-full ${accent} transition-all`} style={{ width: `${pct}%` }} />
+                <div className={`h-full ${accent} transition-[width,background-color]`} style={{ width: `${pct}%` }} />
               </div>
             </div>
           </div>
@@ -30,7 +31,7 @@ function StatsBar({ data, max, accent = "bg-zinc-100", label }) {
   );
 }
 
-function StatsPage({ historyItems, onOpenVenue, onOpenYearReview }) {
+function StatsPage({ historyItems, onOpenArtist, onOpenVenue, onOpenYearReview }) {
   const geographyShows = useMemo(
     () => historyItems.flatMap(({ shows }) => shows.map((show) => parseShow(show, "history"))),
     [historyItems]
@@ -69,7 +70,7 @@ function StatsPage({ historyItems, onOpenVenue, onOpenYearReview }) {
   ];
 
   return (
-    <div className="mx-auto max-w-5xl space-y-10">
+    <div className="space-y-4">
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         {summaryCards.map(({ label, value }) => (
           <div key={label} className="rounded-3xl border border-zinc-800 bg-zinc-900 p-5 text-center">
@@ -81,7 +82,7 @@ function StatsPage({ historyItems, onOpenVenue, onOpenYearReview }) {
       <div className="grid gap-3 md:grid-cols-2">
         <div className="rounded-3xl border border-zinc-800 bg-zinc-900 p-6">
           <div className="text-[11px] font-bold uppercase tracking-widest text-zinc-500">Most-seen artist</div>
-          <div className="mt-2 text-2xl font-black uppercase text-zinc-100">{stats.topArtist}</div>
+          <button onClick={() => stats.topArtist !== "—" && onOpenArtist(stats.topArtist)} className="mt-2 text-left text-2xl font-black uppercase text-zinc-100 hover:underline hover:decoration-zinc-600 hover:underline-offset-4">{stats.topArtist}</button>
           <div className="mt-1 text-sm text-zinc-400">{stats.topArtistShows} {stats.topArtistShows === 1 ? "show" : "shows"}</div>
         </div>
         <div className="rounded-3xl border border-zinc-800 bg-zinc-900 p-6">
@@ -108,7 +109,7 @@ function StatsPage({ historyItems, onOpenVenue, onOpenYearReview }) {
               return (
                 <button type="button" key={year} onClick={() => onOpenYearReview(year)} className="group flex min-w-[36px] flex-1 cursor-pointer flex-col items-center gap-2 rounded-xl px-1 py-2 transition hover:bg-zinc-800 focus-visible:bg-zinc-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-600" aria-label={`Open ${year} year in review: ${count} ${count === 1 ? "concert" : "concerts"}`}>
                   <div className="flex h-44 w-full items-end">
-                    <div className="w-full rounded-t-md bg-zinc-300 transition-all group-hover:bg-white" style={{ height: `${count === 0 ? 2 : heightPct}%`, opacity: count === 0 ? 0.15 : 1 }} title={`${count} ${count === 1 ? "show" : "shows"} in ${year}`} />
+                    <div className="w-full rounded-t-md bg-zinc-300 transition-[height,background-color] group-hover:bg-white" style={{ height: `${count === 0 ? 2 : heightPct}%`, opacity: count === 0 ? 0.15 : 1 }} title={`${count} ${count === 1 ? "show" : "shows"} in ${year}`} />
                   </div>
                   <div className="text-[10px] font-semibold text-zinc-500 transition group-hover:text-zinc-300">'{year.slice(-2)}</div>
                   <div className="text-[11px] font-bold text-zinc-300 transition group-hover:text-white">{count}</div>
@@ -124,7 +125,7 @@ function StatsPage({ historyItems, onOpenVenue, onOpenYearReview }) {
 
 export default StatsPage;
 
-export function YearInReviewPage({ historyItems, selectedYear, onYearChange, onOpenArtist, onOpenSetlist, onOpenVenue, DropdownMenu, Icon }) {
+export function YearInReviewPage({ historyItems, selectedYear, onYearChange, onOpenArtist, onOpenSetlist, onOpenVenue, DropdownMenu, Icon, headerTarget }) {
   const allShows = useMemo(
     () => historyItems.flatMap(({ artist, shows }) =>
       shows.map((show) => ({ artist, show, ...parseShow(show, "history") }))
@@ -198,7 +199,7 @@ export function YearInReviewPage({ historyItems, selectedYear, onYearChange, onO
 
   return (
     <div className="mx-auto max-w-5xl">
-      <div className="mb-8 flex justify-center">
+      {headerTarget && createPortal(<div className="flex justify-end">
         <DropdownMenu
           value={activeYear}
           onChange={onYearChange}
@@ -207,7 +208,7 @@ export function YearInReviewPage({ historyItems, selectedYear, onYearChange, onO
           centered
           options={years.map((year) => ({ value: year, label: year }))}
         />
-      </div>
+      </div>, headerTarget)}
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         {summaryCards.map(({ label, value }) => (
@@ -238,11 +239,11 @@ export function YearInReviewPage({ historyItems, selectedYear, onYearChange, onO
         </div>
       </div>
 
-      <div className="mt-10">
+      <div className="mt-4">
         <GeographicStats shows={review.shows} title={`${activeYear} geography`} />
       </div>
 
-      <div className="mt-10 grid gap-3 md:grid-cols-2">
+      <div className="mt-4 grid gap-3 md:grid-cols-2">
         <div className="rounded-3xl border border-zinc-800 bg-zinc-900 p-6">
           <div className="text-[11px] font-bold uppercase tracking-widest text-zinc-500">The year began with</div>
           {review.firstShow && (
@@ -263,7 +264,7 @@ export function YearInReviewPage({ historyItems, selectedYear, onYearChange, onO
         </div>
       </div>
 
-      <section className="mt-12">
+      <section className="mt-6">
         <div className="mb-6 flex items-end justify-between border-b border-zinc-800 pb-4">
           <h2 className="text-2xl font-black uppercase tracking-tight text-zinc-100">The year in concerts</h2>
           <span className="text-sm text-zinc-500">{review.shows.length} total</span>

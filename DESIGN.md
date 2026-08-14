@@ -3,12 +3,15 @@ name: A Deafening Noise
 description: A dense, high-contrast concert archive with the authority of a live-music poster.
 colors:
   stage-black: "#09090b"
-  raised-black: "#18181b"
+  raised-black: "#15191e"
+  nested-black: "#111418"
   concert-white: "#f4f4f5"
   secondary-copy: "#a1a1aa"
   history-blue: "#172554"
   bought-green: "#064e3b"
   possibility-amber: "#451a03"
+  stage-blue: "#2563eb"
+  panel-border: "#30343a"
 typography:
   display:
     fontFamily: "ui-sans-serif, system-ui, sans-serif"
@@ -20,8 +23,9 @@ typography:
     fontWeight: 400
     lineHeight: 1.5
 rounded:
+  compact: "8px"
   control: "12px"
-  panel: "16px"
+  panel: "6px"
 spacing:
   tight: "8px"
   standard: "16px"
@@ -62,7 +66,9 @@ Heavy uppercase type gives titles and artist names authority while keeping the e
 
 ## Layout
 
-Content sits inside a centered `max-w-7xl` shell. Mobile is a single-column operating surface; cards expand to two columns at medium widths and three at wide widths. Tight groups use 8px, component interiors 16–24px, and page sections 32–48px. Mobile headers reserve a clear zone for the independent Menu control.
+Content fills the space beside the fixed desktop sidebar. Mobile is a single-column operating surface; cards expand to two columns at medium widths and three at wide widths. Tight groups use 8px, component interiors 16–24px, and compact page gaps use 16–24px. Mobile headers reserve a clear zone for the independent Menu control.
+
+Authenticated desktop views use a fixed compact sidebar and fill the remaining viewport with a dense operational grid. Page headers align left and stay compact; mobile returns to the menu control and a single-column stack. The personal dashboard's next-concert panel may use darkened, anonymous live-performance photography.
 
 ## Elevation & Depth
 
@@ -70,12 +76,12 @@ Depth is primarily tonal and structural. Borders separate adjacent black surface
 
 ## Shapes
 
-Panels use 16px corners. Compact controls and nested items use 12px. Pills are reserved for status, counts, filters and short actions. Borders remain one pixel.
+Panels use 6px corners, matching the approved dashboard reference. Controls and nested items use 8px. Pills are reserved for status and counts, never standard actions. Borders remain one pixel.
 
 ## Components
 
 - **Page titles:** system sans 900, uppercase, tight leading, fluid mobile scale.
-- **Primary actions:** near-white fill on stage black, clear disabled state and visible keyboard focus.
+- **Primary actions:** restrained stage blue fill with white text, clear disabled state and visible keyboard focus.
 - **Cards:** raised black with a single border; hover changes border/surface only when the card is interactive.
 - **Dialogs:** centered, labelled, modal to assistive technology, internally scrollable, with focus trapped and restored.
 - **Navigation:** quiet zinc by default, near-white on active/hover, with semantic notification badges.
@@ -92,7 +98,7 @@ Panels use 16px corners. Compact controls and nested items use 12px. Pills are r
 
 ### Don't:
 
-- **Don't** add decorative gradients, glass effects, generic dashboard ornaments or invented music imagery.
+- **Don't** add decorative gradients, glass effects, generic dashboard ornaments or invented artist likenesses. The dashboard's anonymous concert-stage image is the approved atmospheric exception.
 - **Don't** infer shared attendance from users referencing the same canonical concert.
 - **Don't** rely on hover, right-click, long-press or color as the only way to understand an action or state.
 - **Don't** trade scanability for poster styling inside dense data surfaces.

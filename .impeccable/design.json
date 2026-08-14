@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-08-13T00:00:00.000Z",
+  "generatedAt": "2026-08-13T18:15:00.000Z",
   "title": "Design System: A Deafening Noise",
   "extensions": {
     "colorMeta": {
@@ -9,6 +9,10 @@
       "history-blue": { "role": "primary", "displayName": "History Blue", "canonical": "#172554" },
       "bought-green": { "role": "secondary", "displayName": "Bought Green", "canonical": "#064e3b" },
       "possibility-amber": { "role": "tertiary", "displayName": "Possibility Amber", "canonical": "#451a03" }
+      ,"stage-blue": { "role": "primary", "displayName": "Stage Blue", "canonical": "#2563eb" }
+      ,"panel-border": { "role": "neutral", "displayName": "Panel Border", "canonical": "#30343a" }
+      ,"raised-black": { "role": "neutral", "displayName": "Raised Black", "canonical": "#15191e" }
+      ,"nested-black": { "role": "neutral", "displayName": "Nested Black", "canonical": "#111418" }
     },
     "motion": [
       { "name": "state-change", "value": "150ms ease-out", "purpose": "Hover, focus and disclosure feedback; reduced to near-zero when requested." }
@@ -25,9 +29,10 @@
     "overview": "Bold uppercase hierarchy gives the archive authority while restrained dark operating surfaces keep years of personal concert data usable.",
     "keyCharacteristics": ["Bold uppercase hierarchy", "Dense but calm data surfaces", "Factual semantic concert colors", "Mobile-first operation"],
     "rules": [
-      { "name": "Data Provides the Texture", "body": "Use chronology, artists, venues and setlists instead of decorative music imagery.", "section": "typography" }
+      { "name": "Data Provides the Texture", "body": "Use chronology, artists, venues and setlists as the primary texture; the home dashboard may use anonymous darkened concert-stage photography as its approved atmospheric exception.", "section": "layout" },
+      { "name": "Application Shell", "body": "Authenticated desktop views use a fixed compact sidebar, blue primary actions, compact left-aligned headers and dense viewport-filling layouts; mobile returns to the menu drawer and a single-column stack.", "section": "layout" }
     ],
     "dos": ["Preserve semantic concert colors", "Reserve heavy uppercase typography for hierarchy"],
-    "donts": ["Add decorative dashboard effects", "Use hidden gestures as the only action path"]
+    "donts": ["Invent artist likenesses", "Use hidden gestures as the only action path"]
   }
 }

@@ -6,6 +6,7 @@ let callbackPromise;
 const encode = (value) => btoa(String.fromCharCode(...new Uint8Array(value))).replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_");
 const random = () => encode(crypto.getRandomValues(new Uint8Array(48)));
 const redirectUri = () => `${window.location.origin}/spotify/callback`;
+const artistKey = (value) => String(value || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, " ").trim();
 
 export async function connectSpotify() {
   if (!clientId) throw new Error("Spotify is not configured for this environment.");
@@ -25,7 +26,7 @@ async function spotifyRequest(path, accessToken) {
   return response.json();
 }
 
-async function finish(search) {
+async function finish(search, futureArtists) {
   const params = new URLSearchParams(search);
   if (params.get("error")) throw new Error("Spotify connection was cancelled.");
   const code = params.get("code");
@@ -47,16 +48,23 @@ async function finish(search) {
     ...["short_term", "medium_term", "long_term"].map((range) => spotifyRequest(`/me/top/artists?limit=50&time_range=${range}`, accessToken)),
   ]);
   const artists = new Map();
-  ranges.forEach(({ items = [] }, index) => items.forEach(({ id, name }) => {
+  ranges.forEach(({ items = [] }, index) => items.forEach(({ id, name, images }) => {
     if (!id || !name) return;
-    const current = artists.get(id) || { spotifyId: id, name, ranges: [] };
+    const current = artists.get(id) || { spotifyId: id, name, imageUrl: images?.[0]?.url || "", ranges: [] };
     current.ranges.push(["short_term", "medium_term", "long_term"][index]);
     artists.set(id, current);
   }));
-  return { spotifyUserId: profile.id, displayName: profile.display_name || "Spotify user", refreshToken, artists: [...artists.values()] };
+  const known = new Set([...artists.values()].map(({ name }) => artistKey(name)));
+  const artwork = [];
+  for (const name of [...new Set(futureArtists)].filter((artist) => !known.has(artistKey(artist))).slice(0, 50)) {
+    const { artists: matches } = await spotifyRequest(`/search?type=artist&limit=5&q=${encodeURIComponent(name)}`, accessToken);
+    const match = matches?.items?.find((artist) => artistKey(artist.name) === artistKey(name) && artist.images?.[0]?.url);
+    if (match) artwork.push({ normalizedArtist: artistKey(name), spotifyId: match.id, name: match.name, imageUrl: match.images[0].url });
+  }
+  return { spotifyUserId: profile.id, displayName: profile.display_name || "Spotify user", refreshToken, artists: [...artists.values()], artwork };
 }
 
-export function finishSpotifyConnection(search = window.location.search) {
-  callbackPromise ||= finish(search);
+export function finishSpotifyConnection(futureArtists = [], search = window.location.search) {
+  callbackPromise ||= finish(search, futureArtists);
   return callbackPromise;
 }

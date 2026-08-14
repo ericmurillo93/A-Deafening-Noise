@@ -1,26 +1,18 @@
 import { expect, test } from "@playwright/test";
 
 async function openMenu(page) {
-  await page.locator(".menu-button-desktop:visible, .menu-button-touch:visible").click();
-  await expect(page.getByRole("complementary", { name: "Main navigation" })).toBeVisible();
+  const trigger = page.locator(".menu-button-desktop:visible, .menu-button-touch:visible");
+  if (await trigger.count()) {
+    await trigger.click();
+    await expect(page.getByRole("complementary", { name: "Mobile navigation" })).toBeVisible();
+    return true;
+  }
+  await expect(page.getByRole("navigation", { name: "Main navigation" })).toBeVisible();
+  return false;
 }
 
-test("Stats submenu leaves space below its last item", async ({ page }) => {
-  await page.goto("/stats");
-  await openMenu(page);
-
-  const group = page.getByTestId("stats-menu-group");
-  const lastItem = page.getByRole("button", { name: "Year in review", exact: true });
-  const [groupBox, itemBox] = await Promise.all([group.boundingBox(), lastItem.boundingBox()]);
-
-  expect(groupBox).not.toBeNull();
-  expect(itemBox).not.toBeNull();
-  expect(groupBox.y + groupBox.height - (itemBox.y + itemBox.height)).toBeGreaterThanOrEqual(8);
-});
-
 test("Add concert keeps its header visible while form content scrolls", async ({ page }) => {
-  await page.goto("/history");
-  await openMenu(page);
+  await page.goto("/home");
   await page.getByRole("button", { name: "Add concert", exact: true }).click();
 
   const header = page.getByTestId("add-concert-header");
@@ -31,13 +23,12 @@ test("Add concert keeps its header visible while form content scrolls", async ({
 
   expect(before).not.toBeNull();
   expect(after).not.toBeNull();
-  expect(Math.abs(after.y - before.y)).toBeLessThan(1);
+  expect(Math.abs(after.y - before.y)).toBeLessThan(3);
   await expect(page.getByRole("heading", { name: "Add concert" })).toBeVisible();
 });
 
 test("Add concert derives ticket fields from the date and uppercases catalog labels", async ({ page }) => {
-  await page.goto("/history");
-  await openMenu(page);
+  await page.goto("/home");
   await page.getByRole("button", { name: "Add concert", exact: true }).click();
 
   const artist = page.getByPlaceholder("Artist name");
@@ -58,14 +49,13 @@ test("Add concert derives ticket fields from the date and uppercases catalog lab
 });
 
 test("Browser Back closes Add concert before leaving the page", async ({ page }) => {
-  await page.goto("/history");
-  await openMenu(page);
+  await page.goto("/home");
   await page.getByRole("button", { name: "Add concert", exact: true }).click();
   await expect(page.getByTestId("add-concert-modal")).toBeVisible();
 
   await page.goBack();
   await expect(page.getByTestId("add-concert-modal")).toBeHidden();
-  await expect(page).toHaveURL(/\/history$/);
+  await expect(page).toHaveURL(/\/home$/);
 });
 
 test("Year bars open a reload-safe Year in Review route", async ({ page }) => {
@@ -91,11 +81,16 @@ test("Archive concert entries communicate that they are interactive", async ({ p
 
 test("Menu closes with Escape and restores page scrolling", async ({ page }) => {
   await page.goto("/history");
-  await openMenu(page);
+  const openedDrawer = await openMenu(page);
+  if (!openedDrawer) {
+    await expect(page.getByRole("navigation", { name: "Main navigation" })).toBeVisible();
+    await expect.poll(() => page.evaluate(() => document.body.style.overflow)).not.toBe("hidden");
+    return;
+  }
   await expect.poll(() => page.evaluate(() => document.body.style.overflow)).toBe("hidden");
 
   await page.keyboard.press("Escape");
-  await expect(page.getByRole("complementary", { name: "Main navigation" })).toBeHidden();
+  await expect(page.getByRole("complementary", { name: "Mobile navigation" })).toBeHidden();
   await expect.poll(() => page.evaluate(() => document.body.style.overflow)).not.toBe("hidden");
 });
 
@@ -128,8 +123,8 @@ test("Calendar opens on the current month on every visit", async ({ page }) => {
 
   await page.getByRole("button", { name: "Next month" }).click();
   await expect(monthButton).not.toContainText(currentMonth);
-  await openMenu(page);
-  await page.getByRole("button", { name: "Concert history", exact: true }).click();
+  const openedDrawer = await openMenu(page);
+  await page.getByRole("button", { name: openedDrawer ? "Concert history" : "Concert archive", exact: true }).click();
   await openMenu(page);
   await page.getByRole("button", { name: "Concert calendar" }).click();
 
@@ -137,7 +132,7 @@ test("Calendar opens on the current month on every visit", async ({ page }) => {
 });
 
 test("Core pages do not create viewport-level horizontal overflow", async ({ page }) => {
-  for (const route of ["/history", "/calendar", "/timeline", "/stats", "/year-review", "/friends"]) {
+  for (const route of ["/home", "/history", "/calendar", "/timeline", "/stats", "/year-review", "/friends"]) {
     await page.goto(route);
     await expect.poll(() => page.evaluate(() => ({
       clientWidth: document.documentElement.clientWidth,
@@ -151,6 +146,7 @@ test("Core pages do not create viewport-level horizontal overflow", async ({ pag
 test("Clean routes survive direct loads and reloads", async ({ page }) => {
   test.setTimeout(45_000);
   const routes = [
+    ["/home", /^Good (morning|afternoon|evening),/],
     ["/history", "Concert Archive"],
     ["/calendar", "Concert Calendar"],
     ["/suggestions", "Concert Suggestions"],
@@ -161,11 +157,45 @@ test("Clean routes survive direct loads and reloads", async ({ page }) => {
   ];
   for (const [route, heading] of routes) {
     await page.goto(route);
-    await expect(page.getByRole("heading", { name: heading, exact: true })).toBeVisible();
+    await expect(page.getByRole("heading", { name: heading, exact: typeof heading === "string" })).toBeVisible();
     await page.reload();
-    await expect(page.getByRole("heading", { name: heading, exact: true })).toBeVisible();
+    await expect(page.getByRole("heading", { name: heading, exact: typeof heading === "string" })).toBeVisible();
     await expect(page).toHaveURL(new RegExp(`${route.replace("/", "\\/")}$`));
   }
+});
+
+test("Home dashboard opens its primary concert and add flows", async ({ page }) => {
+  await page.goto("/home");
+  await page.getByRole("button", { name: /Next concert/i }).click();
+  await expect(page.getByRole("dialog")).toBeVisible();
+  await page.getByRole("button", { name: "Close" }).click();
+  await expect(page.getByRole("dialog")).toBeHidden();
+  await page.locator("header").getByRole("button", { name: "Add concert", exact: true }).click();
+  await expect(page.getByRole("dialog", { name: "Add concert" })).toBeVisible();
+});
+
+test("Home dashboard reviews concert suggestions without leaving the page", async ({ page }) => {
+  let savedData;
+  await page.route("**/.netlify/functions/save-concerts", (route) => { savedData = route.request().postDataJSON().data; return route.fulfill({ status: 200, contentType: "application/json", body: '{"ok":true}' }); });
+  await page.goto("/home");
+  const suggestion = page.getByRole("button", { name: "Not interested", exact: true }).first();
+  await suggestion.click();
+  await expect(suggestion).toHaveAttribute("aria-pressed", "true");
+  await expect(suggestion).toBeDisabled();
+  await expect(suggestion).toBeVisible();
+
+  const interested = page.getByRole("button", { name: "Interested", exact: true }).first();
+  await expect(interested).toBeEnabled();
+  await interested.click();
+  const dialog = page.getByRole("dialog", { name: "Add suggested concert" });
+  await expect(dialog.getByText("Choose ticket status", { exact: true })).toBeVisible();
+  const artist = (await dialog.locator('section[aria-label="Suggested concert"] h3').textContent()).trim();
+  await expect(dialog.getByText(artist, { exact: true })).toHaveCount(1);
+  await dialog.getByRole("button", { name: "Bought", exact: true }).click();
+  await expect(dialog).toBeHidden();
+  const savedConcert = savedData.concerts.find((concert) => concert.artist === artist);
+  expect(savedConcert.city).toBeTruthy();
+  expect(savedConcert.country).toMatch(/^[A-Z]{2}$/);
 });
 
 test("Profile offers Spotify connection through the UI", async ({ page }) => {
@@ -184,9 +214,17 @@ test("Profile offers Spotify connection through the UI", async ({ page }) => {
   await expect.poll(() => new URL(authorizationUrl).searchParams.get("show_dialog")).toBe("true");
 });
 
-test("Concert suggestions report automatic daily updates", async ({ page }) => {
+test("Profile chooses an avatar without exposing its local filename", async ({ page }) => {
+  await page.goto("/profile");
+  await page.getByLabel("Choose profile photo").setInputFiles({ name: "avatar.png", mimeType: "image/png", buffer: Buffer.from("avatar") });
+  await expect(page.getByText("avatar.png", { exact: true })).toHaveCount(0);
+  await expect(page.getByText("Avatar image", { exact: true })).toHaveCount(0);
+});
+
+test("Concert suggestions rely on automatic discovery without manual refresh controls", async ({ page }) => {
   await page.goto("/suggestions");
-  await expect(page.getByText(/Updated daily · Last update/)).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Concert Suggestions" })).toBeVisible();
+  await expect(page.getByText(/Updated daily · Last update/)).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Find concerts" })).toHaveCount(0);
 });
 

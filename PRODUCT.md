@@ -23,6 +23,7 @@ The product combines a private concert archive, a personal upcoming calendar, fr
 ## Operating Context
 
 - Users browse and edit the archive on desktop and phones in portrait and landscape.
+- After login, a personal dashboard summarizes the next concert, the current year, upcoming shows, activity, and discovery matches without blocking on a fresh network request.
 - Past concerts are explored as cards, timeline entries, artist and venue pages, maps, lifetime statistics, and year reviews.
 - Future concerts are managed in a calendar and can be exported or shared through WhatsApp.
 - Friends become mutual after acceptance; selecting a friend on a concert sends an invitation that must be confirmed before it enters their archive.
@@ -38,7 +39,8 @@ The product combines a private concert archive, a personal upcoming calendar, fr
 - The initial authenticated experience uses a per-user IndexedDB snapshot and silent revalidation; logout removes it completely.
 - The geographic map remains lazy-loaded and must not return to the initial bundle.
 - Production deploys automatically from GitHub through Netlify. Supabase is canonical; checked-in JSON remains fallback and backup data.
-- Suggestions are restricted to Spain and Switzerland sources, refreshed daily from connected Spotify profiles, and filtered to each user's own artists and decisions.
+- Suggestions are restricted to Spain and Switzerland sources, refreshed daily from connected Spotify profiles, and filtered to each user's own artists. Personal Interested and Not Interested states persist immediately without removing entries from the shared discovery catalog.
+- Connected Spotify artist images provide dashboard and suggestion artwork and enrich future-concert details, with the bundled concert-stage image as a fallback where appropriate.
 
 ## Brand Commitments
 

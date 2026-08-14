@@ -16,11 +16,11 @@ export const supabase = supabaseEnabled
   : null;
 
 export async function loadConcertData() {
-  const [data, dismissedSuggestions, listenedArtists, spotifyStatus, preferences] = await Promise.all([
-    rpc("get_app_data"), rpc("get_my_dismissed_suggestions"), rpc("get_my_listened_artists"), rpc("get_my_spotify_status"), rpc("get_my_preferences"),
+  const [data, dismissedSuggestions, listenedArtists, artistImages, spotifyStatus, preferences] = await Promise.all([
+    rpc("get_app_data"), rpc("get_my_dismissed_suggestions"), rpc("get_my_listened_artists"), rpc("get_my_artist_images"), rpc("get_my_spotify_status"), rpc("get_my_preferences"),
   ]);
   const archive = data || { profile: null, concerts: [], friends: [], friendRequests: [], concertInvitations: [], notifications: [] };
-  return { ...archive, profile: archive.profile ? { ...archive.profile, ...preferences } : null, dismissedSuggestions: dismissedSuggestions || [], listenedArtists: listenedArtists || [], spotifyStatus };
+  return { ...archive, profile: archive.profile ? { ...archive.profile, ...preferences } : null, dismissedSuggestions: dismissedSuggestions || [], listenedArtists: listenedArtists || [], artistImages: artistImages || [], spotifyStatus };
 }
 
 async function rpc(name, args = {}) {
@@ -40,6 +40,22 @@ export const respondFriendRequest = (requestId, accept) => rpc("respond_friend_r
 export const removeFriend = (userId) => rpc("remove_friend", { friend_user: userId });
 export const respondConcertInvitation = (concertId, accept, bought = true) => rpc("respond_concert_invitation", { target_concert: concertId, accept_invitation: accept, response_bought: bought });
 export const updateMyProfile = (payload) => rpc("update_my_profile", { payload });
+export async function uploadMyAvatar(file) {
+  if (!file || !["image/jpeg", "image/png", "image/webp"].includes(file.type)) throw new Error("Choose a JPG, PNG or WebP image.");
+  if (file.size > 2 * 1024 * 1024) throw new Error("Avatar images must be smaller than 2 MB.");
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
+  if (userError || !user) throw userError || new Error("Sign in again to upload an avatar.");
+  const path = `${user.id}/avatar`;
+  const { error } = await supabase.storage.from("avatars").upload(path, file, { contentType: file.type, upsert: true });
+  if (error) throw error;
+  return `${supabase.storage.from("avatars").getPublicUrl(path).data.publicUrl}?v=${Date.now()}`;
+}
+export async function removeMyAvatar() {
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
+  if (userError || !user) throw userError || new Error("Sign in again to remove your avatar.");
+  const { error } = await supabase.storage.from("avatars").remove([`${user.id}/avatar`]);
+  if (error) throw error;
+}
 export const markNotificationsRead = (ids = null) => rpc("mark_notifications_read", { notification_ids: ids });
 export const leaveSharedConcert = (concertId) => rpc("leave_shared_concert", { target_concert: concertId });
 export const exportMyData = () => rpc("export_my_data");

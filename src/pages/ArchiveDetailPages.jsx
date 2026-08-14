@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { normalize, parseDate, parseShow } from "../lib/concerts";
 
 export function ArtistDetailPage({ item, upcoming = [], onOpenSetlist, onOpenVenue, Icon }) {
@@ -174,9 +175,10 @@ export function VenueDetailPage({ venue, historyItems, onOpenArtist, onOpenSetli
 
 // ─── Concert timeline ─────────────────────────────────────────────────────────
 
-export function ConcertTimelinePage({ historyItems, onShowCardView, onOpenArtist, onOpenSetlist, onOpenVenue, DropdownMenu, Icon }) {
+export function ConcertTimelinePage({ historyItems, onOpenArtist, onOpenSetlist, onOpenVenue, DropdownMenu, Icon, headerTarget }) {
   const [artistFilter, setArtistFilter] = useState("all");
   const [venueFilter, setVenueFilter] = useState("all");
+  const [selectedYear, setSelectedYear] = useState("");
 
   const shows = useMemo(
     () => historyItems.flatMap(({ artist, shows }) =>
@@ -208,15 +210,17 @@ export function ConcertTimelinePage({ historyItems, onShowCardView, onOpenArtist
     });
     return [...groups.entries()];
   }, [filteredShows]);
+  const activeYear = groupedYears.some(([year]) => year === selectedYear) ? selectedYear : groupedYears[0]?.[0] || "";
   const hasFilters = artistFilter !== "all" || venueFilter !== "all";
 
   function jumpToYear(year) {
+    setSelectedYear(year);
     document.getElementById(`timeline-${year}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
   return (
     <div className="mx-auto max-w-5xl">
-      <section className="sticky top-0 z-10 mb-10 border-y border-zinc-800 bg-zinc-950/95 py-4 backdrop-blur">
+      {headerTarget && createPortal(<section className="w-full">
         <div className="space-y-2 md:hidden">
           <div className="grid grid-cols-2 gap-2">
             <DropdownMenu
@@ -235,33 +239,27 @@ export function ConcertTimelinePage({ historyItems, onShowCardView, onOpenArtist
               options={[{ value: "all", label: "All venues" }, ...venues.map((venue) => ({ value: venue, label: venue }))]}
             />
           </div>
-          <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2">
+          <div>
             <DropdownMenu
-              value=""
+              value={activeYear}
               onChange={jumpToYear}
               ariaLabel="Jump to timeline year"
-              buttonLabel="Years"
               groupName="timeline-filters"
-              menuAlign="left"
-              options={groupedYears.map(([year, yearShows]) => ({ value: year, label: `${year} · ${yearShows.length} ${yearShows.length === 1 ? "concert" : "concerts"}` }))}
+              options={groupedYears.map(([year]) => ({ value: year, label: year }))}
             />
-            <button onClick={onShowCardView} className="rounded-full border border-zinc-700 bg-zinc-900 px-4 py-3 text-zinc-200 transition hover:border-zinc-500 hover:text-white" aria-label="Show concert cards" title="Card view">
-              <i className="fa-solid fa-table-cells-large" aria-hidden="true" />
-            </button>
           </div>
         </div>
-        <div className="hidden gap-3 md:grid md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,0.7fr)_auto]">
+        <div className="hidden gap-3 md:grid md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_8rem]">
           <DropdownMenu value={artistFilter} onChange={setArtistFilter} ariaLabel="Filter timeline by artist" groupName="timeline-filters" menuAlign="left" options={[{ value: "all", label: "All artists" }, ...artists.map((artist) => ({ value: artist, label: artist }))]} />
           <DropdownMenu value={venueFilter} onChange={setVenueFilter} ariaLabel="Filter timeline by venue" groupName="timeline-filters" options={[{ value: "all", label: "All venues" }, ...venues.map((venue) => ({ value: venue, label: venue }))]} />
-          <DropdownMenu value="" onChange={jumpToYear} ariaLabel="Jump to timeline year" buttonLabel="Years" groupName="timeline-filters" menuAlign="left" options={groupedYears.map(([year, yearShows]) => ({ value: year, label: `${year} · ${yearShows.length} ${yearShows.length === 1 ? "concert" : "concerts"}` }))} />
-          <button onClick={onShowCardView} className="rounded-full border border-zinc-700 bg-zinc-900 px-4 py-3 text-zinc-200 transition hover:border-zinc-500 hover:text-white" aria-label="Show concert cards" title="Card view"><i className="fa-solid fa-table-cells-large" aria-hidden="true" /></button>
+          <DropdownMenu value={activeYear} onChange={jumpToYear} ariaLabel="Jump to timeline year" groupName="timeline-filters" options={groupedYears.map(([year]) => ({ value: year, label: year }))} />
         </div>
         {hasFilters && (
           <button onClick={() => { setArtistFilter("all"); setVenueFilter("all"); }} className="mt-3 rounded-full border border-zinc-700 px-3 py-1.5 text-xs font-bold text-zinc-300 hover:border-zinc-500">
             Clear filters
           </button>
         )}
-      </section>
+      </section>, headerTarget)}
 
       {groupedYears.length === 0 ? (
         <p className="py-16 text-center text-zinc-500">No concerts match these filters.</p>

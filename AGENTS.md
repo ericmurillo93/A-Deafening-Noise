@@ -51,6 +51,7 @@ Keep the project's existing **A Deafening Noise** Notion page current when a cha
 
 ## Interaction rules
 
+- Treat recurring visual and interaction patterns as shared product contracts. Before changing one, find every occurrence and update the shared component or style so equivalent controls keep the same labels, icons, states, accessibility, motion, and responsive behavior across all pages.
 - Clicking a concert opens details.
 - Right-click/long-press exposes Edit and Delete.
 - Delete always needs confirmation and is not duplicated inside Edit.
@@ -69,9 +70,9 @@ Keep the project's existing **A Deafening Noise** Notion page current when a cha
 - Respect robots.txt and keep requests polite.
 - `scripts/combine-concert-suggestions.mjs` flattens/deduplicates results into `data/suggestions.json`.
 - Suggestions stay below the calendar in the expandable review panel; never draw them as calendar events.
-- Interested opens the normal prefilled calendar Add modal; Not Interested stages a persistent artist/date dismissal.
-- Suggestion decisions remain in browser storage until Save writes all interested concerts and dismissals together to Supabase.
-- Preserve `dismissedSuggestions` on every archive replacement. Discovery first backs Supabase up to `data/concerts.json`; the combiner excludes those keys from later scraper runs.
+- Interested opens the normal prefilled calendar Add modal; Not Interested persists an artist/date dismissal immediately.
+- Suggestions remain visible with their Interested or Not Interested state. Interested concerts appear in the calendar; changing one to Not Interested confirms removal from the user's calendar without removing the suggestion.
+- Supabase stores suggestion decisions immediately. Preserve `dismissedSuggestions` on every archive replacement; the shared discovery catalog must not be filtered by one user's concerts or dismissals.
 - `.github/workflows/concert-suggestions.yml` runs daily or on demand, refreshes connected Spotify profiles before scraping, emails opted-in users about new matches, and commits only changed discovery data.
 
 ## Verification

@@ -1,4 +1,4 @@
-function parseRouteParts(pagePart = "history", valueParts = []) {
+function parseRouteParts(pagePart = "home", valueParts = []) {
   let value = null;
   try {
     value = valueParts.length ? decodeURIComponent(valueParts.join("/")) : null;
@@ -9,12 +9,12 @@ function parseRouteParts(pagePart = "history", valueParts = []) {
   if (pagePart === "venue" && value) return { page: "venue", artist: null, venue: value };
   if (pagePart === "year-review" && /^\d{4}$/.test(value || "")) return { page: "year-review", artist: null, venue: null, year: value };
   if (pagePart === "spotify" && value === "callback") return { page: "profile", artist: null, venue: null, year: null };
-  const pageAliases = { calendar: "next", suggestions: "suggestions", history: "history", timeline: "timeline", stats: "stats", "year-review": "year-review", friends: "friends", activity: "activity", profile: "profile", admin: "admin" };
-  return { page: pageAliases[pagePart] || "history", artist: null, venue: null, year: null };
+  const pageAliases = { home: "home", calendar: "next", suggestions: "suggestions", history: "history", timeline: "timeline", stats: "stats", "year-review": "year-review", friends: "friends", activity: "activity", profile: "profile", admin: "admin" };
+  return { page: pageAliases[pagePart] || "home", artist: null, venue: null, year: null };
 }
 
 export function readRouteFromLocation() {
-  if (typeof window === "undefined") return { page: "history", artist: null, venue: null };
+  if (typeof window === "undefined") return { page: "home", artist: null, venue: null };
   const pathParts = window.location.pathname.replace(/^\/+|\/+$/g, "").split("/").filter(Boolean);
   if (pathParts.length) return parseRouteParts(pathParts[0], pathParts.slice(1));
 
@@ -27,5 +27,5 @@ export function routeToPath({ page, artist, venue, year }) {
   if (page === "venue" && venue) return `/venue/${encodeURIComponent(venue)}`;
   if (page === "year-review" && year) return `/year-review/${encodeURIComponent(year)}`;
   if (page === "next") return "/calendar";
-  return `/${page || "history"}`;
+  return `/${page || "home"}`;
 }

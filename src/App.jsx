@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import whatsappIcon from "@fortawesome/fontawesome-free/svgs/brands/whatsapp.svg";
 import concertsData from "../data/concerts.json";
 import suggestionsData from "../data/suggestions.json";
@@ -31,6 +32,7 @@ import { restorePageScroll, useDialogFocus, usePageScrollLock } from "./hooks/us
 const ProfilePage = React.lazy(() => import("./pages/AccountPages").then(({ ProfilePage: Page }) => ({ default: Page })));
 const ActivityPage = React.lazy(() => import("./pages/AccountPages").then(({ ActivityPage: Page }) => ({ default: Page })));
 const AdminPage = React.lazy(() => import("./pages/AccountPages").then(({ AdminPage: Page }) => ({ default: Page })));
+const HomePage = React.lazy(() => import("./pages/HomePage"));
 const FriendsPage = React.lazy(() => import("./pages/FriendsPage"));
 const SuggestionsPage = React.lazy(() => import("./pages/SuggestionsPage"));
 const StatsPage = React.lazy(() => import("./pages/StatsPage"));
@@ -133,6 +135,11 @@ async function fetchSetlist({ setlistId, artist, date }) {
 
 function uppercaseConcertLabel(value) {
   return String(value || "").toLocaleUpperCase();
+}
+
+function concertLocation({ city, country } = {}) {
+  const countryName = ({ ES: "Spain", CH: "Switzerland", FR: "France", GB: "United Kingdom", PT: "Portugal" })[String(country || "").toUpperCase()] || country;
+  return [city, countryName].filter(Boolean).join(", ");
 }
 
 function suggestionDecisionKey({ artist, date }) {
@@ -406,7 +413,7 @@ function SetlistModal({ target, onClose, onEdit, onLeave, onIdDiscovered }) {
         <div className="mb-5 flex items-start justify-between gap-4 shrink-0">
           <div>
             <h2 id="concert-details-title" className="text-2xl font-black uppercase tracking-tight">{artist}</h2>
-            <p className="mt-1 text-sm text-zinc-400">{venue || "Venue not specified"} · {date}</p>
+            <p className="mt-1 text-sm text-zinc-400">{venue || "Venue not specified"}{concertLocation(target) ? ` · ${concertLocation(target)}` : ""} · {date}</p>
           </div>
           <div className="shrink-0 text-right">
             <div className="flex items-center justify-end gap-2">
@@ -457,7 +464,7 @@ function SetlistModal({ target, onClose, onEdit, onLeave, onIdDiscovered }) {
               <ol className="space-y-px">
                 {songs.map((song, i) => (
                   <li key={i} className={`flex items-center gap-4 px-3 py-2.5 rounded-xl transition-colors hover:bg-zinc-900 ${i % 2 === 0 ? "" : "bg-zinc-900/40"}`}>
-                    <span className="text-xs font-bold tabular-nums w-6 shrink-0 text-right" style={{ color: song.tape ? "#52525b" : "#3f3f46" }}>{i + 1}</span>
+                    <span className={`w-6 shrink-0 text-right text-xs font-bold tabular-nums ${song.tape ? "text-zinc-600" : "text-zinc-700"}`}>{i + 1}</span>
                     <div className="flex-1 min-w-0 flex items-center gap-2 flex-wrap">
                       <span className={`text-sm font-semibold leading-snug ${song.tape ? "text-zinc-500" : "text-zinc-100"}`}>{song.name}</span>
                       {song.tape && <span className="text-[9px] font-bold uppercase tracking-widest border border-zinc-700 text-zinc-600 px-1.5 py-0.5 rounded-md">tape</span>}
@@ -469,7 +476,7 @@ function SetlistModal({ target, onClose, onEdit, onLeave, onIdDiscovered }) {
               </ol>
             </div>
           )}
-          {onLeave && target.createdBy && target.createdBy !== target.currentUserId && <button type="button" onClick={() => onLeave(target)} className="mt-6 w-full rounded-2xl border border-red-900/70 px-4 py-3 text-sm font-bold text-red-300 transition hover:bg-red-950/30">Leave this shared concert</button>}
+          {onLeave && target.createdBy && target.createdBy !== target.currentUserId && <button type="button" onClick={() => onLeave(target)} className="adn-button-danger mt-6 w-full">Leave this shared concert</button>}
         </div>
       </div>
     </div>
@@ -518,6 +525,8 @@ function FriendAttendeePicker({ friends, selectedIds, lockedIds = [], onChange }
 function EditConcertModal({ isOpen, mode, initial, onClose, onSave, isSaving, saveError, artistSuggestions = [], venueSuggestions = [], friends = [] }) {
   const [artist, setArtist] = useState("");
   const [venue, setVenue] = useState("");
+  const [city, setCity] = useState("");
+  const [country, setCountry] = useState("");
   const [date, setDate] = useState("");
   const [bought, setBought] = useState(false);
   const [setlistId, setSetlistId] = useState("");
@@ -531,6 +540,8 @@ function EditConcertModal({ isOpen, mode, initial, onClose, onSave, isSaving, sa
     if (isOpen && initial) {
       setArtist(uppercaseConcertLabel(initial.artist));
       setVenue(uppercaseConcertLabel(initial.venue));
+      setCity(initial.city || "");
+      setCountry(String(initial.country || "").toUpperCase());
       setDate(initial.date || "");
       setBought(!!initial.bought);
       setSetlistId(initial.setlistId || "");
@@ -546,12 +557,14 @@ function EditConcertModal({ isOpen, mode, initial, onClose, onSave, isSaving, sa
   const canEditEvent = initial.canEditEvent !== false;
 
   function submit() {
-    if (!artist.trim() || !date.trim()) { setValidationError("Add an artist and date before saving."); return; }
+    if (!artist.trim() || !date.trim() || !city.trim() || !/^[A-Z]{2}$/i.test(country.trim())) { setValidationError("Add an artist, date, city and two-letter country code before saving."); return; }
     if (!isNextMode && !venue.trim()) { setValidationError("Add a venue for this past concert."); return; }
     setValidationError("");
     onSave({
       artist: uppercaseConcertLabel(artist.trim()),
       venue: uppercaseConcertLabel(venue.trim()),
+      city: city.trim(),
+      country: country.trim().toUpperCase(),
       date: date.trim(),
       bought,
       setlistId: setlistId.trim(),
@@ -577,6 +590,10 @@ function EditConcertModal({ isOpen, mode, initial, onClose, onSave, isSaving, sa
             <span className="mb-2 block text-xs font-bold uppercase tracking-widest text-zinc-500">Artist</span>
             {canEditEvent ? <AutoSuggestField value={artist} onChange={(value) => setArtist(uppercaseConcertLabel(value))} suggestions={artistSuggestions} placeholder="Artist name" /> : <div className="rounded-2xl border border-zinc-800 bg-zinc-900 px-4 py-3 text-zinc-500">{artist}</div>}
           </label>
+          <div className="grid grid-cols-[minmax(0,1fr)_7rem] gap-3">
+            <label className="block"><span className="mb-2 block text-xs font-bold uppercase tracking-widest text-zinc-500">City</span><input value={city} onChange={(event) => setCity(event.target.value)} disabled={!canEditEvent} placeholder="Barcelona" className="w-full rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-zinc-100 outline-none focus:border-zinc-400 disabled:border-zinc-800 disabled:text-zinc-500" /></label>
+            <label className="block"><span className="mb-2 block text-xs font-bold uppercase tracking-widest text-zinc-500">Country</span><input value={country} onChange={(event) => setCountry(event.target.value.toUpperCase().slice(0, 2))} disabled={!canEditEvent} placeholder="ES" maxLength="2" className="w-full rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3 uppercase text-zinc-100 outline-none focus:border-zinc-400 disabled:border-zinc-800 disabled:text-zinc-500" /></label>
+          </div>
           <label className="block">
             <span className="mb-2 block text-xs font-bold uppercase tracking-widest text-zinc-500">Venue {isNextMode && <span className="ml-1 normal-case tracking-normal text-zinc-600">(optional)</span>}</span>
             {canEditEvent ? <AutoSuggestField value={venue} onChange={(value) => setVenue(uppercaseConcertLabel(value))} suggestions={venueSuggestions} placeholder="Venue or festival" /> : <div className="rounded-2xl border border-zinc-800 bg-zinc-900 px-4 py-3 text-zinc-500">{venue || "—"}</div>}
@@ -605,7 +622,7 @@ function EditConcertModal({ isOpen, mode, initial, onClose, onSave, isSaving, sa
           )}
         </div>
         <div className="shrink-0 border-t border-zinc-900 bg-zinc-950 px-6 py-4">
-          <button onClick={submit} disabled={isSaving} className="adn-save-button w-full rounded-2xl bg-zinc-100 px-5 py-3 font-black text-zinc-950 transition hover:bg-white disabled:opacity-50">{isSaving && <i className="fa-solid fa-circle-notch fa-spin mr-2" aria-hidden="true" />}{isSaving ? "Saving..." : "Save changes"}</button>
+          <button onClick={submit} disabled={isSaving} className="adn-button-primary adn-save-button w-full">{isSaving && <i className="fa-solid fa-circle-notch fa-spin" aria-hidden="true" />}{isSaving ? "Saving..." : "Save changes"}</button>
           {validationError && <div className="mt-3 rounded-2xl border border-amber-900 bg-amber-950/30 px-4 py-3 text-sm font-semibold text-amber-200" role="alert">{validationError}</div>}
           {saveError && <div className="mt-3 rounded-2xl border border-red-900 bg-red-950/40 px-4 py-3 text-sm text-red-200">{saveError}</div>}
         </div>
@@ -619,6 +636,8 @@ function EditConcertModal({ isOpen, mode, initial, onClose, onSave, isSaving, sa
 function AddConcertModal({ isOpen, initial, stagingSuggestion = false, onClose, onSave, isSaving, saveError, friends = [], onSearchCatalog }) {
   const [artist, setArtist] = useState("");
   const [venue, setVenue] = useState("");
+  const [city, setCity] = useState("");
+  const [country, setCountry] = useState("");
   const [date, setDate] = useState("");
   const [bought, setBought] = useState(false);
   const [attendeeUserIds, setAttendeeUserIds] = useState([]);
@@ -631,6 +650,8 @@ function AddConcertModal({ isOpen, initial, stagingSuggestion = false, onClose, 
     if (!isOpen) return;
     setArtist(uppercaseConcertLabel(initial?.artist));
     setVenue(uppercaseConcertLabel(initial?.venue));
+    setCity(initial?.city || "");
+    setCountry(String(initial?.country || "").toUpperCase());
     setDate(initial?.date || "");
     setBought(Boolean(initial?.bought));
     setAttendeeUserIds((initial?.attendeeUsers || []).map((person) => person.id));
@@ -643,16 +664,18 @@ function AddConcertModal({ isOpen, initial, stagingSuggestion = false, onClose, 
   const isPastDate = isPastConcert({ date });
 
   function submit() {
-    if (!artist.trim() || !date.trim()) { setValidationError("Add an artist and date before saving."); return; }
+    if (!artist.trim() || !date.trim() || !city.trim() || !/^[A-Z]{2}$/i.test(country.trim())) { setValidationError("Add an artist, date, city and two-letter country code before saving."); return; }
     if (isPastDate && !venue.trim()) { setValidationError("Add a venue for this past concert."); return; }
     setValidationError("");
-    onSave({ concertId: initial?.concertId || null, artist, venue, date, bought: isPastDate ? true : bought, ticketUrl: isPastDate ? "" : normalizeTicketUrl(ticketUrl), attendeeUserIds, guestAttendees: [...new Set(guestAttendees.split(",").map((name) => name.trim()).filter(Boolean))] });
+    onSave({ concertId: initial?.concertId || null, artist, venue, city: city.trim(), country: country.trim().toUpperCase(), date, bought: isPastDate ? true : bought, ticketUrl: isPastDate ? "" : normalizeTicketUrl(ticketUrl), attendeeUserIds, guestAttendees: [...new Set(guestAttendees.split(",").map((name) => name.trim()).filter(Boolean))] });
   }
 
   function stageSuggestion(ticketBought) {
     onSave({
       artist: uppercaseConcertLabel(initial?.artist),
       venue: uppercaseConcertLabel(initial?.venue),
+      city: initial?.city || "",
+      country: String(initial?.country || "").toUpperCase(),
       date: initial?.date || "",
       bought: ticketBought,
       ticketUrl: normalizeTicketUrl(initial?.ticketUrl),
@@ -664,31 +687,42 @@ function AddConcertModal({ isOpen, initial, stagingSuggestion = false, onClose, 
   function pickCatalogConcert(concert) {
     setArtist(uppercaseConcertLabel(concert.artist));
     setVenue(uppercaseConcertLabel(concert.venue));
+    setCity(concert.city || "");
+    setCountry(String(concert.country || "").toUpperCase());
     setDate(concert.date || "");
     if (!ticketUrl && concert.ticketUrl) setTicketUrl(concert.ticketUrl);
   }
 
   return (
     <div className="adn-modal-backdrop fixed inset-0 z-[60] flex items-center justify-center bg-black/70 p-4">
-      <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="add-concert-title" data-testid="add-concert-modal" className="adn-modal-panel flex max-h-[calc(100dvh-2rem)] w-full max-w-lg flex-col overflow-hidden rounded-3xl border border-zinc-700 bg-zinc-950 shadow-2xl md:max-h-[90dvh]">
-        <div data-testid="add-concert-header" className="flex shrink-0 items-start justify-between gap-4 border-b border-zinc-900 px-6 py-5">
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby={stagingSuggestion ? undefined : "add-concert-title"} aria-label={stagingSuggestion ? "Add suggested concert" : undefined} data-testid="add-concert-modal" className="adn-modal-panel relative flex max-h-[calc(100dvh-2rem)] w-full max-w-lg flex-col overflow-hidden rounded-3xl border border-zinc-700 bg-zinc-950 shadow-2xl md:max-h-[90dvh]">
+        {!stagingSuggestion && <div data-testid="add-concert-header" className="flex shrink-0 items-start justify-between gap-4 border-b border-zinc-900 px-6 py-5">
           <div className="min-w-0">
             <h2 id="add-concert-title" className="text-2xl font-black uppercase tracking-tight">Add concert</h2>
-            <p className="mt-1 truncate text-sm text-zinc-500">{stagingSuggestion ? `${uppercaseConcertLabel(initial?.artist) || "Concert"}${initial?.date ? ` · ${initial.date}` : ""}` : "Add a past or upcoming concert."}</p>
+            <p className="mt-1 truncate text-sm text-zinc-500">Add a past or upcoming concert.</p>
           </div>
           <ModalCloseButton onClick={onClose} />
-        </div>
+        </div>}
         <div data-testid="add-concert-scroll" className="min-h-0 flex-1 overflow-y-auto px-6 py-5 overscroll-contain">
         {stagingSuggestion ? (
-          <div>
-            <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-4">
-              <div className="font-black uppercase tracking-tight text-zinc-100">{uppercaseConcertLabel(initial?.artist)}</div>
-              <div className="mt-1 text-sm text-zinc-400">{initial?.date}{initial?.venue ? ` · ${uppercaseConcertLabel(initial.venue)}` : ""}</div>
-            </div>
-            <p className="mb-3 mt-5 text-center text-xs font-bold uppercase tracking-widest text-zinc-500">Ticket status</p>
-            <div className="grid grid-cols-2 gap-3">
-              <button type="button" onClick={() => stageSuggestion(true)} className="rounded-2xl border border-emerald-700 bg-emerald-950 px-4 py-3 font-black text-emerald-100 transition hover:border-emerald-500 hover:bg-emerald-900">Bought</button>
-              <button type="button" onClick={() => stageSuggestion(false)} className="rounded-2xl border border-amber-700 bg-amber-950 px-4 py-3 font-black text-amber-100 transition hover:border-amber-500 hover:bg-amber-900">Not bought</button>
+          <div className="space-y-6">
+            <section aria-label="Suggested concert" className="rounded-md border border-[#30343a] bg-[#111418] p-5">
+              <div className="flex items-start gap-4">
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-[#30343a] bg-[#15191e] text-blue-400"><i className="fa-solid fa-music" aria-hidden="true" /></span>
+                <div className="min-w-0 flex-1">
+                  <h3 className="truncate text-lg font-black uppercase tracking-[0.025em] text-zinc-100">{uppercaseConcertLabel(initial?.artist)}</h3>
+                  <p className="mt-2 flex items-center gap-2 text-sm text-zinc-400"><i className="fa-solid fa-calendar-days w-4 text-center text-zinc-500" aria-hidden="true" />{initial?.date || "Date TBC"}</p>
+                  <p className="mt-1.5 flex items-center gap-2 text-sm text-zinc-400"><i className="fa-solid fa-location-dot w-4 text-center text-zinc-500" aria-hidden="true" /><span className="truncate">{[uppercaseConcertLabel(initial?.venue), initial?.city, String(initial?.country || "").toUpperCase()].filter(Boolean).join(" · ") || "Venue TBC"}</span></p>
+                </div>
+                <ModalCloseButton onClick={onClose} />
+              </div>
+            </section>
+            <div>
+              <h3 className="mb-3 text-sm font-black uppercase tracking-wide text-zinc-100">Choose ticket status</h3>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <button type="button" onClick={() => stageSuggestion(true)} disabled={isSaving} className="adn-button-success w-full"><i className={`fa-solid ${isSaving ? "fa-circle-notch fa-spin" : "fa-ticket"}`} aria-hidden="true" />Bought</button>
+                <button type="button" onClick={() => stageSuggestion(false)} disabled={isSaving} className="adn-button-warning w-full"><i className="fa-solid fa-clock" aria-hidden="true" />Not bought</button>
+              </div>
             </div>
           </div>
         ) : <div className="space-y-4">
@@ -696,6 +730,10 @@ function AddConcertModal({ isOpen, initial, stagingSuggestion = false, onClose, 
             <span className="mb-2 block text-xs font-bold uppercase tracking-widest text-zinc-500">Artist</span>
             <ConcertCatalogField field="artist" value={artist} onChange={(value) => setArtist(uppercaseConcertLabel(value))} onPick={pickCatalogConcert} onSearch={onSearchCatalog} placeholder="Artist name" />
           </label>
+          <div className="grid grid-cols-[minmax(0,1fr)_7rem] gap-3">
+            <label className="block"><span className="mb-2 block text-xs font-bold uppercase tracking-widest text-zinc-500">City</span><input value={city} onChange={(event) => setCity(event.target.value)} placeholder="Barcelona" className="w-full rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-zinc-100 outline-none focus:border-zinc-400" /></label>
+            <label className="block"><span className="mb-2 block text-xs font-bold uppercase tracking-widest text-zinc-500">Country</span><input value={country} onChange={(event) => setCountry(event.target.value.toUpperCase().slice(0, 2))} placeholder="ES" maxLength="2" className="w-full rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3 uppercase text-zinc-100 outline-none focus:border-zinc-400" /></label>
+          </div>
           <label className="block">
             <span className="mb-2 block text-xs font-bold uppercase tracking-widest text-zinc-500">Venue {!isPastDate && <span className="ml-1 normal-case tracking-normal text-zinc-600">(optional)</span>}</span>
             <ConcertCatalogField field="venue" value={venue} onChange={(value) => setVenue(uppercaseConcertLabel(value))} onPick={pickCatalogConcert} onSearch={onSearchCatalog} placeholder="Venue or festival" />
@@ -725,7 +763,7 @@ function AddConcertModal({ isOpen, initial, stagingSuggestion = false, onClose, 
         </div>}
         </div>
         {(!stagingSuggestion || saveError) && <div className="shrink-0 border-t border-zinc-900 bg-zinc-950 px-6 py-4">
-          {!stagingSuggestion && <button onClick={submit} disabled={isSaving} className="adn-save-button w-full rounded-2xl bg-zinc-100 px-5 py-3 font-black text-zinc-950 transition hover:bg-white disabled:opacity-50">{isSaving && <i className="fa-solid fa-circle-notch fa-spin mr-2" aria-hidden="true" />}{isSaving ? "Saving..." : "Add concert"}</button>}
+          {!stagingSuggestion && <button onClick={submit} disabled={isSaving} className="adn-button-primary adn-save-button w-full">{isSaving && <i className="fa-solid fa-circle-notch fa-spin" aria-hidden="true" />}{isSaving ? "Saving..." : "Add concert"}</button>}
           {validationError && <div className="mt-3 rounded-2xl border border-amber-900 bg-amber-950/30 px-4 py-3 text-sm font-semibold text-amber-200" role="alert">{validationError}</div>}
           {saveError && <div className="mt-3 rounded-2xl border border-red-900 bg-red-950/40 px-4 py-3 text-sm text-red-200">{saveError}</div>}
         </div>}
@@ -736,22 +774,24 @@ function AddConcertModal({ isOpen, initial, stagingSuggestion = false, onClose, 
 
 // ─── Upcoming concert calendar ────────────────────────────────────────────────
 
-function CalendarExportMenu({ items, compact = false }) {
+function CalendarExportMenu({ items, compact = false, iconOnly = false }) {
   return (
     <DropdownMenu
       compact={compact}
       ariaLabel="Export concerts"
-      buttonLabel="Export"
+      buttonLabel={iconOnly ? <i className="fa-solid fa-download" aria-hidden="true" /> : "Export"}
+      iconOnly={iconOnly}
+      className={iconOnly ? "[&_summary]:flex [&_summary]:h-12 [&_summary]:w-12 [&_summary]:items-center [&_summary]:justify-center [&_summary]:!p-0" : ""}
       options={[
-        { value: "all", label: "All concerts", disabled: items.length === 0, onSelect: () => downloadConcertCalendar(items, "concerts.ics", "Próximos conciertos") },
-        { value: "bought", label: "Bought concerts", disabled: !items.some((item) => item.bought), onSelect: () => downloadConcertCalendar(items.filter((item) => item.bought), "concerts-bought.ics", "Conciertos comprados") },
-        { value: "not-bought", label: "Not bought concerts", disabled: !items.some((item) => !item.bought), onSelect: () => downloadConcertCalendar(items.filter((item) => !item.bought), "concerts-not-bought.ics", "Conciertos no comprados") },
+        { value: "all", label: "Export all concerts", disabled: items.length === 0, onSelect: () => downloadConcertCalendar(items, "concerts.ics", "Próximos conciertos") },
+        { value: "bought", label: "Export bought concerts", disabled: !items.some((item) => item.bought), onSelect: () => downloadConcertCalendar(items.filter((item) => item.bought), "concerts-bought.ics", "Conciertos comprados") },
+        { value: "not-bought", label: "Export not bought concerts", disabled: !items.some((item) => !item.bought), onSelect: () => downloadConcertCalendar(items.filter((item) => !item.bought), "concerts-not-bought.ics", "Conciertos no comprados") },
       ]}
     />
   );
 }
 
-function DropdownMenu({ value, onChange, options, compact = false, ariaLabel, className = "", groupName, centered = false, menuAlign = "right", buttonLabel }) {
+function DropdownMenu({ value, onChange, options, compact = false, ariaLabel, className = "", groupName, centered = false, menuAlign = "right", buttonLabel, bare = false, iconOnly = false }) {
   const detailsRef = useRef(null);
   const normalizedOptions = options.map((option) => typeof option === "string" ? { value: option, label: option } : option);
   const activeLabel = buttonLabel || normalizedOptions.find((option) => option.value === value)?.label || normalizedOptions[0]?.label || "";
@@ -772,8 +812,8 @@ function DropdownMenu({ value, onChange, options, compact = false, ariaLabel, cl
 
   return (
     <details ref={detailsRef} name={groupName} className={`group relative min-w-0 ${className}`}>
-      <summary aria-label={ariaLabel} className={`cursor-pointer list-none truncate rounded-full border border-zinc-700 bg-zinc-900 text-sm font-semibold text-zinc-100 shadow-2xl transition hover:border-zinc-500 [&::-webkit-details-marker]:hidden ${centered ? "text-center" : "text-left"} ${compact ? "px-4 py-2.5" : "px-5 py-3"}`}>
-        {activeLabel} <span className="ml-1 text-zinc-500">▾</span>
+      <summary aria-label={ariaLabel} className={`cursor-pointer list-none truncate text-sm font-semibold text-zinc-100 transition [&::-webkit-details-marker]:hidden ${bare ? "px-2 py-2 text-zinc-400 hover:text-zinc-100" : "rounded-md border border-[#30343a] bg-[#15191e] hover:border-zinc-500"} ${centered ? "text-center" : "text-left"} ${compact && !bare ? "px-4 py-2.5" : !bare ? "px-5 py-3" : ""}`}>
+        {activeLabel}{!iconOnly && <span className="ml-1 text-zinc-500">▾</span>}
       </summary>
       <div className={`adn-popover absolute top-full z-30 mt-2 max-h-72 w-64 max-w-[calc(100vw-2rem)] overflow-y-auto rounded-2xl border border-zinc-700 bg-zinc-950 p-2 shadow-2xl ${menuAlign === "left" ? "left-0" : "right-0"}`}>
         {normalizedOptions.map((option) => (
@@ -791,13 +831,16 @@ function DropdownMenu({ value, onChange, options, compact = false, ariaLabel, cl
   );
 }
 
-function ConcertSortMenu({ value, onChange, compact = false }) {
+function ConcertSortMenu({ value, onChange, compact = false, iconOnly = false }) {
   return (
     <DropdownMenu
       value={value}
       onChange={onChange}
       compact={compact}
       ariaLabel="Sort concerts"
+      buttonLabel={iconOnly ? <i className="fa-solid fa-arrow-down-wide-short" aria-hidden="true" /> : undefined}
+      iconOnly={iconOnly}
+      className={iconOnly ? "[&_summary]:flex [&_summary]:h-12 [&_summary]:w-12 [&_summary]:items-center [&_summary]:justify-center [&_summary]:!p-0" : ""}
       options={[
         { value: "artist", label: "Sort by artist" },
         { value: "concerts", label: "Sort by number of concerts" },
@@ -805,6 +848,17 @@ function ConcertSortMenu({ value, onChange, compact = false }) {
       ]}
     />
   );
+}
+
+function FriendStatsMenu({ friends, selectedIds, onChange }) {
+  const detailsRef = useRef(null);
+  useEffect(() => {
+    function close(event) { if (!detailsRef.current?.contains(event.target)) detailsRef.current?.removeAttribute("open"); }
+    document.addEventListener("pointerdown", close);
+    return () => document.removeEventListener("pointerdown", close);
+  }, []);
+  function toggle(id) { onChange(selectedIds.includes(id) ? selectedIds.filter((value) => value !== id) : [...selectedIds, id]); }
+  return <details ref={detailsRef} className="group relative"><summary aria-label="Filter stats by friends" className="flex h-12 w-12 cursor-pointer list-none items-center justify-center rounded-md border border-[#30343a] bg-[#15191e] text-zinc-100 transition hover:border-zinc-500 [&::-webkit-details-marker]:hidden"><i className="fa-solid fa-user-group" aria-hidden="true" />{selectedIds.length > 0 && <span className="absolute -right-1 -top-1 min-w-5 rounded-full bg-blue-600 px-1 text-center text-[9px] font-black leading-5 text-white">{selectedIds.length}</span>}</summary><div className="adn-popover absolute right-0 top-full z-30 mt-2 w-64 max-w-[calc(100vw-2rem)] rounded-md border border-zinc-700 bg-zinc-950 p-2 shadow-2xl"><button type="button" onClick={() => onChange([])} className={`mb-1 flex min-h-11 w-full items-center rounded-md px-3 text-left text-sm font-semibold hover:bg-zinc-800 ${selectedIds.length === 0 ? "text-blue-400" : "text-zinc-300"}`}>All my concerts</button>{friends.map((friend) => <label key={friend.id} className="flex min-h-11 cursor-pointer items-center gap-3 rounded-md px-3 text-sm font-semibold text-zinc-300 hover:bg-zinc-800"><input type="checkbox" checked={selectedIds.includes(friend.id)} onChange={() => toggle(friend.id)} className="h-4 w-4 accent-blue-600" /><span className="truncate">With {friend.displayName}</span></label>)}</div></details>;
 }
 
 function NextConcertCalendar({ items, onOpen, onContextMenu, onContextMenuAt }) {
@@ -970,6 +1024,20 @@ function NextConcertCalendar({ items, onOpen, onContextMenu, onContextMenuAt }) 
         })}
       </div>
 
+      {datedItems.some(({ range }) => range.start <= new Date(year, month + 1, 0) && range.end >= new Date(year, month, 1)) && (
+        <section className="mt-4 md:hidden">
+          <h3 className="mb-2 text-[10px] font-black uppercase tracking-[0.14em] text-zinc-500">This month</h3>
+          <div className="space-y-2">
+            {datedItems.filter(({ range }) => range.start <= new Date(year, month + 1, 0) && range.end >= new Date(year, month, 1)).map((concert) => (
+              <button key={`month-${concert.source}-${concert.artist}-${concert.date}-${concert.venue || ""}`} {...eventInteractionProps(concert)} className={`flex min-h-12 w-full items-center gap-3 rounded-lg border px-3 py-2 text-left ${concert.isPast ? "border-blue-700 bg-blue-950" : concert.bought ? "border-emerald-700 bg-emerald-900" : "border-amber-700 bg-amber-950"}`}>
+                <span className="w-12 shrink-0 text-xs font-black tabular-nums text-zinc-100">{concert.date.slice(0, 5)}</span>
+                <span className="min-w-0"><span className="block truncate text-xs font-black uppercase text-zinc-100">{concert.artist}</span>{concert.venue && <span className="mt-0.5 block truncate text-[10px] text-zinc-300">{concert.venue}</span>}</span>
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
+
       {selectedDay && (
         <section className="mt-4 rounded-2xl border border-zinc-700 bg-zinc-950 p-4 md:hidden">
           <div className="mb-3 flex items-center justify-between gap-3">
@@ -1003,15 +1071,16 @@ function NextConcertCalendar({ items, onOpen, onContextMenu, onContextMenuAt }) 
   );
 }
 
-function CalendarConcertModal({ target, onClose, onEdit }) {
+function CalendarConcertModal({ target, artistImages, onClose, onEdit }) {
   const dialogRef = useDialogFocus(Boolean(target));
   if (!target) return null;
   const isPast = isPastConcert(target);
+  const artistImage = artistImages.get(normalize(target.artist));
   const ticketUrl = normalizeTicketUrl(target.ticketUrl);
   const whatsappMessage = [
     `Concierto: ${target.artist}`,
     `Fecha: ${target.date}`,
-    target.venue ? `Lugar: ${target.venue}` : "",
+    target.venue || concertLocation(target) ? `Lugar: ${[target.venue, concertLocation(target)].filter(Boolean).join(" · ")}` : "",
     ticketUrl ? `Entradas: ${ticketUrl}` : "",
     "",
     "¿Te interesa?",
@@ -1028,9 +1097,10 @@ function CalendarConcertModal({ target, onClose, onEdit }) {
           </div>
         </div>
         <div className="mt-4 overflow-hidden rounded-2xl bg-zinc-950">
+          {!isPast && artistImage && <img src={artistImage} alt="" className="h-44 w-full object-cover object-center" />}
           <div className="p-4">
             <div className="flex items-start justify-between gap-4">
-              {target.venue ? <div className="flex min-w-0 gap-2 text-sm font-semibold text-zinc-100"><Icon type="map" /><span className="break-words">{target.venue}</span></div> : <span />}
+              {target.venue || concertLocation(target) ? <div className="flex min-w-0 gap-2 text-sm font-semibold text-zinc-100"><Icon type="map" /><span className="break-words">{[target.venue, concertLocation(target)].filter(Boolean).join(" · ")}</span></div> : <span />}
               <span className={`shrink-0 rounded-full border px-3 py-1 text-xs font-bold text-zinc-100 ${isPast ? "border-blue-800 bg-blue-950" : target.bought ? "border-emerald-800 bg-emerald-950" : "border-amber-800 bg-amber-950"}`}>
                 {isPast ? "History" : target.bought ? "Bought" : "Not bought"}
               </span>
@@ -1067,17 +1137,17 @@ function ConfirmActionModal({ confirmation, onClose, onConfirm, isSaving, error 
   }, [confirmation, isSaving, onClose]);
   if (!confirmation) return null;
   const confirmed = !confirmation.confirmationText || typedConfirmation === confirmation.confirmationText;
+  const streamlined = confirmation.hideIcon === true;
   return (
     <div className="adn-modal-backdrop fixed inset-0 z-[60] flex items-center justify-center bg-black/70 px-4" onMouseDown={(event) => { if (event.target === event.currentTarget && !isSaving) onClose(); }}>
-      <div ref={dialogRef} role="alertdialog" aria-modal="true" aria-labelledby="confirm-action-title" aria-describedby="confirm-action-description" className="adn-modal-panel w-full max-w-sm rounded-3xl border border-red-950 bg-zinc-950 p-6 shadow-2xl">
-        <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-2xl border border-red-900/60 bg-red-950/30 text-red-300"><i className={`fa-solid ${confirmation.icon || "fa-triangle-exclamation"}`} aria-hidden="true" /></div>
-        <h2 id="confirm-action-title" className="mb-2 text-xl font-black uppercase tracking-tight">{confirmation.title}</h2>
+      <div ref={dialogRef} role="alertdialog" aria-modal="true" aria-labelledby="confirm-action-title" aria-describedby="confirm-action-description" className={`adn-modal-panel w-full max-w-sm rounded-3xl border bg-zinc-950 p-6 shadow-2xl ${streamlined ? "border-zinc-700" : "border-red-950"}`}>
+        {streamlined ? <div className="mb-3 flex items-start justify-between gap-4"><h2 id="confirm-action-title" className="pt-1 text-xl font-black uppercase tracking-tight">{confirmation.title}</h2><ModalCloseButton onClick={onClose} disabled={isSaving} /></div> : <><div className="mb-5 flex h-11 w-11 items-center justify-center rounded-2xl border border-red-900/60 bg-red-950/30 text-red-300"><i className={`fa-solid ${confirmation.icon || "fa-triangle-exclamation"}`} aria-hidden="true" /></div><h2 id="confirm-action-title" className="mb-2 text-xl font-black uppercase tracking-tight">{confirmation.title}</h2></>}
         <p id="confirm-action-description" className={`${confirmation.confirmationText ? "mb-4" : "mb-6"} text-sm leading-relaxed text-zinc-400`}>{confirmation.description}</p>
         {confirmation.confirmationText && <label className="mb-6 block text-xs font-bold text-zinc-400">Type <span className="text-zinc-100">{confirmation.confirmationText}</span> to continue<input value={typedConfirmation} onChange={(event) => setTypedConfirmation(event.target.value)} autoComplete="off" className="mt-2 w-full rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-sm text-zinc-100 outline-none focus:border-zinc-400" /></label>}
         {error && <p className="mb-4 rounded-xl border border-red-900 bg-red-950/30 px-3 py-2 text-sm text-red-300" role="alert">{error}</p>}
         <div className="flex gap-3">
-          <button type="button" onClick={onClose} disabled={isSaving} className="flex-1 rounded-2xl border border-zinc-700 px-5 py-3 font-black text-zinc-300 transition hover:border-zinc-500 hover:bg-zinc-900 disabled:opacity-50">Cancel</button>
-          <button type="button" onClick={onConfirm} disabled={isSaving || !confirmed} className="flex-1 rounded-2xl bg-red-200 px-5 py-3 font-black text-red-950 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-40">{isSaving ? "Working…" : confirmation.confirmLabel}</button>
+          <button type="button" onClick={onClose} disabled={isSaving} className="adn-button-secondary flex-1">Cancel</button>
+          <button type="button" onClick={onConfirm} disabled={isSaving || !confirmed} className="adn-button-danger flex-1">{isSaving ? "Working…" : confirmation.confirmLabel}</button>
         </div>
       </div>
     </div>
@@ -1154,7 +1224,7 @@ function LoginGate({ onSignedIn }) {
       <div className={`w-full max-w-sm ${shake ? "animate-shake" : ""}`}>
         <div className="mb-10 text-center">
           <p className="mb-3 text-xs font-semibold uppercase tracking-[0.45em] text-zinc-500">A Deafening Noise</p>
-          <h1 className="text-4xl font-black uppercase tracking-tight text-zinc-100">Private Archive</h1>
+          <h1 className="text-4xl font-black uppercase tracking-tight text-zinc-100">Concert Archive</h1>
           <p className="mt-3 text-sm text-zinc-500">Sign in to open your concert history.</p>
         </div>
         <form onSubmit={attempt} className="space-y-4">
@@ -1162,7 +1232,7 @@ function LoginGate({ onSignedIn }) {
           <input type="password" value={password} onChange={(e) => { setPassword(e.target.value); setError(""); }} placeholder="Password" autoComplete="current-password" className={`w-full rounded-2xl border bg-zinc-900 px-5 py-4 text-zinc-100 outline-none transition placeholder:text-zinc-600 ${error ? "border-red-700 text-red-300" : "border-zinc-700 focus:border-zinc-400"}`} />
           {error && <p className="text-center text-sm text-red-400">{error}</p>}
           {resetSent && <p className="rounded-2xl border border-emerald-900 bg-emerald-950/40 px-4 py-3 text-center text-sm text-emerald-300">If that account exists, a recovery link has been sent.</p>}
-          <button type="submit" disabled={loading} className="w-full rounded-2xl bg-zinc-100 py-4 font-black uppercase tracking-widest text-zinc-950 transition hover:bg-white disabled:opacity-50">{loading ? "Signing in…" : "Sign in"}</button>
+          <button type="submit" disabled={loading} className="w-full rounded-lg bg-blue-600 py-4 font-black uppercase tracking-widest text-white shadow-lg shadow-blue-950/30 transition hover:bg-blue-500 disabled:opacity-50">{loading ? "Signing in…" : "Sign in"}</button>
           <button type="button" onClick={requestPasswordReset} disabled={loading || resetLoading || emailCooldown.seconds > 0} className="w-full py-2 text-sm font-semibold text-zinc-500 transition hover:text-zinc-200 disabled:opacity-50">{resetLoading ? "Sending recovery email…" : emailCooldown.seconds > 0 ? `Try again in ${emailCooldown.seconds}s` : "Forgot password?"}</button>
         </form>
       </div>
@@ -1171,16 +1241,7 @@ function LoginGate({ onSignedIn }) {
 }
 
 function AppBootstrapShell() {
-  return <div className="min-h-screen bg-zinc-950 px-4 py-8 text-zinc-100" aria-label="Opening A Deafening Noise">
-    <div className="mx-auto max-w-7xl animate-pulse">
-      <div className="mx-auto mt-8 h-3 w-40 rounded-full bg-zinc-900" />
-      <div className="mx-auto mt-5 h-12 w-72 max-w-[80vw] rounded-2xl bg-zinc-900" />
-      <div className="mx-auto mt-5 h-4 w-96 max-w-[90vw] rounded-full bg-zinc-900" />
-      <div className="mx-auto mt-14 grid max-w-6xl gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {[0, 1, 2, 3, 4, 5].map((item) => <div key={item} className="h-36 rounded-3xl border border-zinc-900 bg-zinc-950"><div className="m-5 h-5 w-2/3 rounded bg-zinc-900" /><div className="mx-5 mt-4 h-3 w-1/2 rounded bg-zinc-900" /></div>)}
-      </div>
-    </div>
-  </div>;
+  return <div className="min-h-screen bg-zinc-950"><span className="sr-only" role="status">Opening A Deafening Noise</span></div>;
 }
 
 function DeferredPage({ children }) {
@@ -1274,8 +1335,8 @@ function ChangePasswordModal({ mode, email, onClose }) {
   }
 
   return (
-    <div className="adn-modal-backdrop fixed inset-0 z-[70] flex items-center justify-center bg-black/75 px-4" onClick={() => { if (!saving) onClose(); }}>
-      <section role="dialog" aria-modal="true" aria-labelledby="change-password-title" className="adn-modal-panel w-full max-w-md rounded-3xl border border-zinc-700 bg-zinc-950 p-6 shadow-2xl" onClick={(event) => event.stopPropagation()}>
+    <div className="adn-modal-backdrop fixed inset-0 z-[70] flex items-center justify-center bg-black/75 px-4">
+      <section role="dialog" aria-modal="true" aria-labelledby="change-password-title" className="adn-modal-panel w-full max-w-md rounded-3xl border border-zinc-700 bg-zinc-950 p-6 shadow-2xl">
         <div className="mb-6 flex items-start justify-between gap-4">
           <div>
             <p className="mb-2 text-xs font-bold uppercase tracking-[0.25em] text-zinc-600">{isRecovery ? "Account recovery" : "Account security"}</p>
@@ -1286,14 +1347,14 @@ function ChangePasswordModal({ mode, email, onClose }) {
         {saved ? (
           <div>
             <p className="mb-6 rounded-2xl border border-emerald-900 bg-emerald-950/50 px-4 py-3 text-sm text-emerald-300">Your password has been changed. Sign in again with your new password.</p>
-            <button type="button" onClick={onClose} className="w-full rounded-2xl bg-zinc-100 py-3.5 font-black text-zinc-950 transition hover:bg-white">Done</button>
+            <button type="button" onClick={onClose} className="adn-button-primary w-full">Done</button>
           </div>
         ) : step === "request" ? (
           <div>
             <p className="mb-2 text-sm text-zinc-300">We'll email a verification code to:</p>
             <p className="mb-6 break-all text-sm font-bold text-zinc-100">{email}</p>
             {error && <p className="mb-4 rounded-2xl border border-red-900 bg-red-950/40 px-4 py-3 text-sm text-red-300">{error}</p>}
-            <button type="button" onClick={sendVerificationCode} disabled={saving || emailCooldown.seconds > 0} className="w-full rounded-2xl bg-zinc-100 py-3.5 font-black text-zinc-950 transition hover:bg-white disabled:opacity-50">{saving ? "Sending code…" : emailCooldown.seconds > 0 ? `Try again in ${emailCooldown.seconds}s` : "Send verification code"}</button>
+            <button type="button" onClick={sendVerificationCode} disabled={saving || emailCooldown.seconds > 0} className="adn-button-primary w-full">{saving ? "Sending code…" : emailCooldown.seconds > 0 ? `Try again in ${emailCooldown.seconds}s` : "Send verification code"}</button>
           </div>
         ) : (
           <form onSubmit={submit} className="space-y-4">
@@ -1303,7 +1364,7 @@ function ChangePasswordModal({ mode, email, onClose }) {
             <input type="password" value={confirmation} onChange={(event) => { setConfirmation(event.target.value); setError(""); }} placeholder="Confirm new password" autoComplete="new-password" minLength={8} required className="w-full rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3.5 text-zinc-100 outline-none transition placeholder:text-zinc-600 focus:border-zinc-400" />
             <p className="text-xs text-zinc-600">Use at least 8 characters.</p>
             {error && <p className="rounded-2xl border border-red-900 bg-red-950/40 px-4 py-3 text-sm text-red-300">{error}</p>}
-            <button type="submit" disabled={saving} className="w-full rounded-2xl bg-zinc-100 py-3.5 font-black text-zinc-950 transition hover:bg-white disabled:opacity-50">{saving ? "Changing password…" : "Change password"}</button>
+            <button type="submit" disabled={saving} className="adn-button-primary w-full">{saving ? "Changing password…" : "Change password"}</button>
           </form>
         )}
       </section>
@@ -1312,6 +1373,26 @@ function ChangePasswordModal({ mode, email, onClose }) {
 }
 
 // ─── App ──────────────────────────────────────────────────────────────────────
+
+function DesktopNavigation({ activePage, profile, attentionCount, onNavigate }) {
+  const archiveActive = ["history", "artist", "venue"].includes(activePage);
+  const items = [
+    ["home", "fa-house", "Home", activePage === "home", 0],
+    ["history", "fa-box-archive", "Concert archive", archiveActive, 0],
+    ["timeline", "fa-clock-rotate-left", "Concert Timeline", activePage === "timeline", 0],
+    ["next", "fa-calendar-days", "Concert calendar", activePage === "next", 0],
+    ["suggestions", "fa-wand-magic-sparkles", "Suggestions", activePage === "suggestions", 0],
+    ["stats", "fa-chart-column", "Stats", activePage === "stats" || activePage === "year-review", 0],
+    ["friends", "fa-user-group", "Friends", activePage === "friends", attentionCount],
+  ];
+  return <aside className="fixed inset-y-0 left-0 z-30 hidden w-[205px] flex-col border-r border-[#20242a] bg-[#0c1015] lg:flex">
+    <button type="button" onClick={() => onNavigate("home")} className="h-[121px] border-b border-[#20242a] px-4 text-left"><span className="block whitespace-nowrap text-[15px] font-black uppercase tracking-tight text-zinc-50">A Deafening Noise</span><span className="mt-1 block text-[11px] font-bold uppercase tracking-[0.08em] text-zinc-400">Concert archive</span></button>
+    <nav className="min-h-0 flex-1 space-y-1 overflow-y-auto" aria-label="Main navigation">{items.map(([page, icon, label, active, count]) =>
+      <button key={page} type="button" onClick={() => onNavigate(page)} aria-current={active ? "page" : undefined} className={`relative flex min-h-[61px] w-full items-center gap-3 px-5 text-left text-[12px] font-black uppercase tracking-wide transition-colors ${active ? "bg-[#171b20] text-zinc-50 before:absolute before:inset-y-0 before:left-0 before:w-0.5 before:bg-blue-500" : "text-zinc-400 hover:bg-[#171b20] hover:text-zinc-100"}`}><i className={`fa-solid ${icon} w-5 text-center text-[17px] ${active ? "text-zinc-100" : "text-zinc-400"}`} aria-hidden="true" /><span className="truncate">{label}</span>{count > 0 && <span className="ml-auto min-w-5 rounded-full bg-blue-600 px-1.5 py-0.5 text-center text-[8px] text-white">{count}</span>}</button>
+    )}</nav>
+    <div className="mx-4 h-[98px] border-t border-[#2a2e34]"><button type="button" onClick={() => onNavigate("profile")} aria-current={activePage === "profile" || activePage === "admin" ? "page" : undefined} className={`group relative flex h-full w-full items-center gap-3 rounded-lg text-left transition-colors ${activePage === "profile" || activePage === "admin" ? "before:absolute before:inset-y-6 before:-left-4 before:w-0.5 before:bg-blue-500" : ""}`}><UserAvatar person={profile} size="h-8 w-8" /><span className={`min-w-0 flex-1 truncate text-xs font-bold transition-colors group-hover:text-white ${activePage === "profile" || activePage === "admin" ? "text-white" : "text-zinc-300"}`}>{profile?.displayName || profile?.username || "Profile"}</span><i className={`fa-solid fa-chevron-right text-[9px] transition-[color,transform] group-hover:translate-x-0.5 group-hover:text-blue-400 ${activePage === "profile" || activePage === "admin" ? "text-blue-400" : "text-zinc-500"}`} aria-hidden="true" /></button></div>
+  </aside>;
+}
 
 export default function App() {
   const initialRoute = useMemo(() => readRouteFromLocation(), []);
@@ -1330,7 +1411,7 @@ export default function App() {
   const [selectedVenue, setSelectedVenue] = useState(initialRoute.venue);
   const [selectedReviewYear, setSelectedReviewYear] = useState(initialRoute.year || "");
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [statsMenuOpen, setStatsMenuOpen] = useState(false);
+  const [headerControlsNode, setHeaderControlsNode] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [addInitial, setAddInitial] = useState(null);
   const [activeSuggestionId, setActiveSuggestionId] = useState(null);
@@ -1341,20 +1422,14 @@ export default function App() {
   const [concertItems, setConcertItems] = useState(fallbackConcerts);
   const [dismissedSuggestions, setDismissedSuggestions] = useState(fallbackDismissedSuggestions);
   const [listenedArtists, setListenedArtists] = useState([]);
+  const [artistImageRows, setArtistImageRows] = useState([]);
   const [spotifyStatus, setSpotifyStatus] = useState({ connected: !supabaseEnabled });
   const [appProfile, setAppProfile] = useState(null);
   const [friends, setFriends] = useState([]);
   const [friendRequests, setFriendRequests] = useState([]);
   const [concertInvitations, setConcertInvitations] = useState([]);
   const [notifications, setNotifications] = useState([]);
-  const [statsFriendId, setStatsFriendId] = useState("");
-  const [pendingSuggestionReviews, setPendingSuggestionReviews] = useState(() => {
-    try {
-      const stored = JSON.parse(localStorage.getItem("adn_pending_suggestion_reviews") || "{}");
-      return stored && !Array.isArray(stored) && typeof stored === "object" ? stored : {};
-    }
-    catch { return {}; }
-  });
+  const [statsFriendIds, setStatsFriendIds] = useState([]);
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
   const [confirmRemoveFriend, setConfirmRemoveFriend] = useState(null);
@@ -1380,6 +1455,8 @@ export default function App() {
   const canEdit = !supabaseEnabled || Boolean(appProfile);
 
   const isNext = canEdit && activePage === "next";
+  const isHome = activePage === "home";
+  const isArchive = activePage === "history";
   const isStats = activePage === "stats";
   const isTimeline = activePage === "timeline";
   const isYearReview = activePage === "year-review";
@@ -1400,15 +1477,12 @@ export default function App() {
     };
   }, [sidebarOpen]);
 
-  useEffect(() => {
-    if (activePage === "stats" || activePage === "year-review") setStatsMenuOpen(true);
-  }, [activePage]);
   const historyConcerts = useMemo(
     () => concertItems.filter((concert) => concert.bought && isPastConcert(concert)),
     [concertItems]
   );
   const historyItems = useMemo(() => groupHistoryFromJson(historyConcerts), [historyConcerts]);
-  const scopedHistoryConcerts = useMemo(() => statsFriendId ? historyConcerts.filter((concert) => concert.attendeeUsers?.some((person) => person.id === statsFriendId && person.status === "confirmed")) : historyConcerts, [historyConcerts, statsFriendId]);
+  const scopedHistoryConcerts = useMemo(() => statsFriendIds.length ? historyConcerts.filter((concert) => statsFriendIds.every((friendId) => concert.attendeeUsers?.some((person) => person.id === friendId && person.status === "confirmed"))) : historyConcerts, [historyConcerts, statsFriendIds]);
   const scopedHistoryItems = useMemo(() => groupHistoryFromJson(scopedHistoryConcerts), [scopedHistoryConcerts]);
   const nextItems = useMemo(
     () => concertItems.filter((concert) => !isPastConcert(concert)),
@@ -1426,7 +1500,7 @@ export default function App() {
     ? nextItems.filter((item) => normalize(item.artist) === normalize(artistDetail.artist))
     : [];
   const mode = isNext ? "next" : "history";
-  const title = isVenueDetail ? selectedVenue : isArtistDetail ? artistDetail.artist : isAdminPage ? "Administration" : isSuggestions ? "Concert Suggestions" : isProfile ? "Profile" : isActivity ? "Activity" : isFriends ? "Friends" : isYearReview ? "Year in Review" : isTimeline ? "Timeline" : isStats ? "Archive Overview" : isNext ? "Concert Calendar" : "Concert Archive";
+  const title = isVenueDetail ? selectedVenue : isArtistDetail ? artistDetail.artist : isAdminPage ? "Administration" : isSuggestions ? "Concert Suggestions" : isProfile ? "Profile" : isActivity ? "Activity" : isFriends ? "Friends" : isYearReview ? "Year in Review" : isTimeline ? "Concert Timeline" : isStats ? "Archive Overview" : isNext ? "Concert Calendar" : "Concert Archive";
   const description = isVenueDetail
     ? `${venueShows.length} archived ${venueShows.length === 1 ? "visit" : "visits"} to this venue.`
     : isArtistDetail
@@ -1458,11 +1532,16 @@ export default function App() {
   }, [concertItems, query]);
 
   const listenedArtistKeys = useMemo(() => new Set(listenedArtists.map(normalize)), [listenedArtists]);
+  const artistImages = useMemo(() => new Map(artistImageRows.map(({ artist, imageUrl }) => [normalize(artist), imageUrl])), [artistImageRows]);
   const availableSuggestions = useMemo(() => suggestionsData.suggestions.filter((suggestion) =>
-    (!supabaseEnabled || listenedArtistKeys.has(normalize(suggestion.artist)))
-      && !dismissedSuggestions.includes(suggestionDecisionKey(suggestion))
-      && !concertItems.some((concert) => normalize(concert.artist) === normalize(suggestion.artist) && concert.date === suggestion.date)
-  ), [concertItems, dismissedSuggestions, listenedArtistKeys]);
+    !supabaseEnabled || listenedArtistKeys.has(normalize(suggestion.artist))
+  ), [listenedArtistKeys]);
+  const suggestionReviews = useMemo(() => Object.fromEntries(availableSuggestions.flatMap((suggestion) => {
+    const concert = concertItems.find((item) => normalize(item.artist) === normalize(suggestion.artist) && item.date === suggestion.date);
+    if (concert) return [[suggestion.id, { decision: "interested", concert }]];
+    if (dismissedSuggestions.includes(suggestionDecisionKey(suggestion))) return [[suggestion.id, { decision: "not-interested" }]];
+    return [];
+  })), [availableSuggestions, concertItems, dismissedSuggestions]);
 
   const artistSuggestions = useMemo(() => {
     const set = new Set();
@@ -1481,10 +1560,6 @@ export default function App() {
     });
     return [...set].sort((a, b) => a.localeCompare(b));
   }, [historyItems]);
-
-  useEffect(() => {
-    localStorage.setItem("adn_pending_suggestion_reviews", JSON.stringify(pendingSuggestionReviews));
-  }, [pendingSuggestionReviews]);
 
   useEffect(() => {
     if (!supabaseEnabled) return undefined;
@@ -1511,7 +1586,7 @@ export default function App() {
       if (data.session) {
         openRecovery(data.session);
         if (!recoveryRequested && window.location.pathname === "/" && !window.location.hash) {
-          window.history.replaceState({ adnRoute: true, canGoBack: false }, "", "/history");
+          window.history.replaceState({ adnRoute: true, canGoBack: false }, "", "/home");
         }
       }
       else if (!recoveryRequested) showLoginRoute();
@@ -1583,9 +1658,10 @@ export default function App() {
       try { await reloadAppData(); setSyncError(""); }
       catch (error) { setSyncError(error.message || "Could not refresh the archive"); }
     }
+    const timer = window.setInterval(refreshWhenVisible, 60_000);
     window.addEventListener("focus", refreshWhenVisible);
     document.addEventListener("visibilitychange", refreshWhenVisible);
-    return () => { window.removeEventListener("focus", refreshWhenVisible); document.removeEventListener("visibilitychange", refreshWhenVisible); };
+    return () => { window.clearInterval(timer); window.removeEventListener("focus", refreshWhenVisible); document.removeEventListener("visibilitychange", refreshWhenVisible); };
   }, [currentUserId, dataReady]);
 
   useEffect(() => {
@@ -1672,12 +1748,13 @@ export default function App() {
   if (!authReady) return <>{passwordModal}<AppBootstrapShell /></>;
   if (!supabaseEnabled && !IS_LOCAL) return <>{passwordModal}<div className="flex min-h-screen items-center justify-center bg-zinc-950 px-6 text-center text-red-300">Supabase is not configured for this deployment.</div></>;
   if (passwordModalMode === "recovery") return <>{passwordModal}<div className="min-h-screen bg-zinc-950" aria-hidden="true" /></>;
-  if (supabaseEnabled && !session) return <>{passwordModal}<LoginGate onSignedIn={() => navigateToArchive({ replace: true })} /></>;
+  if (supabaseEnabled && !session) return <>{passwordModal}<LoginGate onSignedIn={() => navigateTo({ page: "home" }, { replace: true })} /></>;
   if (!dataReady || (supabaseEnabled && dataOwnerId !== currentUserId)) return <>{passwordModal}<AppBootstrapShell /></>;
   if (dataLoadError) return <>{passwordModal}<div className="flex min-h-screen items-center justify-center bg-zinc-950 px-6 text-center text-red-300">{dataLoadError}</div></>;
 
-  function navigateTo(route) {
-    window.history.pushState({ adnRoute: true, canGoBack: true }, "", routeToPath(route));
+  function navigateTo(route, { replace = false } = {}) {
+    const updateHistory = replace ? window.history.replaceState.bind(window.history) : window.history.pushState.bind(window.history);
+    updateHistory({ adnRoute: true, canGoBack: !replace }, "", routeToPath(route));
     setActivePage(route.page);
     setSelectedArtist(route.artist || null);
     setSelectedVenue(route.venue || null);
@@ -1745,6 +1822,7 @@ export default function App() {
     setConcertItems(archive.concerts || []);
     setDismissedSuggestions(archive.dismissedSuggestions || []);
     setListenedArtists(archive.listenedArtists || []);
+    setArtistImageRows(archive.artistImages || []);
     setSpotifyStatus(archive.spotifyStatus || { connected: false });
     setAppProfile(archive.profile || null);
     setFriends(archive.friends || []);
@@ -1771,6 +1849,8 @@ export default function App() {
       concertId: data.concertId || null,
       artist: uppercaseConcertLabel(data.artist.trim()),
       venue: uppercaseConcertLabel(data.venue?.trim()),
+      city: data.city?.trim() || "",
+      country: String(data.country || "").trim().toUpperCase(),
       date: data.date.trim(),
       bought: pastConcert ? true : Boolean(data.bought),
       attendeeUserIds: data.attendeeUserIds || [],
@@ -1778,35 +1858,23 @@ export default function App() {
       ...(data.guestAttendees?.length ? { attendees: data.guestAttendees } : {}),
       ...(!pastConcert && normalizeTicketUrl(data.ticketUrl) ? { ticketUrl: normalizeTicketUrl(data.ticketUrl) } : {}),
     };
-    if (activeSuggestionId) {
-      const suggestion = suggestionsData.suggestions.find(({ id }) => id === activeSuggestionId);
-      setPendingSuggestionReviews((current) => ({
-        ...current,
-        [activeSuggestionId]: {
-          decision: "interested",
-          concert: newConcert,
-          key: suggestionDecisionKey(suggestion || newConcert),
-        },
-      }));
-      setSaveError("");
-      setModalOpen(false);
-      setAddInitial(null);
-      setActiveSuggestionId(null);
-      return;
-    }
-
     setIsSaving(true); setSaveError("");
     try {
+      const suggestion = activeSuggestionId && suggestionsData.suggestions.find(({ id }) => id === activeSuggestionId);
+      const updatedDismissed = suggestion ? dismissedSuggestions.filter((key) => key !== suggestionDecisionKey(suggestion)) : dismissedSuggestions;
       if (supabaseEnabled) {
         await upsertMyConcert(newConcert);
+        if (suggestion) await saveDismissedSuggestions(updatedDismissed);
         await reloadAppData();
       } else {
         const updatedConcerts = [...concertItems, newConcert];
-        await saveConcertData(concertDataPayload(updatedConcerts), `Add concert: ${data.artist}${data.venue ? " — " + data.venue : ""} (${data.date})`);
+        await saveConcertData(concertDataPayload(updatedConcerts, updatedDismissed), `Add concert: ${data.artist}${data.venue ? " — " + data.venue : ""} (${data.date})`);
         setConcertItems(updatedConcerts);
+        setDismissedSuggestions(updatedDismissed);
       }
       setModalOpen(false);
       setAddInitial(null);
+      setActiveSuggestionId(null);
     } catch (e) { setSaveError(e.message || "Could not save concert"); }
     finally { setIsSaving(false); }
   }
@@ -1845,7 +1913,7 @@ export default function App() {
       title: "Delete concert?",
       description: `${t.artist}${t.venue ? ` · ${t.venue}` : ""} · ${t.date}. This action cannot be undone.`,
       confirmLabel: "Delete",
-      icon: "fa-trash-can",
+      hideIcon: true,
       action: async () => {
         if (supabaseEnabled && t.concertId) {
           await deleteMyConcert(t.concertId);
@@ -1857,39 +1925,6 @@ export default function App() {
         }
       },
     });
-  }
-
-  async function saveSuggestionReviews() {
-    const reviews = Object.entries(pendingSuggestionReviews);
-    if (!reviews.length) return;
-    setIsSaving(true); setSaveError("");
-    try {
-      const interestedConcerts = reviews
-        .filter(([, review]) => review.decision === "interested" && review.concert)
-        .map(([, review]) => review.concert)
-        .filter((candidate) => !concertItems.some((concert) => concertMatches(concert, candidate)));
-      const updatedDismissed = new Set(dismissedSuggestions);
-      reviews.forEach(([, review]) => {
-        if (!review.key) return;
-        if (review.decision === "not-interested") updatedDismissed.add(review.key);
-        else updatedDismissed.delete(review.key);
-      });
-      if (supabaseEnabled) {
-        for (const concert of interestedConcerts) await upsertMyConcert(concert);
-        await saveDismissedSuggestions([...updatedDismissed]);
-        await reloadAppData();
-      } else {
-        const updatedConcerts = [...concertItems, ...interestedConcerts];
-        await saveConcertData(concertDataPayload(updatedConcerts, [...updatedDismissed]), `Review ${reviews.length} concert ${reviews.length === 1 ? "suggestion" : "suggestions"}`);
-        setConcertItems(updatedConcerts);
-        setDismissedSuggestions([...updatedDismissed]);
-      }
-      setPendingSuggestionReviews({});
-    } catch (error) {
-      setSaveError(error.message || "Could not save suggestion decisions");
-    } finally {
-      setIsSaving(false);
-    }
   }
 
   async function handleSetlistIdDiscovered(target, discoveredId) {
@@ -1921,26 +1956,52 @@ export default function App() {
     const link = document.createElement("a"); link.href = url; link.download = `a-deafening-noise-${new Date().toISOString().slice(0, 10)}.json`; link.click(); URL.revokeObjectURL(url);
   }
 
-  const statsScopeControl = (isStats || isYearReview) && friends.length > 0 ? <div className="mx-auto mb-6 max-w-xs"><DropdownMenu value={statsFriendId} onChange={setStatsFriendId} ariaLabel="Stats scope" centered options={[{ value: "", label: "My complete archive" }, ...friends.map((friend) => ({ value: friend.id, label: `Concerts with ${friend.displayName}` }))]} /></div> : null;
+  function reviewSuggestionAsInterested(suggestion) {
+    if (isSaving || suggestionReviews[suggestion.id]?.decision === "interested") return;
+    setSaveError("");
+    setActiveSuggestionId(suggestion.id);
+    setAddInitial({ artist: suggestion.artist, venue: suggestion.venue, city: suggestion.city || "", country: suggestion.country || "", date: suggestion.date, bought: false, ticketUrl: suggestion.sourceUrl || "" });
+    setModalOpen(true);
+  }
+
+  function reviewSuggestionAsNotInterested(suggestion) {
+    if (isSaving || suggestionReviews[suggestion.id]?.decision === "not-interested") return;
+    setSaveError("");
+    const matchingConcert = suggestionReviews[suggestion.id]?.concert;
+    const action = async () => {
+      const updatedDismissed = [...new Set([...dismissedSuggestions, suggestionDecisionKey(suggestion)])];
+      const updatedConcerts = matchingConcert ? concertItems.filter((concert) => !concertMatches(concert, matchingConcert)) : concertItems;
+      if (supabaseEnabled) {
+        if (matchingConcert?.concertId) await deleteMyConcert(matchingConcert.concertId);
+        await saveDismissedSuggestions(updatedDismissed);
+        await reloadAppData();
+      } else {
+        await saveConcertData(concertDataPayload(updatedConcerts, updatedDismissed), `Mark suggestion not interested: ${suggestion.artist} (${suggestion.date})`);
+        setConcertItems(updatedConcerts);
+        setDismissedSuggestions(updatedDismissed);
+      }
+    };
+    if (matchingConcert) {
+      setConfirmAction({
+        title: "Mark as not interested?",
+        description: `${suggestion.artist} · ${suggestion.date}`,
+        confirmLabel: "Not interested",
+        hideIcon: true,
+        action,
+      });
+      return;
+    }
+    setIsSaving(true);
+    action().catch((error) => setSaveError(error.message || "Could not save suggestion decision")).finally(() => setIsSaving(false));
+  }
+
+  const statsScopeControl = (isStats || isYearReview) && friends.length > 0 ? <FriendStatsMenu friends={friends} selectedIds={statsFriendIds} onChange={setStatsFriendIds} /> : null;
   const suggestionsPage = isSuggestions ? <DeferredPage><SuggestionsPage
-    generatedAt={suggestionsData.generatedAt}
     suggestions={availableSuggestions}
-    reviews={pendingSuggestionReviews}
-    onInterested={(suggestion) => {
-      const pendingConcert = pendingSuggestionReviews[suggestion.id]?.concert;
-      setSaveError("");
-      setActiveSuggestionId(suggestion.id);
-      setAddInitial(pendingConcert || { artist: suggestion.artist, venue: suggestion.venue, date: suggestion.date, bought: false, ticketUrl: suggestion.sourceUrl || "" });
-      setModalOpen(true);
-    }}
-    onNotInterested={(suggestion) => {
-      setSaveError("");
-      setPendingSuggestionReviews((current) => ({
-        ...current,
-        [suggestion.id]: { decision: "not-interested", key: suggestionDecisionKey(suggestion) },
-      }));
-    }}
-    onSave={saveSuggestionReviews}
+    artistImages={artistImages}
+    reviews={suggestionReviews}
+    onInterested={reviewSuggestionAsInterested}
+    onNotInterested={reviewSuggestionAsNotInterested}
     onOpenProfile={() => changePage("profile")}
     spotifyConnected={spotifyStatus.connected}
     isSaving={isSaving}
@@ -1953,52 +2014,65 @@ export default function App() {
     {isRefreshing && <span className="sr-only" role="status">Syncing your latest data</span>}
     {syncError && <div className="fixed bottom-4 left-1/2 z-[80] max-w-[calc(100vw-2rem)] -translate-x-1/2 rounded-full border border-amber-900 bg-zinc-950 px-4 py-2 text-center text-xs font-semibold text-amber-300 shadow-2xl" role="status">Offline · showing saved data</div>}
     <main className="adn-shell min-h-screen bg-zinc-950 text-zinc-100 md:flex">
+      <DesktopNavigation activePage={activePage} profile={appProfile} attentionCount={friendRequests.filter((request) => request.direction === "incoming").length + concertInvitations.length} onNavigate={changePage} />
       {/* Desktop-only fixed Menu button */}
-      <button onClick={() => setSidebarOpen(true)} className="menu-button-desktop fixed left-4 top-4 z-40 rounded-full border border-zinc-700 bg-zinc-900 px-4 py-2 text-sm font-bold text-zinc-100 shadow-2xl transition hover:border-zinc-500" aria-label="Open menu" aria-expanded={sidebarOpen} aria-controls="main-navigation"><i className="fa-solid fa-bars mr-2 text-xs" aria-hidden="true" />Menu</button>
+      <button onClick={() => setSidebarOpen(true)} className="menu-button-desktop fixed left-4 top-4 z-40 h-11 w-11 rounded-full border border-zinc-700 bg-zinc-900 text-sm text-zinc-100 shadow-2xl transition hover:border-zinc-500 lg:hidden" aria-label="Open menu" aria-expanded={sidebarOpen} aria-controls="main-navigation"><i className="fa-solid fa-bars text-xs" aria-hidden="true" /></button>
       {/* Touch-device Menu starts at the top of the page and scrolls away with it */}
       <button onClick={() => setSidebarOpen(true)} className="menu-button-touch touch-target absolute left-4 top-4 z-40 h-11 w-11 rounded-full border border-zinc-700 bg-zinc-900 text-sm text-zinc-100 shadow-2xl transition hover:border-zinc-500" aria-label="Open menu" title="Menu" aria-expanded={sidebarOpen} aria-controls="main-navigation"><i className="fa-solid fa-bars text-xs" aria-hidden="true" /></button>
 
-      <button disabled={!sidebarOpen} aria-hidden={!sidebarOpen} tabIndex={sidebarOpen ? 0 : -1} className={`fixed inset-0 z-40 bg-black/60 transition-opacity duration-150 ${sidebarOpen ? "opacity-100" : "pointer-events-none opacity-0"}`} onClick={() => setSidebarOpen(false)} aria-label="Close menu overlay" />
+      <button disabled={!sidebarOpen} aria-hidden={!sidebarOpen} tabIndex={sidebarOpen ? 0 : -1} className={`fixed inset-0 z-40 bg-black/60 transition-opacity duration-150 lg:hidden ${sidebarOpen ? "opacity-100" : "pointer-events-none opacity-0"}`} onClick={() => setSidebarOpen(false)} aria-label="Close menu overlay" />
 
-      <aside id="main-navigation" aria-label="Main navigation" aria-hidden={!sidebarOpen} inert={!sidebarOpen ? "" : undefined} className={`adn-navigation fixed inset-y-0 left-0 z-50 w-[min(20rem,88vw)] border-r border-zinc-800 bg-zinc-950/95 backdrop-blur-xl transition-transform duration-300 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}>
+      <aside id="main-navigation" aria-label="Mobile navigation" aria-hidden={!sidebarOpen} inert={!sidebarOpen ? "" : undefined} className={`adn-navigation fixed inset-y-0 left-0 z-50 w-[min(20rem,88vw)] border-r border-zinc-800 bg-zinc-950/95 backdrop-blur-xl transition-transform duration-300 lg:hidden ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}>
         <div className="flex h-full flex-col px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-[max(1.25rem,env(safe-area-inset-top))]">
           <div className="flex items-center justify-between gap-4 border-b border-zinc-900 pb-5">
-            <button onClick={() => changePage("history")} className="min-w-0 text-left" aria-label="Go to Concert history">
+            <button onClick={() => changePage("home")} className="min-w-0 text-left" aria-label="Go to dashboard">
               <span className="block truncate text-lg font-black uppercase tracking-tight text-zinc-100">A Deafening Noise</span>
               <span className="mt-0.5 block text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-600">Concert archive</span>
             </button>
             <button onClick={() => setSidebarOpen(false)} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-zinc-800 text-zinc-400 transition hover:border-zinc-600 hover:bg-zinc-900 hover:text-zinc-100" aria-label="Close menu"><i className="fa-solid fa-xmark" aria-hidden="true" /></button>
           </div>
 
-          {canEdit && <button onClick={() => { setSidebarOpen(false); setSaveError(""); setActiveSuggestionId(null); setAddInitial(null); setModalOpen(true); }} className="my-5 flex w-full items-center justify-center gap-2 rounded-2xl bg-zinc-100 px-4 py-3.5 text-sm font-black text-zinc-950 shadow-lg shadow-black/20 transition hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-100"><i className="fa-solid fa-plus text-xs" aria-hidden="true" />Add concert</button>}
-
-          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pr-1">
+          <div className="mt-5 min-h-0 flex-1 overflow-y-auto overscroll-contain pr-1">
             <p className="mb-2 px-3 text-[10px] font-black uppercase tracking-[0.2em] text-zinc-600">Explore</p>
             <nav className="space-y-1 text-sm">
-              <button onClick={() => changePage("history")} aria-current={["history", "artist", "timeline", "venue"].includes(activePage) ? "page" : undefined} className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left font-bold transition ${["history", "artist", "timeline", "venue"].includes(activePage) ? "bg-zinc-900 text-zinc-100" : "text-zinc-400 hover:bg-zinc-900/70 hover:text-zinc-100"}`}><i className="fa-solid fa-layer-group w-5 text-center text-zinc-500" aria-hidden="true" /><span>Concert history</span></button>
-              {canEdit && <div className={`rounded-xl ${activePage === "next" || activePage === "suggestions" ? "bg-zinc-900 pb-2" : ""}`}><button onClick={() => changePage("next")} aria-current={activePage === "next" ? "page" : undefined} className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left font-bold transition ${activePage === "next" ? "text-zinc-100" : "text-zinc-400 hover:bg-zinc-900/70 hover:text-zinc-100"}`}><i className="fa-solid fa-calendar-days w-5 text-center text-zinc-500" aria-hidden="true" /><span>Concert calendar</span></button><div className="ml-5 border-l border-zinc-800 pl-3 pr-2"><button onClick={() => changePage("suggestions")} aria-current={activePage === "suggestions" ? "page" : undefined} className={`flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-xs font-semibold transition hover:bg-zinc-800 hover:text-zinc-100 ${activePage === "suggestions" ? "bg-zinc-800 text-zinc-100" : "text-zinc-500"}`}><span>Concert suggestions</span><span className="ml-auto rounded-full border border-zinc-700 px-1.5 py-0.5 text-[10px]">{availableSuggestions.length}</span></button></div></div>}
+              <button onClick={() => changePage("home")} aria-current={activePage === "home" ? "page" : undefined} className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left font-bold transition ${activePage === "home" ? "bg-zinc-900 text-zinc-100" : "text-zinc-400 hover:bg-zinc-900/70 hover:text-zinc-100"}`}><i className="fa-solid fa-house w-5 text-center text-zinc-500" aria-hidden="true" /><span>Home</span></button>
+              <button onClick={() => changePage("history")} aria-current={["history", "artist", "venue"].includes(activePage) ? "page" : undefined} className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left font-bold transition ${["history", "artist", "venue"].includes(activePage) ? "bg-zinc-900 text-zinc-100" : "text-zinc-400 hover:bg-zinc-900/70 hover:text-zinc-100"}`}><i className="fa-solid fa-box-archive w-5 text-center text-zinc-500" aria-hidden="true" /><span>Concert history</span></button>
+              <button onClick={() => changePage("timeline")} aria-current={activePage === "timeline" ? "page" : undefined} className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left font-bold transition ${activePage === "timeline" ? "bg-zinc-900 text-zinc-100" : "text-zinc-400 hover:bg-zinc-900/70 hover:text-zinc-100"}`}><i className="fa-solid fa-clock-rotate-left w-5 text-center text-zinc-500" aria-hidden="true" /><span>Concert Timeline</span></button>
+              {canEdit && <button onClick={() => changePage("next")} aria-current={activePage === "next" ? "page" : undefined} className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left font-bold transition ${activePage === "next" ? "bg-zinc-900 text-zinc-100" : "text-zinc-400 hover:bg-zinc-900/70 hover:text-zinc-100"}`}><i className="fa-solid fa-calendar-days w-5 text-center text-zinc-500" aria-hidden="true" /><span>Concert calendar</span></button>}
+              {canEdit && <button onClick={() => changePage("suggestions")} aria-current={activePage === "suggestions" ? "page" : undefined} className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left font-bold transition ${activePage === "suggestions" ? "bg-zinc-900 text-zinc-100" : "text-zinc-400 hover:bg-zinc-900/70 hover:text-zinc-100"}`}><i className="fa-solid fa-wand-magic-sparkles w-5 text-center text-zinc-500" aria-hidden="true" /><span>Suggestions</span></button>}
               <button onClick={() => changePage("friends")} aria-current={activePage === "friends" ? "page" : undefined} className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left font-bold transition ${activePage === "friends" ? "bg-zinc-900 text-zinc-100" : "text-zinc-400 hover:bg-zinc-900/70 hover:text-zinc-100"}`}><i className="fa-solid fa-user-group w-5 text-center text-zinc-500" aria-hidden="true" /><span>Friends</span>{friendRequests.filter((request) => request.direction === "incoming").length + concertInvitations.length > 0 && <span className="ml-auto min-w-6 rounded-full bg-amber-900 px-2 py-0.5 text-center text-[10px] font-black text-amber-100">{friendRequests.filter((request) => request.direction === "incoming").length + concertInvitations.length}</span>}</button>
-              <button onClick={() => changePage("activity")} aria-current={activePage === "activity" ? "page" : undefined} className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left font-bold transition ${activePage === "activity" ? "bg-zinc-900 text-zinc-100" : "text-zinc-400 hover:bg-zinc-900/70 hover:text-zinc-100"}`}><i className="fa-solid fa-bell w-5 text-center text-zinc-500" aria-hidden="true" /><span>Activity</span>{notifications.filter((item) => !item.readAt).length > 0 && <span className="ml-auto min-w-6 rounded-full bg-amber-900 px-2 py-0.5 text-center text-[10px] font-black text-amber-100">{notifications.filter((item) => !item.readAt).length}</span>}</button>
-              <div data-testid="stats-menu-group" className={`rounded-xl ${statsMenuOpen ? "pb-2" : ""} ${activePage === "stats" || activePage === "year-review" ? "bg-zinc-900" : ""}`}>
-                <button onClick={() => setStatsMenuOpen((open) => !open)} className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left font-bold transition hover:bg-zinc-900/70 hover:text-zinc-100 ${activePage === "stats" || activePage === "year-review" ? "text-zinc-100" : "text-zinc-400"}`} aria-expanded={statsMenuOpen} aria-controls="stats-navigation"><i className="fa-solid fa-chart-simple w-5 text-center text-zinc-500" aria-hidden="true" /><span>Stats</span><i className={`fa-solid fa-chevron-down ml-auto text-[10px] text-zinc-600 transition-transform ${statsMenuOpen ? "rotate-180" : ""}`} aria-hidden="true" /></button>
-                {statsMenuOpen && <div id="stats-navigation" data-testid="stats-navigation" className="ml-5 border-l border-zinc-800 pl-3 pr-2"><button onClick={() => changePage("stats")} aria-current={activePage === "stats" ? "page" : undefined} className={`block w-full rounded-lg px-3 py-2.5 text-left text-xs font-semibold transition hover:bg-zinc-800 hover:text-zinc-100 ${activePage === "stats" ? "bg-zinc-800 text-zinc-100" : "text-zinc-500"}`}>Archive overview</button><button onClick={() => changePage("year-review")} aria-current={activePage === "year-review" ? "page" : undefined} className={`mt-1 block w-full rounded-lg px-3 py-2.5 text-left text-xs font-semibold transition hover:bg-zinc-800 hover:text-zinc-100 ${activePage === "year-review" ? "bg-zinc-800 text-zinc-100" : "text-zinc-500"}`}>Year in review</button></div>}
-              </div>
-              {isAdmin && <button onClick={() => changePage("admin")} aria-current={activePage === "admin" ? "page" : undefined} className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left font-bold transition ${activePage === "admin" ? "bg-zinc-900 text-zinc-100" : "text-zinc-400 hover:bg-zinc-900/70 hover:text-zinc-100"}`}><i className="fa-solid fa-user-shield w-5 text-center text-zinc-500" aria-hidden="true" /><span>Administration</span></button>}
+              <button onClick={() => changePage("stats")} aria-current={activePage === "stats" || activePage === "year-review" ? "page" : undefined} className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left font-bold transition ${activePage === "stats" || activePage === "year-review" ? "bg-zinc-900 text-zinc-100" : "text-zinc-400 hover:bg-zinc-900/70 hover:text-zinc-100"}`}><i className="fa-solid fa-chart-column w-5 text-center text-zinc-500" aria-hidden="true" /><span>Stats</span></button>
             </nav>
           </div>
 
-          {currentUserName && <div className="mt-4 border-t border-zinc-900 pt-4"><button onClick={() => changePage("profile")} className="flex w-full items-center gap-3 rounded-2xl bg-zinc-900/60 p-3 text-left transition hover:bg-zinc-900"><UserAvatar person={appProfile} /><div className="min-w-0 flex-1"><div className="flex items-center gap-2"><span className="truncate text-sm font-bold text-zinc-200">{currentUserName}</span>{isAdmin && <span className="rounded-full border border-zinc-700 px-1.5 py-0.5 text-[8px] font-black uppercase tracking-wider text-zinc-500">Admin</span>}</div><span className="block truncate text-[11px] text-zinc-600">View profile</span></div><i className="fa-solid fa-chevron-right text-[10px] text-zinc-700" aria-hidden="true" /></button><button type="button" onClick={() => supabase.auth.signOut()} className="mt-2 w-full rounded-xl px-3 py-2 text-xs font-semibold text-zinc-500 transition hover:bg-zinc-900 hover:text-red-300"><i className="fa-solid fa-arrow-right-from-bracket mr-2" aria-hidden="true" />Sign out</button></div>}
+          {currentUserName && <div className="mt-4 border-t border-zinc-900 pt-4"><button onClick={() => changePage("profile")} className="group flex w-full items-center gap-3 rounded-lg p-3 text-left transition-colors"><UserAvatar person={appProfile} /><div className="min-w-0 flex-1"><div className="flex items-center gap-2"><span className="truncate text-sm font-bold text-zinc-300 transition-colors group-hover:text-white">{currentUserName}</span>{isAdmin && <span className="rounded-full border border-zinc-700 px-1.5 py-0.5 text-[8px] font-black uppercase tracking-wider text-zinc-500">Admin</span>}</div><span className="block truncate text-[11px] text-zinc-500">View profile</span></div><i className="fa-solid fa-chevron-right text-[10px] text-zinc-600 transition-[color,transform] group-hover:translate-x-0.5 group-hover:text-blue-400" aria-hidden="true" /></button></div>}
         </div>
       </aside>
 
-      <section className="mx-auto w-full max-w-7xl overflow-x-hidden px-4 pb-8 pt-5 md:px-8 md:py-14">
-        <header className="mb-8 min-h-32 pt-12 text-center md:mb-12 md:min-h-0 md:pt-0">
-          <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.42em] text-zinc-400 md:mb-3 md:text-xs">A Deafening Noise</p>
-          <h1 className="break-words text-5xl font-black uppercase leading-none tracking-tight text-zinc-50 md:text-8xl">{title}</h1>
-          <p className="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-zinc-400 md:mt-5 md:text-lg">{description}</p>
-        </header>
+      <section className={`adn-content w-full overflow-x-hidden lg:ml-[205px] ${isHome ? "px-4 pb-8 pt-5 lg:pb-10 lg:pl-[51px] lg:pr-[56px] lg:pt-8" : "px-4 pb-8 pt-5 md:px-8 md:py-10 lg:px-[51px] lg:py-8 lg:pr-[56px]"}`}>
+        {!isHome && <header className="mb-6 min-h-32 pt-12 text-left md:min-h-0 md:pt-0 lg:mb-6">
+          <div className="flex flex-col items-start justify-between gap-5 lg:flex-row">
+            <div className="min-w-0"><h1 className="break-words text-3xl font-black uppercase leading-none tracking-[0.025em] text-zinc-50 lg:text-[1.75rem]">{title}</h1><p className="mt-2.5 max-w-2xl text-sm leading-relaxed text-zinc-400">{description}</p></div>
+            <div ref={setHeaderControlsNode} className={`flex w-full min-w-0 flex-wrap items-start justify-end gap-2 lg:max-w-[65%] lg:shrink-0 ${isArchive || isTimeline || isNext ? "lg:w-[42rem]" : "lg:w-auto"}`} />
+          </div>
+        </header>}
 
-        {isVenueDetail ? (
+        {isHome ? <DeferredPage><HomePage
+          profile={appProfile}
+          concerts={concertItems}
+          suggestions={availableSuggestions}
+          artistImages={artistImages}
+          suggestionReviews={suggestionReviews}
+          suggestionError={saveError}
+          notifications={notifications}
+          onAdd={() => { setSaveError(""); setActiveSuggestionId(null); setAddInitial(null); setModalOpen(true); }}
+          onOpenConcert={(concert) => setCalendarTarget({ ...concert, mode: isPastConcert(concert) ? "history" : "next" })}
+          onSuggestionInterested={reviewSuggestionAsInterested}
+          onSuggestionNotInterested={reviewSuggestionAsNotInterested}
+          onNavigate={changePage}
+          onOpenYearReview={openYearReview}
+          DropdownMenu={DropdownMenu}
+        /></DeferredPage> : isVenueDetail ? (
           <DeferredPage><VenueDetailPage
             venue={selectedVenue}
             historyItems={historyItems}
@@ -2017,15 +2091,15 @@ export default function App() {
         ) : isTimeline ? (
           <DeferredPage><ConcertTimelinePage
             historyItems={historyItems}
-            onShowCardView={() => changePage("history")}
             onOpenArtist={openArtistDetail}
             onOpenSetlist={openConcertDetails}
             onOpenVenue={openVenueDetail}
             DropdownMenu={DropdownMenu}
             Icon={Icon}
+            headerTarget={headerControlsNode}
           /></DeferredPage>
         ) : isYearReview ? (
-          <>{statsScopeControl}<DeferredPage><YearInReviewPage
+          <><DeferredPage><YearInReviewPage
             historyItems={scopedHistoryItems}
             selectedYear={selectedReviewYear}
             onYearChange={changeReviewYear}
@@ -2034,47 +2108,34 @@ export default function App() {
             onOpenVenue={openVenueDetail}
             DropdownMenu={DropdownMenu}
             Icon={Icon}
+            headerTarget={headerControlsNode}
           /></DeferredPage></>
         ) : isSuggestions ? suggestionsPage
         : isAdminPage ? <DeferredPage><AdminPage currentUserId={currentUserId} onChanged={reloadAppData} onConfirm={(confirmation) => { setSaveError(""); setConfirmAction(confirmation); }} /></DeferredPage>
-        : isProfile ? <DeferredPage><ProfilePage profile={appProfile} onSave={async (payload) => { await updateMyProfile(payload); await reloadAppData(); }} onExport={handleProfileExport} onDelete={async () => { await deleteMyAccount(); await supabase.auth.signOut(); }} onPassword={() => setPasswordModalMode("change")} onConfirm={(confirmation) => { setSaveError(""); setConfirmAction(confirmation); }} /></DeferredPage>
+        : isProfile ? <DeferredPage><ProfilePage profile={appProfile} futureArtists={[...new Set(concertItems.filter((concert) => !isPastConcert(concert)).map((concert) => concert.artist))]} isAdmin={isAdmin} onAdmin={() => changePage("admin")} onSignOut={() => supabase.auth.signOut()} onSave={async (payload) => { await updateMyProfile(payload); await reloadAppData(); }} onExport={handleProfileExport} onDelete={async () => { await deleteMyAccount(); await supabase.auth.signOut(); }} onPassword={() => setPasswordModalMode("change")} onConfirm={(confirmation) => { setSaveError(""); setConfirmAction(confirmation); }} onSpotifyChanged={reloadAppData} /></DeferredPage>
         : isActivity ? <DeferredPage><ActivityPage notifications={notifications} onRead={async (ids) => { await markNotificationsRead(ids); await reloadAppData(); }} onOpenFriends={() => changePage("friends")} /></DeferredPage>
-        : isFriends ? <DeferredPage><FriendsPage friends={friends} requests={friendRequests} invitations={concertInvitations} onSearch={searchProfiles} onSendRequest={(userId) => runSocialAction(() => sendFriendRequest(userId))} onRespondRequest={(requestId, accept) => runSocialAction(() => respondFriendRequest(requestId, accept))} onRequestRemoveFriend={(friend) => { setSaveError(""); setConfirmRemoveFriend(friend); }} onRespondInvitation={(concertId, accept, bought) => runSocialAction(() => respondConcertInvitation(concertId, accept, bought))} /></DeferredPage> : isStats ? <>{statsScopeControl}<DeferredPage><StatsPage historyItems={scopedHistoryItems} onOpenVenue={openVenueDetail} onOpenYearReview={openYearReview} /></DeferredPage></> : (
+        : isFriends ? <DeferredPage><FriendsPage friends={friends} requests={friendRequests} invitations={concertInvitations} onSearch={searchProfiles} onSendRequest={(userId) => runSocialAction(() => sendFriendRequest(userId))} onRespondRequest={(requestId, accept) => runSocialAction(() => respondFriendRequest(requestId, accept))} onRequestRemoveFriend={(friend) => { setSaveError(""); setConfirmRemoveFriend(friend); }} onRespondInvitation={(concertId, accept, bought) => runSocialAction(() => respondConcertInvitation(concertId, accept, bought))} /></DeferredPage> : isStats ? <>{headerControlsNode && statsScopeControl && createPortal(statsScopeControl, headerControlsNode)}<DeferredPage><StatsPage historyItems={scopedHistoryItems} onOpenArtist={openArtistDetail} onOpenVenue={openVenueDetail} onOpenYearReview={openYearReview} /></DeferredPage></> : (
           <>
-            <div className="sticky top-0 z-10 mb-8 border-y border-zinc-800 bg-zinc-950/90 py-3 backdrop-blur">
-              <div className="mx-auto max-w-6xl space-y-2 px-4 md:space-y-0 md:px-0">
+            {headerControlsNode && createPortal(<div className="w-full space-y-2 md:space-y-0">
 
                 {/* Mobile layout */}
                 <div className="flex items-center gap-2 md:hidden">
-                  <div className="flex flex-1 items-center gap-2 rounded-full border border-zinc-700 bg-zinc-900 px-3 py-2.5 min-w-0">
+                  <div className="adn-search-field flex h-12 min-w-0 flex-1 items-center gap-2 rounded-md border border-[#30343a] bg-[#15191e] px-3">
                     <Icon type="search" />
                     <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search…" className="w-full min-w-0 bg-transparent text-sm text-zinc-100 outline-none placeholder:text-zinc-500" aria-label="Search concerts" />
                   </div>
-                  {isNext && <CalendarExportMenu items={nextItems} compact />}
+                  {isNext ? <CalendarExportMenu items={nextItems} compact iconOnly /> : <ConcertSortMenu value={sortMode} onChange={setSortMode} compact iconOnly />}
                 </div>
-                {!isNext && (
-                  <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2 md:hidden">
-                    <ConcertSortMenu value={sortMode} onChange={setSortMode} compact />
-                    <button onClick={() => changePage("timeline")} className="rounded-full border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-zinc-100 transition hover:border-zinc-500" aria-label="Open concert timeline" title="Timeline"><i className="fa-solid fa-timeline" aria-hidden="true" /></button>
-                  </div>
-                )}
 
                 {/* Desktop layout */}
-                <div className={`hidden md:grid gap-3 ${isNext ? "md:grid-cols-[1fr_180px]" : "md:grid-cols-[1fr_280px]"}`}>
-                  <div className="flex items-center gap-3 rounded-full border border-zinc-700 bg-zinc-900 px-5 py-3 shadow-2xl">
+                <div className="hidden gap-3 md:grid md:grid-cols-[minmax(18rem,1fr)_auto]">
+                  <div className="adn-search-field flex h-12 items-center gap-3 rounded-md border border-[#30343a] bg-[#15191e] px-5">
                     <Icon type="search" />
                     <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search artist, venue, festival, city or date" className="w-full bg-transparent text-base text-zinc-100 outline-none placeholder:text-zinc-500" aria-label="Search concerts" />
                   </div>
-                  {!isNext && (
-                    <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2">
-                      <ConcertSortMenu value={sortMode} onChange={setSortMode} />
-                      <button onClick={() => changePage("timeline")} className="rounded-full border border-zinc-700 bg-zinc-900 px-4 py-3 text-zinc-100 shadow-2xl transition hover:border-zinc-500" aria-label="Open concert timeline" title="Timeline"><i className="fa-solid fa-timeline" aria-hidden="true" /></button>
-                    </div>
-                  )}
-                  {isNext && <CalendarExportMenu items={nextItems} />}
+                  {isNext ? <CalendarExportMenu items={nextItems} iconOnly /> : <ConcertSortMenu value={sortMode} onChange={setSortMode} iconOnly />}
                 </div>
-              </div>
-            </div>
+            </div>, headerControlsNode)}
 
             {isNext ? (
               <>
@@ -2086,7 +2147,7 @@ export default function App() {
                 />
               </>
             ) : (
-            <><div className="mb-4 flex items-center justify-between text-xs font-bold uppercase tracking-widest text-zinc-500"><span>{filtered.length} {filtered.length === 1 ? "artist" : "artists"}</span><span>{filtered.reduce((total, item) => total + (item.shows?.length || 0), 0)} concerts</span></div><section className="grid w-full gap-4 md:grid-cols-2 xl:grid-cols-3">
+            <><section className="grid w-full gap-4 md:grid-cols-2 xl:grid-cols-3">
               {filtered.map((item) => (
                 <article key={item.artist + (isNext ? item.date : "")} className="adn-artist-card group w-full min-w-0 rounded-3xl border border-zinc-800 bg-zinc-900 p-5 shadow-xl">
                   <div className="flex items-start justify-between gap-4 border-b border-zinc-800 pb-4">
@@ -2110,7 +2171,7 @@ export default function App() {
                         ? { mode: "next", artist: item.artist, date: item.date, bought: item.bought, venue: item.venue || "" }
                         : { mode: "history", artist: item.artist, show, venue, date, setlistId };
                       const storedConcert = concertItems.find((concert) => concertMatches(concert, target));
-                      const concertTarget = { ...target, concertId: storedConcert?.concertId, canEditEvent: storedConcert?.canEditEvent, attendees: storedConcert?.attendees || [], attendeeUsers: storedConcert?.attendeeUsers || [], guestAttendees: storedConcert?.guestAttendees || [], setlistId: storedConcert?.setlistId || setlistId, ticketUrl: storedConcert?.ticketUrl || "" };
+                      const concertTarget = { ...target, concertId: storedConcert?.concertId, city: storedConcert?.city || "", country: storedConcert?.country || "", canEditEvent: storedConcert?.canEditEvent, attendees: storedConcert?.attendees || [], attendeeUsers: storedConcert?.attendeeUsers || [], guestAttendees: storedConcert?.guestAttendees || [], setlistId: storedConcert?.setlistId || setlistId, ticketUrl: storedConcert?.ticketUrl || "" };
                       let touchTimer = null, touchMoved = false, longPressed = false;
                       return (
                         <div
@@ -2179,6 +2240,7 @@ export default function App() {
       />
       <CalendarConcertModal
         target={calendarTarget}
+        artistImages={artistImages}
         onClose={() => setCalendarTarget(null)}
         onEdit={canEdit ? (target) => { setCalendarTarget(null); setEditTarget(target); } : null}
       />

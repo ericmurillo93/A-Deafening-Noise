@@ -10,14 +10,18 @@
         "Ester",
         "Lin Yu"
       ],
-      "setlistId": "1bfe9508"
+      "setlistId": "1bfe9508",
+      "city": "Barcelona",
+      "country": "ES"
     },
     {
       "date": "10/11/2017",
       "venue": "SALA BIKINI",
       "artist": "AGENT FRESCO",
       "bought": true,
-      "setlistId": "63e09e47"
+      "setlistId": "63e09e47",
+      "city": "Barcelona",
+      "country": "ES"
     },
     {
       "date": "28/06/2023",
@@ -28,28 +32,36 @@
         "Dimas",
         "Jano"
       ],
-      "setlistId": "6ba7b612"
+      "setlistId": "6ba7b612",
+      "city": "Viveiro",
+      "country": "ES"
     },
     {
       "date": "01/07/2017",
       "venue": "BE PROG! MY FRIEND",
       "artist": "ANATHEMA",
       "bought": true,
-      "setlistId": "4be43f22"
+      "setlistId": "4be43f22",
+      "city": "Barcelona",
+      "country": "ES"
     },
     {
       "date": "30/06/2017",
       "venue": "BE PROG! MY FRIEND",
       "artist": "ANIMALS AS LEADERS",
       "bought": true,
-      "setlistId": "6be4c6c6"
+      "setlistId": "6be4c6c6",
+      "city": "Barcelona",
+      "country": "ES"
     },
     {
       "date": "30/06/2019",
       "venue": "DOWNLOAD FESTIVAL MADRID",
       "artist": "ARCHITECTS",
       "bought": true,
-      "setlistId": "73916a79"
+      "setlistId": "73916a79",
+      "city": "Madrid",
+      "country": "ES"
     },
     {
       "date": "01/07/2023",
@@ -60,7 +72,9 @@
         "Dimas",
         "Jano"
       ],
-      "setlistId": "13a78d09"
+      "setlistId": "13a78d09",
+      "city": "Viveiro",
+      "country": "ES"
     },
     {
       "date": "21/06/2026",
@@ -71,7 +85,9 @@
         "Luca",
         "Jano"
       ],
-      "setlistId": "34f3d1b"
+      "setlistId": "34f3d1b",
+      "city": "Clisson",
+      "country": "FR"
     },
     {
       "date": "25/11/2013",
@@ -82,7 +98,9 @@
         "Galcerán",
         "Rubén"
       ],
-      "setlistId": "23c4c01b"
+      "setlistId": "23c4c01b",
+      "city": "Badalona",
+      "country": "ES"
     },
     {
       "date": "24/06/2017",
@@ -92,14 +110,18 @@
       "attendees": [
         "Claudia"
       ],
-      "setlistId": "4be4f706"
+      "setlistId": "4be4f706",
+      "city": "Madrid",
+      "country": "ES"
     },
     {
       "date": "25/03/2018",
       "venue": "SALA BIKINI",
       "artist": "AVATAR",
       "bought": true,
-      "setlistId": "23ef08b7"
+      "setlistId": "23ef08b7",
+      "city": "Barcelona",
+      "country": "ES"
     },
     {
       "date": "05/07/2025",
@@ -109,21 +131,27 @@
       "attendees": [
         "Raúl"
       ],
-      "setlistId": "4353db9f"
+      "setlistId": "4353db9f",
+      "city": "Madrid",
+      "country": "ES"
     },
     {
       "date": "24/02/2026",
       "venue": "RAZZMATAZZ",
       "artist": "AVATAR",
       "bought": true,
-      "setlistId": "534697c5"
+      "setlistId": "534697c5",
+      "city": "Barcelona",
+      "country": "ES"
     },
     {
       "date": "20/10/2010",
       "venue": "SANT JORDI CLUB",
       "artist": "AVENGED SEVENFOLD",
       "bought": true,
-      "setlistId": "6bd50ed6"
+      "setlistId": "6bd50ed6",
+      "city": "Barcelona",
+      "country": "ES"
     },
     {
       "date": "25/11/2013",
@@ -134,14 +162,18 @@
         "Galcerán",
         "Rubén"
       ],
-      "setlistId": "1bc4c5b4"
+      "setlistId": "1bc4c5b4",
+      "city": "Badalona",
+      "country": "ES"
     },
     {
       "date": "11/06/2024",
       "venue": "ST. JAKOBSHALLE BASEL",
       "artist": "AVENGED SEVENFOLD",
       "bought": true,
-      "setlistId": "3bab9848"
+      "setlistId": "3bab9848",
+      "city": "Basel",
+      "country": "CH"
     },
     {
       "date": "29/06/2024",
@@ -152,14 +184,18 @@
         "Dimas",
         "Jano"
       ],
-      "setlistId": "2babd8ca"
+      "setlistId": "2babd8ca",
+      "city": "Viveiro",
+      "country": "ES"
     },
     {
       "date": "29/06/2018",
       "venue": "BE PROG! MY FRIEND",
       "artist": "A PERFECT CIRCLE",
       "bought": true,
-      "setlistId": "4bea1766"
+      "setlistId": "4bea1766",
+      "city": "Barcelona",
+      "country": "ES"
     },
     {
       "date": "20/06/2026",
@@ -170,14 +206,18 @@
         "Luca",
         "Jano"
       ],
-      "setlistId": "1b4f3dec"
+      "setlistId": "1b4f3dec",
+      "city": "Clisson",
+      "country": "FR"
     },
     {
       "date": "29/06/2018",
       "venue": "BE PROG! MY FRIEND",
       "artist": "BARONESS",
       "bought": true,
-      "setlistId": "4bea17f6"
+      "setlistId": "4bea17f6",
+      "city": "Barcelona",
+      "country": "ES"
     },
     {
       "date": "28/06/2023",
@@ -188,7 +228,9 @@
         "Dimas",
         "Jano"
       ],
-      "setlistId": "6ba7b61a"
+      "setlistId": "6ba7b61a",
+      "city": "Viveiro",
+      "country": "ES"
     },
     {
       "date": "20/06/2026",
@@ -198,21 +240,27 @@
       "attendees": [
         "Luca",
         "Jano"
-      ]
+      ],
+      "city": "Clisson",
+      "country": "FR"
     },
     {
       "date": "04/02/2017",
       "venue": "RAZZMATAZZ",
       "artist": "BETWEEN THE BURIED AND ME",
       "bought": true,
-      "setlistId": "73f826f9"
+      "setlistId": "73f826f9",
+      "city": "Barcelona",
+      "country": "ES"
     },
     {
       "date": "06/07/2022",
       "venue": "MONTREUX JAZZ FESTIVAL",
       "artist": "BLACK PUMAS",
       "bought": true,
-      "setlistId": "73b522ed"
+      "setlistId": "73b522ed",
+      "city": "Montreux",
+      "country": "CH"
     },
     {
       "date": "11/12/2024",
@@ -222,7 +270,9 @@
       "attendees": [
         "Luca"
       ],
-      "setlistId": "235e44ab"
+      "setlistId": "235e44ab",
+      "city": "Zürich",
+      "country": "CH"
     },
     {
       "date": "09/06/2023",
@@ -233,7 +283,9 @@
         "Dimas",
         "Jano"
       ],
-      "setlistId": "13b97d81"
+      "setlistId": "13b97d81",
+      "city": "Viveiro",
+      "country": "ES"
     },
     {
       "date": "30/10/2016",
@@ -243,7 +295,9 @@
       "attendees": [
         "Claudia"
       ],
-      "setlistId": "3bf6ec54"
+      "setlistId": "3bf6ec54",
+      "city": "London",
+      "country": "GB"
     },
     {
       "date": "03/07/2022",
@@ -254,7 +308,9 @@
         "Dimas",
         "Jano"
       ],
-      "setlistId": "33b5c8d1"
+      "setlistId": "33b5c8d1",
+      "city": "Viveiro",
+      "country": "ES"
     },
     {
       "date": "27/06/2024",
@@ -265,7 +321,9 @@
         "Dimas",
         "Jano"
       ],
-      "setlistId": "bab892e"
+      "setlistId": "bab892e",
+      "city": "Viveiro",
+      "country": "ES"
     },
     {
       "date": "18/06/2026",
@@ -275,14 +333,18 @@
       "attendees": [
         "Luca",
         "Jano"
-      ]
+      ],
+      "city": "Clisson",
+      "country": "FR"
     },
     {
       "date": "30/06/2017",
       "venue": "BE PROG! MY FRIEND",
       "artist": "CALIGULA'S HORSE",
       "bought": true,
-      "setlistId": "63e4c6c7"
+      "setlistId": "63e4c6c7",
+      "city": "Barcelona",
+      "country": "ES"
     },
     {
       "date": "22/06/2017",
@@ -292,7 +354,9 @@
       "attendees": [
         "Claudia"
       ],
-      "setlistId": "13e481a1"
+      "setlistId": "13e481a1",
+      "city": "Madrid",
+      "country": "ES"
     },
     {
       "date": "01/07/2023",
@@ -303,21 +367,27 @@
         "Dimas",
         "Jano"
       ],
-      "setlistId": "1ba78d0c"
+      "setlistId": "1ba78d0c",
+      "city": "Viveiro",
+      "country": "ES"
     },
     {
       "date": "04/02/2017",
       "venue": "RAZZMATAZZ",
       "artist": "DEVIN TOWNSEND",
       "bought": true,
-      "setlistId": "4bf827f2"
+      "setlistId": "4bf827f2",
+      "city": "Barcelona",
+      "country": "ES"
     },
     {
       "date": "01/07/2017",
       "venue": "BE PROG! MY FRIEND",
       "artist": "DEVIN TOWNSEND",
       "bought": true,
-      "setlistId": "43e43f23"
+      "setlistId": "43e43f23",
+      "city": "Barcelona",
+      "country": "ES"
     },
     {
       "date": "24/02/2012",
@@ -328,21 +398,27 @@
         "Raúl",
         "Iván"
       ],
-      "setlistId": "53deffc1"
+      "setlistId": "53deffc1",
+      "city": "Barcelona",
+      "country": "ES"
     },
     {
       "date": "28/04/2017",
       "venue": "RAZZMATAZZ",
       "artist": "DREAM THEATER",
       "bought": true,
-      "setlistId": "be6057e"
+      "setlistId": "be6057e",
+      "city": "Barcelona",
+      "country": "ES"
     },
     {
       "date": "14/02/2020",
       "venue": "SAMSUNG HALL, ZÚRICH",
       "artist": "DREAM THEATER",
       "bought": true,
-      "setlistId": "2b9824ea"
+      "setlistId": "2b9824ea",
+      "city": "Dübendorf",
+      "country": "CH"
     },
     {
       "date": "20/03/2016",
@@ -352,7 +428,9 @@
       "attendees": [
         "Claudia"
       ],
-      "setlistId": "1bf02d0c"
+      "setlistId": "1bf02d0c",
+      "city": "Barcelona",
+      "country": "ES"
     },
     {
       "date": "30/10/2016",
@@ -362,35 +440,45 @@
       "attendees": [
         "Claudia"
       ],
-      "setlistId": "5bfaefe4"
+      "setlistId": "5bfaefe4",
+      "city": "London",
+      "country": "GB"
     },
     {
       "date": "06/11/2025",
       "venue": "RAZZMATAZZ",
       "artist": "ENTER SHIKARI",
       "bought": true,
-      "setlistId": "1b423944"
+      "setlistId": "1b423944",
+      "city": "Barcelona",
+      "country": "ES"
     },
     {
       "date": "03/06/2022",
       "venue": "GIRONA",
       "artist": "ESTOPA",
       "bought": true,
-      "setlistId": "1b44bd74"
+      "setlistId": "1b44bd74",
+      "city": "Girona",
+      "country": "ES"
     },
     {
       "date": "10/07/2024",
       "venue": "ESTADI OLÍMPIC LLUÍS COMPANYS",
       "artist": "ESTOPA",
       "bought": true,
-      "setlistId": "1356357d"
+      "setlistId": "1356357d",
+      "city": "Barcelona",
+      "country": "ES"
     },
     {
       "date": "17/05/2025",
       "venue": "MALEDUCATS 2025",
       "artist": "ESTOPA",
       "bought": true,
-      "setlistId": "2347e0ff"
+      "setlistId": "2347e0ff",
+      "city": "Barcelona",
+      "country": "ES"
     },
     {
       "date": "29/06/2023",
@@ -401,21 +489,27 @@
         "Dimas",
         "Jano"
       ],
-      "setlistId": "4ba7b7da"
+      "setlistId": "4ba7b7da",
+      "city": "Viveiro",
+      "country": "ES"
     },
     {
       "date": "02/07/2025",
       "venue": "POBLE ESPANYOL",
       "artist": "GUITARRICADELAFUENTE",
       "bought": true,
-      "setlistId": "1b5fa908"
+      "setlistId": "1b5fa908",
+      "city": "Barcelona",
+      "country": "ES"
     },
     {
       "date": "27/09/2024",
       "venue": "BE PROG! MY FRIEND",
       "artist": "HAKEN",
       "bought": true,
-      "setlistId": "23537c37"
+      "setlistId": "23537c37",
+      "city": "Barcelona",
+      "country": "ES"
     },
     {
       "date": "03/07/2022",
@@ -426,14 +520,18 @@
         "Dimas",
         "Jano"
       ],
-      "setlistId": "6bb5d24e"
+      "setlistId": "6bb5d24e",
+      "city": "Viveiro",
+      "country": "ES"
     },
     {
       "date": "30/06/2018",
       "venue": "BE PROG! MY FRIEND",
       "artist": "GAZPACHO",
       "bought": true,
-      "setlistId": "3ea0d37"
+      "setlistId": "3ea0d37",
+      "city": "Barcelona",
+      "country": "ES"
     },
     {
       "date": "28/06/2023",
@@ -444,7 +542,9 @@
         "Dimas",
         "Jano"
       ],
-      "setlistId": "33a7b4f1"
+      "setlistId": "33a7b4f1",
+      "city": "Viveiro",
+      "country": "ES"
     },
     {
       "date": "22/06/2017",
@@ -454,7 +554,9 @@
       "attendees": [
         "Claudia"
       ],
-      "setlistId": "23e4845f"
+      "setlistId": "23e4845f",
+      "city": "Madrid",
+      "country": "ES"
     },
     {
       "date": "02/07/2022",
@@ -465,7 +567,9 @@
         "Dimas",
         "Jano"
       ],
-      "setlistId": "43b5db8f"
+      "setlistId": "43b5db8f",
+      "city": "Viveiro",
+      "country": "ES"
     },
     {
       "date": "01/07/2018",
@@ -475,7 +579,9 @@
       "attendees": [
         "Raúl"
       ],
-      "setlistId": "2bea0456"
+      "setlistId": "2bea0456",
+      "city": "Barcelona",
+      "country": "ES"
     },
     {
       "date": "24/06/2017",
@@ -485,7 +591,9 @@
       "attendees": [
         "Claudia"
       ],
-      "setlistId": "53e4f711"
+      "setlistId": "53e4f711",
+      "city": "Madrid",
+      "country": "ES"
     },
     {
       "date": "22/11/2017",
@@ -495,7 +603,9 @@
       "attendees": [
         "Guille"
       ],
-      "setlistId": "3be0d0a0"
+      "setlistId": "3be0d0a0",
+      "city": "Barcelona",
+      "country": "ES"
     },
     {
       "date": "05/07/2025",
@@ -505,7 +615,9 @@
       "attendees": [
         "Raúl"
       ],
-      "setlistId": "1353d949"
+      "setlistId": "1353d949",
+      "city": "Madrid",
+      "country": "ES"
     },
     {
       "date": "22/06/2017",
@@ -515,28 +627,36 @@
       "attendees": [
         "Claudia"
       ],
-      "setlistId": "3be4844c"
+      "setlistId": "3be4844c",
+      "city": "Madrid",
+      "country": "ES"
     },
     {
       "date": "01/07/2017",
       "venue": "BE PROG! MY FRIEND",
       "artist": "JARDIN DE LA CROIX",
       "bought": true,
-      "setlistId": "43e43f27"
+      "setlistId": "43e43f27",
+      "city": "Barcelona",
+      "country": "ES"
     },
     {
       "date": "01/07/2017",
       "venue": "BE PROG! MY FRIEND",
       "artist": "JETHRO TULL",
       "bought": true,
-      "setlistId": "2be4c08e"
+      "setlistId": "2be4c08e",
+      "city": "Barcelona",
+      "country": "ES"
     },
     {
       "date": "11/03/2023",
       "venue": "SALLE MÉTROPOLE LAUSANNE",
       "artist": "JETHRO TULL",
       "bought": true,
-      "setlistId": "13ba69d1"
+      "setlistId": "13ba69d1",
+      "city": "Lausanne",
+      "country": "CH"
     },
     {
       "date": "01/07/2022",
@@ -547,7 +667,9 @@
         "Dimas",
         "Jano"
       ],
-      "setlistId": "2bb59c9a"
+      "setlistId": "2bb59c9a",
+      "city": "Viveiro",
+      "country": "ES"
     },
     {
       "date": "01/08/2022",
@@ -557,7 +679,9 @@
       "attendees": [
         "Luca"
       ],
-      "setlistId": "43b207eb"
+      "setlistId": "43b207eb",
+      "city": "Geneva",
+      "country": "CH"
     },
     {
       "date": "24/06/2017",
@@ -567,70 +691,90 @@
       "attendees": [
         "Claudia"
       ],
-      "setlistId": "7be4f6b8"
+      "setlistId": "7be4f6b8",
+      "city": "Madrid",
+      "country": "ES"
     },
     {
       "date": "15/02/2019",
       "venue": "RAZZMATAZZ",
       "artist": "KVELERTAK",
       "bought": true,
-      "setlistId": "63924a8b"
+      "setlistId": "63924a8b",
+      "city": "Barcelona",
+      "country": "ES"
     },
     {
       "date": "26/02/2022",
       "venue": "LA RIVIERA",
       "artist": "LA MARAVILLOSA ORQUESTA DEL ALCOHOL",
       "bought": true,
-      "setlistId": "4388bf8b"
+      "setlistId": "4388bf8b",
+      "city": "Madrid",
+      "country": "ES"
     },
     {
       "date": "15/09/2023",
       "venue": "GRANADA SOUND",
       "artist": "LA MARAVILLOSA ORQUESTA DEL ALCOHOL",
       "bought": true,
-      "setlistId": "5ba27f00"
+      "setlistId": "5ba27f00",
+      "city": "Granada",
+      "country": "ES"
     },
     {
       "date": "13/02/2026",
       "venue": "RAZZMATAZZ",
       "artist": "LA MARAVILLOSA ORQUESTA DEL ALCOHOL",
       "bought": true,
-      "setlistId": "7b5a7238"
+      "setlistId": "7b5a7238",
+      "city": "Barcelona",
+      "country": "ES"
     },
     {
       "date": "04/02/2017",
       "venue": "RAZZMATAZZ",
       "artist": "LEPROUS",
       "bought": true,
-      "setlistId": "5bf827f0"
+      "setlistId": "5bf827f0",
+      "city": "Barcelona",
+      "country": "ES"
     },
     {
       "date": "01/07/2017",
       "venue": "BE PROG! MY FRIEND",
       "artist": "LEPROUS",
       "bought": true,
-      "setlistId": "53e43f21"
+      "setlistId": "53e43f21",
+      "city": "Barcelona",
+      "country": "ES"
     },
     {
       "date": "10/11/2017",
       "venue": "SALA BIKINI",
       "artist": "LEPROUS",
       "bought": true,
-      "setlistId": "73e0ae75"
+      "setlistId": "73e0ae75",
+      "city": "Barcelona",
+      "country": "ES"
     },
     {
       "date": "29/06/2019",
       "venue": "DOWNLOAD FESTIVAL MADRID",
       "artist": "LEPROUS",
       "bought": true,
-      "setlistId": "5b916b84"
+      "setlistId": "5b916b84",
+      "city": "Madrid",
+      "country": "ES"
     },
     {
       "date": "16/11/2019",
       "venue": "SALA APOLO",
       "artist": "LEPROUS",
       "bought": true,
-      "setlistId": "239ad06b"
+      "setlistId": "239ad06b",
+      "city": "Barcelona",
+      "country": "ES"
     },
     {
       "date": "11/02/2020",
@@ -640,14 +784,18 @@
       "attendees": [
         "Luca"
       ],
-      "setlistId": "2b983046"
+      "setlistId": "2b983046",
+      "city": "Fribourg",
+      "country": "CH"
     },
     {
       "date": "10/12/2021",
       "venue": "SALA APOLO",
       "artist": "LEPROUS",
       "bought": true,
-      "setlistId": "1b8b91f4"
+      "setlistId": "1b8b91f4",
+      "city": "Barcelona",
+      "country": "ES"
     },
     {
       "date": "26/02/2023",
@@ -658,7 +806,9 @@
         "Luca",
         "Vivien"
       ],
-      "setlistId": "6bbab66a"
+      "setlistId": "6bbab66a",
+      "city": "Lausanne",
+      "country": "CH"
     },
     {
       "date": "22/06/2017",
@@ -668,7 +818,9 @@
       "attendees": [
         "Claudia"
       ],
-      "setlistId": "63e0ee4b"
+      "setlistId": "63e0ee4b",
+      "city": "Madrid",
+      "country": "ES"
     },
     {
       "date": "26/06/2024",
@@ -679,14 +831,18 @@
         "Dimas",
         "Jano"
       ],
-      "setlistId": "13ab890d"
+      "setlistId": "13ab890d",
+      "city": "Viveiro",
+      "country": "ES"
     },
     {
       "date": "30/06/2017",
       "venue": "BE PROG! MY FRIEND",
       "artist": "MARILLION",
       "bought": true,
-      "setlistId": "73e4c6c5"
+      "setlistId": "73e4c6c5",
+      "city": "Barcelona",
+      "country": "ES"
     },
     {
       "date": "23/06/2017",
@@ -696,14 +852,18 @@
       "attendees": [
         "Claudia"
       ],
-      "setlistId": "3be48c88"
+      "setlistId": "3be48c88",
+      "city": "Madrid",
+      "country": "ES"
     },
     {
       "date": "15/02/2019",
       "venue": "RAZZMATAZZ",
       "artist": "MASTODON",
       "bought": true,
-      "setlistId": "3956d1f"
+      "setlistId": "3956d1f",
+      "city": "Barcelona",
+      "country": "ES"
     },
     {
       "date": "02/07/2022",
@@ -714,7 +874,9 @@
         "Dimas",
         "Jano"
       ],
-      "setlistId": "43b5db57"
+      "setlistId": "43b5db57",
+      "city": "Viveiro",
+      "country": "ES"
     },
     {
       "date": "19/06/2026",
@@ -724,7 +886,9 @@
       "attendees": [
         "Luca",
         "Jano"
-      ]
+      ],
+      "city": "Clisson",
+      "country": "FR"
     },
     {
       "date": "15/07/2024",
@@ -734,7 +898,9 @@
       "attendees": [
         "Luca"
       ],
-      "setlistId": "5ba91708"
+      "setlistId": "5ba91708",
+      "city": "Montreux",
+      "country": "CH"
     },
     {
       "date": "29/06/2024",
@@ -745,7 +911,9 @@
         "Dimas",
         "Jano"
       ],
-      "setlistId": "5babd3dc"
+      "setlistId": "5babd3dc",
+      "city": "Viveiro",
+      "country": "ES"
     },
     {
       "date": "30/06/2023",
@@ -756,7 +924,9 @@
         "Dimas",
         "Jano"
       ],
-      "setlistId": "7ba7ba40"
+      "setlistId": "7ba7ba40",
+      "city": "Viveiro",
+      "country": "ES"
     },
     {
       "date": "21/03/2024",
@@ -766,63 +936,81 @@
       "attendees": [
         "Vivien"
       ],
-      "setlistId": "13ab2d51"
+      "setlistId": "13ab2d51",
+      "city": "Lausanne",
+      "country": "CH"
     },
     {
       "date": "06/07/2022",
       "venue": "MONTREUX JAZZ FESTIVAL",
       "artist": "MICHAEL KIWANUKA",
       "bought": true,
-      "setlistId": "7bb522ec"
+      "setlistId": "7bb522ec",
+      "city": "Montreux",
+      "country": "CH"
     },
     {
       "date": "19/07/2024",
       "venue": "MONTREUX JAZZ FESTIVAL",
       "artist": "MICHAEL KIWANUKA",
       "bought": true,
-      "setlistId": "6bab5e7a"
+      "setlistId": "6bab5e7a",
+      "city": "Montreux",
+      "country": "CH"
     },
     {
       "date": "30/06/2017",
       "venue": "BE PROG! MY FRIEND",
       "artist": "MIKE PORTNOY - SHATTERED FORTRESS",
       "bought": true,
-      "setlistId": "13e4c525"
+      "setlistId": "13e4c525",
+      "city": "Barcelona",
+      "country": "ES"
     },
     {
       "date": "07/07/2025",
       "venue": "LES NITS DE BARCELONA 2025 - JARDINS DEL PALAU DE PEDRALBES",
       "artist": "MORCHEEBA",
       "bought": true,
-      "setlistId": "35d656f"
+      "setlistId": "35d656f",
+      "city": "Barcelona",
+      "country": "ES"
     },
     {
       "date": "25/04/2025",
       "venue": "PALAU DE LA MÚSICA CATALANA",
       "artist": "MORGAN",
       "bought": true,
-      "setlistId": "635f0e13"
+      "setlistId": "635f0e13",
+      "city": "Barcelona",
+      "country": "ES"
     },
     {
       "date": "12/07/2023",
       "venue": "BERN",
       "artist": "MUSE",
       "bought": true,
-      "setlistId": "4ba71f46"
+      "setlistId": "4ba71f46",
+      "city": "Bern",
+      "country": "CH"
     },
     {
       "date": "14/06/2025",
       "venue": "SÓNAR 2025",
       "artist": "NATHY PELUSO",
       "bought": true,
-      "setlistId": "535d5f05"
+      "setlistId": "535d5f05",
+      "city": "Barcelona",
+      "country": "ES"
     },
     {
       "date": "14/02/2026",
       "venue": "PALAU SANT JORDI",
       "artist": "NATHY PELUSO",
       "bought": true,
-      "setlistId": "5341fb6d"
+      "setlistId": "5341fb6d",
+      "city": "Barcelona",
+      "country": "ES"
     },
     {
       "date": "22/11/2017",
@@ -832,7 +1020,9 @@
       "attendees": [
         "Guille"
       ],
-      "setlistId": "23e038f7"
+      "setlistId": "23e038f7",
+      "city": "Barcelona",
+      "country": "ES"
     },
     {
       "date": "23/06/2017",
@@ -842,28 +1032,36 @@
       "attendees": [
         "Claudia"
       ],
-      "setlistId": "be4fd1e"
+      "setlistId": "be4fd1e",
+      "city": "Madrid",
+      "country": "ES"
     },
     {
       "date": "08/04/2017",
       "venue": "SALA BIKINI",
       "artist": "PAIN OF SALVATION",
       "bought": true,
-      "setlistId": "53e68365"
+      "setlistId": "53e68365",
+      "city": "Barcelona",
+      "country": "ES"
     },
     {
       "date": "29/06/2018",
       "venue": "BE PROG! MY FRIEND",
       "artist": "PAIN OF SALVATION",
       "bought": true,
-      "setlistId": "43ea17f7"
+      "setlistId": "43ea17f7",
+      "city": "Barcelona",
+      "country": "ES"
     },
     {
       "date": "28/09/2024",
       "venue": "BE PROG! MY FRIEND",
       "artist": "PAIN OF SALVATION",
       "bought": true,
-      "setlistId": "2b537c9a"
+      "setlistId": "2b537c9a",
+      "city": "Barcelona",
+      "country": "ES"
     },
     {
       "date": "29/06/2023",
@@ -874,7 +1072,9 @@
         "Dimas",
         "Jano"
       ],
-      "setlistId": "13a7b915"
+      "setlistId": "13a7b915",
+      "city": "Viveiro",
+      "country": "ES"
     },
     {
       "date": "30/06/2023",
@@ -885,7 +1085,9 @@
         "Dimas",
         "Jano"
       ],
-      "setlistId": "13a79d15"
+      "setlistId": "13a79d15",
+      "city": "Viveiro",
+      "country": "ES"
     },
     {
       "date": "18/06/2026",
@@ -895,7 +1097,9 @@
       "attendees": [
         "Luca",
         "Jano"
-      ]
+      ],
+      "city": "Clisson",
+      "country": "FR"
     },
     {
       "date": "01/07/2023",
@@ -906,14 +1110,18 @@
         "Dimas",
         "Jano"
       ],
-      "setlistId": "1ba78d04"
+      "setlistId": "1ba78d04",
+      "city": "Viveiro",
+      "country": "ES"
     },
     {
       "date": "30/06/2018",
       "venue": "BE PROG! MY FRIEND",
       "artist": "PLINI",
       "bought": true,
-      "setlistId": "1bea0d2c"
+      "setlistId": "1bea0d2c",
+      "city": "Barcelona",
+      "country": "ES"
     },
     {
       "date": "12/06/2024",
@@ -923,7 +1131,9 @@
       "attendees": [
         "Luca"
       ],
-      "setlistId": "4b57b78a"
+      "setlistId": "4b57b78a",
+      "city": "Lausanne",
+      "country": "CH"
     },
     {
       "date": "22/11/2017",
@@ -933,7 +1143,9 @@
       "attendees": [
         "Guille"
       ],
-      "setlistId": "23e038f3"
+      "setlistId": "23e038f3",
+      "city": "Barcelona",
+      "country": "ES"
     },
     {
       "date": "24/05/2023",
@@ -943,7 +1155,9 @@
       "attendees": [
         "Jeremiah"
       ],
-      "setlistId": "4bb91f4e"
+      "setlistId": "4bb91f4e",
+      "city": "Zürich",
+      "country": "CH"
     },
     {
       "date": "12/06/2024",
@@ -953,7 +1167,9 @@
       "attendees": [
         "Luca"
       ],
-      "setlistId": "5357b799"
+      "setlistId": "5357b799",
+      "city": "Lausanne",
+      "country": "CH"
     },
     {
       "date": "09/11/2022",
@@ -963,28 +1179,36 @@
       "attendees": [
         "Vivien"
       ],
-      "setlistId": "43be73bf"
+      "setlistId": "43be73bf",
+      "city": "Zürich",
+      "country": "CH"
     },
     {
       "date": "19/07/2018",
       "venue": "POBLE ESPANYOL",
       "artist": "RESIDENTE",
       "bought": true,
-      "setlistId": "13ebd941"
+      "setlistId": "13ebd941",
+      "city": "Barcelona",
+      "country": "ES"
     },
     {
       "date": "14/09/2024",
       "venue": "PALAU SANT JORDI",
       "artist": "RESIDENTE",
       "bought": true,
-      "setlistId": "7ba89ed8"
+      "setlistId": "7ba89ed8",
+      "city": "Barcelona",
+      "country": "ES"
     },
     {
       "date": "14/07/2025",
       "venue": "POBLE ESPANYOL",
       "artist": "RESIDENTE",
       "bought": true,
-      "setlistId": "135f1d09"
+      "setlistId": "135f1d09",
+      "city": "Barcelona",
+      "country": "ES"
     },
     {
       "date": "01/07/2022",
@@ -995,21 +1219,27 @@
         "Dimas",
         "Jano"
       ],
-      "setlistId": "1bb5dd74"
+      "setlistId": "1bb5dd74",
+      "city": "Viveiro",
+      "country": "ES"
     },
     {
       "date": "13/05/2017",
       "venue": "SALAMANDRA",
       "artist": "RIVERSIDE",
       "bought": true,
-      "setlistId": "73e65661"
+      "setlistId": "73e65661",
+      "city": "L’Hospitalet de Llobregat",
+      "country": "ES"
     },
     {
       "date": "05/11/2018",
       "venue": "SALAMANDRA",
       "artist": "RIVERSIDE",
       "bought": true,
-      "setlistId": "3396a0d5"
+      "setlistId": "3396a0d5",
+      "city": "L’Hospitalet de Llobregat",
+      "country": "ES"
     },
     {
       "date": "13/04/2018",
@@ -1019,28 +1249,36 @@
       "attendees": [
         "Raúl"
       ],
-      "setlistId": "bec81fe"
+      "setlistId": "bec81fe",
+      "city": "Barcelona",
+      "country": "ES"
     },
     {
       "date": "25/11/2022",
       "venue": "BRAGA",
       "artist": "ROSALIA",
       "bought": true,
-      "setlistId": "2bbfd432"
+      "setlistId": "2bbfd432",
+      "city": "Braga",
+      "country": "PT"
     },
     {
       "date": "18/04/2026",
       "venue": "PALAU SANT JORDI",
       "artist": "ROSALIA",
       "bought": true,
-      "setlistId": "634c2207"
+      "setlistId": "634c2207",
+      "city": "Barcelona",
+      "country": "ES"
     },
     {
       "date": "20/04/2023",
       "venue": "Z7 - PRATTELN",
       "artist": "SOEN",
       "bought": true,
-      "setlistId": "4bb8c32e"
+      "setlistId": "4bb8c32e",
+      "city": "Pratteln",
+      "country": "CH"
     },
     {
       "date": "24/06/2017",
@@ -1050,21 +1288,27 @@
       "attendees": [
         "Claudia"
       ],
-      "setlistId": "5be4f714"
+      "setlistId": "5be4f714",
+      "city": "Madrid",
+      "country": "ES"
     },
     {
       "date": "25/11/2017",
       "venue": "RAZZMATAZZ 2",
       "artist": "SÓLSTAFIR",
       "bought": true,
-      "setlistId": "63e0e6f3"
+      "setlistId": "63e0e6f3",
+      "city": "Barcelona",
+      "country": "ES"
     },
     {
       "date": "30/06/2018",
       "venue": "BE PROG! MY FRIEND",
       "artist": "SONS OF APOLLO",
       "bought": true,
-      "setlistId": "13ea0d29"
+      "setlistId": "13ea0d29",
+      "city": "Barcelona",
+      "country": "ES"
     },
     {
       "date": "01/07/2023",
@@ -1075,35 +1319,45 @@
         "Dimas",
         "Jano"
       ],
-      "setlistId": "2ba790c2"
+      "setlistId": "2ba790c2",
+      "city": "Viveiro",
+      "country": "ES"
     },
     {
       "date": "30/06/2018",
       "venue": "BE PROG! MY FRIEND",
       "artist": "STEVE HACKETT",
       "bought": true,
-      "setlistId": "bea0d3e"
+      "setlistId": "bea0d3e",
+      "city": "Barcelona",
+      "country": "ES"
     },
     {
       "date": "12/06/2025",
       "venue": "SALA PARAL·LEL 62",
       "artist": "STEVEN WILSON",
       "bought": true,
-      "setlistId": "1b570598"
+      "setlistId": "1b570598",
+      "city": "Barcelona",
+      "country": "ES"
     },
     {
       "date": "05/11/2024",
       "venue": "HALLE 622 ZÜRICH",
       "artist": "SLEEP TOKEN",
       "bought": true,
-      "setlistId": "53536365"
+      "setlistId": "53536365",
+      "city": "Zürich",
+      "country": "CH"
     },
     {
       "date": "29/06/2019",
       "venue": "DOWNLOAD FESTIVAL MADRID",
       "artist": "SLIPKNOT",
       "bought": true,
-      "setlistId": "1b916de4"
+      "setlistId": "1b916de4",
+      "city": "Madrid",
+      "country": "ES"
     },
     {
       "date": "01/08/2022",
@@ -1113,7 +1367,9 @@
       "attendees": [
         "Luca"
       ],
-      "setlistId": "5bb207fc"
+      "setlistId": "5bb207fc",
+      "city": "Geneva",
+      "country": "CH"
     },
     {
       "date": "30/06/2023",
@@ -1124,7 +1380,9 @@
         "Dimas",
         "Jano"
       ],
-      "setlistId": "3a79d17"
+      "setlistId": "3a79d17",
+      "city": "Viveiro",
+      "country": "ES"
     },
     {
       "date": "11/12/2024",
@@ -1134,7 +1392,9 @@
       "attendees": [
         "Luca"
       ],
-      "setlistId": "2babc85a"
+      "setlistId": "2babc85a",
+      "city": "Zürich",
+      "country": "CH"
     },
     {
       "date": "09/02/2026",
@@ -1145,7 +1405,9 @@
         "Ibai",
         "Pau"
       ],
-      "setlistId": "6b400e06"
+      "setlistId": "6b400e06",
+      "city": "Barcelona",
+      "country": "ES"
     },
     {
       "date": "23/06/2017",
@@ -1155,7 +1417,9 @@
       "attendees": [
         "Claudia"
       ],
-      "setlistId": "1be4fd08"
+      "setlistId": "1be4fd08",
+      "city": "Madrid",
+      "country": "ES"
     },
     {
       "date": "26/06/2024",
@@ -1166,7 +1430,9 @@
         "Dimas",
         "Jano"
       ],
-      "setlistId": "13ab8935"
+      "setlistId": "13ab8935",
+      "city": "Viveiro",
+      "country": "ES"
     },
     {
       "date": "20/01/2024",
@@ -1176,7 +1442,9 @@
       "attendees": [
         "Luca"
       ],
-      "setlistId": "53aca7e9"
+      "setlistId": "53aca7e9",
+      "city": "Barcelona",
+      "country": "ES"
     },
     {
       "date": "11/01/2025",
@@ -1186,14 +1454,18 @@
       "attendees": [
         "Luca"
       ],
-      "setlistId": "4b546f9e"
+      "setlistId": "4b546f9e",
+      "city": "Lausanne",
+      "country": "CH"
     },
     {
       "date": "26/09/2025",
       "venue": "BE PROG! MY FRIEND",
       "artist": "TESSERACT",
       "bought": true,
-      "setlistId": "346f153"
+      "setlistId": "346f153",
+      "city": "Barcelona",
+      "country": "ES"
     },
     {
       "date": "28/06/2023",
@@ -1204,7 +1476,9 @@
         "Dimas",
         "Jano"
       ],
-      "setlistId": "33a7b4fd"
+      "setlistId": "33a7b4fd",
+      "city": "Viveiro",
+      "country": "ES"
     },
     {
       "date": "29/01/2022",
@@ -1214,35 +1488,45 @@
       "attendees": [
         "Vivien"
       ],
-      "setlistId": "3388c0f1"
+      "setlistId": "3388c0f1",
+      "city": "Yverdon-les-Bains",
+      "country": "CH"
     },
     {
       "date": "30/06/2019",
       "venue": "DOWNLOAD FESTIVAL MADRID",
       "artist": "TOOL",
       "bought": true,
-      "setlistId": "339168cd"
+      "setlistId": "339168cd",
+      "city": "Madrid",
+      "country": "ES"
     },
     {
       "date": "08/04/2018",
       "venue": "RAZZMATAZZ 2",
       "artist": "TRIVIUM",
       "bought": true,
-      "setlistId": "23eca02b"
+      "setlistId": "23eca02b",
+      "city": "Barcelona",
+      "country": "ES"
     },
     {
       "date": "16/09/2023",
       "venue": "GRANADA SOUND",
       "artist": "VETUSTA MORLA",
       "bought": true,
-      "setlistId": "43a27ff7"
+      "setlistId": "43a27ff7",
+      "city": "Granada",
+      "country": "ES"
     },
     {
       "date": "18/01/2018",
       "venue": "RAZZMATAZZ 2",
       "artist": "WHILE SHE SLEEPS",
       "bought": true,
-      "setlistId": "7be1de88"
+      "setlistId": "7be1de88",
+      "city": "Barcelona",
+      "country": "ES"
     },
     {
       "date": "09/12/2025",
@@ -1252,21 +1536,27 @@
       "attendees": [
         "Raúl"
       ],
-      "setlistId": "2b4fbcd2"
+      "setlistId": "2b4fbcd2",
+      "city": "Barcelona",
+      "country": "ES"
     },
     {
       "date": "05/06/2026",
       "venue": "NOCHES DEL BOTÁNICO - MADRID",
       "artist": "RIGOBERTA BANDINI",
       "bought": true,
-      "setlistId": "7b4c5224"
+      "setlistId": "7b4c5224",
+      "city": "Madrid",
+      "country": "ES"
     },
     {
       "date": "06/06/2026",
       "venue": "RIYADH AIR METROPOLITANO",
       "artist": "BAD BUNNY",
       "bought": true,
-      "setlistId": "1b47991c"
+      "setlistId": "1b47991c",
+      "city": "Madrid",
+      "country": "ES"
     },
     {
       "date": "20/06/2026",
@@ -1276,7 +1566,9 @@
       "attendees": [
         "Luca",
         "Jano"
-      ]
+      ],
+      "city": "Clisson",
+      "country": "FR"
     },
     {
       "date": "18/06/2026",
@@ -1286,7 +1578,9 @@
       "attendees": [
         "Luca",
         "Jano"
-      ]
+      ],
+      "city": "Clisson",
+      "country": "FR"
     },
     {
       "date": "18/06/2026",
@@ -1296,7 +1590,9 @@
       "attendees": [
         "Luca",
         "Jano"
-      ]
+      ],
+      "city": "Clisson",
+      "country": "FR"
     },
     {
       "date": "19/06/2026",
@@ -1306,7 +1602,9 @@
       "attendees": [
         "Luca",
         "Jano"
-      ]
+      ],
+      "city": "Clisson",
+      "country": "FR"
     },
     {
       "date": "19/06/2026",
@@ -1316,7 +1614,9 @@
       "attendees": [
         "Luca",
         "Jano"
-      ]
+      ],
+      "city": "Clisson",
+      "country": "FR"
     },
     {
       "date": "19/06/2026",
@@ -1326,7 +1626,9 @@
       "attendees": [
         "Luca",
         "Jano"
-      ]
+      ],
+      "city": "Clisson",
+      "country": "FR"
     },
     {
       "date": "20/06/2026",
@@ -1337,7 +1639,9 @@
         "Luca",
         "Jano"
       ],
-      "setlistId": "3b4f3010"
+      "setlistId": "3b4f3010",
+      "city": "Clisson",
+      "country": "FR"
     },
     {
       "date": "21/06/2026",
@@ -1348,49 +1652,63 @@
         "Luca",
         "Jano"
       ],
-      "setlistId": "1b4f3dfc"
+      "setlistId": "1b4f3dfc",
+      "city": "Clisson",
+      "country": "FR"
     },
     {
       "date": "19/04/2007",
       "venue": "LA FARGA",
       "artist": "MÄGO DE OZ",
       "bought": true,
-      "setlistId": "63f5124f"
+      "setlistId": "63f5124f",
+      "city": "L’Hospitalet de Llobregat",
+      "country": "ES"
     },
     {
       "date": "10/09/2026",
       "venue": "PALAU SANT JORDI",
       "artist": "CA7RIEL & PACO AMOROSO",
       "bought": true,
-      "ticketUrl": "https://www.livenation.es/event/ca7riel-and-paco-amoroso-free-spirits-world-tour-barcelona-tickets-edp1660583"
+      "ticketUrl": "https://www.livenation.es/event/ca7riel-and-paco-amoroso-free-spirits-world-tour-barcelona-tickets-edp1660583",
+      "city": "Barcelona",
+      "country": "ES"
     },
     {
       "date": "23/09/2026",
       "venue": "SALAMANDRA",
       "artist": "HAKEN",
       "bought": true,
-      "ticketUrl": "https://www.madnesslive.es/es/pagina/372-haken-actuaran-en-septiembre-de-2026-en-barcelona"
+      "ticketUrl": "https://www.madnesslive.es/es/pagina/372-haken-actuaran-en-septiembre-de-2026-en-barcelona",
+      "city": "L’Hospitalet de Llobregat",
+      "country": "ES"
     },
     {
       "date": "25/09/2026 - 26/09/2026",
       "venue": "BE PROG! MY FRIEND",
       "artist": "BE PROG! MY FRIEND",
       "bought": true,
-      "ticketUrl": "https://www.madnesslive.es/es/conciertos-en-barcelona/1918-comprar-entrada-abono-be-prog-my-friend-2026-barcelona.html"
+      "ticketUrl": "https://www.madnesslive.es/es/conciertos-en-barcelona/1918-comprar-entrada-abono-be-prog-my-friend-2026-barcelona.html",
+      "city": "Barcelona",
+      "country": "ES"
     },
     {
       "date": "10/10/2026",
       "venue": "SALAMANDRA",
       "artist": "DEVIN TOWNSEND",
       "bought": false,
-      "ticketUrl": "https://www.madnesslive.es/es/pagina/378-devin-townsend-ofrecera-dos-conciertos-acusticos-en-espana-acompanados-de-encuentros-con-el-publico"
+      "ticketUrl": "https://www.madnesslive.es/es/pagina/378-devin-townsend-ofrecera-dos-conciertos-acusticos-en-espana-acompanados-de-encuentros-con-el-publico",
+      "city": "L’Hospitalet de Llobregat",
+      "country": "ES"
     },
     {
       "date": "06/11/2026",
       "venue": "SALAMANDRA",
       "artist": "ARCHSPIRE",
       "bought": false,
-      "ticketUrl": "https://www.madnesslive.es/es/pagina/359-archspire-anuncian-su-regreso-a-espana-con-el-nuevo-album-too-fast-to-die"
+      "ticketUrl": "https://www.madnesslive.es/es/pagina/359-archspire-anuncian-su-regreso-a-espana-con-el-nuevo-album-too-fast-to-die",
+      "city": "L’Hospitalet de Llobregat",
+      "country": "ES"
     },
     {
       "date": "22/11/2026",
@@ -1400,77 +1718,99 @@
       "attendees": [
         "Ibai"
       ],
-      "ticketUrl": "https://www.salarazzmatazz.com/agenda/22-11-2026-polyphia/"
+      "ticketUrl": "https://www.salarazzmatazz.com/agenda/22-11-2026-polyphia/",
+      "city": "Barcelona",
+      "country": "ES"
     },
     {
       "date": "11/12/2026",
       "venue": "RAZZMATAZZ 2",
       "artist": "TOUNDRA",
       "bought": false,
-      "ticketUrl": "https://www.salarazzmatazz.com/agenda/11-12-2026-toundra/"
+      "ticketUrl": "https://www.salarazzmatazz.com/agenda/11-12-2026-toundra/",
+      "city": "Barcelona",
+      "country": "ES"
     },
     {
       "date": "18/12/2026",
       "venue": "PALAU SANT JORDI",
       "artist": "AMARAL",
       "bought": false,
-      "ticketUrl": "https://www.elcorteingles.es/entradas/conciertos/entradas-amaral-barcelona-42875264745714/"
+      "ticketUrl": "https://www.elcorteingles.es/entradas/conciertos/entradas-amaral-barcelona-42875264745714/",
+      "city": "Barcelona",
+      "country": "ES"
     },
     {
       "date": "20/12/2026",
       "venue": "PALAU SANT JORDI",
       "artist": "AMAIA",
       "bought": false,
-      "ticketUrl": "https://palausantjordi.barcelona/es/amaia2026"
+      "ticketUrl": "https://palausantjordi.barcelona/es/amaia2026",
+      "city": "Barcelona",
+      "country": "ES"
     },
     {
       "date": "06/02/2027",
       "venue": "RAZZMATAZZ 2",
       "artist": "SYLOSIS",
       "bought": false,
-      "ticketUrl": "https://www.resurrectionfest.es/route/whitechapel-tour-2027/"
+      "ticketUrl": "https://www.resurrectionfest.es/route/whitechapel-tour-2027/",
+      "city": "Barcelona",
+      "country": "ES"
     },
     {
       "date": "26/02/2027",
       "venue": "SALA PARAL·LEL 62",
       "artist": "MORGAN",
       "bought": false,
-      "ticketUrl": "https://tickets.oneboxtds.com/farotickets/select/2880063"
+      "ticketUrl": "https://tickets.oneboxtds.com/farotickets/select/2880063",
+      "city": "Barcelona",
+      "country": "ES"
     },
     {
       "date": "06/02/2027",
       "venue": "RAZZMATAZZ 2",
       "artist": "WHITECHAPEL",
       "bought": false,
-      "ticketUrl": "https://www.resurrectionfest.es/route/whitechapel-tour-2027/"
+      "ticketUrl": "https://www.resurrectionfest.es/route/whitechapel-tour-2027/",
+      "city": "Barcelona",
+      "country": "ES"
     },
     {
       "date": "17/08/2026",
       "venue": "LES DOCKS",
       "artist": "FONTAINES D.C.",
       "bought": false,
-      "ticketUrl": "https://www.docks.ch/evenement/concerts/20260817/fontaines-d-c-2/"
+      "ticketUrl": "https://www.docks.ch/evenement/concerts/20260817/fontaines-d-c-2/",
+      "city": "Lausanne",
+      "country": "CH"
     },
     {
       "date": "18/08/2026",
       "venue": "LES DOCKS",
       "artist": "FONTAINES D.C.",
       "bought": false,
-      "ticketUrl": "https://www.docks.ch/evenement/concerts/20260818/fontaines-d-c-3/"
+      "ticketUrl": "https://www.docks.ch/evenement/concerts/20260818/fontaines-d-c-3/",
+      "city": "Lausanne",
+      "country": "CH"
     },
     {
       "date": "30/08/2026",
       "venue": "GRAN TEATRE DEL LICEU",
       "artist": "HERMANOS GUTIÉRREZ",
       "bought": false,
-      "ticketUrl": "https://www.ticketmaster.es/artist/hermanos-gutierrez-entradas/1158644"
+      "ticketUrl": "https://www.ticketmaster.es/artist/hermanos-gutierrez-entradas/1158644",
+      "city": "Barcelona",
+      "country": "ES"
     },
     {
       "date": "31/08/2026",
       "venue": "GRAN TEATRE DEL LICEU",
       "artist": "HERMANOS GUTIÉRREZ",
       "bought": false,
-      "ticketUrl": "https://www.ticketmaster.es/artist/hermanos-gutierrez-entradas/1158644"
+      "ticketUrl": "https://www.ticketmaster.es/artist/hermanos-gutierrez-entradas/1158644",
+      "city": "Barcelona",
+      "country": "ES"
     },
     {
       "date": "22/11/2026",
@@ -1480,14 +1820,18 @@
       "attendees": [
         "Ibai"
       ],
-      "ticketUrl": "https://www.salarazzmatazz.com/agenda/22-11-2026-polyphia/"
+      "ticketUrl": "https://www.salarazzmatazz.com/agenda/22-11-2026-polyphia/",
+      "city": "Barcelona",
+      "country": "ES"
     },
     {
       "date": "02/12/2026",
       "venue": "RAZZMATAZZ",
       "artist": "ELUVEITIE",
       "bought": false,
-      "ticketUrl": "https://www.resurrectionfest.es/route/eluveitie-tour-2026/"
+      "ticketUrl": "https://www.resurrectionfest.es/route/eluveitie-tour-2026/",
+      "city": "Barcelona",
+      "country": "ES"
     }
   ],
   "dismissedSuggestions": [
