@@ -71,7 +71,7 @@ Keep the project's existing **A Deafening Noise** Notion page current when a cha
 - `scripts/combine-concert-suggestions.mjs` flattens/deduplicates results into `data/suggestions.json`.
 - Suggestions stay below the calendar in the expandable review panel; never draw them as calendar events.
 - Interested opens the normal prefilled calendar Add modal; Not Interested persists an artist/date dismissal immediately.
-- Suggestions remain visible with their Interested or Not Interested state. Interested concerts appear in the calendar; changing one to Not Interested confirms removal from the user's calendar without removing the suggestion.
+- Home shows only untreated suggestions. Interested adds the concert immediately as not bought and removes it from Home; Not Interested also removes it from Home. The Suggestions page keeps treated entries under the collapsed Past suggestions section, where decisions can still be changed.
 - Supabase stores suggestion decisions immediately. Preserve `dismissedSuggestions` on every archive replacement; the shared discovery catalog must not be filtered by one user's concerts or dismissals.
 - `.github/workflows/concert-suggestions.yml` runs daily or on demand, refreshes connected Spotify profiles before scraping, emails opted-in users about new matches, and commits only changed discovery data.
 

@@ -124,7 +124,7 @@ test("Calendar opens on the current month on every visit", async ({ page }) => {
   await page.getByRole("button", { name: "Next month" }).click();
   await expect(monthButton).not.toContainText(currentMonth);
   const openedDrawer = await openMenu(page);
-  await page.getByRole("button", { name: openedDrawer ? "Concert history" : "Concert archive", exact: true }).click();
+  await page.getByRole("button", { name: "Concert archive", exact: true }).click();
   await openMenu(page);
   await page.getByRole("button", { name: "Concert calendar" }).click();
 
@@ -178,24 +178,25 @@ test("Home dashboard reviews concert suggestions without leaving the page", asyn
   let savedData;
   await page.route("**/.netlify/functions/save-concerts", (route) => { savedData = route.request().postDataJSON().data; return route.fulfill({ status: 200, contentType: "application/json", body: '{"ok":true}' }); });
   await page.goto("/home");
-  const suggestion = page.getByRole("button", { name: "Not interested", exact: true }).first();
-  await suggestion.click();
-  await expect(suggestion).toHaveAttribute("aria-pressed", "true");
-  await expect(suggestion).toBeDisabled();
-  await expect(suggestion).toBeVisible();
-
-  const interested = page.getByRole("button", { name: "Interested", exact: true }).first();
-  await expect(interested).toBeEnabled();
-  await interested.click();
-  const dialog = page.getByRole("dialog", { name: "Add suggested concert" });
-  await expect(dialog.getByText("Choose ticket status", { exact: true })).toBeVisible();
-  const artist = (await dialog.locator('section[aria-label="Suggested concert"] h3').textContent()).trim();
-  await expect(dialog.getByText(artist, { exact: true })).toHaveCount(1);
-  await dialog.getByRole("button", { name: "Bought", exact: true }).click();
-  await expect(dialog).toBeHidden();
-  const savedConcert = savedData.concerts.find((concert) => concert.artist === artist);
+  const notInterested = page.getByRole("button", { name: "Not interested", exact: true });
+  await expect(notInterested.first()).toBeVisible();
+  const dismissedRow = notInterested.first().locator("xpath=ancestor::*[@data-suggestion-id]");
+  const dismissedId = await dismissedRow.getAttribute("data-suggestion-id");
+  await dismissedRow.getByRole("button", { name: "Not interested", exact: true }).click();
+  await expect(page.locator(`[data-suggestion-id="${dismissedId}"]`)).toBeHidden();
+  const interested = page.getByRole("button", { name: "Interested", exact: true });
+  const interestedRow = interested.first().locator("xpath=ancestor::*[@data-suggestion-id]");
+  const interestedId = await interestedRow.getAttribute("data-suggestion-id");
+  await interestedRow.getByRole("button", { name: "Interested", exact: true }).click();
+  await expect(page.getByText("Concert added to your calendar.", { exact: true })).toBeVisible();
+  await expect(page.locator(`[data-suggestion-id="${interestedId}"]`)).toBeHidden();
+  const savedConcert = savedData.concerts.at(-1);
+  expect(savedConcert.bought).toBe(false);
   expect(savedConcert.city).toBeTruthy();
   expect(savedConcert.country).toMatch(/^[A-Z]{2}$/);
+
+  await page.getByRole("button", { name: "View all", exact: true }).last().click();
+  await expect(page.getByText(/Past suggestions/)).toBeVisible();
 });
 
 test("Profile offers Spotify connection through the UI", async ({ page }) => {

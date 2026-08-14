@@ -24,7 +24,7 @@ export function ProfilePage({ profile, futureArtists, isAdmin, onAdmin, onSignOu
       title: "Remove profile photo?",
       description: "Your current profile photo will be removed when you save your profile.",
       confirmLabel: "Remove photo",
-      icon: "fa-user-xmark",
+      hideIcon: true,
       action: () => { setAvatarFile(null); setAvatarRemoved(true); setForm((current) => ({ ...current, avatarUrl: "" })); setStatus("Save your profile to remove the photo."); },
     });
   }
@@ -34,7 +34,7 @@ export function ProfilePage({ profile, futureArtists, isAdmin, onAdmin, onSignOu
       description: "This permanently deletes your profile and personal data. This action cannot be undone.",
       confirmLabel: "Delete account",
       confirmationText: "DELETE",
-      icon: "fa-user-slash",
+      hideIcon: true,
       action: onDelete,
     });
   }
@@ -43,7 +43,7 @@ export function ProfilePage({ profile, futureArtists, isAdmin, onAdmin, onSignOu
       title: "Disconnect Spotify?",
       description: "Your synced artists will be removed and concert suggestions will no longer use your Spotify taste until you reconnect.",
       confirmLabel: "Disconnect",
-      icon: "fa-link-slash",
+      hideIcon: true,
       action: async () => {
         await disconnectMySpotify();
         await onSpotifyChanged();
@@ -101,5 +101,5 @@ export function AdminPage({ currentUserId, onChanged, onConfirm }) {
   async function load() { try { setUsers(await adminListUsers()); } catch { setError("User administration could not be loaded. Try again."); } }
   useEffect(() => { load(); }, []);
   async function update(user, changes) { try { await adminUpdateUser(user.id, changes.role || user.role, changes.status || user.status); await load(); onChanged(); } catch (e) { setError(e.message); } }
-  return <div className="mx-auto max-w-5xl"><section className="rounded-3xl border border-zinc-800 bg-zinc-900 p-5 md:p-7"><PanelHeading icon="fa-user-shield" title="User administration" description="Manage roles and access without exposing private credentials." />{error && <p className="mb-4 text-sm text-red-300">{error}</p>}<div className="space-y-3">{users.map((user) => <div key={user.id} className="grid gap-3 rounded-2xl border border-zinc-800 bg-zinc-950 p-4 md:grid-cols-[1fr_auto_auto] md:items-center"><div className="min-w-0"><p className="truncate font-bold">{user.displayName}</p><p className="truncate text-xs text-zinc-500">{user.email} · {user.concertCount} concerts</p></div><select aria-label={`Role for ${user.displayName}`} value={user.role} disabled={user.id === currentUserId} onChange={(e) => update(user, { role: e.target.value })} className="rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm"><option value="user">User</option><option value="admin">Admin</option></select><button disabled={user.id === currentUserId} onClick={() => user.status === "active" ? onConfirm({ title: "Block user?", description: `${user.displayName} will immediately lose access until an administrator restores the account.`, confirmLabel: "Block", icon: "fa-user-lock", action: () => update(user, { status: "blocked" }) }) : update(user, { status: "active" })} className={user.status === "active" ? "adn-button-danger" : "adn-button-success"}>{user.status === "active" ? "Block" : "Restore"}</button></div>)}</div></section></div>;
+  return <div className="mx-auto max-w-5xl"><section className="rounded-3xl border border-zinc-800 bg-zinc-900 p-5 md:p-7"><PanelHeading icon="fa-user-shield" title="User administration" description="Manage roles and access without exposing private credentials." />{error && <p className="mb-4 text-sm text-red-300">{error}</p>}<div className="space-y-3">{users.map((user) => <div key={user.id} className="grid gap-3 rounded-2xl border border-zinc-800 bg-zinc-950 p-4 md:grid-cols-[1fr_auto_auto] md:items-center"><div className="min-w-0"><p className="truncate font-bold">{user.displayName}</p><p className="truncate text-xs text-zinc-500">{user.email} · {user.concertCount} concerts</p></div><select aria-label={`Role for ${user.displayName}`} value={user.role} disabled={user.id === currentUserId} onChange={(e) => update(user, { role: e.target.value })} className="rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm"><option value="user">User</option><option value="admin">Admin</option></select><button disabled={user.id === currentUserId} onClick={() => user.status === "active" ? onConfirm({ title: "Block user?", description: `${user.displayName} will immediately lose access until an administrator restores the account.`, confirmLabel: "Block", hideIcon: true, action: () => update(user, { status: "blocked" }) }) : update(user, { status: "active" })} className={user.status === "active" ? "adn-button-danger" : "adn-button-success"}>{user.status === "active" ? "Block" : "Restore"}</button></div>)}</div></section></div>;
 }

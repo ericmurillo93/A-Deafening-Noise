@@ -633,7 +633,7 @@ function EditConcertModal({ isOpen, mode, initial, onClose, onSave, isSaving, sa
 
 // ─── AddConcertModal ──────────────────────────────────────────────────────────
 
-function AddConcertModal({ isOpen, initial, stagingSuggestion = false, onClose, onSave, isSaving, saveError, friends = [], onSearchCatalog }) {
+function AddConcertModal({ isOpen, initial, onClose, onSave, isSaving, saveError, friends = [], onSearchCatalog }) {
   const [artist, setArtist] = useState("");
   const [venue, setVenue] = useState("");
   const [city, setCity] = useState("");
@@ -670,20 +670,6 @@ function AddConcertModal({ isOpen, initial, stagingSuggestion = false, onClose, 
     onSave({ concertId: initial?.concertId || null, artist, venue, city: city.trim(), country: country.trim().toUpperCase(), date, bought: isPastDate ? true : bought, ticketUrl: isPastDate ? "" : normalizeTicketUrl(ticketUrl), attendeeUserIds, guestAttendees: [...new Set(guestAttendees.split(",").map((name) => name.trim()).filter(Boolean))] });
   }
 
-  function stageSuggestion(ticketBought) {
-    onSave({
-      artist: uppercaseConcertLabel(initial?.artist),
-      venue: uppercaseConcertLabel(initial?.venue),
-      city: initial?.city || "",
-      country: String(initial?.country || "").toUpperCase(),
-      date: initial?.date || "",
-      bought: ticketBought,
-      ticketUrl: normalizeTicketUrl(initial?.ticketUrl),
-      attendeeUserIds,
-      guestAttendees: [...new Set(guestAttendees.split(",").map((name) => name.trim()).filter(Boolean))],
-    });
-  }
-
   function pickCatalogConcert(concert) {
     setArtist(uppercaseConcertLabel(concert.artist));
     setVenue(uppercaseConcertLabel(concert.venue));
@@ -695,37 +681,16 @@ function AddConcertModal({ isOpen, initial, stagingSuggestion = false, onClose, 
 
   return (
     <div className="adn-modal-backdrop fixed inset-0 z-[60] flex items-center justify-center bg-black/70 p-4">
-      <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby={stagingSuggestion ? undefined : "add-concert-title"} aria-label={stagingSuggestion ? "Add suggested concert" : undefined} data-testid="add-concert-modal" className="adn-modal-panel relative flex max-h-[calc(100dvh-2rem)] w-full max-w-lg flex-col overflow-hidden rounded-3xl border border-zinc-700 bg-zinc-950 shadow-2xl md:max-h-[90dvh]">
-        {!stagingSuggestion && <div data-testid="add-concert-header" className="flex shrink-0 items-start justify-between gap-4 border-b border-zinc-900 px-6 py-5">
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="add-concert-title" data-testid="add-concert-modal" className="adn-modal-panel relative flex max-h-[calc(100dvh-2rem)] w-full max-w-lg flex-col overflow-hidden rounded-3xl border border-zinc-700 bg-zinc-950 shadow-2xl md:max-h-[90dvh]">
+        <div data-testid="add-concert-header" className="flex shrink-0 items-start justify-between gap-4 border-b border-zinc-900 px-6 py-5">
           <div className="min-w-0">
             <h2 id="add-concert-title" className="text-2xl font-black uppercase tracking-tight">Add concert</h2>
             <p className="mt-1 truncate text-sm text-zinc-500">Add a past or upcoming concert.</p>
           </div>
           <ModalCloseButton onClick={onClose} />
-        </div>}
+        </div>
         <div data-testid="add-concert-scroll" className="min-h-0 flex-1 overflow-y-auto px-6 py-5 overscroll-contain">
-        {stagingSuggestion ? (
-          <div className="space-y-6">
-            <section aria-label="Suggested concert" className="rounded-md border border-[#30343a] bg-[#111418] p-5">
-              <div className="flex items-start gap-4">
-                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-[#30343a] bg-[#15191e] text-blue-400"><i className="fa-solid fa-music" aria-hidden="true" /></span>
-                <div className="min-w-0 flex-1">
-                  <h3 className="truncate text-lg font-black uppercase tracking-[0.025em] text-zinc-100">{uppercaseConcertLabel(initial?.artist)}</h3>
-                  <p className="mt-2 flex items-center gap-2 text-sm text-zinc-400"><i className="fa-solid fa-calendar-days w-4 text-center text-zinc-500" aria-hidden="true" />{initial?.date || "Date TBC"}</p>
-                  <p className="mt-1.5 flex items-center gap-2 text-sm text-zinc-400"><i className="fa-solid fa-location-dot w-4 text-center text-zinc-500" aria-hidden="true" /><span className="truncate">{[uppercaseConcertLabel(initial?.venue), initial?.city, String(initial?.country || "").toUpperCase()].filter(Boolean).join(" · ") || "Venue TBC"}</span></p>
-                </div>
-                <ModalCloseButton onClick={onClose} />
-              </div>
-            </section>
-            <div>
-              <h3 className="mb-3 text-sm font-black uppercase tracking-wide text-zinc-100">Choose ticket status</h3>
-              <div className="grid gap-3 sm:grid-cols-2">
-                <button type="button" onClick={() => stageSuggestion(true)} disabled={isSaving} className="adn-button-success w-full"><i className={`fa-solid ${isSaving ? "fa-circle-notch fa-spin" : "fa-ticket"}`} aria-hidden="true" />Bought</button>
-                <button type="button" onClick={() => stageSuggestion(false)} disabled={isSaving} className="adn-button-warning w-full"><i className="fa-solid fa-clock" aria-hidden="true" />Not bought</button>
-              </div>
-            </div>
-          </div>
-        ) : <div className="space-y-4">
+        <div className="space-y-4">
           <label className="block">
             <span className="mb-2 block text-xs font-bold uppercase tracking-widest text-zinc-500">Artist</span>
             <ConcertCatalogField field="artist" value={artist} onChange={(value) => setArtist(uppercaseConcertLabel(value))} onPick={pickCatalogConcert} onSearch={onSearchCatalog} placeholder="Artist name" />
@@ -760,13 +725,13 @@ function AddConcertModal({ isOpen, initial, stagingSuggestion = false, onClose, 
               <i className="fa-solid fa-ticket text-zinc-500" aria-hidden="true" /><span>Ticket bought</span>
             </label>
           )}
-        </div>}
         </div>
-        {(!stagingSuggestion || saveError) && <div className="shrink-0 border-t border-zinc-900 bg-zinc-950 px-6 py-4">
-          {!stagingSuggestion && <button onClick={submit} disabled={isSaving} className="adn-button-primary adn-save-button w-full">{isSaving && <i className="fa-solid fa-circle-notch fa-spin" aria-hidden="true" />}{isSaving ? "Saving..." : "Add concert"}</button>}
+        </div>
+        <div className="shrink-0 border-t border-zinc-900 bg-zinc-950 px-6 py-4">
+          <button onClick={submit} disabled={isSaving} className="adn-button-primary adn-save-button w-full">{isSaving && <i className="fa-solid fa-circle-notch fa-spin" aria-hidden="true" />}{isSaving ? "Saving..." : "Add concert"}</button>
           {validationError && <div className="mt-3 rounded-2xl border border-amber-900 bg-amber-950/30 px-4 py-3 text-sm font-semibold text-amber-200" role="alert">{validationError}</div>}
           {saveError && <div className="mt-3 rounded-2xl border border-red-900 bg-red-950/40 px-4 py-3 text-sm text-red-200">{saveError}</div>}
-        </div>}
+        </div>
       </div>
     </div>
   );
@@ -863,7 +828,6 @@ function FriendStatsMenu({ friends, selectedIds, onChange }) {
 
 function NextConcertCalendar({ items, onOpen, onContextMenu, onContextMenuAt }) {
   const [monthPickerOpen, setMonthPickerOpen] = useState(false);
-  const [selectedDay, setSelectedDay] = useState(null);
   const monthPickerRef = useRef(null);
   const swipeStartRef = useRef(null);
   const datedItems = useMemo(
@@ -900,7 +864,6 @@ function NextConcertCalendar({ items, onOpen, onContextMenu, onContextMenuAt }) 
 
   function moveMonth(offset) {
     setVisibleMonth((current) => new Date(current.getFullYear(), current.getMonth() + offset, 1));
-    setSelectedDay(null);
   }
 
   function eventInteractionProps(concert) {
@@ -996,7 +959,6 @@ function NextConcertCalendar({ items, onOpen, onContextMenu, onContextMenuAt }) 
           const concerts = datedItems.filter(({ range }) => calendarDay >= range.start && calendarDay <= range.end);
           return (
             <div key={day} className={`relative h-20 overflow-hidden rounded-xl border p-1.5 md:h-auto md:min-h-32 md:overflow-visible md:rounded-2xl md:p-2 ${concerts.length ? "border-zinc-700 bg-zinc-950" : "border-zinc-800/60 bg-zinc-950/40"}`}>
-              {concerts.length > 0 && <button type="button" onClick={() => setSelectedDay({ date: calendarDay, concerts })} className="absolute inset-0 z-10 rounded-xl md:hidden" aria-label={`Show ${concerts.length} ${concerts.length === 1 ? "concert" : "concerts"} on ${new Intl.DateTimeFormat("en", { day: "numeric", month: "long" }).format(calendarDay)}`} />}
               <div className="mb-1 text-right text-[10px] font-bold text-zinc-600 md:text-xs">{day}</div>
               {concerts.length > 0 && (
                 <div className="md:hidden">
@@ -1032,29 +994,6 @@ function NextConcertCalendar({ items, onOpen, onContextMenu, onContextMenuAt }) 
               <button key={`month-${concert.source}-${concert.artist}-${concert.date}-${concert.venue || ""}`} {...eventInteractionProps(concert)} className={`flex min-h-12 w-full items-center gap-3 rounded-lg border px-3 py-2 text-left ${concert.isPast ? "border-blue-700 bg-blue-950" : concert.bought ? "border-emerald-700 bg-emerald-900" : "border-amber-700 bg-amber-950"}`}>
                 <span className="w-12 shrink-0 text-xs font-black tabular-nums text-zinc-100">{concert.date.slice(0, 5)}</span>
                 <span className="min-w-0"><span className="block truncate text-xs font-black uppercase text-zinc-100">{concert.artist}</span>{concert.venue && <span className="mt-0.5 block truncate text-[10px] text-zinc-300">{concert.venue}</span>}</span>
-              </button>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {selectedDay && (
-        <section className="mt-4 rounded-2xl border border-zinc-700 bg-zinc-950 p-4 md:hidden">
-          <div className="mb-3 flex items-center justify-between gap-3">
-            <h3 className="text-sm font-black uppercase tracking-tight text-zinc-100">
-              {new Intl.DateTimeFormat("en", { weekday: "short", day: "numeric", month: "short" }).format(selectedDay.date)}
-            </h3>
-            <span className="text-xs font-semibold text-zinc-500">{selectedDay.concerts.length} {selectedDay.concerts.length === 1 ? "concert" : "concerts"}</span>
-          </div>
-          <div className="space-y-2">
-            {selectedDay.concerts.map((concert) => (
-              <button
-                key={`agenda-${concert.source}-${concert.artist}-${concert.date}-${concert.show || concert.venue || ""}`}
-                {...eventInteractionProps(concert)}
-                className={`block w-full rounded-xl border px-3 py-2.5 text-left text-sm font-bold text-zinc-100 transition hover:brightness-110 ${concert.isPast ? "border-blue-700 bg-blue-950" : concert.bought ? "border-emerald-700 bg-emerald-900" : "border-amber-700 bg-amber-950"}`}
-              >
-                <span className="block">{concert.artist}</span>
-                {concert.venue && <span className="mt-0.5 block truncate text-xs font-medium opacity-60">{concert.venue}</span>}
               </button>
             ))}
           </div>
@@ -1374,9 +1313,9 @@ function ChangePasswordModal({ mode, email, onClose }) {
 
 // ─── App ──────────────────────────────────────────────────────────────────────
 
-function DesktopNavigation({ activePage, profile, attentionCount, onNavigate }) {
+function mainNavigationItems(activePage, attentionCount) {
   const archiveActive = ["history", "artist", "venue"].includes(activePage);
-  const items = [
+  return [
     ["home", "fa-house", "Home", activePage === "home", 0],
     ["history", "fa-box-archive", "Concert archive", archiveActive, 0],
     ["timeline", "fa-clock-rotate-left", "Concert Timeline", activePage === "timeline", 0],
@@ -1385,6 +1324,10 @@ function DesktopNavigation({ activePage, profile, attentionCount, onNavigate }) 
     ["stats", "fa-chart-column", "Stats", activePage === "stats" || activePage === "year-review", 0],
     ["friends", "fa-user-group", "Friends", activePage === "friends", attentionCount],
   ];
+}
+
+function DesktopNavigation({ activePage, profile, attentionCount, onNavigate }) {
+  const items = mainNavigationItems(activePage, attentionCount);
   return <aside className="fixed inset-y-0 left-0 z-30 hidden w-[205px] flex-col border-r border-[#20242a] bg-[#0c1015] lg:flex">
     <button type="button" onClick={() => onNavigate("home")} className="h-[121px] border-b border-[#20242a] px-4 text-left"><span className="block whitespace-nowrap text-[15px] font-black uppercase tracking-tight text-zinc-50">A Deafening Noise</span><span className="mt-1 block text-[11px] font-bold uppercase tracking-[0.08em] text-zinc-400">Concert archive</span></button>
     <nav className="min-h-0 flex-1 space-y-1 overflow-y-auto" aria-label="Main navigation">{items.map(([page, icon, label, active, count]) =>
@@ -1414,7 +1357,6 @@ export default function App() {
   const [headerControlsNode, setHeaderControlsNode] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [addInitial, setAddInitial] = useState(null);
-  const [activeSuggestionId, setActiveSuggestionId] = useState(null);
   const [editTarget, setEditTarget] = useState(null);
   const [contextMenu, setContextMenu] = useState({ open: false, x: 0, y: 0, target: null });
   const [setlistTarget, setSetlistTarget] = useState(null);
@@ -1432,6 +1374,7 @@ export default function App() {
   const [statsFriendIds, setStatsFriendIds] = useState([]);
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
   const [confirmRemoveFriend, setConfirmRemoveFriend] = useState(null);
   const [confirmAction, setConfirmAction] = useState(null);
   const [passwordModalMode, setPasswordModalMode] = useState(null);
@@ -1443,6 +1386,11 @@ export default function App() {
   const scrollRestorationRef = useRef("auto");
   const passwordModalModeRef = useRef(null);
   const lastRefreshRef = useRef(0);
+  useEffect(() => {
+    if (!successMessage) return undefined;
+    const timeout = window.setTimeout(() => setSuccessMessage(""), 4000);
+    return () => window.clearTimeout(timeout);
+  }, [successMessage]);
   passwordModalModeRef.current = passwordModalMode;
   const anyDialogOpen = modalOpen || Boolean(editTarget) || Boolean(setlistTarget) || Boolean(calendarTarget) || Boolean(confirmRemoveFriend) || Boolean(confirmAction) || Boolean(passwordModalMode);
   const anyPageOverlayOpen = sidebarOpen || contextMenu.open || anyDialogOpen;
@@ -1843,7 +1791,7 @@ export default function App() {
     } finally { setIsRefreshing(false); }
   }
 
-  async function handleAddConcert(data) {
+  async function handleAddConcert(data, suggestion = null) {
     const pastConcert = isPastConcert({ date: data.date });
     const newConcert = {
       concertId: data.concertId || null,
@@ -1860,7 +1808,6 @@ export default function App() {
     };
     setIsSaving(true); setSaveError("");
     try {
-      const suggestion = activeSuggestionId && suggestionsData.suggestions.find(({ id }) => id === activeSuggestionId);
       const updatedDismissed = suggestion ? dismissedSuggestions.filter((key) => key !== suggestionDecisionKey(suggestion)) : dismissedSuggestions;
       if (supabaseEnabled) {
         await upsertMyConcert(newConcert);
@@ -1874,7 +1821,7 @@ export default function App() {
       }
       setModalOpen(false);
       setAddInitial(null);
-      setActiveSuggestionId(null);
+      if (suggestion) setSuccessMessage("Concert added to your calendar.");
     } catch (e) { setSaveError(e.message || "Could not save concert"); }
     finally { setIsSaving(false); }
   }
@@ -1959,9 +1906,7 @@ export default function App() {
   function reviewSuggestionAsInterested(suggestion) {
     if (isSaving || suggestionReviews[suggestion.id]?.decision === "interested") return;
     setSaveError("");
-    setActiveSuggestionId(suggestion.id);
-    setAddInitial({ artist: suggestion.artist, venue: suggestion.venue, city: suggestion.city || "", country: suggestion.country || "", date: suggestion.date, bought: false, ticketUrl: suggestion.sourceUrl || "" });
-    setModalOpen(true);
+    void handleAddConcert({ artist: suggestion.artist, venue: suggestion.venue, city: suggestion.city || "", country: suggestion.country || "", date: suggestion.date, bought: false, ticketUrl: suggestion.sourceUrl || "" }, suggestion);
   }
 
   function reviewSuggestionAsNotInterested(suggestion) {
@@ -2016,37 +1961,21 @@ export default function App() {
     <main className="adn-shell min-h-screen bg-zinc-950 text-zinc-100 md:flex">
       <DesktopNavigation activePage={activePage} profile={appProfile} attentionCount={friendRequests.filter((request) => request.direction === "incoming").length + concertInvitations.length} onNavigate={changePage} />
       {/* Desktop-only fixed Menu button */}
-      <button onClick={() => setSidebarOpen(true)} className="menu-button-desktop fixed left-4 top-4 z-40 h-11 w-11 rounded-full border border-zinc-700 bg-zinc-900 text-sm text-zinc-100 shadow-2xl transition hover:border-zinc-500 lg:hidden" aria-label="Open menu" aria-expanded={sidebarOpen} aria-controls="main-navigation"><i className="fa-solid fa-bars text-xs" aria-hidden="true" /></button>
+      <button onClick={() => setSidebarOpen(true)} className="menu-button-desktop fixed left-4 top-4 z-40 h-11 w-11 rounded-md border border-[#30343a] bg-[#111418] text-sm text-zinc-100 shadow-lg transition-colors hover:border-zinc-500 hover:bg-[#171b20] lg:hidden" aria-label="Open menu" aria-expanded={sidebarOpen} aria-controls="main-navigation"><i className="fa-solid fa-bars text-xs" aria-hidden="true" /></button>
       {/* Touch-device Menu starts at the top of the page and scrolls away with it */}
-      <button onClick={() => setSidebarOpen(true)} className="menu-button-touch touch-target absolute left-4 top-4 z-40 h-11 w-11 rounded-full border border-zinc-700 bg-zinc-900 text-sm text-zinc-100 shadow-2xl transition hover:border-zinc-500" aria-label="Open menu" title="Menu" aria-expanded={sidebarOpen} aria-controls="main-navigation"><i className="fa-solid fa-bars text-xs" aria-hidden="true" /></button>
+      <button onClick={() => setSidebarOpen(true)} className="menu-button-touch touch-target absolute left-4 top-4 z-40 h-11 w-11 rounded-md border border-[#30343a] bg-[#111418] text-sm text-zinc-100 shadow-lg transition-colors hover:border-zinc-500 hover:bg-[#171b20]" aria-label="Open menu" title="Menu" aria-expanded={sidebarOpen} aria-controls="main-navigation"><i className="fa-solid fa-bars text-xs" aria-hidden="true" /></button>
 
       <button disabled={!sidebarOpen} aria-hidden={!sidebarOpen} tabIndex={sidebarOpen ? 0 : -1} className={`fixed inset-0 z-40 bg-black/60 transition-opacity duration-150 lg:hidden ${sidebarOpen ? "opacity-100" : "pointer-events-none opacity-0"}`} onClick={() => setSidebarOpen(false)} aria-label="Close menu overlay" />
 
-      <aside id="main-navigation" aria-label="Mobile navigation" aria-hidden={!sidebarOpen} inert={!sidebarOpen ? "" : undefined} className={`adn-navigation fixed inset-y-0 left-0 z-50 w-[min(20rem,88vw)] border-r border-zinc-800 bg-zinc-950/95 backdrop-blur-xl transition-transform duration-300 lg:hidden ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}>
-        <div className="flex h-full flex-col px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-[max(1.25rem,env(safe-area-inset-top))]">
-          <div className="flex items-center justify-between gap-4 border-b border-zinc-900 pb-5">
-            <button onClick={() => changePage("home")} className="min-w-0 text-left" aria-label="Go to dashboard">
-              <span className="block truncate text-lg font-black uppercase tracking-tight text-zinc-100">A Deafening Noise</span>
-              <span className="mt-0.5 block text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-600">Concert archive</span>
-            </button>
-            <button onClick={() => setSidebarOpen(false)} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-zinc-800 text-zinc-400 transition hover:border-zinc-600 hover:bg-zinc-900 hover:text-zinc-100" aria-label="Close menu"><i className="fa-solid fa-xmark" aria-hidden="true" /></button>
-          </div>
-
-          <div className="mt-5 min-h-0 flex-1 overflow-y-auto overscroll-contain pr-1">
-            <p className="mb-2 px-3 text-[10px] font-black uppercase tracking-[0.2em] text-zinc-600">Explore</p>
-            <nav className="space-y-1 text-sm">
-              <button onClick={() => changePage("home")} aria-current={activePage === "home" ? "page" : undefined} className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left font-bold transition ${activePage === "home" ? "bg-zinc-900 text-zinc-100" : "text-zinc-400 hover:bg-zinc-900/70 hover:text-zinc-100"}`}><i className="fa-solid fa-house w-5 text-center text-zinc-500" aria-hidden="true" /><span>Home</span></button>
-              <button onClick={() => changePage("history")} aria-current={["history", "artist", "venue"].includes(activePage) ? "page" : undefined} className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left font-bold transition ${["history", "artist", "venue"].includes(activePage) ? "bg-zinc-900 text-zinc-100" : "text-zinc-400 hover:bg-zinc-900/70 hover:text-zinc-100"}`}><i className="fa-solid fa-box-archive w-5 text-center text-zinc-500" aria-hidden="true" /><span>Concert history</span></button>
-              <button onClick={() => changePage("timeline")} aria-current={activePage === "timeline" ? "page" : undefined} className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left font-bold transition ${activePage === "timeline" ? "bg-zinc-900 text-zinc-100" : "text-zinc-400 hover:bg-zinc-900/70 hover:text-zinc-100"}`}><i className="fa-solid fa-clock-rotate-left w-5 text-center text-zinc-500" aria-hidden="true" /><span>Concert Timeline</span></button>
-              {canEdit && <button onClick={() => changePage("next")} aria-current={activePage === "next" ? "page" : undefined} className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left font-bold transition ${activePage === "next" ? "bg-zinc-900 text-zinc-100" : "text-zinc-400 hover:bg-zinc-900/70 hover:text-zinc-100"}`}><i className="fa-solid fa-calendar-days w-5 text-center text-zinc-500" aria-hidden="true" /><span>Concert calendar</span></button>}
-              {canEdit && <button onClick={() => changePage("suggestions")} aria-current={activePage === "suggestions" ? "page" : undefined} className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left font-bold transition ${activePage === "suggestions" ? "bg-zinc-900 text-zinc-100" : "text-zinc-400 hover:bg-zinc-900/70 hover:text-zinc-100"}`}><i className="fa-solid fa-wand-magic-sparkles w-5 text-center text-zinc-500" aria-hidden="true" /><span>Suggestions</span></button>}
-              <button onClick={() => changePage("friends")} aria-current={activePage === "friends" ? "page" : undefined} className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left font-bold transition ${activePage === "friends" ? "bg-zinc-900 text-zinc-100" : "text-zinc-400 hover:bg-zinc-900/70 hover:text-zinc-100"}`}><i className="fa-solid fa-user-group w-5 text-center text-zinc-500" aria-hidden="true" /><span>Friends</span>{friendRequests.filter((request) => request.direction === "incoming").length + concertInvitations.length > 0 && <span className="ml-auto min-w-6 rounded-full bg-amber-900 px-2 py-0.5 text-center text-[10px] font-black text-amber-100">{friendRequests.filter((request) => request.direction === "incoming").length + concertInvitations.length}</span>}</button>
-              <button onClick={() => changePage("stats")} aria-current={activePage === "stats" || activePage === "year-review" ? "page" : undefined} className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left font-bold transition ${activePage === "stats" || activePage === "year-review" ? "bg-zinc-900 text-zinc-100" : "text-zinc-400 hover:bg-zinc-900/70 hover:text-zinc-100"}`}><i className="fa-solid fa-chart-column w-5 text-center text-zinc-500" aria-hidden="true" /><span>Stats</span></button>
-            </nav>
-          </div>
-
-          {currentUserName && <div className="mt-4 border-t border-zinc-900 pt-4"><button onClick={() => changePage("profile")} className="group flex w-full items-center gap-3 rounded-lg p-3 text-left transition-colors"><UserAvatar person={appProfile} /><div className="min-w-0 flex-1"><div className="flex items-center gap-2"><span className="truncate text-sm font-bold text-zinc-300 transition-colors group-hover:text-white">{currentUserName}</span>{isAdmin && <span className="rounded-full border border-zinc-700 px-1.5 py-0.5 text-[8px] font-black uppercase tracking-wider text-zinc-500">Admin</span>}</div><span className="block truncate text-[11px] text-zinc-500">View profile</span></div><i className="fa-solid fa-chevron-right text-[10px] text-zinc-600 transition-[color,transform] group-hover:translate-x-0.5 group-hover:text-blue-400" aria-hidden="true" /></button></div>}
+      <aside id="main-navigation" aria-label="Mobile navigation" aria-hidden={!sidebarOpen} inert={!sidebarOpen ? "" : undefined} className={`adn-navigation fixed inset-y-0 left-0 z-50 flex w-[min(17rem,88vw)] flex-col border-r border-[#20242a] bg-[#0c1015] transition-transform duration-300 lg:hidden ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}>
+        <div className="flex min-h-[105px] items-center justify-between gap-3 border-b border-[#20242a] px-5 pt-[env(safe-area-inset-top)]">
+          <button onClick={() => changePage("home")} className="min-w-0 text-left" aria-label="Go to dashboard"><span className="block truncate text-[15px] font-black uppercase tracking-tight text-zinc-50">A Deafening Noise</span><span className="mt-1 block text-[11px] font-bold uppercase tracking-[0.08em] text-zinc-400">Concert archive</span></button>
+          <button onClick={() => setSidebarOpen(false)} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md text-zinc-400 transition-colors hover:bg-[#171b20] hover:text-zinc-100" aria-label="Close menu"><i className="fa-solid fa-xmark" aria-hidden="true" /></button>
         </div>
+        <nav className="min-h-0 flex-1 overflow-y-auto overscroll-contain" aria-label="Main navigation">{mainNavigationItems(activePage, friendRequests.filter((request) => request.direction === "incoming").length + concertInvitations.length).map(([page, icon, label, active, count]) =>
+          <button key={page} type="button" onClick={() => changePage(page)} aria-current={active ? "page" : undefined} className={`relative flex min-h-[58px] w-full items-center gap-3 px-5 text-left text-[12px] font-black uppercase tracking-wide transition-colors ${active ? "bg-[#171b20] text-zinc-50 before:absolute before:inset-y-0 before:left-0 before:w-0.5 before:bg-blue-500" : "text-zinc-400 hover:bg-[#171b20] hover:text-zinc-100"}`}><i className={`fa-solid ${icon} w-5 text-center text-[17px] ${active ? "text-zinc-100" : "text-zinc-400"}`} aria-hidden="true" /><span className="truncate">{label}</span>{count > 0 && <span className="ml-auto min-w-5 rounded-full bg-blue-600 px-1.5 py-0.5 text-center text-[8px] text-white">{count}</span>}</button>
+        )}</nav>
+        {currentUserName && <div className="mx-4 h-[90px] shrink-0 border-t border-[#2a2e34] pb-[env(safe-area-inset-bottom)]"><button type="button" onClick={() => changePage("profile")} aria-current={activePage === "profile" || activePage === "admin" ? "page" : undefined} className={`group relative flex h-full w-full items-center gap-3 text-left transition-colors ${activePage === "profile" || activePage === "admin" ? "before:absolute before:inset-y-5 before:-left-4 before:w-0.5 before:bg-blue-500" : ""}`}><UserAvatar person={appProfile} size="h-8 w-8" /><span className={`min-w-0 flex-1 truncate text-xs font-bold transition-colors group-hover:text-white ${activePage === "profile" || activePage === "admin" ? "text-white" : "text-zinc-300"}`}>{currentUserName}</span>{isAdmin && <span className="rounded-full border border-zinc-700 px-1.5 py-0.5 text-[8px] font-black uppercase tracking-wider text-zinc-500">Admin</span>}<i className={`fa-solid fa-chevron-right text-[9px] transition-[color,transform] group-hover:translate-x-0.5 group-hover:text-blue-400 ${activePage === "profile" || activePage === "admin" ? "text-blue-400" : "text-zinc-500"}`} aria-hidden="true" /></button></div>}
       </aside>
 
       <section className={`adn-content w-full overflow-x-hidden lg:ml-[205px] ${isHome ? "px-4 pb-8 pt-5 lg:pb-10 lg:pl-[51px] lg:pr-[56px] lg:pt-8" : "px-4 pb-8 pt-5 md:px-8 md:py-10 lg:px-[51px] lg:py-8 lg:pr-[56px]"}`}>
@@ -2065,7 +1994,7 @@ export default function App() {
           suggestionReviews={suggestionReviews}
           suggestionError={saveError}
           notifications={notifications}
-          onAdd={() => { setSaveError(""); setActiveSuggestionId(null); setAddInitial(null); setModalOpen(true); }}
+          onAdd={() => { setSaveError(""); setAddInitial(null); setModalOpen(true); }}
           onOpenConcert={(concert) => setCalendarTarget({ ...concert, mode: isPastConcert(concert) ? "history" : "next" })}
           onSuggestionInterested={reviewSuggestionAsInterested}
           onSuggestionNotInterested={reviewSuggestionAsNotInterested}
@@ -2209,8 +2138,9 @@ export default function App() {
           <span className="text-sm font-bold text-zinc-100">Saving…</span>
         </div>
       )}
+      {successMessage && <div className="adn-saving-toast fixed bottom-6 right-6 z-[80] max-w-[calc(100vw-2rem)] rounded-md border border-emerald-800 bg-emerald-950 px-5 py-3 text-sm font-bold text-emerald-200 shadow-2xl" role="status" aria-live="polite"><i className="fa-solid fa-circle-check mr-2" aria-hidden="true" />{successMessage}<button type="button" onClick={() => setSuccessMessage("")} className="ml-4 text-emerald-400 hover:text-white" aria-label="Dismiss message"><i className="fa-solid fa-xmark" aria-hidden="true" /></button></div>}
 
-      <ConfirmActionModal confirmation={confirmRemoveFriend ? { title: "Remove friend?", description: `${confirmRemoveFriend.displayName} will no longer appear in concert invitations. Existing concert records remain unchanged.`, confirmLabel: "Remove", icon: "fa-user-minus" } : null} onClose={() => { if (!isSaving) { setConfirmRemoveFriend(null); setSaveError(""); } }} isSaving={isSaving} error={saveError} onConfirm={async () => {
+      <ConfirmActionModal confirmation={confirmRemoveFriend ? { title: "Remove friend?", description: `${confirmRemoveFriend.displayName} will no longer appear in concert invitations. Existing concert records remain unchanged.`, confirmLabel: "Remove", hideIcon: true } : null} onClose={() => { if (!isSaving) { setConfirmRemoveFriend(null); setSaveError(""); } }} isSaving={isSaving} error={saveError} onConfirm={async () => {
         if (!confirmRemoveFriend) return;
         setIsSaving(true); setSaveError("");
         try {
@@ -2228,14 +2158,14 @@ export default function App() {
         finally { setIsSaving(false); }
       }} />
 
-      {canEdit && <AddConcertModal isOpen={modalOpen} initial={addInitial} stagingSuggestion={Boolean(activeSuggestionId)} onClose={() => { setModalOpen(false); setAddInitial(null); setActiveSuggestionId(null); }} onSave={handleAddConcert} isSaving={isSaving} saveError={saveError} friends={friends} onSearchCatalog={supabaseEnabled ? searchConcertCatalog : null} />}
+      {canEdit && <AddConcertModal isOpen={modalOpen} initial={addInitial} onClose={() => { setModalOpen(false); setAddInitial(null); }} onSave={handleAddConcert} isSaving={isSaving} saveError={saveError} friends={friends} onSearchCatalog={supabaseEnabled ? searchConcertCatalog : null} />}
       {canEdit && <EditConcertModal isOpen={!!editTarget} mode={editTarget?.mode || mode} initial={editTarget} onClose={() => setEditTarget(null)} onSave={handleEditConcert} isSaving={isSaving} saveError={saveError} artistSuggestions={artistSuggestions} venueSuggestions={venueSuggestions} friends={friends} />}
       {canEdit && <ContextMenu open={contextMenu.open} x={contextMenu.x} y={contextMenu.y} onEdit={startEditFromContext} onDelete={deleteFromContext} onClose={closeContextMenu} />}
       <SetlistModal
         target={setlistTarget}
         onClose={() => setSetlistTarget(null)}
         onEdit={canEdit ? (target) => { setSetlistTarget(null); setEditTarget(target); } : null}
-        onLeave={supabaseEnabled ? async (target) => { setSaveError(""); setSetlistTarget(null); setConfirmAction({ title: "Leave concert?", description: "The concert will be removed from your archive but will remain in the creator's archive.", confirmLabel: "Leave", icon: "fa-arrow-right-from-bracket", action: async () => { await leaveSharedConcert(target.concertId); await reloadAppData(); } }); } : null}
+        onLeave={supabaseEnabled ? async (target) => { setSaveError(""); setSetlistTarget(null); setConfirmAction({ title: "Leave concert?", description: "The concert will be removed from your archive but will remain in the creator's archive.", confirmLabel: "Leave", hideIcon: true, action: async () => { await leaveSharedConcert(target.concertId); await reloadAppData(); } }); } : null}
         onIdDiscovered={canEdit ? handleSetlistIdDiscovered : null}
       />
       <CalendarConcertModal
