@@ -828,6 +828,7 @@ function FriendStatsMenu({ friends, selectedIds, onChange }) {
 
 function NextConcertCalendar({ items, onOpen, onContextMenu, onContextMenuAt }) {
   const [monthPickerOpen, setMonthPickerOpen] = useState(false);
+  const [highlightedDay, setHighlightedDay] = useState(null);
   const monthPickerRef = useRef(null);
   const swipeStartRef = useRef(null);
   const datedItems = useMemo(
@@ -852,6 +853,8 @@ function NextConcertCalendar({ items, onOpen, onContextMenu, onContextMenuAt }) 
   const leadingDays = (new Date(year, month, 1).getDay() + 6) % 7;
   const monthLabel = new Intl.DateTimeFormat("en", { month: "long", year: "numeric" }).format(visibleMonth);
   const weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
 
   useEffect(() => {
     if (!monthPickerOpen) return undefined;
@@ -864,6 +867,7 @@ function NextConcertCalendar({ items, onOpen, onContextMenu, onContextMenuAt }) 
 
   function moveMonth(offset) {
     setVisibleMonth((current) => new Date(current.getFullYear(), current.getMonth() + offset, 1));
+    setHighlightedDay(null);
   }
 
   function eventInteractionProps(concert) {
@@ -905,7 +909,7 @@ function NextConcertCalendar({ items, onOpen, onContextMenu, onContextMenuAt }) 
   return (
     <section className="rounded-3xl border border-zinc-800 bg-zinc-900 p-3 md:p-6">
       <div ref={monthPickerRef} className="relative mb-5 flex flex-wrap items-center justify-start gap-2">
-        <button onClick={() => { const today = new Date(); setVisibleMonth(new Date(today.getFullYear(), today.getMonth(), 1)); setMonthPickerOpen(false); }} className="rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-2.5 text-sm font-black text-zinc-100 transition hover:border-zinc-500">Today</button>
+        <button onClick={() => { setVisibleMonth(new Date(today.getFullYear(), today.getMonth(), 1)); setHighlightedDay(null); setMonthPickerOpen(false); }} className="rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-2.5 text-sm font-black text-zinc-100 transition hover:border-zinc-500">Today</button>
         <button onClick={() => moveMonth(-1)} className="rounded-xl px-3 py-2.5 text-sm text-zinc-400 transition hover:bg-zinc-800 hover:text-white" aria-label="Previous month"><i className="fa-solid fa-chevron-up" aria-hidden="true" /></button>
         <button onClick={() => moveMonth(1)} className="rounded-xl px-3 py-2.5 text-sm text-zinc-400 transition hover:bg-zinc-800 hover:text-white" aria-label="Next month"><i className="fa-solid fa-chevron-down" aria-hidden="true" /></button>
         <button onClick={() => setMonthPickerOpen((open) => !open)} className="rounded-xl px-4 py-2 text-xl font-black text-zinc-100 transition hover:bg-zinc-800 md:text-2xl" aria-label={`Choose month, ${monthLabel}`} aria-expanded={monthPickerOpen}>
@@ -916,13 +920,13 @@ function NextConcertCalendar({ items, onOpen, onContextMenu, onContextMenuAt }) 
             <div className="mb-4 flex items-center justify-between">
               <span className="text-xl font-black text-zinc-100">{year}</span>
               <div className="flex gap-1">
-                <button onClick={() => setVisibleMonth(new Date(year - 1, month, 1))} className="rounded-xl px-3 py-2 text-sm text-zinc-400 hover:bg-zinc-800 hover:text-white" aria-label="Previous year"><i className="fa-solid fa-chevron-up" aria-hidden="true" /></button>
-                <button onClick={() => setVisibleMonth(new Date(year + 1, month, 1))} className="rounded-xl px-3 py-2 text-sm text-zinc-400 hover:bg-zinc-800 hover:text-white" aria-label="Next year"><i className="fa-solid fa-chevron-down" aria-hidden="true" /></button>
+                <button onClick={() => { setVisibleMonth(new Date(year - 1, month, 1)); setHighlightedDay(null); }} className="rounded-xl px-3 py-2 text-sm text-zinc-400 hover:bg-zinc-800 hover:text-white" aria-label="Previous year"><i className="fa-solid fa-chevron-up" aria-hidden="true" /></button>
+                <button onClick={() => { setVisibleMonth(new Date(year + 1, month, 1)); setHighlightedDay(null); }} className="rounded-xl px-3 py-2 text-sm text-zinc-400 hover:bg-zinc-800 hover:text-white" aria-label="Next year"><i className="fa-solid fa-chevron-down" aria-hidden="true" /></button>
               </div>
             </div>
             <div className="grid grid-cols-4 gap-2">
               {["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"].map((label, monthIndex) => (
-                <button key={label} onClick={() => { setVisibleMonth(new Date(year, monthIndex, 1)); setMonthPickerOpen(false); }} className={`rounded-xl px-2 py-3 text-sm font-semibold transition ${monthIndex === month ? "bg-zinc-100 text-zinc-950" : "text-zinc-300 hover:bg-zinc-800 hover:text-white"}`}>
+                <button key={label} onClick={() => { setVisibleMonth(new Date(year, monthIndex, 1)); setHighlightedDay(null); setMonthPickerOpen(false); }} className={`rounded-xl px-2 py-3 text-sm font-semibold transition ${monthIndex === month ? "bg-zinc-100 text-zinc-950" : "text-zinc-300 hover:bg-zinc-800 hover:text-white"}`}>
                   {label}
                 </button>
               ))}
@@ -957,14 +961,15 @@ function NextConcertCalendar({ items, onOpen, onContextMenu, onContextMenuAt }) 
           const day = index + 1;
           const calendarDay = new Date(year, month, day);
           const concerts = datedItems.filter(({ range }) => calendarDay >= range.start && calendarDay <= range.end);
+          const isToday = calendarDay.getTime() === today.getTime();
           return (
             <div key={day} className={`relative h-20 overflow-hidden rounded-xl border p-1.5 md:h-auto md:min-h-32 md:overflow-visible md:rounded-2xl md:p-2 ${concerts.length ? "border-zinc-700 bg-zinc-950" : "border-zinc-800/60 bg-zinc-950/40"}`}>
-              <div className="mb-1 text-right text-[10px] font-bold text-zinc-600 md:text-xs">{day}</div>
+              <div className="mb-1 flex justify-end text-[10px] font-bold md:text-xs"><span className={`inline-flex h-5 w-5 items-center justify-center rounded-full ${isToday ? "bg-blue-500/15 text-blue-300 ring-1 ring-inset ring-blue-500/30" : "text-zinc-600"}`} aria-current={isToday ? "date" : undefined}>{day}</span></div>
               {concerts.length > 0 && (
                 <div className="md:hidden">
-                  <div className={`truncate rounded-md border px-1 py-1 text-center text-[8px] font-bold text-zinc-100 ${concerts.some((concert) => concert.isPast) ? "border-blue-700 bg-blue-950" : concerts.some((concert) => concert.bought) ? "border-emerald-700 bg-emerald-900" : "border-amber-700 bg-amber-950"}`}>
+                  <button type="button" aria-pressed={highlightedDay === calendarDay.getTime()} aria-label={`Highlight ${concerts.length === 1 ? concerts[0].artist : `${concerts.length} concerts`} in the monthly list`} onClick={() => setHighlightedDay(calendarDay.getTime())} className={`block w-full truncate rounded-md border px-1 py-1 text-center text-[8px] font-bold text-zinc-100 transition-[filter,box-shadow] ${concerts.some((concert) => concert.isPast) ? "border-blue-700 bg-blue-950" : concerts.some((concert) => concert.bought) ? "border-emerald-700 bg-emerald-900" : "border-amber-700 bg-amber-950"} ${highlightedDay === calendarDay.getTime() ? "brightness-110 ring-1 ring-inset ring-white/40" : ""}`}>
                     {concerts.length === 1 ? concerts[0].artist : `${concerts.length} shows`}
-                  </div>
+                  </button>
                 </div>
               )}
               <div className="hidden space-y-1 md:block">
@@ -990,12 +995,13 @@ function NextConcertCalendar({ items, onOpen, onContextMenu, onContextMenuAt }) 
         <section className="mt-4 md:hidden">
           <h3 className="mb-2 text-[10px] font-black uppercase tracking-[0.14em] text-zinc-500">This month</h3>
           <div className="space-y-2">
-            {datedItems.filter(({ range }) => range.start <= new Date(year, month + 1, 0) && range.end >= new Date(year, month, 1)).map((concert) => (
-              <button key={`month-${concert.source}-${concert.artist}-${concert.date}-${concert.venue || ""}`} {...eventInteractionProps(concert)} className={`flex min-h-12 w-full items-center gap-3 rounded-lg border px-3 py-2 text-left ${concert.isPast ? "border-blue-700 bg-blue-950" : concert.bought ? "border-emerald-700 bg-emerald-900" : "border-amber-700 bg-amber-950"}`}>
+            {datedItems.filter(({ range }) => range.start <= new Date(year, month + 1, 0) && range.end >= new Date(year, month, 1)).map((concert) => {
+              const highlighted = highlightedDay !== null && highlightedDay >= concert.range.start.getTime() && highlightedDay <= concert.range.end.getTime();
+              return <button key={`month-${concert.source}-${concert.artist}-${concert.date}-${concert.venue || ""}`} data-calendar-highlighted={highlighted || undefined} {...eventInteractionProps(concert)} className={`flex min-h-12 w-full items-center gap-3 rounded-lg border px-3 py-2 text-left transition-[filter,box-shadow] ${concert.isPast ? "border-blue-700 bg-blue-950" : concert.bought ? "border-emerald-700 bg-emerald-900" : "border-amber-700 bg-amber-950"} ${highlighted ? "brightness-110 ring-1 ring-inset ring-white/40" : ""}`}>
                 <span className="w-12 shrink-0 text-xs font-black tabular-nums text-zinc-100">{concert.date.slice(0, 5)}</span>
                 <span className="min-w-0"><span className="block truncate text-xs font-black uppercase text-zinc-100">{concert.artist}</span>{concert.venue && <span className="mt-0.5 block truncate text-[10px] text-zinc-300">{concert.venue}</span>}</span>
-              </button>
-            ))}
+              </button>;
+            })}
           </div>
         </section>
       )}

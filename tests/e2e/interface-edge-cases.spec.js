@@ -120,6 +120,7 @@ test("Calendar opens on the current month on every visit", async ({ page }) => {
   await page.goto("/calendar");
   const monthButton = page.locator('button[aria-label^="Choose month"]');
   await expect(monthButton).toContainText(currentMonth);
+  await expect(page.locator('[aria-current="date"]')).toBeVisible();
 
   await page.getByRole("button", { name: "Next month" }).click();
   await expect(monthButton).not.toContainText(currentMonth);
@@ -129,6 +130,17 @@ test("Calendar opens on the current month on every visit", async ({ page }) => {
   await page.getByRole("button", { name: "Concert calendar" }).click();
 
   await expect(monthButton).toContainText(currentMonth);
+});
+
+test("Mobile calendar events highlight their matching monthly-list entry", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name === "desktop" || page.viewportSize().width >= 768);
+  await page.goto("/calendar");
+  const event = page.locator('button[aria-label^="Highlight "]');
+  for (let month = 0; month < 24 && await event.count() === 0; month += 1) await page.getByRole("button", { name: "Previous month" }).click();
+  await expect(event.first()).toBeVisible();
+  await event.first().click();
+  await expect(event.first()).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator('[data-calendar-highlighted="true"]').first()).toBeVisible();
 });
 
 test("Core pages do not create viewport-level horizontal overflow", async ({ page }) => {
