@@ -1,8 +1,8 @@
 import fs from "node:fs/promises";
+import { renderSuggestionDigest } from "./suggestion-email-template.mjs";
 
 const normalize = (value) => String(value || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, " ").trim();
 const key = ({ artist, date }) => `${normalize(artist)}|${date}`;
-const escape = (value) => String(value).replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]);
 
 const [previousPath, currentPath] = process.argv.slice(2);
 if (!previousPath || !currentPath) throw new Error("Pass previous and current suggestion files");
@@ -25,17 +25,18 @@ const response = await fetch(`${supabaseUrl}/rest/v1/rpc/get_suggestion_notifica
 if (!response.ok) throw new Error(`Could not load notification recipients (${response.status})`);
 const recipients = await response.json();
 let sent = 0;
+const deliveryDate = new Date().toLocaleDateString("sv-SE", { timeZone: "Europe/Berlin" });
 for (const recipient of recipients) {
   const artists = new Set(recipient.artists.map(normalize));
   const dismissed = new Set(recipient.dismissed);
   const concerts = new Set(recipient.concerts.map((concertKey) => { const split = concertKey.lastIndexOf("|"); return `${normalize(concertKey.slice(0, split))}${concertKey.slice(split)}`; }));
   const matches = added.filter((suggestion) => artists.has(normalize(suggestion.artist)) && !dismissed.has(key(suggestion)) && !concerts.has(key(suggestion)));
   if (!matches.length) continue;
-  const items = matches.slice(0, 20).map((suggestion) => `<li><strong>${escape(suggestion.artist)}</strong> · ${escape(suggestion.date)}${suggestion.venue ? ` · ${escape(suggestion.venue)}` : ""}</li>`).join("");
+  const message = renderSuggestionDigest(recipient.displayName, matches);
   const email = await fetch("https://api.resend.com/emails", {
     method: "POST",
-    headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ from: process.env.RESEND_FROM_EMAIL, to: [recipient.email], subject: `${matches.length} new concert ${matches.length === 1 ? "suggestion" : "suggestions"}`, html: `<p>Hi ${escape(recipient.displayName)},</p><p>New concerts match artists you listen to:</p><ul>${items}</ul><p><a href="https://adeafeningnoise.com/suggestions">Review suggestions</a></p>` }),
+    headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, "Content-Type": "application/json", "Idempotency-Key": `suggestion-digest/${recipient.userId}/${deliveryDate}` },
+    body: JSON.stringify({ from: process.env.RESEND_FROM_EMAIL, to: [recipient.email], subject: message.subject, html: message.html, text: message.text, headers: { "List-Unsubscribe": "<https://adeafeningnoise.com/profile>" } }),
   });
   if (email.ok) sent += 1;
   else process.stderr.write(`Warning: email to ${recipient.email} failed (${email.status})\n`);
