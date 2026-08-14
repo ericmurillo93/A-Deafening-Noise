@@ -7,9 +7,10 @@ test("renders every suggestion and escapes untrusted content", () => {
     { artist: "A & B", date: "01/09/2026", venue: "SALA <ONE>", sourceUrl: "https://example.com/one" },
     { artist: "SECOND", date: "02/09/2026", sourceUrl: "javascript:alert(1)" },
   ]);
-  assert.match(email.subject, /^2 new concerts/);
+  assert.equal(email.subject, "New concert suggestions");
   assert.match(email.html, /Eric &lt;Admin&gt;/);
   assert.match(email.html, /A &amp; B/);
   assert.match(email.html, /SECOND/);
   assert.doesNotMatch(email.html, /javascript:/);
+  assert.doesNotMatch(email.html, /You receive this daily digest/);
 });
