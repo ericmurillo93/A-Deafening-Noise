@@ -17,6 +17,7 @@ const scrapers = [
   ["apolo", "scrape-sala-apolo.mjs", "Sala Apolo"],
   ["bikini", "scrape-bikini-barcelona.mjs", "Sala Bikini"],
   ["dice", "scrape-dice.mjs", "DICE"],
+  ["doctor-music", "scrape-doctor-music.mjs", "Doctor Music"],
 ];
 
 function run(script, arguments_) {

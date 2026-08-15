@@ -288,7 +288,7 @@ Functions directory: netlify/functions
 
 ## Concert suggestion automation
 
-The workflow `.github/workflows/concert-suggestions.yml` runs daily at 04:23 UTC and can also be started from GitHub's Actions UI. It first refreshes every active Spotify connection, rebuilds the privacy-reduced union artist catalog, and then refreshes Resurrection Fest Route, Live Nation Spain, Madness Live, Sala Razzmatazz, Sala Apolo, Sala Bikini, Paral·lel 62, Palau de la Música Catalana, Les Docks, Montreux Jazz Festival, and DICE listings in Spain and Switzerland. The non-round cron minute reduces the chance of GitHub scheduling delays.
+The workflow `.github/workflows/concert-suggestions.yml` runs daily at 04:23 UTC and can also be started from GitHub's Actions UI. It first refreshes every active Spotify connection, rebuilds the privacy-reduced union artist catalog, and then refreshes Resurrection Fest Route, Live Nation Spain, Madness Live, Sala Razzmatazz, Sala Apolo, Sala Bikini, Paral·lel 62, Palau de la Música Catalana, Les Docks, Montreux Jazz Festival, DICE, and Doctor Music listings in Spain and Switzerland. The non-round cron minute reduces the chance of GitHub scheduling delays.
 
 Configure these GitHub Actions repository secrets:
 
@@ -348,10 +348,12 @@ Run the complete pipeline locally:
 node scripts/scrape-resurrection-route.mjs --output=/tmp/resurrection.json
 node scripts/scrape-livenation-events.mjs --output=/tmp/livenation.json
 node scripts/scrape-madness-live.mjs --output=/tmp/madness-live.json
+node scripts/scrape-doctor-music.mjs --output=/tmp/doctor-music.json
 node scripts/combine-concert-suggestions.mjs \
   /tmp/resurrection.json \
   /tmp/livenation.json \
   /tmp/madness-live.json \
+  /tmp/doctor-music.json \
   --output=/tmp/suggestions.json
 ```
 
@@ -446,6 +448,7 @@ reduce file length.
 │   ├── combine-concert-suggestions.mjs
 │   ├── scrape-livenation-events.mjs
 │   ├── scrape-madness-live.mjs
+│   ├── scrape-doctor-music.mjs
 │   ├── scrape-resurrection-route.mjs
 │   └── setup-local.mjs
 ├── src/
