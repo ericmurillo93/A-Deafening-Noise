@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-13T05:52:27.730Z",
+  "generatedAt": "2026-08-15T04:51:36.797Z",
   "source": "Connected Spotify profiles",
   "matchingRule": "Current top artists from connected users",
   "artists": [
@@ -10,62 +10,8 @@
       "totalMsPlayed": 3600000
     },
     {
-      "artist": "A Perfect Circle",
-      "spotifyId": "catalog:a0743414d7ea6d584990d6995ea636a4fc4e95ee1e34377d85f2102720ac4617",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Abbie Falls",
-      "spotifyId": "catalog:a24a157d17eed463d9ad8e7763131b952fdff98273ff9921a0d8f422cce068a9",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Above Symmetry",
-      "spotifyId": "catalog:b7e1365248ed90996da254637b9e139db2fb2b8b1330ebcc7a2dbe52c0687d8d",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
       "artist": "Above, Below",
       "spotifyId": "catalog:f3e6feb8d75a393cf6ee66c0eacb83034e93d05509b17e100a6a256173db2a30",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "AC/DC",
-      "spotifyId": "catalog:a03e20dcf9d2f01df3a566e3851d45e9979b0d0f70df8a23bb52132836616945",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Acid Bath",
-      "spotifyId": "catalog:6742e97f2249ca09a2a2b9bcff27476b21ed88e42da622a32fbb2285d947e08b",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Acres",
-      "spotifyId": "catalog:465a702895f910041f2f5879b778e7a74489155447713f0b93b7d0ecaca42dad",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Adele",
-      "spotifyId": "catalog:3e4e823f00a094bc933cb5b9f65b2d5adb8a55dd5b83bbe991465dd57bd55040",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Aerosmith",
-      "spotifyId": "catalog:4e9394ca65be987340b7b706f24c2890bbd3150daef896135dae7820f5194f5c",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "After The Burial",
-      "spotifyId": "catalog:8bb7116e1550a8cd10b68e28e8e89252b2fcec2cc5708cba271ecdee77611045",
       "listenCount": 1,
       "totalMsPlayed": 3600000
     },
@@ -76,68 +22,8 @@
       "totalMsPlayed": 3600000
     },
     {
-      "artist": "Alba Reche",
-      "spotifyId": "catalog:8f2232ff6f734427bd574d967b9c4f5fbe8d4a9bcb47931a8fe31da5a4a45a7e",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Alcest",
-      "spotifyId": "catalog:60f8a096ca8cf2ee902bf83a5f4585d8bfe3530ba2520be8882bb530aa743485",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Alice In Chains",
-      "spotifyId": "catalog:12faa58b0d2782d0f6fc95220bbb96c29dee0c088c3b549a9e57bdae25aa95aa",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Alissic",
-      "spotifyId": "catalog:0963731b8eb3477335acfe1e09a4fcd4bddefd914b874c9c344370e8eef18dfe",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Alithia",
-      "spotifyId": "catalog:200c593164ec0ab468c2c989960fd1402437e9f1ea539938e9267902513d24e4",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "All That Remains",
-      "spotifyId": "catalog:4b68fa58213084b0eb9dc113143ef6469b115ab5ebb91c87a8157a3816931187",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "All Them Witches",
-      "spotifyId": "catalog:8536b3fbe70eda96509e20af148a3e69683ef81233361a7ab9130b41a8f29455",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
       "artist": "Allt",
       "spotifyId": "catalog:930d475a99491d31d3e69574f70325cbc8cb169f1a9456173db75b7b07084433",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Alpha Wolf",
-      "spotifyId": "catalog:e973c40f8f081b84c1270c10a6b02166aae30aa9c73b6d67cb6701eea1d88282",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "alt-J",
-      "spotifyId": "catalog:447ce0ee24a6b1651640cbdda54c2f502a439b4e1c16e8db963b917ad6d602dd",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Alter Bridge",
-      "spotifyId": "catalog:a28242bf25b990d8933935859d72256f0a5b6e0bd287a38652249082f716d137",
       "listenCount": 1,
       "totalMsPlayed": 3600000
     },
@@ -154,56 +40,8 @@
       "totalMsPlayed": 3600000
     },
     {
-      "artist": "Amorphis",
-      "spotifyId": "catalog:df45b32ffc5e076c02e383f0aacf06f7aaecd29e725ce157ce8a858a97480d5c",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Amy Winehouse",
-      "spotifyId": "catalog:7736ddc9c758f3cf03e3d75333f9882670adecd7c66cdf01f8138f9075136d96",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Anathema",
-      "spotifyId": "catalog:dacbd249f599d977b6e031e46f2a09d1b65c455b7c3b45bc550c79662adb413b",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Angel Vivaldi",
-      "spotifyId": "catalog:7fd7b745a3e5cdae217840d67fd1b590f40fa6f5203b2d53d5df492dcfc453eb",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Animals As Leaders",
-      "spotifyId": "catalog:745a074437b525c70b061d6a4f8544ee91037e364e73469b3a378381978a453e",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Apparat",
-      "spotifyId": "catalog:5215394972adb8ef9a8c8721346afc86206deaf2e42aaa6551ce7402fe553555",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Arcade Fire",
-      "spotifyId": "catalog:5635c7bf7691f83818e64be672b22e30ee1b55ed052ad255a6849af69ee91de0",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
       "artist": "Arcane Roots",
       "spotifyId": "catalog:a5eb982d24f10e2c7a9ff82e0e67f5af07b9b995168b25b1b685d67b276d3fd3",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Arch Enemy",
-      "spotifyId": "catalog:60c0fc9c096348b1b54ca7a679d79e36ec00cd79c2a1e313934144d8d52dde63",
       "listenCount": 1,
       "totalMsPlayed": 3600000
     },
@@ -220,68 +58,8 @@
       "totalMsPlayed": 3600000
     },
     {
-      "artist": "Arctic Monkeys",
-      "spotifyId": "catalog:efd86cb98a5f6dc27fe5a3fd2b5d6a440c0cc4fe7915b2bcdd77ea42e593de94",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Arena",
-      "spotifyId": "catalog:572e31f55b6ac1b13fd5f5665d44bef1e3474ccf39b983428d4d8c4493d041c5",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Árstíðir",
-      "spotifyId": "catalog:61469c5df37ab78a04b94ed46e48ab9d75521669c59ffddc11049c4c2668590a",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Artificial Language",
-      "spotifyId": "catalog:69ea7d33e52409c65b8937b812fba5c0f71ad7f19529ac32c506df590caee733",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "As I Lay Dying",
-      "spotifyId": "catalog:a90e9c37d6f04d37b4ff76b1717b0a7b6fab4831eb92d813d052954c2ef4158a",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
       "artist": "Asking Alexandria",
       "spotifyId": "catalog:3c3d77c5af4b75de74ad1ca1a6951740bea327f774b157c0d3b8d7580f49359b",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Astrosaur",
-      "spotifyId": "catalog:664086216d9a1afabf191b0125ab569fa6a43f07a0e4063bd15ea9ee7bbc01d6",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "At the Drive-In",
-      "spotifyId": "catalog:85959da35c68bb57b3623cc3ec858f183b1619b03cf040aeed776fa45b3999fa",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "At The Gates",
-      "spotifyId": "catalog:9844babeb3df8f7e8436922bf29a759a8bd5cca95e5d27a07d8a65ffdcb04fbf",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Atreyu",
-      "spotifyId": "catalog:4caad95537cc20249dc7ee0e812c1216ccb40697c3abc548be8a1bba698f983a",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Audioslave",
-      "spotifyId": "catalog:6af67c7d65f9bef8259d6422f452fbc0bb8b49083e78defae675e2b29bd4fb11",
       "listenCount": 1,
       "totalMsPlayed": 3600000
     },
@@ -292,38 +70,8 @@
       "totalMsPlayed": 3600000
     },
     {
-      "artist": "AURORA",
-      "spotifyId": "catalog:9b89025ce7a6d932b28f6e15132a70d402f723874a425e9b4c7cc3b179fa66ce",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Avatar",
-      "spotifyId": "catalog:87bbe879c7a5f5784a70384bb49fa9513a6a3fbe4c2d388635e3c87611c03fae",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
       "artist": "Avenged Sevenfold",
       "spotifyId": "catalog:555806e1250433e8e9e1c11ad303f8d0d9ae4de5d2dcddffee39d586f60177f2",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Ayax y Prok",
-      "spotifyId": "catalog:79ee38be1c6741dfe1c9d15762a597182e92aee148acbc61f9aab3da49981fc5",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Ayreon",
-      "spotifyId": "catalog:3f9d3b1fa0b7a1d03132c816987a9e2df0d1a942ef4e1b7ff01527cfdb04f55f",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "BABYMETAL",
-      "spotifyId": "catalog:230cf431ba1e085c6afd4771579d0085d56ef478b40a4b8c02cd700d996fec20",
       "listenCount": 1,
       "totalMsPlayed": 3600000
     },
@@ -340,68 +88,8 @@
       "totalMsPlayed": 3600000
     },
     {
-      "artist": "Baroness",
-      "spotifyId": "catalog:739742877feeb01168d8e1db7a5cc33fad6e80de7364183dc2bed2567d500f47",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Bear McCreary",
-      "spotifyId": "catalog:5b2c3dee5bfd959bf962ad944cb78420660d73626a83495ccb46673f0555b08a",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Behemoth",
-      "spotifyId": "catalog:0f2319286c28dda0adc5fcf8482c5b259be5ec239a7cb12cdc85ff673d5f7700",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Ben Yart",
-      "spotifyId": "catalog:b4a636aff5a3757cdfbce7e5e0f23a8c658be9510fcaa69ad504721fcdc21508",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Beneath The Massacre",
-      "spotifyId": "catalog:3c58a53a6f1f547c9b4d8a43fd374d6ceece8a3dcb11f4f014b08b8356cdbe56",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Betraying The Martyrs",
-      "spotifyId": "catalog:156a41ced9e647507e67c071073d8b29e1e4a70cc3c158ee6fb6e8dae9762dbe",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
       "artist": "Between The Buried And Me",
       "spotifyId": "catalog:4c8e36e15a90d339ec7b6932d2e01b55ecab2ca2a2d07600cd94f829aea80b86",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Beyoncé",
-      "spotifyId": "catalog:8511faeff24111c7909c217bdc1157fb93e5a3cde3c29e2337c4cd61cfc92fea",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Billie Eilish",
-      "spotifyId": "catalog:1d78f58dc2096dc72c0f771b808345926d4acc0eec73c1f62b862c7fafde91a4",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Billy Joel",
-      "spotifyId": "catalog:26457e898ba9b255c85552d48b539ff8f8c01a918ef904152f2a9fbb12c43218",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Billy Talent",
-      "spotifyId": "catalog:93b0736a0e9634536430f6266a072f312c6c3ae4914fa5d84527a0774826e4ee",
       "listenCount": 1,
       "totalMsPlayed": 3600000
     },
@@ -412,68 +100,8 @@
       "totalMsPlayed": 3600000
     },
     {
-      "artist": "Black Eyed Peas",
-      "spotifyId": "catalog:e470e8ff531b8a164185b818ff894cfea4a15698b1883fdce3f2cc18d509f791",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Black Peaks",
-      "spotifyId": "catalog:85e6eceb4e6a79b26eee66f6016ba8810ec752ce800e4660579fc2e4eff7424d",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Black Pumas",
-      "spotifyId": "catalog:749eadb1d9859827a35c67a6950d0b570aea32f51c526c8016e2093a74c3b21d",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Black Sabbath",
-      "spotifyId": "catalog:ccb8a1cf3782dd0b59c6327bf9e8db8a846e6f723bce34ee05f4a59880c30b88",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Blackhole",
-      "spotifyId": "catalog:e7edd6da7bc67389f20bdf84c95fd5c852b1585f648f209822a012f2cd9daf5a",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
       "artist": "Bleed From Within",
       "spotifyId": "catalog:98f36362e89a6cee1a28308be33077c04b07e23a1235fae2c99c4657c461a5a0",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Blessed By A Broken Heart",
-      "spotifyId": "catalog:327155ba98175186955ed28c3b3962884667f8b40b1be34e3852cc3b243a58c4",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "blessthefall",
-      "spotifyId": "catalog:c9a29ef61f6931f57ca62de3c92c196de0e74aaf8fe0a4e448e8bd77dbb8c3af",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "blink-182",
-      "spotifyId": "catalog:a8c45e6cf34eb3b4bca71c932f96e58347b11ffb541d3f5e228198f8150f36ef",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Blueneck",
-      "spotifyId": "catalog:b1d42cc6e4437d89da633449ff879c0c25ae7dd570b6e43edc9eb0592cf3bdd8",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Bob Dylan",
-      "spotifyId": "catalog:01f709e87c9c8e2abedfc3af13b6b3a294ad602aa6c5ce8df996960253d40247",
       "listenCount": 1,
       "totalMsPlayed": 3600000
     },
@@ -484,62 +112,8 @@
       "totalMsPlayed": 3600000
     },
     {
-      "artist": "Bon Iver",
-      "spotifyId": "catalog:8d1e429d26a5c8ee2d69f52686673b6f8b2f34d565ff3497d138249b76532a04",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Born Of Osiris",
-      "spotifyId": "catalog:7eb07032c74214b34b623c99b7da0587691409c0d50c2e2009c040a1b2e3aa73",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
       "artist": "Bring Me The Horizon",
       "spotifyId": "catalog:ab7a1a28f957bd3fc1bb4f2d43abdfff0a95a354aced584c8b5a4b8b47dda821",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Britney Spears",
-      "spotifyId": "catalog:2f523266a6393326391d5b00bcfbb36bd98f81d7edcd5c315fbdd614bd7a80a5",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Brontide",
-      "spotifyId": "catalog:c7abf55af7b298b3a6ba27a73c768e535aca30b5cac43a708a43afc862a7927d",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Buckethead",
-      "spotifyId": "catalog:19506ea5197baf51230de5cbf4044a91a6a31ba146787b0b4da7283a48919a3b",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Bullet For My Valentine",
-      "spotifyId": "catalog:a5def8372af88c78126d29f64211dd41e9be518de99c4c869d63387a75f8d717",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Burst",
-      "spotifyId": "catalog:57d59e28722dfd55524b8d4faf279bd38f0a3f33106f9e54dfe9239fa2d0dfbf",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Bury Tomorrow",
-      "spotifyId": "catalog:49cbd066998c1ef7d5b8c7210976f851454443d5906574e9293b77532778b7d8",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "C. Tangana",
-      "spotifyId": "catalog:40862e93b6b5da2d4c33093b8592aac0898481f982d7e85bdf27d7c6a1556b22",
       "listenCount": 1,
       "totalMsPlayed": 3600000
     },
@@ -550,80 +124,8 @@
       "totalMsPlayed": 3600000
     },
     {
-      "artist": "Caligula's Horse",
-      "spotifyId": "catalog:d47fdffd88db963ea6d3338fdeca7c6a9f3fd5ba003994366dd1d4381672dc8a",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
       "artist": "Calle 13",
       "spotifyId": "catalog:105fc329e938ff8e749c1b08b99395c1b5e3f2b443ee72c2facea2fb2f6b97c8",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Camel",
-      "spotifyId": "catalog:4812585e944994cb91cae8b4d8d87a155e6b1a165d8bdf5ab75752c4f04b9724",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Cane Hill",
-      "spotifyId": "catalog:d745443bb7eeae01b8970e6675b62de00239b9336b0861afdef69e78ab3522fa",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Canserbero",
-      "spotifyId": "catalog:bd219c1d905ddd8d4cf5e04b0bfcdff9b05301bbcb1cf1ebccd5efdeedd13741",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Car Bomb",
-      "spotifyId": "catalog:2437e16f5320ec14997d06f07129506a3dbd885509427716273bc7235c8226d0",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Cattle Decapitation",
-      "spotifyId": "catalog:626177ed09b97cce0da3d451eaad7925e35013e54f5bd3e88358b39d6d05fc8a",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Cavalera Conspiracy",
-      "spotifyId": "catalog:b73401823dfc69c0471cdc4be4ea47fe9bd92c7fad8d512b94618771dab64907",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Cecilio G.",
-      "spotifyId": "catalog:276e1daaaf6c83156bb4cec5310686c6fefa63b6173330f66a04024d89ac9c06",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Childish Gambino",
-      "spotifyId": "catalog:ce456abe423454411f2c33e19f230b1d1a8b36397d72b65a4fd6f521f203b960",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Children Of Bodom",
-      "spotifyId": "catalog:bd52d6a8e93eec62a1b878087efadb5e09bf141abad37c9943b0e2d22e896d5c",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Chocolate",
-      "spotifyId": "catalog:7499aced43869b27f505701e4edc737f0cc346add1240d4ba86fbfa251e0fc35",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "CLANN",
-      "spotifyId": "catalog:d53362e574c0d24ebd8faf13d6b3991fa7874a0248b5d391f9bd35a06ddade7f",
       "listenCount": 1,
       "totalMsPlayed": 3600000
     },
@@ -634,44 +136,8 @@
       "totalMsPlayed": 3600000
     },
     {
-      "artist": "Coheed and Cambria",
-      "spotifyId": "catalog:de94d2689423e81b5348e5b3ee373245e46835ed29fae2942ad0e26a9087df4d",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
       "artist": "Counterparts",
       "spotifyId": "catalog:3031be2980f2e485cec4fe2e2a4149d883c7b5e90bdbcd6dcf0619e9b045aff6",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Cradle Of Filth",
-      "spotifyId": "catalog:92c6c828f72b0dc09abb5f25a9ec53ad3f978dc7b49d50b36496d9769df93bf3",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Creedence Clearwater Revival",
-      "spotifyId": "catalog:423825ad3cdd31a2e1a74e13d9c1d08ddcfc54a6a016ba3f3ce97fffffbe002b",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Creeper",
-      "spotifyId": "catalog:8f0b49be84aba883a225569f87359227261e79b4d76cff56888ca4ab9c7a15ee",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Crystal Lake",
-      "spotifyId": "catalog:601a86ebbe7ffe9bf74f15ce9861e8286e7401695082e45d2a55cf16a866412f",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Cult Of Luna",
-      "spotifyId": "catalog:fc781dd065654efa741074d66000718c6a1b2941327ecbd394f198954aa7f90e",
       "listenCount": 1,
       "totalMsPlayed": 3600000
     },
@@ -682,194 +148,8 @@
       "totalMsPlayed": 3600000
     },
     {
-      "artist": "Cynic",
-      "spotifyId": "catalog:50c8977f9c95994fcd86c19d9b5bc6cf36bf37d22ca60002e772ee1a6f4ff563",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Daft Punk",
-      "spotifyId": "catalog:7a2ad6b68d51963bf2b27b491f38d7941fe2d21784f92ab1a79c8944dcdeaed3",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Dance Gavin Dance",
-      "spotifyId": "catalog:60894827a6236503bd2aa40e89367adfb977e851b4c0988c006df6747f8a724a",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Danger Mouse",
-      "spotifyId": "catalog:2e1ba1c66425b1dd5b438534dd61eb1381ab69d772ac9ad6b1fd76154f917417",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Daniel Tompkins",
-      "spotifyId": "catalog:d281ae6b0761e01825d0fc0d0dc75fe03970edf7b1cb4fb799462378d476e936",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Dark Tranquillity",
-      "spotifyId": "catalog:0ebfa492cb6a239b3dd47cde22dde184613ea5bdd95f16e1ce04c2758dc02232",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Darkest Hour",
-      "spotifyId": "catalog:1ba28bdc85afabddf58d40bd9ab86d065438f8df9832377200511e7b767ee7f8",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Darko US",
-      "spotifyId": "catalog:551da48378889397edcf25056d525f89eb28d3670a9ef273d2f006b0feba9947",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
       "artist": "dArtagnan",
       "spotifyId": "catalog:7fae1a0e45e93633c624b03ede1733077645db55c714f25783d0e75933605197",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Daughter",
-      "spotifyId": "catalog:4ed28f82ca96c3342a5c591668270f78c26dae22fd953772a6c14e52f46e1b22",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "David Bowie",
-      "spotifyId": "catalog:1f7629b7788b04f243b4e6bda3f83fd78fefaf02fddf992dd6a3540f0f0470db",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "David Maxim Micic",
-      "spotifyId": "catalog:83131ef5b8599e69e1f9e9a5f8ba5b6be33987e8639c5b94957e1eb55938c07c",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Deafheaven",
-      "spotifyId": "catalog:e1681f554f134f71b74dec83a0dcce1472cb6dc78c5aa010d5d3299fa3c7bd5e",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Death",
-      "spotifyId": "catalog:52c8e02987ccb1b0eef9c7c966aebf03c92a159aafda37fbcf03f4838dbcd48d",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Decapitated",
-      "spotifyId": "catalog:5677f45b873b48e08b105174bd5d9f8e9f76883a5bb30dfaedc01489e70175ad",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Deep Purple",
-      "spotifyId": "catalog:1440319bf7c1fef8d1b1a6fa62f84d0dc514616c14b4346a98ec667226e0d10d",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Deftones",
-      "spotifyId": "catalog:1c09e5d790356eec81d192865298e10cfd13cc9f2192e03406424d13325a2dc1",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "DELLAFUENTE",
-      "spotifyId": "catalog:dda70dbcdab2943308db51aa0897b4c5eddb50e5ece76f4b5375dc04f8ca31bd",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Desakato",
-      "spotifyId": "catalog:c83e5bfa1c1879ebd9b5bb4dc5ae7846526e3c9dc171e99169fff26b7e79e0f9",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Despojos de Poeta",
-      "spotifyId": "catalog:a8412205ec20e71d43728b011ebb5014a585b92563554c80a88e16efc655b4e7",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Destiny Potato",
-      "spotifyId": "catalog:f4e67d3f56757fa20353090d4434103f3a19a674d21c97a1a899168d1683757c",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Devin Townsend",
-      "spotifyId": "catalog:aea84f81b1733455e0a9c662d7266e125590934e442ec6f81ba013111eb166f6",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Devin Townsend Project",
-      "spotifyId": "catalog:61c53b464d6ee723c773ff28ea2a78297b1745fccdd2d168809a8b7ede3313b3",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "DIR EN GREY",
-      "spotifyId": "catalog:709b0dd21d6dc72b119b6dd9140333f981f4a746acda0fba6b8b7dc041a79d99",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Dire Straits",
-      "spotifyId": "catalog:7d29fa2ce5e7cb7fe18b87f2d5b0ed40375f33231eeeec04d770d5c8b0b9469a",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Djo",
-      "spotifyId": "catalog:f68037abc082783e2de1adb2db7d96e6c7a0b8efd04cefd82bc3cac5a0f1fb5e",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "DON BROCO",
-      "spotifyId": "catalog:133e724d631e8926c7c2877b41a41a01ca42d2a9000cb58ab9d1e5ed33a9fdd2",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Don Omar",
-      "spotifyId": "catalog:451e65fa6366f6b6b2ba16bb3e98dd5a995606e4b494d87ff5571de4dc1684fc",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Dream Theater",
-      "spotifyId": "catalog:2225b3f7c3e0a22e4a1388f69f315da22d078ff7423ab7a6c04ac2d7fd85e9b9",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Dua Lipa",
-      "spotifyId": "catalog:683ab57a0f7ce050f713c64c687194c7befae62e1466a63072d660e55f1f3394",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Duki",
-      "spotifyId": "catalog:6f9b1c08b4f29854427b76a0b68c7ebd4519dbf41ca03c13a1be7fda66cf8692",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Eagles",
-      "spotifyId": "catalog:c94bb5f268d814b7ebe7ea96321013e23ce47e48cb418302a60f2d231519437d",
       "listenCount": 1,
       "totalMsPlayed": 3600000
     },
@@ -880,74 +160,14 @@
       "totalMsPlayed": 3600000
     },
     {
-      "artist": "Ed Maverick",
-      "spotifyId": "catalog:b39fdc899f1bfc37e69eb50ba1d38c553cce16a3aa695a91467afe5ef3d809ef",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
       "artist": "Einar Solberg",
       "spotifyId": "catalog:80ff00e5a1aaa400550ec9548c380977f8356e03266b6cb87f47d0990fc600d6",
       "listenCount": 1,
       "totalMsPlayed": 3600000
     },
     {
-      "artist": "El Chojin",
-      "spotifyId": "catalog:ce9285169caf37d717fc38da57c918bd8de3effb23d78343931b7fdc9c3e3ccf",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Elder",
-      "spotifyId": "catalog:4bad2eaec5cd6571264fa0de990ab015b08d9ecfa290aec10c06f3d2bece51ac",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Electric Callboy",
-      "spotifyId": "catalog:6698732a14b289e08e461eda458eccaf2dd2aeea49bc80763eaabf0f86a9e01b",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Elliott Smith",
-      "spotifyId": "catalog:1eb6ab427a4ddcc136e8481f0258c540e8f44ce7e4bb5ad29663c7ecabe32caa",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Elton John",
-      "spotifyId": "catalog:ad236204762552efc2bcba897e24564bf1278b7b92900e728f2def1dcc42ec61",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
       "artist": "Eluveitie",
       "spotifyId": "catalog:d2f0a489941505697c7b6ba2daf713fb683b105c21056ee31f166ed4f11c7276",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Emarosa",
-      "spotifyId": "catalog:296011d64aa56ed9b9f7e98dfae7277d2cc97884be54d1c91ac1f85f45a06523",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Eminem",
-      "spotifyId": "catalog:9f0c989dd3e4c7a6ef5512d6347a9af24b95ee886e9874edbebf2055166c5ed6",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Emmure",
-      "spotifyId": "catalog:74fda26598dfb993355fea2f1ecdd2cfe6768e3cebe663e1e17081a13e225c98",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "ENMY",
-      "spotifyId": "catalog:d5b17b7c89ccfcf4384ae018ea59e9b7c8e52805f2f397ab15e819e1a082ed53",
       "listenCount": 1,
       "totalMsPlayed": 3600000
     },
@@ -970,32 +190,8 @@
       "totalMsPlayed": 3600000
     },
     {
-      "artist": "Escape the Fate",
-      "spotifyId": "catalog:fb2f94ab82da8c8e43582a5c1d1e9d7ad4fe8e03a6efdd0212d757336085587d",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Estas Tonne",
-      "spotifyId": "catalog:77f0da45913bd30c8e58bd327dcdfe1847b1f2ec5d89d1a082ace87c91653103",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
       "artist": "Estopa",
       "spotifyId": "catalog:ff1198e54a7e19a23174bb0eea7e8264cee687cc2bd5452aa7bab82720ba4d39",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Every Time I Die",
-      "spotifyId": "catalog:17c3d430728c5ad01c24f38f9297dc414822f82da5159f96f6563ac8d3b1a91a",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Exquirla",
-      "spotifyId": "catalog:6a09a2862ef2584fbc7f253f6e18f0c7bdce5513ad842e99b694c8668a4c17b3",
       "listenCount": 1,
       "totalMsPlayed": 3600000
     },
@@ -1006,104 +202,8 @@
       "totalMsPlayed": 3600000
     },
     {
-      "artist": "Fair To Midland",
-      "spotifyId": "catalog:af15af0505a4e411179fe2c8a2bdb4e3e1ad2740e0769e429bcc44500dac8514",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Faith No More",
-      "spotifyId": "catalog:ea347c8bbbf04d3ba77d74ad98168678921c2347da49b10a4ff9e8d2fcd12e29",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Falling In Reverse",
-      "spotifyId": "catalog:1247de718ad36fb0f66b9bcd39e9f8683054a09aadb2c6d1fdd9758a1144bccd",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Fear Factory",
-      "spotifyId": "catalog:825a199b245cf5ac01e72f0f0fb93e21fcf084c731e6d51f478dccb95ce1ea91",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "FERNANDOCOSTA",
-      "spotifyId": "catalog:e545a4b5919bdd7df0e8b05c3c941eb78d500b8fde6a629053ecb80f94c1d745",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "FEVER 333",
-      "spotifyId": "catalog:3ce8590bbb6258852fcf91664291e387c1765dfdccc7d6bb0f48bac3d2fcf4a5",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Fit For A King",
-      "spotifyId": "catalog:58531fbf5f58aa50d4bc2ef023df79669dbf0fc0c54a657752348a8c46dd83c2",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
       "artist": "Fit For An Autopsy",
       "spotifyId": "catalog:ed6801147ae2cdc5383d3edc5644f542a42900d5788efd148f14e19c93344a53",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Fito y Fitipaldis",
-      "spotifyId": "catalog:521493b862f154a914cf34511c65e696a9b1e23a85ee1c3565b12f527c174a1d",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Fixation",
-      "spotifyId": "catalog:e76b46f0699f01d4b37a5a7d8e49092203c6554d62e7520857a94cb78f2da49e",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Fleetwood Mac",
-      "spotifyId": "catalog:4f18715a1e9e414f51be4643895c8798d4eeefe9c19774ae644b3ea5682cbd6b",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Foo Fighters",
-      "spotifyId": "catalog:ff1fc9e7accc15e951375d76909cb0d3cc0a970f5d813140564879ed8a1fd55b",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Frank Carter & The Rattlesnakes",
-      "spotifyId": "catalog:d4da7711f1609a7dc93b97e7f481c6e1c7601eee378cc91f49fd6df3527afb5b",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Frank Ocean",
-      "spotifyId": "catalog:94f9136684d0b6f3a379746ba252ee9576f7f34c9a0c405922e849064695091f",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Fred again..",
-      "spotifyId": "catalog:36864734a27d4bda1959a8f85afad50512ead6aa292586b9ccd2c3327ef674d1",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Funkadelic",
-      "spotifyId": "catalog:9670fc73ed17d512194633b4739136281b4834a4089aac061e40c91233ec0fab",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Future",
-      "spotifyId": "catalog:ebb3de8a3d9a40366132eb5deb5af44e4c96c11696f8fc34ea2c1d8bd8399171",
       "listenCount": 1,
       "totalMsPlayed": 3600000
     },
@@ -1114,110 +214,8 @@
       "totalMsPlayed": 3600000
     },
     {
-      "artist": "Gallows",
-      "spotifyId": "catalog:0ad79209461f3ea8f3ea68aca367fc9085b7ce0d6eb6e0b20b08915a67b00a5b",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Gareth Coker",
-      "spotifyId": "catalog:fdc36323fff166deff36da02159268753d09b22643ea1087b66a4cb1dec843a9",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Gary Jules",
-      "spotifyId": "catalog:5482d9781bd95c57194d68ec6ffa48560547da75928ec748983ce5953dfb5776",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Gazpacho",
-      "spotifyId": "catalog:6e2ccdbd2b5d5dcb6a8576ea4fb71706e6a620ee2002c64ad3b2919b2020b3b0",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Genesis",
-      "spotifyId": "catalog:aeebad4a796fcc2e15dc4c6061b45ed9b373f26adfc798ca7d2d8cc58182718e",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Ghost",
-      "spotifyId": "catalog:ead6ef03d61ee60c533d6d450c50a1e559a8a37f6b796a4094cd0dac6b744428",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Giraffes? Giraffes!",
-      "spotifyId": "catalog:96669d6e01e36b040c3be026417e07f16c6d4b20f148333e55b02fc624aefc08",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Glen Hansard",
-      "spotifyId": "catalog:a152a96adef67c61f5697cbf4189d54d4ff048e414e090093506948f6387b05b",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Gnarls Barkley",
-      "spotifyId": "catalog:3e0afbd2e425e35e86056f49a761dcd5e1d39fefab36b8794270c923f8db3a19",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Gojira",
-      "spotifyId": "catalog:62a662c6a9bc6f6270437eafa5bb31d224cf325b4fc6d4035f5b0b8206d495ed",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Gorillaz",
-      "spotifyId": "catalog:d1de50137a3a6a6f59048dc234db2e9006b03ae52e5c5a844ae3ef769ee50988",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Grace Carter",
-      "spotifyId": "catalog:d932ab6e10334f2f8f24bc5611a3c7183f403df0e640dc0978161be4d5c17cd5",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Grace VanderWaal",
-      "spotifyId": "catalog:3f4464bd869f430f88331daba1f0abeb049221bb31f775bf38d7df7975a3e9cf",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
       "artist": "Greta Van Fleet",
       "spotifyId": "catalog:a889d8115fb443c858eeb4303134a9037f6bf3e93c8de1afb14a969e202196ee",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Greyhaven",
-      "spotifyId": "catalog:5e89d2ac44531b632e8612bf282129595426ee5940d32f5f5a8693e52a1d6a4d",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Guilt Machine",
-      "spotifyId": "catalog:104eb8670c227947bb633ef6843ae979e0c2c529e7a189e0d735a6cde75ccbbf",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Guitarricadelafuente",
-      "spotifyId": "catalog:3c638a8e896edab5074b4e3b005f02f5ebb3cec2b1f493f5f9b5537ae1d76de6",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Guns N' Roses",
-      "spotifyId": "catalog:9d5a6fc43687c4393dd913f4950e519e5c33dbfd575386df294d6e5b8587ef8f",
       "listenCount": 1,
       "totalMsPlayed": 3600000
     },
@@ -1228,278 +226,14 @@
       "totalMsPlayed": 3600000
     },
     {
-      "artist": "Halestorm",
-      "spotifyId": "catalog:b6de3e01efda50826e64511266ec98c0a273efd49d49226785449a1d2057fbfc",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Harakiri for the Sky",
-      "spotifyId": "catalog:b482d3f3f463ab8f8e08cd743f58e8a99998349d9d62d52a4753606944f7bb93",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Healing Sequenz",
-      "spotifyId": "catalog:6a6f583b26ea1276efd99a2efec64d690dae004cc885915b66af6eb6b1cd1ccc",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Heaven Shall Burn",
-      "spotifyId": "catalog:15f88ee658b0605b693a0b693c5a81b7d55a222ef5a7d9e28035e18427c29f38",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Holding Absence",
-      "spotifyId": "catalog:3b9100e240d026481b32ad6213279536017a3b7e8394810978b06d9cdbe20662",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "House of Protection",
-      "spotifyId": "catalog:3abda389fa630612494f828140feef6a195f38934c50bac7a5baa8751958943d",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Humanity's Last Breath",
-      "spotifyId": "catalog:6cd736875247682fead297959eac15cadd9c892c65e83ffbf9c8f498a039ccf5",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "I Prevail",
-      "spotifyId": "catalog:b57d2f8201da9f27637d98ca8e726f07b57900cec03af73c7bb245eab41b9498",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "I See Stars",
-      "spotifyId": "catalog:cc7a7f225c381c1b3177f3fc83d3728601db54efb71d8242967d968a180fafa6",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Ibaraki",
-      "spotifyId": "catalog:3ba1a9f8064cd564d939cd11159a66cdc1d2ec03f03efe72c1b2635e3c07da2a",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Ice Nine Kills",
-      "spotifyId": "catalog:937f219ca8dd9e079b5b754dc864a65881ecc1c670e70c0916df39bab88874d6",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "IDLES",
-      "spotifyId": "catalog:92c2d870f53b527da11874fe644abbc45803ebdf62706f88043804cd033a9100",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Iggy Pop",
-      "spotifyId": "catalog:b389fc07c18d61140ec64b8805b4add5c1c63dde618e88ee40e95adbf241fad1",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Igorrr",
-      "spotifyId": "catalog:6a34adf3715e433d6736ef9dec909116a557b6c3a7f017803dc09c246242ecf2",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Ihlo",
-      "spotifyId": "catalog:c95e5e7ffc8338e4e50118570faa587046d28b10df7b593d968d86a1cee03559",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Ihsahn",
-      "spotifyId": "catalog:ea744c72cdbecfdef310d3f20c23f4b0890435969739847b277b4ff7fd76c8ef",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
       "artist": "Imminence",
       "spotifyId": "catalog:45b1d29a57d1c4e2549335eb6293c7f42e0b2c0ad58a81970b0026622b0ff3b0",
       "listenCount": 1,
       "totalMsPlayed": 3600000
     },
     {
-      "artist": "In Flames",
-      "spotifyId": "catalog:d709904ffcf6b05047e959ce8d88c06af54ea913400fea38a283fd0670c217ff",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "In Mourning",
-      "spotifyId": "catalog:a3999aa4fbac3ee7ec42c05a0b58aaa0365a1ff34c2e69c27240f1276ff553c5",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "In Vain",
-      "spotifyId": "catalog:2ec78541718a01338d5e4045fe8051f75786a1bf82fcb3f0f9a1ef9655520032",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Intervals",
-      "spotifyId": "catalog:ec3f30fe82847d4fd43a93fc4753900f2886d126b25bce52442a8627d4047505",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
       "artist": "Invent Animate",
       "spotifyId": "catalog:aa51dc5b81e837d11dd98642ed7fa3685702736347e2ba92a59591cf95b54070",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "IQ",
-      "spotifyId": "catalog:6b0b190a13b8ef02acba8b0fe2d8a571f086fd3fd0d59717828db33953de6e78",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Iron Maiden",
-      "spotifyId": "catalog:cf78f0986445cc8f240bda39a98bc7482350f7f1ae7b9030833965d0caf40ebd",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "ISIS",
-      "spotifyId": "catalog:8ca2dcb0199b28f9b0db819c35774dd0435e6d784e5e8eedb4a56a805fc09330",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "IZAL",
-      "spotifyId": "catalog:4971c2f6d51688c55a646e8304db0c3039a6414e1006f7a4975f2f500b52c45d",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "J Balvin",
-      "spotifyId": "catalog:da3a528d353920f0ac199d124994733b75fafcf76deb4249768377a6a9c68802",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Jack White",
-      "spotifyId": "catalog:84e2b1543342d2426cbd24458ffc7d8ca6c7896cdd796c8a6ff6496fd335aa7a",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Janis Joplin",
-      "spotifyId": "catalog:0caa0b4848c7fb7489e6799042e5fdc05487441846d67feca899c33a2871ee21",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Jarabe De Palo",
-      "spotifyId": "catalog:7025055f13992fe7ab3b58bfa1ad192ee5ee06501f4a0387f29d6690541cec15",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Jardín de la Croix",
-      "spotifyId": "catalog:84e4cf1dca920629bd83a4f5ce3f08bd8a09de955446b0978fb32504bd291c6c",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Jason Richardson",
-      "spotifyId": "catalog:6790882bde17429343f12e06524e80bc1cf02ecaaf1cdba57ce39f109b6d4856",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "JAY-Z",
-      "spotifyId": "catalog:cd0a0d037fd368454b3a0fcb9daca932a699186dad30ac2298991138e4430a3d",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Jeff Buckley",
-      "spotifyId": "catalog:31e88bfba5a2a3e2328751e75edfe6ba97b921a2dea048ecbc8b6637fa9d3b5e",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Jeris Johnson",
-      "spotifyId": "catalog:e0783ebf6e9cb239924f65f1dfd4430281576494d673bbfd5561d1cb79ac6e5a",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Jethro Tull",
-      "spotifyId": "catalog:a703b7d138cfd4f10dae2e8b81e66866e326f47524dc6c18fa2bb0675b9ebce3",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Jimi Hendrix",
-      "spotifyId": "catalog:0286dbd89604ac9d56199c9ac5ac8d0ba54575147f2bb6f420971b9326b26362",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Jinjer",
-      "spotifyId": "catalog:394473649a3aedd280b92a844a0a8248c5aec3e9b29c5f94baf5d890357e09e8",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "John Frusciante",
-      "spotifyId": "catalog:e68338ff6a4b41ad87aa1b95adbc99ed45a47bffc5451ff36d5399c72a0e31d0",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "John Petrucci",
-      "spotifyId": "catalog:1573495d564e5f81cfe7d6d3e7290f682a7da5b0e3f3f3422a11969b2f3722b8",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Johnny Cash",
-      "spotifyId": "catalog:9514ff29f90f6b6732ef97ca1f306ed5f79f1f15aa053defaa62510a1e0ea931",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Jorge Drexler",
-      "spotifyId": "catalog:7d5493da96798c38a96323ca68d9393cc6cae70700e92f0b35d2bf122ef2405e",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Judeline",
-      "spotifyId": "catalog:8b64ba2106a1e73a415e2d2a1da1c7ef1add611dcd73c868622ff037d83c43fd",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Juice WRLD",
-      "spotifyId": "catalog:213c6afd8b3606586e4e3ccfeb6569dffbf183eaeb47e8da86952a904799ec45",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Kansas",
-      "spotifyId": "catalog:37aa022583059b190b36cffcd500e48dd024690cb202a9091a909995e6bbd46a",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Kanye West",
-      "spotifyId": "catalog:d446d9d85660881a05d8c4f44e76e644e84a7ee292cc3d7754e50db0849d9acb",
       "listenCount": 1,
       "totalMsPlayed": 3600000
     },
@@ -1516,92 +250,8 @@
       "totalMsPlayed": 3600000
     },
     {
-      "artist": "KAROL G",
-      "spotifyId": "catalog:d3441e67207674c25688b6db49a1d848555ef3374d5875c5a3ccf63f0c92ef1e",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Kase.O",
-      "spotifyId": "catalog:f69620379eb635091869608bb746146030f5a37970e87a9009240a7a0acc7ebe",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Katatonia",
-      "spotifyId": "catalog:f82167d8f92fa784d0587c78810046dd095eed4cf5138cb62e2432824a0dfeb4",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Kendrick Lamar",
-      "spotifyId": "catalog:43138de860cfdd175024a5ccc033d44860f82fa48f884e6607b22b81302f0080",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "KID BRUNSWICK",
-      "spotifyId": "catalog:4a231d1003d6cb31b72e3d68d6f0d8c8e01d76a55e0d8cdc76be393907e3bc10",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Kidd Keo",
-      "spotifyId": "catalog:4355492cb9793a8ec7ab0dd41d532635132c82d06504486bb92f9352aefba4e1",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Kiko Loureiro",
-      "spotifyId": "catalog:412a6cabdd65f8380f1353a4b8ced385ae756748060e01cacb2a31469e3f9ad6",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Killer Be Killed",
-      "spotifyId": "catalog:1f82195afab4c390ed20d45577135d15d3fda98da2b28f8ed891598c6cb190de",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Killswitch Engage",
-      "spotifyId": "catalog:24cd3c2fade8ddca2b29a1226921c9066a9b476a900fddec93f112b1f997c1cc",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Kinder Malo",
-      "spotifyId": "catalog:65dcbfda26104b2b103fa62c58ddc28045f64ae6d21c1ecd4161510cc92b99b0",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "King Crimson",
-      "spotifyId": "catalog:3c31d6bb9ff0c00dc818f4a74872124dd200841d9c6da91cbed8a111258102dc",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Kingcrow",
-      "spotifyId": "catalog:df2c9fcb8d2ca9d9fb7362e1c245bc674739e6ff93a8ddb00b609e58a4ca6b0a",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Klone",
-      "spotifyId": "catalog:d2ea6e1a815b67e01364221bd6e451bc4794c088efadd5755ce67ccf7dfd6181",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
       "artist": "Knocked Loose",
       "spotifyId": "catalog:9f76abdb8d7c8d08e77f86a51208c0fd577a5697cd9a4e6ec6f8eec24beb46cd",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Korn",
-      "spotifyId": "catalog:2c8cbdc2b318b91b5d33603d773147405b6f15558bc8ea112ca095b6b9604305",
       "listenCount": 1,
       "totalMsPlayed": 3600000
     },
@@ -1612,44 +262,8 @@
       "totalMsPlayed": 3600000
     },
     {
-      "artist": "Kula Shaker",
-      "spotifyId": "catalog:1d7534e9235be0f58ae749bbfe835aa1c63a8258caf8675c748c4573b7904e2c",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Kvelertak",
-      "spotifyId": "catalog:3df8e0070d837aff271b27e14ba4dd813f6780dbb40853e57bf4baeea764434c",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "La Maquina",
-      "spotifyId": "catalog:926fed6ad08e70c5eaca84e1c921fed51bd06c4f7da6d79dcf3bf2f4c3752697",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
       "artist": "La Maravillosa Orquesta del Alcohol",
       "spotifyId": "catalog:6254033ebc085d81a889d06b28285399ce5e27809d2e494a03e1b283b2c1859f",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "La Oreja de Van Gogh",
-      "spotifyId": "catalog:62fb256887317ceff5f996b7f88a7b6db67bb1a1b38a76c48838508942e614b6",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Lamb of God",
-      "spotifyId": "catalog:28ff70b6edb9f7aac471e1ba1dda669661cfa193163064c26e02bb1d64aa9c6d",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Lana Del Rey",
-      "spotifyId": "catalog:5605cb5cd3f1cd622675ddde57671da8bb0241b2d6ae2b2e2e03c69b83e8182b",
       "listenCount": 1,
       "totalMsPlayed": 3600000
     },
@@ -1660,56 +274,8 @@
       "totalMsPlayed": 3600000
     },
     {
-      "artist": "Landon Tewers",
-      "spotifyId": "catalog:428c578e9395b41a135eb67738fb5f309a7228dd794eb385074fe5ce6ad97365",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Led Zeppelin",
-      "spotifyId": "catalog:286ac6f75dc010b6f528f6edd3182d0b8702b33f1b2777704eadc457130596c5",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Leo Jiménez",
-      "spotifyId": "catalog:f1a9324e8f708e02d5fd807693d2c3729fc050bf4a463aa35f3f20de56af76fd",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Leonard Cohen",
-      "spotifyId": "catalog:288952daff53621861731219cf8d71d7896a38d42d1dc06165305a4468cd6652",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
       "artist": "Leprous",
       "spotifyId": "catalog:4cd04d6e9024441404646e2d89e82a274ea5691b37375e9972c81007a7776515",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "letlive.",
-      "spotifyId": "catalog:5be329e0d17d83d6fa14117ce877e2f2cb9fa33ed84bb62be08120388a60f82b",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Lewis Capaldi",
-      "spotifyId": "catalog:8a9f17f0a333e76d9bdcd2393c3a1a8aac7322909b32fb0e1239aa9621a525ec",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Lil Nas X",
-      "spotifyId": "catalog:010d69d98f224d4e119b29d94f450db90277048158662bc8d90e4d5cbd31c865",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Lil Peep",
-      "spotifyId": "catalog:62085bf3b75fc909411a1c36a013f4e4dafff36648b2bd166dfb9616a758fa36",
       "listenCount": 1,
       "totalMsPlayed": 3600000
     },
@@ -1726,110 +292,8 @@
       "totalMsPlayed": 3600000
     },
     {
-      "artist": "Liquid Tension Experiment",
-      "spotifyId": "catalog:9f3f27cb1248776140ab4aaa3e0b2a552912a0e1ac5278d53432985252f7a5a6",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
       "artist": "Loathe",
       "spotifyId": "catalog:ddfc880c238848a771a877b11f62c29adf4a47f62b5a6ee08c43ee194e60dec0",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Lola Indigo",
-      "spotifyId": "catalog:13d90906c6d667e945f132739262130c03769bab5ead8adff589e9d82da04b70",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Long Distance Calling",
-      "spotifyId": "catalog:e2846a6b8d483bc7782bb8f39ed2286c142b9eb958268503aa6fb13bfc7de23c",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Lorna Shore",
-      "spotifyId": "catalog:ce6507a9390ed7a4f8b3f655f798ba0b2d0d324cd658c9c7db48303ad4e4de28",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Love of Lesbian",
-      "spotifyId": "catalog:acbdffbba2fc4d160d7d8faf874168208e15888e0b2cf95c8f803ee25a97734d",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Lunatic Soul",
-      "spotifyId": "catalog:4b6edd15e8ee298f441ff8e781080d0ffa4ee0641081fb2a44d3de1bcbeecbff",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Lynyrd Skynyrd",
-      "spotifyId": "catalog:53afab732bba6afcdfe02cbadf0500af4b92e043ff31bde43b4267e87209bcb1",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "M.I.A.",
-      "spotifyId": "catalog:9982e6cc1005fd908bbb9111690a5c23c71de3ce15c52cb2f844a4013bb4a3ff",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "M83",
-      "spotifyId": "catalog:020e7d13459f879a01cfe1d465435e82e3ef2e36f5de81b1033fa45a5b5a06b1",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Mac Miller",
-      "spotifyId": "catalog:29810d9f822aad6b2484f1fcc9ee6e175695255e07e23b63bcd3b37fc700c61c",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Machine Head",
-      "spotifyId": "catalog:b436cc9b43561e7a35e10d19d806d9a5064f5a5078c8aead36568e5b1dcbd58a",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Mägo de Oz",
-      "spotifyId": "catalog:1584d35ab210ac43a9ffa80519c9ea7477d25b9c97724d5abbd4d14c49a2f3c2",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Make Them Suffer",
-      "spotifyId": "catalog:dc7febe7268487a39cc3502af034bd143d06e3ec1253844943ec98cafb20c7dd",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Maraton",
-      "spotifyId": "catalog:4f7c37671d4e1cf215cbdd8ccfbfd3586cf9f823cdf511885dd9a16d40b46789",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Marillion",
-      "spotifyId": "catalog:41e552aa6b68c04015dec09d2c0f9c9cc98b1872f8b66a5214c7371b1e7c85be",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Marilyn Manson",
-      "spotifyId": "catalog:566aa0947eff33442e71e19572b4c7a2bf4f447b4ddf81aed7ff2af77a2c466c",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Mark Mancina",
-      "spotifyId": "catalog:bed6213f39adab2452bee034471625be9a5b9108abfdee667b2f0e7220d763f6",
       "listenCount": 1,
       "totalMsPlayed": 3600000
     },
@@ -1840,62 +304,8 @@
       "totalMsPlayed": 3600000
     },
     {
-      "artist": "Marvin Gaye",
-      "spotifyId": "catalog:3ea586340a61c74df952c6fb3db21bc6b3b1d6b14c5ad68f3746651180796c8c",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Massive Attack",
-      "spotifyId": "catalog:9f363f68ca1222ac45186621c310d9e979282a6ec23dbcd872b72572f0c210eb",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
       "artist": "Mastodon",
       "spotifyId": "catalog:ab7cda0f915ec5660476b4129e5d5e2938e8d2e167ab839d90531b3fe37606c4",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Megadeth",
-      "spotifyId": "catalog:2867f306661f287eb6d35ce40322fcd1399ae33741a0b516837a43a49fb24895",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Melendi",
-      "spotifyId": "catalog:e5082c0be3121b551484c3126ce5c720ddedd992a9414eb041bab550bd6ef7f1",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Memorist",
-      "spotifyId": "catalog:4d46e532e05f555b12705a8d4fef547880f7362ea4892f4191fc171e6ed186b7",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Meshuggah",
-      "spotifyId": "catalog:4deadc299f667d02b1948cf0138678978ae809d82acb6f4d97932e15caf2b4f9",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Metallica",
-      "spotifyId": "catalog:336665b051dbac2e59b32911c20f519a1d4fa75d65407207d2e4a4d09e762275",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "mgk",
-      "spotifyId": "catalog:ea25e3027b5fd40b75fe85548874218eba77046aa647d2f3476d007301dd99e1",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Michael Jackson",
-      "spotifyId": "catalog:99d4ec41c9c6e8adbafb833279461194aa818c1dbf4227e9acf787fcfea7f549",
       "listenCount": 1,
       "totalMsPlayed": 3600000
     },
@@ -1906,50 +316,8 @@
       "totalMsPlayed": 3600000
     },
     {
-      "artist": "Mike Oldfield",
-      "spotifyId": "catalog:d50c5973b79b26c7d4543eae4f1a596d1670f5341f3c2604ec4d88c422ece499",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Misery Signals",
-      "spotifyId": "catalog:d9f5477ffcaca45d984ce2252f87e3a42ec4f7d30ccec8f7d00c65228f5e0778",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
       "artist": "Molotov",
       "spotifyId": "catalog:369b450c3e4549ec0562ff1a483758da6cb0f0d48a5e45936675c3b2e2d4c71d",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Monuments",
-      "spotifyId": "catalog:f5ce7efa5bedbc2611af27f018e0fc48c9314db3be16895c40772b9248511080",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Morcheeba",
-      "spotifyId": "catalog:63a96ca1492bd8f4101d3755889be8b185a19a5022b77c286164d0dfbb8f3bfc",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Morgan",
-      "spotifyId": "catalog:d2a1ba788399c8d1c1273791c5d9937a0b844247425556a9464677ac6dbbbd1f",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Motionless In White",
-      "spotifyId": "catalog:b9cb722749331cacfeb81d817069220f510263c3acb71349da21c1ba5efdfaaa",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Mr. Bungle",
-      "spotifyId": "catalog:9c1c85a55aa2628cb6b9c56ea3e720ea7287a3a99b0209132feeab42fc410acc",
       "listenCount": 1,
       "totalMsPlayed": 3600000
     },
@@ -1966,38 +334,8 @@
       "totalMsPlayed": 3600000
     },
     {
-      "artist": "Myrkur",
-      "spotifyId": "catalog:1e4710c4d20360927f724456d30d0ca8a9511b29afdb132285fd7a30a97d6c82",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Nach",
-      "spotifyId": "catalog:d941a36dbe67051b56940bde18552222ec741260a9e71cb2a0cb8da396eb7045",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Natalia Lacunza",
-      "spotifyId": "catalog:5886a5aff9646665b75632149a7717e5423db3ae35e17522f5fd133b100566bc",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
       "artist": "NATHY PELUSO",
       "spotifyId": "catalog:4772945b1afa5eeef7fd4f70b1c7ddf18063ed82a3ceb41858d436ffd3ce04c9",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Natos y Waor",
-      "spotifyId": "catalog:b0eb255bfc4352bf13bdae05578748cd445b3deb791e7e925592dc80bb2c4bbd",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Ne Obliviscaris",
-      "spotifyId": "catalog:aa77e32eb830938b1dcac1361d1d6b4197ad124c29d38f1143fc56d17520f1f6",
       "listenCount": 1,
       "totalMsPlayed": 3600000
     },
@@ -2008,86 +346,8 @@
       "totalMsPlayed": 3600000
     },
     {
-      "artist": "Nick Cave & The Bad Seeds",
-      "spotifyId": "catalog:d454a678cc4cab74dd473eebe9c76563cc6484e00b477a338197682add24e177",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Nick Johnston",
-      "spotifyId": "catalog:a43a4a50f106eb846c75d10381304433d522245f7062de21e477f6e14923c355",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Night Verses",
-      "spotifyId": "catalog:25c5f8894a1974782eb15264e78d5f0fb24314dcd62661d7e4c95311052ca685",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Nik Nocturnal",
-      "spotifyId": "catalog:aa828378412eb2bbe7f15cd75fc96f8db8f7c75324cf5b7ac8f9b3f50242ab3b",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
       "artist": "Northlane",
       "spotifyId": "catalog:f8b9e7941a7f70cd1bab50d9e48a8e9502bed2a9869d374c641f7711e350b513",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "NOTHING MORE",
-      "spotifyId": "catalog:76d75dcb00bb975fd1ea880f6d16739608f43a9bec96daf0c6b8ab16d5d6e0fa",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Nova Twins",
-      "spotifyId": "catalog:d4f30b7d9bccd085817e831bed3394b93db45eb98f00b2320db54c84de8da389",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "NOVELISTS",
-      "spotifyId": "catalog:742eb890f047dcaec0af526dcd424261c4cc6ee3eb94f665a4bc0c10abafc0a3",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Oasis",
-      "spotifyId": "catalog:8e424db8e5664ade76226356bcf5ef6ad9d0879bdad6377db835868b17c443ba",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Oceans Ate Alaska",
-      "spotifyId": "catalog:fc6aeb00d8e65b47ccf7d8fddf6b7f22cabe7c562adfcd8507e71b08e3bcffbb",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Of Mice & Men",
-      "spotifyId": "catalog:a69a865b9dfe8c6b501f5a57633404994bff9fc5d7fed52762f094bf1527924c",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Old Kerry McKee",
-      "spotifyId": "catalog:931262e1c33ca9f63f45d117c074ea0db267638b7c33638e766b16a6f792f6db",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Olivia Rodrigo",
-      "spotifyId": "catalog:740286f7d8b928e071ead85f18568be9e10b59f65b70df2ca4e5642faf66dab7",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "öOoOoOoOoOo",
-      "spotifyId": "catalog:86d40c74febfafceba4f405ee1926f55f4499e79fd6b2a974a8d3c78f7723d27",
       "listenCount": 1,
       "totalMsPlayed": 3600000
     },
@@ -2098,80 +358,8 @@
       "totalMsPlayed": 3600000
     },
     {
-      "artist": "Orbit Culture",
-      "spotifyId": "catalog:b8455d85134615ee8594d66044752e340bced5e0b5da2082a892a4a3698c2970",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Orslok",
-      "spotifyId": "catalog:f1b6da6ec370d876853b7dc6768a78e4d9c3a7be2e67b424b27eeba43bd3fa08",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Ozzy Osbourne",
-      "spotifyId": "catalog:01cd3de800d20c07be71764ed4e6593afbb22bcb53a6266bc8a274c46424b0df",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Pain of Salvation",
-      "spotifyId": "catalog:12ce566cd46268f13e2c2f51ca151a346abcf369b6b56509e8561bfbc96659aa",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Paleface Swiss",
-      "spotifyId": "catalog:209fe58895edc2a348a89c4cc56820fb946e3231bc86b8d3750161c92672b177",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Pantera",
-      "spotifyId": "catalog:8cc131a56ea5986fdf7dae19cba8e0c57991f5ae6d8c226bea1c9b5f32f77cf3",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Papa Roach",
-      "spotifyId": "catalog:ca965946f41562b7f25db9b0a1c4cc93a4c2904fa21b77390e392a87987f16f4",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Paradise Lost",
-      "spotifyId": "catalog:57b6ec0e5dfcf52da9923cfafa8fba90954ee52c8b23a12c844a331bed2e131f",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Paramore",
-      "spotifyId": "catalog:d4155ef881b578cfc820a48558837c07c42e187c20b31e93816f6d9e2d7da98b",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
       "artist": "Parkway Drive",
       "spotifyId": "catalog:180f7ee12b46350e27724815fc7a8e6436ba4ef70400e5170a477d2569c98bee",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Pearl Jam",
-      "spotifyId": "catalog:ba67c5b133b79cc39778b40b0e1546a1816aa05340da814ce8c7cbda7ca4f476",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Penélope",
-      "spotifyId": "catalog:ac7a89c282194aa6fd19ee0916325e2e5a7ccb0635056a2dcbcb084bc1f71fd8",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Pereza",
-      "spotifyId": "catalog:16e318f530400205dac4e3cdba2efe5aa3d6bcd7405eba9aea5af669622cfa0f",
       "listenCount": 1,
       "totalMsPlayed": 3600000
     },
@@ -2182,44 +370,8 @@
       "totalMsPlayed": 3600000
     },
     {
-      "artist": "Persefone",
-      "spotifyId": "catalog:e92a109fd14079d29d00c6d45e26559cc055a84550ba0599464b9aea21c21d21",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Phil Collins",
-      "spotifyId": "catalog:1d07329e7447d70d2e721c578f12ac99fd35ce344895a84c68360b7ac66108b2",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Pink Floyd",
-      "spotifyId": "catalog:8c18a0c305a1ae913d1e23f741db810447dfbad15e05f78a1bbaf747a1a3345b",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Pixies",
-      "spotifyId": "catalog:c743eff1b98ceec512406f7e1e8b2db3c4fa3aa7fa9e9b83cfc6a633e370842d",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Playboi Carti",
-      "spotifyId": "catalog:7a674a97a2044a237e3bc3b088166b4b1f5eb0344bedf8b7237bcb4faea0feb6",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
       "artist": "Plini",
       "spotifyId": "catalog:7f5fc08b1005c962f2d17dfb9b4fb38779177900fa507a2fd7984d2293eb6975",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Polaris",
-      "spotifyId": "catalog:6c296fde55b852788be0818c74fc20be7554d5fede6bbd3d421965755dd3d0c1",
       "listenCount": 1,
       "totalMsPlayed": 3600000
     },
@@ -2230,38 +382,8 @@
       "totalMsPlayed": 3600000
     },
     {
-      "artist": "Poppy",
-      "spotifyId": "catalog:76c32abc03629dd0977b4b9f1ae43c5d9f52421dd65d31df7a274ec3e1289049",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Porcupine Tree",
-      "spotifyId": "catalog:5310c8ea17a193d78776838f749f39f969bd39fdf4a486d707119c0b1958890e",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Post Malone",
-      "spotifyId": "catalog:6a44688cb0b4ff711eac89e294024b8b273cbf6a338a305a6d3ad17aff85d138",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Power Trip",
-      "spotifyId": "catalog:a27e1a7269fd5944c35428692a5c2ae96769c9a6e0f3badd6073965aa7e59383",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
       "artist": "PRESIDENT",
       "spotifyId": "catalog:7a47d46e30a5efe74919bfb557c6347176328e832c400f60adcdbc18f68e86a8",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Primordial",
-      "spotifyId": "catalog:6583584c75d7e469e024fb52dfebe42277c78656c03e713e6e232eca8cd09894",
       "listenCount": 1,
       "totalMsPlayed": 3600000
     },
@@ -2272,110 +394,8 @@
       "totalMsPlayed": 3600000
     },
     {
-      "artist": "Queen",
-      "spotifyId": "catalog:a9c3c1f7674502331a5ad3e54592d3eb2fc39cf78bb908004777ff4ac89119e4",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Queens of the Stone Age",
-      "spotifyId": "catalog:e501c79afed47b0895c6c112a4756612fc2832d4ede5bba47288ef9b705245e8",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Quevedo",
-      "spotifyId": "catalog:c5fca2204cb567a74332fcd724365429fb6c7086fe5367eecb9d866f83bf09ec",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "R.E.M.",
-      "spotifyId": "catalog:d5031d3cfef9af8ef1fee15a68812dac0c5800def4192ec007a3f95d9f6e4b4a",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Racer X",
-      "spotifyId": "catalog:e80ce7734562f01e979132583dfe70c666bd2f889ab1c8b700002175e414b50d",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Radiohead",
-      "spotifyId": "catalog:3f3371c759cd4d39b5d9ac571fdde1007568391d621b0f799fde70f0f245a6e1",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Rage Against The Machine",
-      "spotifyId": "catalog:7cb39d7e13aee3c608d035c051917c6b9820b7fff0750698cff6cd16d85a63c6",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Ramin Djawadi",
-      "spotifyId": "catalog:c5653110219ff1d8d85e489f970070e152d93a65af49fe2c9354963297249211",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Rammstein",
-      "spotifyId": "catalog:97448d87ae61db6141eae3b2b5d560ea7fc3f1143ec813cd68f940abe4461602",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Red Hot Chili Peppers",
-      "spotifyId": "catalog:fa920dc1b20e4a0dc1487b4b080d329155174de6b50075be403614bf95af4616",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
       "artist": "Residente",
       "spotifyId": "catalog:98eea53b4fc54115eefdee8968f57c45d8c0b8b2a3e2441563d85b30f4e2bf22",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Rigoberta Bandini",
-      "spotifyId": "catalog:661a35b19e8fe142ba02742098cfc0a4bb30234f633950bc5740b615fb5a67df",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Rishloo",
-      "spotifyId": "catalog:8ef5cc73b047fd6d3f90d4b5bbe4d0b32b6ca9c4ec3a1d7ce3ba33b9911e7335",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Rival Sons",
-      "spotifyId": "catalog:2eb35be9a961535a26073dd9c66b181fad0d9cb6c73a84b60be46601d4596d84",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Riverside",
-      "spotifyId": "catalog:12aea5f4cd614e6bbcdd214c0e2286e75d62d5c6c348096d56b8bd20393226d8",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Rob Scallon",
-      "spotifyId": "catalog:8f82104cbd3f6f855f92ce8efec293fb45553b6c52c217ae4bd3366e9019fc99",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Robe",
-      "spotifyId": "catalog:9d0f44502d8625d3a501b4c7ef6e4db63c82de325376f0745ed6afc77383135b",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Roger Waters",
-      "spotifyId": "catalog:7aef939864428b6606b5232bed21b3dfe26e8d98c9d11165ec21c83da3cbd6af",
       "listenCount": 1,
       "totalMsPlayed": 3600000
     },
@@ -2386,104 +406,8 @@
       "totalMsPlayed": 3600000
     },
     {
-      "artist": "Royal Blood",
-      "spotifyId": "catalog:dd65490fc6ee42e203c172b14dff25461882c60ae4a88cca1cc1c6aeffdd9def",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Rozalén",
-      "spotifyId": "catalog:e7eb89d46ddfc330a8f5ebf34eee5f0902ef9f5e26af30ffd84f6f8283e91a51",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "RPWL",
-      "spotifyId": "catalog:b84a2bbd03ef03afe3aa059a6c2aa181167cd273011fc1988d496075fa0764ea",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Rush",
-      "spotifyId": "catalog:2d1fd0086934aca9129323fd90ba6b15f8bf49189888307a3a0a743e9211d084",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Russian Circles",
-      "spotifyId": "catalog:eb090eaa251bc131519e4f8df2eb6d6a7c2ab6c6df396cc310ae09a27732b0ac",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Serj Tankian",
-      "spotifyId": "catalog:4c6879c1ad09b0bea2db8502b4ec163d0b70cb99a5c3ac8e5df62379a0317768",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Serrat",
-      "spotifyId": "catalog:1e2ee6b2097dd80747d066a84232378259f8d019ba5e51711ef8425d3c8d4f81",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Shadow of Intent",
-      "spotifyId": "catalog:e5106d8935b59314b7992e7f12f3d9f5867ace7875b9098383f0c047702f3a0d",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Shakira",
-      "spotifyId": "catalog:abf9eb9facd09aafefb1e027a819da4d95fdad98b246494096033c7f099608d3",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Shanendogs",
-      "spotifyId": "catalog:34ee8fa8a053598ba783e091e5caa23e0fab439e460481a854d820bc6a317e21",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Shokran",
-      "spotifyId": "catalog:c6e2d0e01095aa573e4844a19924bac64ac9c5d5c8c0d8abaa8b612cc45faebe",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Sigur Rós",
-      "spotifyId": "catalog:213487e4ae085347c46d18887cebdf0f32d943a73e63470fe41313b56d4d0dfd",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
       "artist": "Silent Planet",
       "spotifyId": "catalog:7c02a72deef9b70650c713dbee7d70651c3ec59b6d82052041548a28b7995500",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "SION",
-      "spotifyId": "catalog:b5e91c059fd73705a35d6551ffc7ce5b673c9618f9a635ee43ddf61b5e842636",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Skeletonwitch",
-      "spotifyId": "catalog:ede082bfd3e62f27c3fe0e191ca9cfb0a0589efcefa8ed16ca323d63680ceac9",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Slaughter to Prevail",
-      "spotifyId": "catalog:794858aaaacf3c2ef0366ebc2a25dfa2e3e69a20cd387450641a011642ce0375",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Slayer",
-      "spotifyId": "catalog:6061913f881d4dca9a230e3e86a75a412cf26487501a9e6a25873dcfde6d5dcc",
       "listenCount": 1,
       "totalMsPlayed": 3600000
     },
@@ -2494,56 +418,8 @@
       "totalMsPlayed": 3600000
     },
     {
-      "artist": "Slice The Cake",
-      "spotifyId": "catalog:6780b033054095b924bb41f5ee6a6445a1b767c5493eb8359f8966e49e991885",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Slipknot",
-      "spotifyId": "catalog:07a0a3bd1783de63016f550da1c0e47c8225fea4b0fa040fe058af60c2d858c7",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Smash Hit Combo",
-      "spotifyId": "catalog:aa702a7b334164e3890112b4d050f1a0f723082c89c7d07568b4129534409d33",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Snarky Puppy",
-      "spotifyId": "catalog:7728ba1f2081b13a88a7ebf06ba52c7e30d5b34624b5ef6ef968308d222b917f",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Soap&Skin",
-      "spotifyId": "catalog:f10e6e62e51468afc5fefae9a966b716353ab2a6ea6f5736d611f80743b0ea24",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
       "artist": "Soen",
       "spotifyId": "catalog:d08dd372129015742d86b2d5b0590238fccee13e5d9cb6969b49346d242fd60b",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Sólstafir",
-      "spotifyId": "catalog:25d97d0129349fc17d7df4097808cd2b159985995c855fa0039e177cc1f8e1a6",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Sons Of Apollo",
-      "spotifyId": "catalog:43785357b07df02ba786550996a4c477d315073fc8ec56cff430dc4bde93e16d",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Soundgarden",
-      "spotifyId": "catalog:5114bc3e28cc5ad227a8364808acced044c94a6f16e337f979363090aefc6a5e",
       "listenCount": 1,
       "totalMsPlayed": 3600000
     },
@@ -2554,80 +430,8 @@
       "totalMsPlayed": 3600000
     },
     {
-      "artist": "Spite",
-      "spotifyId": "catalog:04726352b7def4cc77d19629c67972e04523ea00df4bbb9130652018f20bf550",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Spurv",
-      "spotifyId": "catalog:89052b4c80864f997eaa3cec168826d69044ee8f24abc06a75eb3f7efed9a07a",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "State Faults",
-      "spotifyId": "catalog:2c158a923f5c4391b4bc551b2719441cbdca050e79cc5e3bcaff8c86cea1dd21",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Steven Wilson",
-      "spotifyId": "catalog:6a9b846ea37680ffde0a16b9a1ae234ae418442851ff9d1ebc61bab13a5ae4e0",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Stone Sour",
-      "spotifyId": "catalog:4f97c182708dff5bf8ea7e942c086955c4023fb529e780be882695fcbc85b690",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Strapping Young Lad",
-      "spotifyId": "catalog:cd23a472fe5732b64d46ad938ba1331c58f32e4864bb533a97011c55e3e54194",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Sum 41",
-      "spotifyId": "catalog:61684f7367a5cdf9f6696f42d21e1cb4bed444d7f5c293fecf76f5656bc4f70a",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Supertramp",
-      "spotifyId": "catalog:2d001120bd06ad8efa0d47f150f686c4c0d1192fb3d942285b1833eee8d79c7e",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
       "artist": "Sylosis",
       "spotifyId": "catalog:ad010ae3f10e9e1f5fd188c47a1a2f02716c6d36bf93336db7d15d3b74c9a77f",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "System Of A Down",
-      "spotifyId": "catalog:9767f56671455261a3b204160dbac71e029af3efffeb24cd8655a285525f19a3",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Tallah",
-      "spotifyId": "catalog:d51b14ca7e481f02044a73f9d92de88424e084aab7374a11abad64c312b336bc",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Tate McRae",
-      "spotifyId": "catalog:6a6a9e32b0bd2446792150754646a891d75557e94928ae2cc4700f4a7547b645",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Tenacious D",
-      "spotifyId": "catalog:b7e5e7bcaab693fcac52002f41403c821bef40b7e559a02c51e7d08b59f3cf5d",
       "listenCount": 1,
       "totalMsPlayed": 3600000
     },
@@ -2638,230 +442,14 @@
       "totalMsPlayed": 3600000
     },
     {
-      "artist": "Textures",
-      "spotifyId": "catalog:b0c1f93aa5186e844c636699fdfa028263661be3b84c9411e3c353eafbde488f",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Thank You Scientist",
-      "spotifyId": "catalog:300f418f17baf164b3592d5da28a653c826db072cbe43c2c0eb1fc47f3fa9f77",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "The Amity Affliction",
-      "spotifyId": "catalog:9baef6966bfe67b0726c2d00c7135b0bc57181419d8be8729102dfcc9f64764b",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "The Animals",
-      "spotifyId": "catalog:db07920ebe683a5b3ea41f1492ab64a8af82ad99f282f28eca136ea8e534c2b0",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "The Aristocrats",
-      "spotifyId": "catalog:a48a94a9a765bbabd1705da8677314be4fb6424873c234f33d0b8fe2b2c724ad",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "The Beatles",
-      "spotifyId": "catalog:6e75bf0511e179710a98bb8fa7621283acbf425623af794ed851b3a53ed29028",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
       "artist": "The Contortionist",
       "spotifyId": "catalog:e386795c1d5b6fee3217c66caf623e8572e85272e68d022d62c80333fa8b646a",
       "listenCount": 1,
       "totalMsPlayed": 3600000
     },
     {
-      "artist": "The Cost",
-      "spotifyId": "catalog:5300722d6f17ba6fe3dbd7a0e2fb50cfb779da6b0a5f3f1c5337b17bed09dbe1",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "The Dear Hunter",
-      "spotifyId": "catalog:5d9b79e3e248e19754bc6e3d6b1d68f1ef5750e49fd19b6587fe4fe4308a1175",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "The Dillinger Escape Plan",
-      "spotifyId": "catalog:5efe52a74e852e3b566fece130fbd39278cf49c2b88ca4541abc6afadb0d9f7e",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "The Elijah",
-      "spotifyId": "catalog:543a4b8f21e5cdd97771934927756d73f1591579e257161e7945665369de3a38",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "The Faceless",
-      "spotifyId": "catalog:6c25494e031859836d48f823d448e87126332fff5f1a624d30c9a23b90a27f24",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "The HAARP Machine",
-      "spotifyId": "catalog:de601b29546e4319ddd393821b1938108717e4b33473e88e6cecfa92512b23ae",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "The Halo Effect",
-      "spotifyId": "catalog:b9cbcd52bd0173a78f13f756ddf0a4b1a29a5d344d490770c06ee9aefe4823ca",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "The Human Abstract",
-      "spotifyId": "catalog:fb890e780c6467a4490781584c3fccaf3e9d31da517451357e9460db875d5d27",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "The Mars Volta",
-      "spotifyId": "catalog:29a163d40e5dd826405d60d181b4785611789a133b36a6d4ad1ffae54521cdf6",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "The Ocean",
-      "spotifyId": "catalog:d8c5d79d03114d51aa1342598caa222d739ead9f5c708d5c808453ad01c679fc",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "The Pineapple Thief",
-      "spotifyId": "catalog:fa99e1521c1bda793cc5904c6da537a51f6822df361e784fb723a1cda65d805b",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "The Plot In You",
-      "spotifyId": "catalog:9f13e3b7c656d38bab81ccf57380f2e5db91e248ef230d59d6ab565e390797c4",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "The Rolling Stones",
-      "spotifyId": "catalog:86204d8901267bf1b62f0150e0859a45fb3d2daa7a25ca837c920b5fbb71f02c",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "The Smashing Pumpkins",
-      "spotifyId": "catalog:815db2c4816787ed1eba4601a81c728822fc9ae70e80b6cad781fbb92a522b98",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "The Weeknd",
-      "spotifyId": "catalog:978e340d8732381281dcdcc5d490c030ca02940f52bef29735c294649cd889d1",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "The White Buffalo",
-      "spotifyId": "catalog:6877ae640d1ab35b02ded11ca63de04100356fb52b35659cf426edee5fcda837",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "The Who",
-      "spotifyId": "catalog:8f2a1e9bbd9843d0138768c28a9f0b667e815cb0412be5c7bd9835528e75d17d",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Their Dogs Were Astronauts",
-      "spotifyId": "catalog:6921961a99eb5b91d1d0fd0d624e567d8eb09bac71cfc154a1b76721f317f9db",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Thirty Seconds To Mars",
-      "spotifyId": "catalog:2374e5b82d977078145663d54e99c8fe894857e22c654398cbfc2d2cd5bc0fd5",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Thomas Giles",
-      "spotifyId": "catalog:7598400420c57bc23c98b3a6c3b9df9c73a2ed55f3f43724d15ea88a17e7fabf",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
       "artist": "Thornhill",
       "spotifyId": "catalog:030283d299c3be7ef01e63a039e3caae7449eff9330dda13b67f26d7d47229ef",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "thrown",
-      "spotifyId": "catalog:3c259ed3deb3e27cb83273ac37621df8abc76d6f73d00d32cfebb2d4da5cc35f",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Thy Art Is Murder",
-      "spotifyId": "catalog:38b17af1066b95b51962a7918e98aafcc78e267f73480dcd19a1c1a2bee3a7ab",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Tigran Hamasyan",
-      "spotifyId": "catalog:37846e097a9ba0be64ffd536e94ddf8b62d94579a5ef8e9e3ecabd667bd63056",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "toe",
-      "spotifyId": "catalog:6d0ef3950c22cb1913d5775e951263c355eacdde7a34848c9c5fb4eb7f7d77a7",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Tokischa",
-      "spotifyId": "catalog:af785bddd6d98b6274a4cd4c8d98be57da4d84b251e78f69c7ce94bbdeffbd9a",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "TOOL",
-      "spotifyId": "catalog:7c9bbe5ec9b3fb774e8fa0f54247e93c34ddf8e5d16fe3073420de0ae81a262d",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "ToteKing",
-      "spotifyId": "catalog:4a291bf66c68ae34590037bbda817b7139f2fab090819b7ab982e76803eedc2c",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Touché Amoré",
-      "spotifyId": "catalog:b08b51e7e3978f145b736ee851d082843e5430e097889853397c3567a9e3db8f",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Toundra",
-      "spotifyId": "catalog:49955383b7346477b92970647da6028adfe9d71bd01e0d319c2496720b8a7ad5",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Trade Wind",
-      "spotifyId": "catalog:200db36593146fe8e3a384ebae2e6ee7d62a8c307d6ca7f8eed904ec68862fa1",
       "listenCount": 1,
       "totalMsPlayed": 3600000
     },
@@ -2878,32 +466,8 @@
       "totalMsPlayed": 3600000
     },
     {
-      "artist": "Trueno",
-      "spotifyId": "catalog:a35c394824d9072cf7571e1abe62dd7459dcf96213dc17566a4ca65110878754",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Turnstile",
-      "spotifyId": "catalog:7ada3cb954611466a402ea9f7f428be59a609f0ad5b6021a844e1d628c55b3cd",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
       "artist": "Twenty One Pilots",
       "spotifyId": "catalog:38e2375d6a3e825c44783a077a71160ba6e07df5e7a96541c6a043c6d47d9382",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Tyler, The Creator",
-      "spotifyId": "catalog:0daa7afe8d5b255f477b0adb2694585fa8bd17f9b2524638660df5bf99b3f49d",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Underoath",
-      "spotifyId": "catalog:e3cc62cb48247fb871a5ffbf5785eb220b6fbf72f5b73fdd8f8af58d76a88e28",
       "listenCount": 1,
       "totalMsPlayed": 3600000
     },
@@ -2914,92 +478,14 @@
       "totalMsPlayed": 3600000
     },
     {
-      "artist": "Van Halen",
-      "spotifyId": "catalog:30b1a5309f113c7224abf37de50a62267071965801e9c81455fd020368a9f73c",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Veil Of Maya",
-      "spotifyId": "catalog:6977443491bfe93c703c1a00d4a0886db15bdb04b98bfe8905b7bb4023a8d0c8",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Vended",
-      "spotifyId": "catalog:5677771bcd02aae1e0cb5488ada00ecb33fbce474004b1b1548bb0b6bb11cca0",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
       "artist": "Vetusta Morla",
       "spotifyId": "catalog:7aaf9d97f6fe1ae39d5bf20e373c173f8e4cb41e7bde12462085fdeac8ad08f9",
       "listenCount": 1,
       "totalMsPlayed": 3600000
     },
     {
-      "artist": "Vita Imana",
-      "spotifyId": "catalog:80314ebf3e300dc6b9b56683919a550d9722541ad45d74ba2a488f614ad436a7",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Viva Suecia",
-      "spotifyId": "catalog:9d2181502bc48398a0e0e4b2d86e10c64de1a4f66181f3bb8ad24cc81bf1ddec",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
       "artist": "VOLA",
       "spotifyId": "catalog:9297d9cf5ef65c9b1b9b5300852b5edcfeffcaa3e75b77567e9502df95a112d8",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Volumes",
-      "spotifyId": "catalog:5d2d96b881a94aa3768cb66421aa5f3095a4a7c090a765693db5545070eb482a",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Vonzo",
-      "spotifyId": "catalog:3e957d3b4a8768384ea9d784491e220af2ce3624db71f1911dfa4ac042f07ff6",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Votum",
-      "spotifyId": "catalog:ea56af3b419780e0941604646b4b8310813bf70af816e64eaf9d28b726082cd0",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Vulfpeck",
-      "spotifyId": "catalog:a435bbed05f0dfec22f2b513587c9162befa85a47c75fe94dd1208c606446c56",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Vulkan",
-      "spotifyId": "catalog:3891ebe5728c7d69068ccb4b0ab96bfb8275c18af21ba984edb645c9d9907aba",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Wage War",
-      "spotifyId": "catalog:f45dc93d0271f7f03e1fe9426e4aa437152c116f358724d06d9f2d20338cd102",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "We Came As Romans",
-      "spotifyId": "catalog:7ddff24b04b53250d868639fa3f5d4000eb32f7a9798945a90c6c693921f79fb",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "We Lost The Sea",
-      "spotifyId": "catalog:9b2141d71906f740e5500853e82dd9dc0210d37f2a993d235b9978e6250012a3",
       "listenCount": 1,
       "totalMsPlayed": 3600000
     },
@@ -3016,68 +502,8 @@
       "totalMsPlayed": 3600000
     },
     {
-      "artist": "White Moth Black Butterfly",
-      "spotifyId": "catalog:1f18c29378b998fe3f66dc52cccd1b0dfea69ef31f7e5a8dd751cd027d1f8a11",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Whitechapel",
-      "spotifyId": "catalog:2d8d2b759e6693803808b2f50fdb2f67938130926ef837c206ae4f82b1ac516a",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Wilderun",
-      "spotifyId": "catalog:dcfa651046f3ff4717422e92f769347620070d3b6137e183a60ae14b4afc443d",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Wisin & Yandel",
-      "spotifyId": "catalog:b12f003f41247683032454ae18ac369933f4a465565d5e8fc7279ae0af21f367",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Xoel López",
-      "spotifyId": "catalog:9567b6a812c362f1b8ffcabbbdbf70a4a6094ba1dbab2788ea4b45d5a13a13ee",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "XXXTENTACION",
-      "spotifyId": "catalog:635fd6323df30003516a1437119b03e11575955c49902bf563bf42cb8cdd987b",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Yellowcard",
-      "spotifyId": "catalog:b1ac21291b3e2a7ebab75a340587a5e245417558390869f584ebffeea6f2a9f7",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "YONAKA",
-      "spotifyId": "catalog:9e10b4edae407a4a49bbb7ca0b3f13522fa72a31403b3251d98715185b299149",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
       "artist": "Yung Beef",
       "spotifyId": "catalog:ff6980dbe405de34d60ca21669be4a907caaa6c8c225aa9f37d58c9df515497a",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "Zahara",
-      "spotifyId": "catalog:2c9478c8e073de3330f31d010b89a4e34cd2c7d1c796bd5065c5c1c7b655d0b1",
-      "listenCount": 1,
-      "totalMsPlayed": 3600000
-    },
-    {
-      "artist": "ZZ Top",
-      "spotifyId": "catalog:71dbdc0b5c7a5f69e6d9b7d00c25ef9497bf66381df9aa6c0ec84dab475ad52a",
       "listenCount": 1,
       "totalMsPlayed": 3600000
     }
