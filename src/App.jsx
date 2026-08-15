@@ -1985,7 +1985,7 @@ export default function App() {
       </aside>
 
       <section className={`adn-content w-full overflow-x-hidden lg:ml-[205px] ${isHome ? "px-4 pb-8 pt-5 lg:pb-10 lg:pl-[51px] lg:pr-[56px] lg:pt-8" : "px-4 pb-8 pt-5 md:px-8 md:py-10 lg:px-[51px] lg:py-8 lg:pr-[56px]"}`}>
-        {!isHome && <header className="mb-6 min-h-32 pt-12 text-left md:min-h-0 md:pt-0 lg:mb-6">
+        {!isHome && <header className="mb-6 min-h-32 pt-14 text-left md:min-h-0 md:pt-0 lg:mb-6">
           <div className="flex flex-col items-start justify-between gap-5 lg:flex-row">
             <div className="min-w-0"><h1 className="break-words text-3xl font-black uppercase leading-none tracking-[0.025em] text-zinc-50 lg:text-[1.75rem]">{title}</h1><p className="mt-2.5 max-w-2xl text-sm leading-relaxed text-zinc-400">{description}</p></div>
             <div ref={setHeaderControlsNode} className={`flex w-full min-w-0 flex-wrap items-start justify-end gap-2 lg:max-w-[65%] lg:shrink-0 ${isArchive || isTimeline || isNext ? "lg:w-[42rem]" : "lg:w-auto"}`} />
