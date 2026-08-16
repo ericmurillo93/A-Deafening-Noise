@@ -1,6 +1,17 @@
 {
-  "generatedAt": "2026-08-15T04:54:29.700Z",
+  "generatedAt": "2026-08-16T04:58:09.009Z",
   "suggestions": [
+    {
+      "id": "razzmatazz-11092026-11-09-2026-rigoberta-bandini-rigoberta-bandini",
+      "artist": "Rigoberta Bandini",
+      "venue": "Razzmatazz",
+      "city": "Barcelona",
+      "country": "ES",
+      "date": "11/09/2026",
+      "title": "Rigoberta Bandini",
+      "source": "Sala Razzmatazz",
+      "sourceUrl": "https://www.salarazzmatazz.com/agenda/11-09-2026-rigoberta-bandini/"
+    },
     {
       "id": "dice-692da6c8d7ee02000114da39-guitarricadelafuente",
       "artist": "Guitarricadelafuente",
@@ -24,6 +35,17 @@
       "sourceUrl": "https://dice.fm/event/7dq2b6-festivalb-2026-17th-sep-parc-del-frum-barcelona-tickets"
     },
     {
+      "id": "dice-692da6c8d7ee02000114da39-rusowsky",
+      "artist": "rusowsky",
+      "venue": "Parc del Fòrum",
+      "city": "Barcelona",
+      "country": "ES",
+      "date": "17/09/2026",
+      "title": "Festival•B 2026",
+      "source": "DICE",
+      "sourceUrl": "https://dice.fm/event/7dq2b6-festivalb-2026-17th-sep-parc-del-frum-barcelona-tickets"
+    },
+    {
       "id": "dice-692da6c8d7ee02000114da39-yung-beef",
       "artist": "Yung Beef",
       "venue": "Parc del Fòrum",
@@ -35,26 +57,15 @@
       "sourceUrl": "https://dice.fm/event/7dq2b6-festivalb-2026-17th-sep-parc-del-frum-barcelona-tickets"
     },
     {
-      "id": "dice-69bd2ba9b9555c000158359b-kinder-malo",
-      "artist": "Kinder Malo",
-      "venue": "Sala Copérnico",
-      "city": "Madrid",
+      "id": "razzmatazz-06022027-06-02-2027-nina-polaca-nina-polaca",
+      "artist": "Niña Polaca",
+      "venue": "Razzmatazz",
+      "city": "Barcelona",
       "country": "ES",
-      "date": "31/10/2026",
-      "title": "Dora Band (Pimp Flaco + Kinder Malo) en MAZO",
-      "source": "DICE",
-      "sourceUrl": "https://dice.fm/event/eoyp22-dora-band-pimp-flaco-kinder-malo-en-mazo-31st-oct-sala-coprnico-madrid-tickets"
-    },
-    {
-      "id": "dice-69f9efd045d5be0001a2c5ad-cecilio-g",
-      "artist": "Cecilio G.",
-      "venue": "Sala But",
-      "city": "Madrid",
-      "country": "ES",
-      "date": "10/12/2026",
-      "title": "Cecilio G en MAZO",
-      "source": "DICE",
-      "sourceUrl": "https://dice.fm/event/oed76y-cecilio-g-en-mazo-10th-dec-sala-but-madrid-tickets"
+      "date": "06/02/2027",
+      "title": "Niña Polaca",
+      "source": "Sala Razzmatazz",
+      "sourceUrl": "https://www.salarazzmatazz.com/agenda/06-02-2027-nina-polaca/"
     }
   ]
 }

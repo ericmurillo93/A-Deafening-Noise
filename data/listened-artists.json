@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-15T04:51:36.797Z",
+  "generatedAt": "2026-08-16T04:54:19.552Z",
   "source": "Connected Spotify profiles",
   "matchingRule": "Current top artists from connected users",
   "artists": [
@@ -16,8 +16,26 @@
       "totalMsPlayed": 3600000
     },
     {
+      "artist": "Afro Nation",
+      "spotifyId": "catalog:0810ed8c098f6599162693bbbdbb60bbabfa2ca3ca7b6b06ea99e7a252d0d6b4",
+      "listenCount": 1,
+      "totalMsPlayed": 3600000
+    },
+    {
       "artist": "Agent Fresco",
       "spotifyId": "catalog:2c1cd0290d5a591c8ce2f8375cd8b54deccaf3229b575c70a89cc89c710de4d2",
+      "listenCount": 1,
+      "totalMsPlayed": 3600000
+    },
+    {
+      "artist": "Aitana",
+      "spotifyId": "catalog:762bddda24f158335fc5ecf0ac2da6746c1a2b846523b3c4ad30a0a44bef4921",
+      "listenCount": 1,
+      "totalMsPlayed": 3600000
+    },
+    {
+      "artist": "Alizzz",
+      "spotifyId": "catalog:22554a6352648991daf041890b4987f19cddef0f477e2be22e2a8e787a1fe571",
       "listenCount": 1,
       "totalMsPlayed": 3600000
     },
@@ -58,6 +76,12 @@
       "totalMsPlayed": 3600000
     },
     {
+      "artist": "Aretha Franklin",
+      "spotifyId": "catalog:82df8cff6c1e1113feaee867eecac4bfd93142d1a1ea87e6331f76a750b4203d",
+      "listenCount": 1,
+      "totalMsPlayed": 3600000
+    },
+    {
       "artist": "Asking Alexandria",
       "spotifyId": "catalog:3c3d77c5af4b75de74ad1ca1a6951740bea327f774b157c0d3b8d7580f49359b",
       "listenCount": 1,
@@ -82,14 +106,32 @@
       "totalMsPlayed": 3600000
     },
     {
+      "artist": "Bad Gyal",
+      "spotifyId": "catalog:085422dfc0969e5d478c1b3b8199663d1247283192b7bdc5bbf3cd79b1f306ef",
+      "listenCount": 1,
+      "totalMsPlayed": 3600000
+    },
+    {
       "artist": "Bad Omens",
       "spotifyId": "catalog:737cb10b66d1ba84b0f07a06f3df84ec14315044668ed5ceedb2a48662d8ae07",
       "listenCount": 1,
       "totalMsPlayed": 3600000
     },
     {
+      "artist": "Beéle",
+      "spotifyId": "catalog:4a936f530280e09a5799eb22ccd600aababd59a9e00729cff3ab63df0dc644d2",
+      "listenCount": 1,
+      "totalMsPlayed": 3600000
+    },
+    {
       "artist": "Between The Buried And Me",
       "spotifyId": "catalog:4c8e36e15a90d339ec7b6932d2e01b55ecab2ca2a2d07600cd94f829aea80b86",
+      "listenCount": 1,
+      "totalMsPlayed": 3600000
+    },
+    {
+      "artist": "Billie Eilish",
+      "spotifyId": "catalog:1d78f58dc2096dc72c0f771b808345926d4acc0eec73c1f62b862c7fafde91a4",
       "listenCount": 1,
       "totalMsPlayed": 3600000
     },
@@ -118,6 +160,12 @@
       "totalMsPlayed": 3600000
     },
     {
+      "artist": "C. Tangana",
+      "spotifyId": "catalog:40862e93b6b5da2d4c33093b8592aac0898481f982d7e85bdf27d7c6a1556b22",
+      "listenCount": 1,
+      "totalMsPlayed": 3600000
+    },
+    {
       "artist": "CA7RIEL & Paco Amoroso",
       "spotifyId": "catalog:c389f574d582744de0be9dfe8ae8cb839ecf2bd97a37761b271062b51edf45bf",
       "listenCount": 1,
@@ -126,6 +174,24 @@
     {
       "artist": "Calle 13",
       "spotifyId": "catalog:105fc329e938ff8e749c1b08b99395c1b5e3f2b443ee72c2facea2fb2f6b97c8",
+      "listenCount": 1,
+      "totalMsPlayed": 3600000
+    },
+    {
+      "artist": "Carlos Ares",
+      "spotifyId": "catalog:1bb880ec948117ed791043b45df27941b6ae3bde0d5c1f9a81b0a15eb440f47b",
+      "listenCount": 1,
+      "totalMsPlayed": 3600000
+    },
+    {
+      "artist": "Carlos Sadness",
+      "spotifyId": "catalog:3339acd9899861aa8ffe2fe689e57ec60d55c7de6899345f7e05abc6cf1996e1",
+      "listenCount": 1,
+      "totalMsPlayed": 3600000
+    },
+    {
+      "artist": "Charli xcx",
+      "spotifyId": "catalog:35a9eb2b725d84cea64e1d19d0f5acb1ae937c74a39ec6f6bfd575856c891a7b",
       "listenCount": 1,
       "totalMsPlayed": 3600000
     },
@@ -148,8 +214,38 @@
       "totalMsPlayed": 3600000
     },
     {
+      "artist": "Daddy Yankee",
+      "spotifyId": "catalog:08343e62d8946ffc633e61a89d46c8d8a32987c97690b02d66b0a0a804d7d583",
+      "listenCount": 1,
+      "totalMsPlayed": 3600000
+    },
+    {
+      "artist": "Danny Ocean",
+      "spotifyId": "catalog:0e2926612973ce4a3a96b16e44a91d7f4dbaa22bfd8f3bf4bf9a60d25dbbfa24",
+      "listenCount": 1,
+      "totalMsPlayed": 3600000
+    },
+    {
       "artist": "dArtagnan",
       "spotifyId": "catalog:7fae1a0e45e93633c624b03ede1733077645db55c714f25783d0e75933605197",
+      "listenCount": 1,
+      "totalMsPlayed": 3600000
+    },
+    {
+      "artist": "David Guetta",
+      "spotifyId": "catalog:9dd624fd297824b326a0e408a6b252cdf265abb763a64d4f6f3821abea68c898",
+      "listenCount": 1,
+      "totalMsPlayed": 3600000
+    },
+    {
+      "artist": "Don Omar",
+      "spotifyId": "catalog:451e65fa6366f6b6b2ba16bb3e98dd5a995606e4b494d87ff5571de4dc1684fc",
+      "listenCount": 1,
+      "totalMsPlayed": 3600000
+    },
+    {
+      "artist": "Dua Lipa",
+      "spotifyId": "catalog:683ab57a0f7ce050f713c64c687194c7befae62e1466a63072d660e55f1f3394",
       "listenCount": 1,
       "totalMsPlayed": 3600000
     },
@@ -208,14 +304,38 @@
       "totalMsPlayed": 3600000
     },
     {
+      "artist": "Fito y Fitipaldis",
+      "spotifyId": "catalog:521493b862f154a914cf34511c65e696a9b1e23a85ee1c3565b12f527c174a1d",
+      "listenCount": 1,
+      "totalMsPlayed": 3600000
+    },
+    {
+      "artist": "Fools Garden",
+      "spotifyId": "catalog:80c8ae5f95a59cd1948f891f8c5ec9efd9d1742693c491314050d6c9b7e0e6af",
+      "listenCount": 1,
+      "totalMsPlayed": 3600000
+    },
+    {
       "artist": "Gaerea",
       "spotifyId": "catalog:bc1d250cf97228d499c94cced201d0e4ae3865739183d0ca13032f4edf2a607f",
       "listenCount": 1,
       "totalMsPlayed": 3600000
     },
     {
+      "artist": "Gojira",
+      "spotifyId": "catalog:62a662c6a9bc6f6270437eafa5bb31d224cf325b4fc6d4035f5b0b8206d495ed",
+      "listenCount": 1,
+      "totalMsPlayed": 3600000
+    },
+    {
       "artist": "Greta Van Fleet",
       "spotifyId": "catalog:a889d8115fb443c858eeb4303134a9037f6bf3e93c8de1afb14a969e202196ee",
+      "listenCount": 1,
+      "totalMsPlayed": 3600000
+    },
+    {
+      "artist": "Guitarricadelafuente",
+      "spotifyId": "catalog:3c638a8e896edab5074b4e3b005f02f5ebb3cec2b1f493f5f9b5537ae1d76de6",
       "listenCount": 1,
       "totalMsPlayed": 3600000
     },
@@ -238,6 +358,24 @@
       "totalMsPlayed": 3600000
     },
     {
+      "artist": "J Balvin",
+      "spotifyId": "catalog:da3a528d353920f0ac199d124994733b75fafcf76deb4249768377a6a9c68802",
+      "listenCount": 1,
+      "totalMsPlayed": 3600000
+    },
+    {
+      "artist": "Jarabe De Palo",
+      "spotifyId": "catalog:7025055f13992fe7ab3b58bfa1ad192ee5ee06501f4a0387f29d6690541cec15",
+      "listenCount": 1,
+      "totalMsPlayed": 3600000
+    },
+    {
+      "artist": "Judeline",
+      "spotifyId": "catalog:8b64ba2106a1e73a415e2d2a1da1c7ef1add611dcd73c868622ff037d83c43fd",
+      "listenCount": 1,
+      "totalMsPlayed": 3600000
+    },
+    {
       "artist": "Karmanjakah",
       "spotifyId": "catalog:a243397eee8c676bab1f3ad2ae745a8a623f0d3321c1478704621a87923913ec",
       "listenCount": 1,
@@ -246,6 +384,12 @@
     {
       "artist": "Karnivool",
       "spotifyId": "catalog:ea53e7a70c5bb75827de2347e5486d42f59f5d97c8c0d7cfa03b37c235e737c8",
+      "listenCount": 1,
+      "totalMsPlayed": 3600000
+    },
+    {
+      "artist": "KAROL G",
+      "spotifyId": "catalog:d3441e67207674c25688b6db49a1d848555ef3374d5875c5a3ccf63f0c92ef1e",
       "listenCount": 1,
       "totalMsPlayed": 3600000
     },
@@ -262,6 +406,12 @@
       "totalMsPlayed": 3600000
     },
     {
+      "artist": "La Bien Querida",
+      "spotifyId": "catalog:822b02fc4667d46a2991b3a867c18111a1244261694522963511b72cdf7b4b40",
+      "listenCount": 1,
+      "totalMsPlayed": 3600000
+    },
+    {
       "artist": "La Maravillosa Orquesta del Alcohol",
       "spotifyId": "catalog:6254033ebc085d81a889d06b28285399ce5e27809d2e494a03e1b283b2c1859f",
       "listenCount": 1,
@@ -270,6 +420,12 @@
     {
       "artist": "LANDMVRKS",
       "spotifyId": "catalog:1f258765a4d0dc93dae1d8893b6aa89e2e617eac0de6a953fc15b8b78af49ffb",
+      "listenCount": 1,
+      "totalMsPlayed": 3600000
+    },
+    {
+      "artist": "Leiva",
+      "spotifyId": "catalog:9e48344ea90a69e85fad1a681c6a021ed9d023b5b53f89f8dbee12ec638e51ed",
       "listenCount": 1,
       "totalMsPlayed": 3600000
     },
@@ -298,6 +454,18 @@
       "totalMsPlayed": 3600000
     },
     {
+      "artist": "Lola Indigo",
+      "spotifyId": "catalog:13d90906c6d667e945f132739262130c03769bab5ead8adff589e9d82da04b70",
+      "listenCount": 1,
+      "totalMsPlayed": 3600000
+    },
+    {
+      "artist": "Machaka",
+      "spotifyId": "catalog:8760c01337fcbff93e786223f64ed3da104259e9e2aa7bc9cc631c6d98c52bc5",
+      "listenCount": 1,
+      "totalMsPlayed": 3600000
+    },
+    {
       "artist": "Marmozets",
       "spotifyId": "catalog:1fff23b4b503ffb3b54499c87048fe406c4843d10d6c6e9fefb515638762f8e2",
       "listenCount": 1,
@@ -310,14 +478,38 @@
       "totalMsPlayed": 3600000
     },
     {
+      "artist": "Melendi",
+      "spotifyId": "catalog:e5082c0be3121b551484c3126ce5c720ddedd992a9414eb041bab550bd6ef7f1",
+      "listenCount": 1,
+      "totalMsPlayed": 3600000
+    },
+    {
       "artist": "Michael Kiwanuka",
       "spotifyId": "catalog:a82f2c4ca039c2e1584098ee73968977f21c3dfde3798c3c728b33aada51d1e6",
       "listenCount": 1,
       "totalMsPlayed": 3600000
     },
     {
+      "artist": "MIKA",
+      "spotifyId": "catalog:1567e79a15758616ee6c7bccbbd6f2bafcf3de6c49e7dd31fe6cd8a63d944359",
+      "listenCount": 1,
+      "totalMsPlayed": 3600000
+    },
+    {
+      "artist": "Milo j",
+      "spotifyId": "catalog:79c4313e1865be9911b123769d8ce412add0c9576ea4d8b1828d957ef20547af",
+      "listenCount": 1,
+      "totalMsPlayed": 3600000
+    },
+    {
       "artist": "Molotov",
       "spotifyId": "catalog:369b450c3e4549ec0562ff1a483758da6cb0f0d48a5e45936675c3b2e2d4c71d",
+      "listenCount": 1,
+      "totalMsPlayed": 3600000
+    },
+    {
+      "artist": "Mon Laferte",
+      "spotifyId": "catalog:1347b08f3eefb9d0921e849bf4275da5cc329031a60761ffdeaf7787524e23c3",
       "listenCount": 1,
       "totalMsPlayed": 3600000
     },
@@ -334,6 +526,18 @@
       "totalMsPlayed": 3600000
     },
     {
+      "artist": "Myke Towers",
+      "spotifyId": "catalog:ac8c24ca7283a5cb25035c4a4002f20d183303f7196143423c090f23f6590d08",
+      "listenCount": 1,
+      "totalMsPlayed": 3600000
+    },
+    {
+      "artist": "Natalia Lacunza",
+      "spotifyId": "catalog:5886a5aff9646665b75632149a7717e5423db3ae35e17522f5fd133b100566bc",
+      "listenCount": 1,
+      "totalMsPlayed": 3600000
+    },
+    {
       "artist": "NATHY PELUSO",
       "spotifyId": "catalog:4772945b1afa5eeef7fd4f70b1c7ddf18063ed82a3ceb41858d436ffd3ce04c9",
       "listenCount": 1,
@@ -342,6 +546,18 @@
     {
       "artist": "Nerv",
       "spotifyId": "catalog:ccc455a76c8435cb3085632a83cfeb83792536f894d53593294f4048f9cdf198",
+      "listenCount": 1,
+      "totalMsPlayed": 3600000
+    },
+    {
+      "artist": "Nicki Nicole",
+      "spotifyId": "catalog:55bc4ea4865e6fcf83c452a1befaed5ae40b37d42a4c3dfc57cd5f11a5791ad7",
+      "listenCount": 1,
+      "totalMsPlayed": 3600000
+    },
+    {
+      "artist": "Niña Polaca",
+      "spotifyId": "catalog:f1c87ebe9e63785b8140a830cd3108cce671c6c91f860df62e47fa390978c075",
       "listenCount": 1,
       "totalMsPlayed": 3600000
     },
@@ -364,8 +580,20 @@
       "totalMsPlayed": 3600000
     },
     {
+      "artist": "Pereza",
+      "spotifyId": "catalog:16e318f530400205dac4e3cdba2efe5aa3d6bcd7405eba9aea5af669622cfa0f",
+      "listenCount": 1,
+      "totalMsPlayed": 3600000
+    },
+    {
       "artist": "Periphery",
       "spotifyId": "catalog:037beaafcba0557f52ab74e511f39be2906744cd333d06ee6f582718c141bc96",
+      "listenCount": 1,
+      "totalMsPlayed": 3600000
+    },
+    {
+      "artist": "Phil Collins",
+      "spotifyId": "catalog:1d07329e7447d70d2e721c578f12ac99fd35ce344895a84c68360b7ac66108b2",
       "listenCount": 1,
       "totalMsPlayed": 3600000
     },
@@ -394,8 +622,56 @@
       "totalMsPlayed": 3600000
     },
     {
+      "artist": "Ptazeta",
+      "spotifyId": "catalog:c17db8bb61f80006e3a12ba569f00b385a3f9e7a633dce80db29e53934e5432e",
+      "listenCount": 1,
+      "totalMsPlayed": 3600000
+    },
+    {
+      "artist": "Quevedo",
+      "spotifyId": "catalog:c5fca2204cb567a74332fcd724365429fb6c7086fe5367eecb9d866f83bf09ec",
+      "listenCount": 1,
+      "totalMsPlayed": 3600000
+    },
+    {
+      "artist": "Rauw Alejandro",
+      "spotifyId": "catalog:1c947cee71891577c917dbcaa794c26915f3974e11ad53181e84c0e3fe8a290d",
+      "listenCount": 1,
+      "totalMsPlayed": 3600000
+    },
+    {
+      "artist": "Rawayana",
+      "spotifyId": "catalog:cfea7562200f99f27888bd3a1dd1cbdf61ee4632f485aec20b4177e29dd3a233",
+      "listenCount": 1,
+      "totalMsPlayed": 3600000
+    },
+    {
+      "artist": "Rels B",
+      "spotifyId": "catalog:60b1eb89ff4b2e33c240966e66191181f02a45ed621aa784772989613ccc0ca7",
+      "listenCount": 1,
+      "totalMsPlayed": 3600000
+    },
+    {
       "artist": "Residente",
       "spotifyId": "catalog:98eea53b4fc54115eefdee8968f57c45d8c0b8b2a3e2441563d85b30f4e2bf22",
+      "listenCount": 1,
+      "totalMsPlayed": 3600000
+    },
+    {
+      "artist": "Rigoberta Bandini",
+      "spotifyId": "catalog:661a35b19e8fe142ba02742098cfc0a4bb30234f633950bc5740b615fb5a67df",
+      "listenCount": 1,
+      "totalMsPlayed": 3600000
+    },
+    {
+      "artist": "Rihanna",
+      "spotifyId": "catalog:9344b1d1292feb5c37c42dcd20c66e1c8c05336752b3e2b0f342eed2fde61a17",
+      "listenCount": 1,
+      "totalMsPlayed": 3600000
+    },
+    {
+      "artist": "Robe",
+      "spotifyId": "catalog:9d0f44502d8625d3a501b4c7ef6e4db63c82de325376f0745ed6afc77383135b",
       "listenCount": 1,
       "totalMsPlayed": 3600000
     },
@@ -406,14 +682,56 @@
       "totalMsPlayed": 3600000
     },
     {
+      "artist": "rusowsky",
+      "spotifyId": "catalog:54f2e030d7783bb28efcdf7f032065e05975209a1def506b4e15c3eef4974af7",
+      "listenCount": 1,
+      "totalMsPlayed": 3600000
+    },
+    {
+      "artist": "Rvfv",
+      "spotifyId": "catalog:3ba33db19d987cf1639df4bf5b103dcda8d211a7b29bcc9be6c15651abded045",
+      "listenCount": 1,
+      "totalMsPlayed": 3600000
+    },
+    {
+      "artist": "Ryan Castro",
+      "spotifyId": "catalog:3a0bc9e04d94a129d5ca199979a0b5db11f0ad60cdc6ae551f858a78b3df57fd",
+      "listenCount": 1,
+      "totalMsPlayed": 3600000
+    },
+    {
+      "artist": "Sen Senra",
+      "spotifyId": "catalog:ee49ec73f38c016d7ca355613868e8f04acc23c88366d07ca7b79230debdf233",
+      "listenCount": 1,
+      "totalMsPlayed": 3600000
+    },
+    {
+      "artist": "Shakira",
+      "spotifyId": "catalog:abf9eb9facd09aafefb1e027a819da4d95fdad98b246494096033c7f099608d3",
+      "listenCount": 1,
+      "totalMsPlayed": 3600000
+    },
+    {
       "artist": "Silent Planet",
       "spotifyId": "catalog:7c02a72deef9b70650c713dbee7d70651c3ec59b6d82052041548a28b7995500",
       "listenCount": 1,
       "totalMsPlayed": 3600000
     },
     {
+      "artist": "Siloé",
+      "spotifyId": "catalog:129ac6de950c11260cb4185737636d07a07d20b17060e420888d4991ba4391da",
+      "listenCount": 1,
+      "totalMsPlayed": 3600000
+    },
+    {
       "artist": "Sleep Token",
       "spotifyId": "catalog:f5ebd43dd685e2eb7e13e4379cddeef9c79bdeec7b7a2e158707d849e4a30d84",
+      "listenCount": 1,
+      "totalMsPlayed": 3600000
+    },
+    {
+      "artist": "Slipknot",
+      "spotifyId": "catalog:07a0a3bd1783de63016f550da1c0e47c8225fea4b0fa040fe058af60c2d858c7",
       "listenCount": 1,
       "totalMsPlayed": 3600000
     },
@@ -454,6 +772,12 @@
       "totalMsPlayed": 3600000
     },
     {
+      "artist": "Tokischa",
+      "spotifyId": "catalog:af785bddd6d98b6274a4cd4c8d98be57da4d84b251e78f69c7ce94bbdeffbd9a",
+      "listenCount": 1,
+      "totalMsPlayed": 3600000
+    },
+    {
       "artist": "Travis Scott",
       "spotifyId": "catalog:83646fd80195493bc5e8ace7abb4f3c0c39a5f14d3cf4c0041eafb77d5993f16",
       "listenCount": 1,
@@ -466,6 +790,12 @@
       "totalMsPlayed": 3600000
     },
     {
+      "artist": "Trueno",
+      "spotifyId": "catalog:a35c394824d9072cf7571e1abe62dd7459dcf96213dc17566a4ca65110878754",
+      "listenCount": 1,
+      "totalMsPlayed": 3600000
+    },
+    {
       "artist": "Twenty One Pilots",
       "spotifyId": "catalog:38e2375d6a3e825c44783a077a71160ba6e07df5e7a96541c6a043c6d47d9382",
       "listenCount": 1,
@@ -474,6 +804,18 @@
     {
       "artist": "Unprocessed",
       "spotifyId": "catalog:be94f1c2d6a7a7c83950a15baad6e3f5c9c99f599aac662a74aaf4884125db0a",
+      "listenCount": 1,
+      "totalMsPlayed": 3600000
+    },
+    {
+      "artist": "Valeria Castro",
+      "spotifyId": "catalog:230b6afabfd30e71f4ae0a2d8f2a7cee578e6bbd0dd9bb4ebcb5100d1753aa81",
+      "listenCount": 1,
+      "totalMsPlayed": 3600000
+    },
+    {
+      "artist": "Veintiuno",
+      "spotifyId": "catalog:22bcd7432ffcd022a258643231b738af56ddb9182ae15f93a8a467e038695743",
       "listenCount": 1,
       "totalMsPlayed": 3600000
     },
@@ -504,6 +846,12 @@
     {
       "artist": "Yung Beef",
       "spotifyId": "catalog:ff6980dbe405de34d60ca21669be4a907caaa6c8c225aa9f37d58c9df515497a",
+      "listenCount": 1,
+      "totalMsPlayed": 3600000
+    },
+    {
+      "artist": "Zion & Lennox",
+      "spotifyId": "catalog:77659f836b1a4a01f5f7c37d67af5fb191cb4ec6dcd0107136c1b4875f2f2c5e",
       "listenCount": 1,
       "totalMsPlayed": 3600000
     }
