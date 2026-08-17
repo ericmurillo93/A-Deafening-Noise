@@ -21,6 +21,7 @@
   --adn-border-strong: #30343a;
   --adn-radius-panel: 6px;
   --adn-radius-control: 8px;
+  --adn-navigation-width: clamp(17rem, 22vw, 20rem);
 }
 
 html {
@@ -80,6 +81,8 @@ input::placeholder {
 }
 
 .adn-shell { background: var(--adn-stage); }
+.adn-desktop-navigation { width: var(--adn-navigation-width); }
+.adn-drawer-navigation { width: min(var(--adn-navigation-width), 88vw); }
 
 /* The dashboard language is the application shell: compact panels, blue
    actions and quiet tonal depth. Page-specific semantic colors stay intact. */
@@ -230,7 +233,6 @@ button[aria-label="View activity"] { display: flex; }
 [data-theme="poster"] .border-\[\#30343a\] { border-color: #27272a; }
 [data-theme="poster"] .adn-button-primary img { filter: brightness(0); }
 [data-theme="poster"] .adn-navigation nav button { border-radius: 12px; }
-[data-theme="poster"] .adn-drawer-navigation { width: min(20rem, 88vw); }
 [data-theme="poster"] .menu-button-touch { border-radius: 9999px; }
 [data-theme="poster"] .adn-content {
   width: 100%;
@@ -323,6 +325,10 @@ button[aria-label="View activity"] { display: flex; }
 }
 
 @media (min-width: 1024px) {
+  .adn-content {
+    width: calc(100% - var(--adn-navigation-width));
+    margin-left: var(--adn-navigation-width);
+  }
   [data-theme="poster"] .adn-desktop-navigation { display: none; }
   [data-theme="poster"] .adn-drawer-navigation { display: flex; }
   [data-theme="poster"] .adn-menu-overlay { display: block; }

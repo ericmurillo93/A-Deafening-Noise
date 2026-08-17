@@ -30,22 +30,23 @@ test("Add concert keeps its header visible while form content scrolls", async ({
 test("Add concert derives ticket fields from the date and uppercases catalog labels", async ({ page }) => {
   await page.goto("/home");
   await page.getByRole("button", { name: "Add concert", exact: true }).click();
+  const dialog = page.getByRole("dialog", { name: "Add concert" });
 
-  const artist = page.getByPlaceholder("Artist name");
-  const venue = page.getByPlaceholder("Venue or festival");
-  const date = page.getByPlaceholder("DD/MM/YYYY");
+  const artist = dialog.getByPlaceholder("Artist name");
+  const venue = dialog.getByPlaceholder("Venue or festival");
+  const date = dialog.getByPlaceholder("DD/MM/YYYY");
   await artist.fill("Björk");
   await venue.fill("Sala Apolo");
   await expect(artist).toHaveValue("BJÖRK");
   await expect(venue).toHaveValue("SALA APOLO");
 
   await date.fill("01/01/2020");
-  await expect(page.getByText("Ticket bought", { exact: true })).toBeHidden();
-  await expect(page.getByPlaceholder("https://…")).toBeHidden();
+  await expect(dialog.getByText("Ticket bought", { exact: true })).toBeHidden();
+  await expect(dialog.getByPlaceholder("https://…")).toBeHidden();
 
   await date.fill("01/01/2099");
-  await expect(page.getByText("Ticket bought", { exact: true })).toBeVisible();
-  await expect(page.getByPlaceholder("https://…")).toBeVisible();
+  await expect(dialog.getByText("Ticket bought", { exact: true })).toBeVisible();
+  await expect(dialog.getByPlaceholder("https://…")).toBeVisible();
 });
 
 test("Browser Back closes Add concert before leaving the page", async ({ page }) => {
@@ -162,7 +163,7 @@ test("Clean routes survive direct loads and reloads", async ({ page }) => {
     ["/history", "Concert Archive"],
     ["/calendar", "Concert Calendar"],
     ["/suggestions", "Concert Suggestions"],
-    ["/timeline", "Timeline"],
+    ["/timeline", "Concert Timeline"],
     ["/stats", "Archive Overview"],
     ["/year-review", "Year in Review"],
     ["/friends", "Friends"],
@@ -184,6 +185,17 @@ test("Home dashboard opens its primary concert and add flows", async ({ page }) 
   await expect(page.getByRole("dialog")).toBeHidden();
   await page.locator("header").getByRole("button", { name: "Add concert", exact: true }).click();
   await expect(page.getByRole("dialog", { name: "Add concert" })).toBeVisible();
+});
+
+test("Home keeps today's concert until midnight, then advances", async ({ page }) => {
+  await page.clock.install({ time: new Date("2026-08-17T12:00:00") });
+  await page.goto("/home");
+  const nextConcert = page.getByRole("button", { name: /Next concert/i });
+  await expect(nextConcert).toContainText("Mon, Aug 17, 2026");
+  await expect(page.getByText("Today", { exact: true })).toBeVisible();
+
+  await page.clock.fastForward("12:00:01");
+  await expect(nextConcert).toContainText("Tue, Aug 18, 2026");
 });
 
 test("Home dashboard reviews concert suggestions without leaving the page", async ({ page }) => {
@@ -236,12 +248,16 @@ test("Profile chooses an avatar without exposing its local filename", async ({ p
 
 test("Profile theme choice persists after reload", async ({ page }, testInfo) => {
   await page.goto("/profile");
+  const defaultNavigation = page.locator(".adn-desktop-navigation");
+  const defaultNavigationWidth = testInfo.project.name === "desktop" ? (await defaultNavigation.boundingBox())?.width : null;
   await page.getByRole("radio", { name: /Concert poster/ }).click();
   await expect(page.locator("html")).toHaveAttribute("data-theme", "poster");
   if (testInfo.project.name === "desktop") {
     await expect(page.locator(".adn-desktop-navigation")).toBeHidden();
     await page.getByRole("button", { name: "Open menu" }).click();
-    await expect(page.getByRole("complementary", { name: "Main navigation" })).toBeVisible();
+    const posterNavigation = page.getByRole("complementary", { name: "Main navigation" });
+    await expect(posterNavigation).toBeVisible();
+    expect((await posterNavigation.boundingBox())?.width).toBeCloseTo(defaultNavigationWidth, 4);
   }
   await page.reload();
   await expect(page.locator("html")).toHaveAttribute("data-theme", "poster");

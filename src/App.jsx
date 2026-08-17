@@ -1326,7 +1326,7 @@ function mainNavigationItems(activePage, attentionCount) {
     ["history", "fa-box-archive", "Concert archive", archiveActive, 0],
     ["timeline", "fa-clock-rotate-left", "Concert Timeline", activePage === "timeline", 0],
     ["next", "fa-calendar-days", "Concert calendar", activePage === "next", 0],
-    ["suggestions", "fa-wand-magic-sparkles", "Suggestions", activePage === "suggestions", 0],
+    ["suggestions", "fa-wand-magic-sparkles", "Concert Suggestions", activePage === "suggestions", 0],
     ["stats", "fa-chart-column", "Stats", activePage === "stats" || activePage === "year-review", 0],
     ["friends", "fa-user-group", "Friends", activePage === "friends", attentionCount],
   ];
@@ -1334,7 +1334,7 @@ function mainNavigationItems(activePage, attentionCount) {
 
 function DesktopNavigation({ activePage, profile, attentionCount, onNavigate }) {
   const items = mainNavigationItems(activePage, attentionCount);
-  return <aside className="adn-desktop-navigation fixed inset-y-0 left-0 z-30 hidden w-[205px] flex-col border-r border-[#20242a] bg-[#0c1015] lg:flex">
+  return <aside className="adn-desktop-navigation fixed inset-y-0 left-0 z-30 hidden flex-col border-r border-[#20242a] bg-[#0c1015] lg:flex">
     <button type="button" onClick={() => onNavigate("home")} className="h-[121px] border-b border-[#20242a] px-4 text-left"><span className="block whitespace-nowrap text-[15px] font-black uppercase tracking-tight text-zinc-50">A Deafening Noise</span><span className="mt-1 block text-[11px] font-bold uppercase tracking-[0.08em] text-zinc-400">Concert archive</span></button>
     <nav className="min-h-0 flex-1 space-y-1 overflow-y-auto" aria-label="Main navigation">{items.map(([page, icon, label, active, count]) =>
       <button key={page} type="button" onClick={() => onNavigate(page)} aria-current={active ? "page" : undefined} className={`relative flex min-h-[61px] w-full items-center gap-3 px-5 text-left text-[12px] font-black uppercase tracking-wide transition-colors ${active ? "bg-[#171b20] text-zinc-50 before:absolute before:inset-y-0 before:left-0 before:w-0.5 before:bg-blue-500" : "text-zinc-400 hover:bg-[#171b20] hover:text-zinc-100"}`}><i className={`fa-solid ${icon} w-5 text-center text-[17px] ${active ? "text-zinc-100" : "text-zinc-400"}`} aria-hidden="true" /><span className="truncate">{label}</span>{count > 0 && <span className="ml-auto min-w-5 rounded-full bg-blue-600 px-1.5 py-0.5 text-center text-[8px] text-white">{count}</span>}</button>
@@ -1594,6 +1594,7 @@ export default function App() {
         const archive = await loadConcertData();
         if (!cancelled) {
           applyAppData(archive);
+          if (archive.profile?.theme) setTheme(archive.profile.theme);
           setDataOwnerId(currentUserId);
           await writeAppCache(currentUserId, archive);
           lastRefreshRef.current = Date.now();
@@ -1650,7 +1651,6 @@ export default function App() {
         closingDialogWithBackRef.current = false;
         setModalOpen(false);
         setAddInitial(null);
-        setActiveSuggestionId(null);
         setEditTarget(null);
         setSetlistTarget(null);
         setCalendarTarget(null);
@@ -1797,10 +1797,24 @@ export default function App() {
     try {
       const archive = await loadConcertData();
       applyAppData(archive);
+      if (archive.profile?.theme) setTheme(archive.profile.theme);
       await writeAppCache(currentUserId, archive);
       lastRefreshRef.current = Date.now();
       setSyncError("");
     } finally { setIsRefreshing(false); }
+  }
+
+  async function changeTheme(nextTheme) {
+    const previousTheme = theme;
+    setTheme(nextTheme);
+    if (!supabaseEnabled) return;
+    try {
+      await updateMyProfile({ theme: nextTheme });
+      await reloadAppData();
+    } catch (error) {
+      setTheme(previousTheme);
+      setSaveError(error.message || "Could not save your theme.");
+    }
   }
 
   async function handleAddConcert(data, suggestion = null) {
@@ -1979,7 +1993,7 @@ export default function App() {
 
       <button disabled={!sidebarOpen} aria-hidden={!sidebarOpen} tabIndex={sidebarOpen ? 0 : -1} className={`adn-menu-overlay fixed inset-0 z-40 bg-black/60 transition-opacity duration-150 lg:hidden ${sidebarOpen ? "opacity-100" : "pointer-events-none opacity-0"}`} onClick={() => setSidebarOpen(false)} aria-label="Close menu overlay" />
 
-      <aside id="main-navigation" aria-label="Main navigation" aria-hidden={!sidebarOpen} inert={!sidebarOpen ? "" : undefined} className={`adn-navigation adn-drawer-navigation fixed inset-y-0 left-0 z-50 flex w-[min(17rem,88vw)] flex-col border-r border-[#20242a] bg-[#0c1015] transition-transform duration-300 lg:hidden ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}>
+      <aside id="main-navigation" aria-label="Main navigation" aria-hidden={!sidebarOpen} inert={!sidebarOpen ? "" : undefined} className={`adn-navigation adn-drawer-navigation fixed inset-y-0 left-0 z-50 flex flex-col border-r border-[#20242a] bg-[#0c1015] transition-transform duration-300 lg:hidden ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}>
         <div className="flex min-h-[105px] items-center justify-between gap-3 border-b border-[#20242a] px-5 pt-[env(safe-area-inset-top)]">
           <button onClick={() => changePage("home")} className="min-w-0 text-left" aria-label="Go to dashboard"><span className="block truncate text-[15px] font-black uppercase tracking-tight text-zinc-50">A Deafening Noise</span><span className="mt-1 block text-[11px] font-bold uppercase tracking-[0.08em] text-zinc-400">Concert archive</span></button>
           <button onClick={() => setSidebarOpen(false)} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md text-zinc-400 transition-colors hover:bg-[#171b20] hover:text-zinc-100" aria-label="Close menu"><i className="fa-solid fa-xmark" aria-hidden="true" /></button>
@@ -1990,7 +2004,7 @@ export default function App() {
         {currentUserName && <div className="mx-4 h-[90px] shrink-0 border-t border-[#2a2e34] pb-[env(safe-area-inset-bottom)]"><button type="button" onClick={() => changePage("profile")} aria-current={activePage === "profile" || activePage === "admin" ? "page" : undefined} className={`group relative flex h-full w-full items-center gap-3 text-left transition-colors ${activePage === "profile" || activePage === "admin" ? "before:absolute before:inset-y-5 before:-left-4 before:w-0.5 before:bg-blue-500" : ""}`}><UserAvatar person={appProfile} size="h-8 w-8" /><span className={`min-w-0 flex-1 truncate text-xs font-bold transition-colors group-hover:text-white ${activePage === "profile" || activePage === "admin" ? "text-white" : "text-zinc-300"}`}>{currentUserName}</span>{isAdmin && <span className="rounded-full border border-zinc-700 px-1.5 py-0.5 text-[8px] font-black uppercase tracking-wider text-zinc-500">Admin</span>}<i className={`fa-solid fa-chevron-right text-[9px] transition-[color,transform] group-hover:translate-x-0.5 group-hover:text-blue-400 ${activePage === "profile" || activePage === "admin" ? "text-blue-400" : "text-zinc-500"}`} aria-hidden="true" /></button></div>}
       </aside>
 
-      <section className={`adn-content w-full overflow-x-hidden lg:ml-[205px] ${isHome ? "px-4 pb-8 pt-5 lg:pb-10 lg:pl-[51px] lg:pr-[56px] lg:pt-8" : "px-4 pb-8 pt-5 md:px-8 md:py-10 lg:px-[51px] lg:py-8 lg:pr-[56px]"}`}>
+      <section className={`adn-content w-full overflow-x-hidden ${isHome ? "px-4 pb-8 pt-5 lg:pb-10 lg:pl-[51px] lg:pr-[56px] lg:pt-8" : "px-4 pb-8 pt-5 md:px-8 md:py-10 lg:px-[51px] lg:py-8 lg:pr-[56px]"}`}>
         {!isHome && <header className="mb-6 min-h-32 pt-14 text-left md:min-h-0 md:pt-0 lg:mb-6">
           <div className="flex flex-col items-start justify-between gap-5 lg:flex-row">
             <div className="min-w-0"><h1 className="break-words text-3xl font-black uppercase leading-none tracking-[0.025em] text-zinc-50 lg:text-[1.75rem]">{title}</h1><p className="mt-2.5 max-w-2xl text-sm leading-relaxed text-zinc-400">{description}</p></div>
@@ -2053,7 +2067,7 @@ export default function App() {
           /></DeferredPage></>
         ) : isSuggestions ? suggestionsPage
         : isAdminPage ? <DeferredPage><AdminPage currentUserId={currentUserId} onChanged={reloadAppData} onConfirm={(confirmation) => { setSaveError(""); setConfirmAction(confirmation); }} /></DeferredPage>
-        : isProfile ? <DeferredPage><ProfilePage profile={appProfile} futureArtists={[...new Set(concertItems.filter((concert) => !isPastConcert(concert)).map((concert) => concert.artist))]} theme={theme} isAdmin={isAdmin} onThemeChange={setTheme} onAdmin={() => changePage("admin")} onSignOut={() => supabase.auth.signOut()} onSave={async (payload) => { await updateMyProfile(payload); await reloadAppData(); }} onExport={handleProfileExport} onDelete={async () => { await deleteMyAccount(); await supabase.auth.signOut(); }} onPassword={() => setPasswordModalMode("change")} onConfirm={(confirmation) => { setSaveError(""); setConfirmAction(confirmation); }} onSpotifyChanged={reloadAppData} /></DeferredPage>
+        : isProfile ? <DeferredPage><ProfilePage profile={appProfile} futureArtists={[...new Set(concertItems.filter((concert) => !isPastConcert(concert)).map((concert) => concert.artist))]} theme={theme} isAdmin={isAdmin} onThemeChange={changeTheme} onAdmin={() => changePage("admin")} onSignOut={() => supabase.auth.signOut()} onSave={async (payload) => { await updateMyProfile(payload); await reloadAppData(); }} onExport={handleProfileExport} onDelete={async () => { await deleteMyAccount(); await supabase.auth.signOut(); }} onPassword={() => setPasswordModalMode("change")} onConfirm={(confirmation) => { setSaveError(""); setConfirmAction(confirmation); }} onSpotifyChanged={reloadAppData} /></DeferredPage>
         : isActivity ? <DeferredPage><ActivityPage notifications={notifications} onRead={async (ids) => { await markNotificationsRead(ids); await reloadAppData(); }} onOpenFriends={() => changePage("friends")} /></DeferredPage>
         : isFriends ? <DeferredPage><FriendsPage friends={friends} requests={friendRequests} invitations={concertInvitations} onSearch={searchProfiles} onSendRequest={(userId) => runSocialAction(() => sendFriendRequest(userId))} onRespondRequest={(requestId, accept) => runSocialAction(() => respondFriendRequest(requestId, accept))} onRequestRemoveFriend={(friend) => { setSaveError(""); setConfirmRemoveFriend(friend); }} onRespondInvitation={(concertId, accept, bought) => runSocialAction(() => respondConcertInvitation(concertId, accept, bought))} /></DeferredPage> : isStats ? <>{headerControlsNode && statsScopeControl && createPortal(statsScopeControl, headerControlsNode)}<DeferredPage><StatsPage historyItems={scopedHistoryItems} onOpenArtist={openArtistDetail} onOpenVenue={openVenueDetail} onOpenYearReview={openYearReview} /></DeferredPage></> : (
           <>

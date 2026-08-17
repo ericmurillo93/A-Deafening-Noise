@@ -368,7 +368,7 @@ gh auth setup-git
 
 ## Data model
 
-Supabase is the production source of truth. The normalized model uses `profiles`, canonical `concerts`, per-user `concert_participants`, mutual `friendships`, durable `notifications`, per-user `user_dismissed_suggestions`, and encrypted Spotify connections. Each authenticated user manages their own archive, calendar, Spotify taste profile, and suggestions; Eric's `admin` role additionally grants user administration. Profiles include a display name, optional avatar URL and location, discoverability, email-notification preference, role, and account status. `data/concerts.json` remains Eric's compatible local fallback and GitHub backup:
+Supabase is the production source of truth. The normalized model uses `profiles`, canonical `concerts`, per-user `concert_participants`, mutual `friendships`, durable `notifications`, per-user `user_dismissed_suggestions`, and encrypted Spotify connections. Each authenticated user manages their own archive, calendar, Spotify taste profile, and suggestions; Eric's `admin` role additionally grants user administration. Profiles include a display name, optional avatar URL and location, discoverability, email-notification and theme preferences, role, and account status. The theme is also cached locally so it can be applied before React renders. `data/concerts.json` remains Eric's compatible local fallback and GitHub backup:
 
 ```json
 {

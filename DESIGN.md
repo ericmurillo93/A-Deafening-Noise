@@ -61,7 +61,7 @@ The design is dark because the product is commonly used around live music and pe
 
 Near-black tonal layers establish hierarchy. Concert white carries primary information, while readable cool gray supports metadata. Colored surfaces must use foregrounds from the same hue family or near-white, never washed-out gray.
 
-The interface offers two complete dark themes without changing information architecture or behavior. **Default** uses compact corners, blue primary actions, cool layered panels and a persistent desktop sidebar. **Concert Poster** restores the earlier visual character with a deeper black canvas, zinc surfaces, generous rounded panels, concert-white primary actions, a centered maximum-width composition and an on-demand navigation drawer at every viewport. Semantic history, bought and possibility colors remain unchanged in both themes. The selected theme is a device preference and must apply before React renders to avoid a flash of the other theme.
+The interface offers two complete dark themes without changing information architecture or behavior. **Default** uses compact corners, blue primary actions, cool layered panels and a persistent desktop sidebar. **Concert Poster** restores the earlier visual character with a deeper black canvas, zinc surfaces, generous rounded panels, concert-white primary actions, a centered maximum-width composition and an on-demand navigation drawer at every viewport. Semantic history, bought and possibility colors remain unchanged in both themes. The selected theme is an account preference synchronized through Supabase and cached on the device so it applies before React renders without a flash of the other theme.
 
 ## Typography
 
