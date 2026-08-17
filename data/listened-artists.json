@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-16T04:54:19.552Z",
+  "generatedAt": "2026-08-17T05:02:39.057Z",
   "source": "Connected Spotify profiles",
   "matchingRule": "Current top artists from connected users",
   "artists": [
@@ -172,6 +172,12 @@
       "totalMsPlayed": 3600000
     },
     {
+      "artist": "Café Quijano",
+      "spotifyId": "catalog:926157a0eb9d230849a08536c00bc5f0fe6cd75f09e589768c1f2a52bf4e4bb4",
+      "listenCount": 1,
+      "totalMsPlayed": 3600000
+    },
+    {
       "artist": "Calle 13",
       "spotifyId": "catalog:105fc329e938ff8e749c1b08b99395c1b5e3f2b443ee72c2facea2fb2f6b97c8",
       "listenCount": 1,
@@ -258,6 +264,12 @@
     {
       "artist": "Einar Solberg",
       "spotifyId": "catalog:80ff00e5a1aaa400550ec9548c380977f8356e03266b6cb87f47d0990fc600d6",
+      "listenCount": 1,
+      "totalMsPlayed": 3600000
+    },
+    {
+      "artist": "El Canto Del Loco",
+      "spotifyId": "catalog:bf8235d4c9e223217f1d5b0f8e2f385949f51952895c0f0f9f2458c1ec6538c9",
       "listenCount": 1,
       "totalMsPlayed": 3600000
     },
@@ -418,6 +430,12 @@
       "totalMsPlayed": 3600000
     },
     {
+      "artist": "La Oreja de Van Gogh",
+      "spotifyId": "catalog:62fb256887317ceff5f996b7f88a7b6db67bb1a1b38a76c48838508942e614b6",
+      "listenCount": 1,
+      "totalMsPlayed": 3600000
+    },
+    {
       "artist": "LANDMVRKS",
       "spotifyId": "catalog:1f258765a4d0dc93dae1d8893b6aa89e2e617eac0de6a953fc15b8b78af49ffb",
       "listenCount": 1,
@@ -462,6 +480,12 @@
     {
       "artist": "Machaka",
       "spotifyId": "catalog:8760c01337fcbff93e786223f64ed3da104259e9e2aa7bc9cc631c6d98c52bc5",
+      "listenCount": 1,
+      "totalMsPlayed": 3600000
+    },
+    {
+      "artist": "Marc Anthony",
+      "spotifyId": "catalog:843d22e0c09da944f5a8d92040b69b01bc6dc941348f421fd7865df940ecb681",
       "listenCount": 1,
       "totalMsPlayed": 3600000
     },
@@ -720,6 +744,12 @@
     {
       "artist": "Siloé",
       "spotifyId": "catalog:129ac6de950c11260cb4185737636d07a07d20b17060e420888d4991ba4391da",
+      "listenCount": 1,
+      "totalMsPlayed": 3600000
+    },
+    {
+      "artist": "Ska-P",
+      "spotifyId": "catalog:601f90ca9f0d7a222bac39fb6e71fc9f6038ca01c10fae6d47cb28a5aa03a7e5",
       "listenCount": 1,
       "totalMsPlayed": 3600000
     },
