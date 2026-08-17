@@ -5,6 +5,8 @@
   "extensions": {
     "colorMeta": {
       "stage-black": { "role": "neutral", "displayName": "Stage Black", "canonical": "#09090b" },
+      "poster-black": { "role": "neutral", "displayName": "Poster Black", "canonical": "#050506" },
+      "poster-border": { "role": "neutral", "displayName": "Poster Border", "canonical": "#27272a" },
       "concert-white": { "role": "neutral", "displayName": "Concert White", "canonical": "#f4f4f5" },
       "history-blue": { "role": "primary", "displayName": "History Blue", "canonical": "#172554" },
       "bought-green": { "role": "secondary", "displayName": "Bought Green", "canonical": "#064e3b" },
@@ -30,7 +32,8 @@
     "keyCharacteristics": ["Bold uppercase hierarchy", "Dense but calm data surfaces", "Factual semantic concert colors", "Mobile-first operation"],
     "rules": [
       { "name": "Data Provides the Texture", "body": "Use chronology, artists, venues and setlists as the primary texture; the home dashboard may use anonymous darkened concert-stage photography as its approved atmospheric exception.", "section": "layout" },
-      { "name": "Application Shell", "body": "Authenticated desktop views use a fixed compact sidebar, blue primary actions, compact left-aligned headers and dense viewport-filling layouts; mobile returns to the menu drawer and a single-column stack.", "section": "layout" }
+      { "name": "Application Shell", "body": "Authenticated desktop views use a fixed compact sidebar, blue primary actions, compact left-aligned headers and dense viewport-filling layouts; mobile returns to the menu drawer and a single-column stack.", "section": "layout" },
+      { "name": "Theme Pair", "body": "Default uses compact corners and blue primary actions. Concert Poster uses deeper blacks, zinc surfaces, generous rounded panels, concert-white primary actions, centered content and an on-demand drawer without changing behavior or semantic concert colors.", "section": "color" }
     ],
     "dos": ["Preserve semantic concert colors", "Reserve heavy uppercase typography for hierarchy"],
     "donts": ["Invent artist likenesses", "Use hidden gestures as the only action path"]

@@ -4,7 +4,7 @@ async function openMenu(page) {
   const trigger = page.locator(".menu-button-desktop:visible, .menu-button-touch:visible");
   if (await trigger.count()) {
     await trigger.click();
-    await expect(page.getByRole("complementary", { name: "Mobile navigation" })).toBeVisible();
+    await expect(page.getByRole("complementary", { name: "Main navigation" })).toBeVisible();
     return true;
   }
   await expect(page.getByRole("navigation", { name: "Main navigation" })).toBeVisible();
@@ -90,7 +90,7 @@ test("Menu closes with Escape and restores page scrolling", async ({ page }) => 
   await expect.poll(() => page.evaluate(() => document.body.style.overflow)).toBe("hidden");
 
   await page.keyboard.press("Escape");
-  await expect(page.getByRole("complementary", { name: "Mobile navigation" })).toBeHidden();
+  await expect(page.getByRole("complementary", { name: "Main navigation" })).toBeHidden();
   await expect.poll(() => page.evaluate(() => document.body.style.overflow)).not.toBe("hidden");
 });
 
@@ -232,6 +232,19 @@ test("Profile chooses an avatar without exposing its local filename", async ({ p
   await page.getByLabel("Choose profile photo").setInputFiles({ name: "avatar.png", mimeType: "image/png", buffer: Buffer.from("avatar") });
   await expect(page.getByText("avatar.png", { exact: true })).toHaveCount(0);
   await expect(page.getByText("Avatar image", { exact: true })).toHaveCount(0);
+});
+
+test("Profile theme choice persists after reload", async ({ page }, testInfo) => {
+  await page.goto("/profile");
+  await page.getByRole("radio", { name: /Concert poster/ }).click();
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "poster");
+  if (testInfo.project.name === "desktop") {
+    await expect(page.locator(".adn-desktop-navigation")).toBeHidden();
+    await page.getByRole("button", { name: "Open menu" }).click();
+    await expect(page.getByRole("complementary", { name: "Main navigation" })).toBeVisible();
+  }
+  await page.reload();
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "poster");
 });
 
 test("Concert suggestions rely on automatic discovery without manual refresh controls", async ({ page }) => {

@@ -4,7 +4,7 @@ import { adminListUsers, adminUpdateUser, disconnectMySpotify, getMySpotifyStatu
 import { connectSpotify, finishSpotifyConnection } from "../lib/spotify";
 import { EmptyState, PanelHeading, UserAvatar } from "../components/SharedUi";
 
-export function ProfilePage({ profile, futureArtists, isAdmin, onAdmin, onSignOut, onSave, onExport, onDelete, onPassword, onConfirm, onSpotifyChanged }) {
+export function ProfilePage({ profile, futureArtists, theme, isAdmin, onThemeChange, onAdmin, onSignOut, onSave, onExport, onDelete, onPassword, onConfirm, onSpotifyChanged }) {
   const [form, setForm] = useState({ displayName: "", avatarUrl: "", city: "", country: "", discoverable: true, suggestionEmailEnabled: false });
   const [status, setStatus] = useState("");
   const [saving, setSaving] = useState(false);
@@ -82,6 +82,21 @@ export function ProfilePage({ profile, futureArtists, isAdmin, onAdmin, onSignOu
       {status && <p className="mt-4 text-sm text-zinc-300" role="status">{status}</p>}
       <button disabled={saving} className="adn-button-primary mt-6">{saving ? "Saving…" : "Save profile"}</button>
     </form>
+    <section className="rounded-3xl border border-zinc-800 bg-zinc-900 p-5 md:p-7">
+      <PanelHeading icon="fa-palette" title="Appearance" description="Choose how your concert archive feels on this device." />
+      <div className="grid gap-3 sm:grid-cols-2" role="radiogroup" aria-label="Theme">
+        <button type="button" role="radio" aria-checked={theme === "archive"} onClick={() => onThemeChange("archive")} className={`adn-theme-choice ${theme === "archive" ? "adn-theme-choice-active" : ""}`}>
+          <span className="adn-theme-preview adn-theme-preview-archive" aria-hidden="true"><span /><span /><span /></span>
+          <span><strong>Default</strong><small>Compact panels and blue actions</small></span>
+          <i className="fa-solid fa-check" aria-hidden="true" />
+        </button>
+        <button type="button" role="radio" aria-checked={theme === "poster"} onClick={() => onThemeChange("poster")} className={`adn-theme-choice ${theme === "poster" ? "adn-theme-choice-active" : ""}`}>
+          <span className="adn-theme-preview adn-theme-preview-poster" aria-hidden="true"><span /><span /><span /></span>
+          <span><strong>Concert poster</strong><small>Deeper blacks and bold white actions</small></span>
+          <i className="fa-solid fa-check" aria-hidden="true" />
+        </button>
+      </div>
+    </section>
     <section className="rounded-3xl border border-zinc-800 bg-zinc-900 p-5 md:p-7">
       <div className="mb-5 flex items-start gap-3"><div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-[#30343a] bg-[#111418]"><img src={spotifyIcon} alt="" className="h-4 w-4" style={{ filter: "invert(55%) sepia(79%) saturate(1118%) hue-rotate(98deg) brightness(90%) contrast(86%)" }} /></div><div><h2 className="text-base font-black uppercase tracking-[0.025em] text-zinc-100">Spotify</h2><p className="mt-1 text-sm text-zinc-400">Use your top artists to personalise concert suggestions.</p></div></div>
       {spotify.loading ? <p className="text-sm text-zinc-400" role="status">Updating Spotify connection…</p> : spotify.connected ? <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"><div className="min-w-0"><p className="truncate font-bold text-zinc-100">Connected as {spotify.displayName}</p>{spotify.needsReauthorization && <p className="mt-2 text-sm font-semibold text-amber-300">Spotify access expired. Reconnect to resume daily updates.</p>}</div><div className="flex flex-wrap gap-2">{spotify.needsReauthorization && <button type="button" onClick={() => connectSpotify().catch((error) => setSpotify((current) => ({ ...current, error: error.message })))} className="adn-button-secondary">Reconnect</button>}<button type="button" onClick={disconnectSpotify} className="adn-button-danger">Disconnect</button></div></div> : <button type="button" onClick={() => connectSpotify().catch((error) => setSpotify((current) => ({ ...current, error: error.message })))} className="adn-button-primary"><img src={spotifyIcon} alt="" className="h-4 w-4 brightness-0 invert" />Connect Spotify</button>}

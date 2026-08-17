@@ -1334,7 +1334,7 @@ function mainNavigationItems(activePage, attentionCount) {
 
 function DesktopNavigation({ activePage, profile, attentionCount, onNavigate }) {
   const items = mainNavigationItems(activePage, attentionCount);
-  return <aside className="fixed inset-y-0 left-0 z-30 hidden w-[205px] flex-col border-r border-[#20242a] bg-[#0c1015] lg:flex">
+  return <aside className="adn-desktop-navigation fixed inset-y-0 left-0 z-30 hidden w-[205px] flex-col border-r border-[#20242a] bg-[#0c1015] lg:flex">
     <button type="button" onClick={() => onNavigate("home")} className="h-[121px] border-b border-[#20242a] px-4 text-left"><span className="block whitespace-nowrap text-[15px] font-black uppercase tracking-tight text-zinc-50">A Deafening Noise</span><span className="mt-1 block text-[11px] font-bold uppercase tracking-[0.08em] text-zinc-400">Concert archive</span></button>
     <nav className="min-h-0 flex-1 space-y-1 overflow-y-auto" aria-label="Main navigation">{items.map(([page, icon, label, active, count]) =>
       <button key={page} type="button" onClick={() => onNavigate(page)} aria-current={active ? "page" : undefined} className={`relative flex min-h-[61px] w-full items-center gap-3 px-5 text-left text-[12px] font-black uppercase tracking-wide transition-colors ${active ? "bg-[#171b20] text-zinc-50 before:absolute before:inset-y-0 before:left-0 before:w-0.5 before:bg-blue-500" : "text-zinc-400 hover:bg-[#171b20] hover:text-zinc-100"}`}><i className={`fa-solid ${icon} w-5 text-center text-[17px] ${active ? "text-zinc-100" : "text-zinc-400"}`} aria-hidden="true" /><span className="truncate">{label}</span>{count > 0 && <span className="ml-auto min-w-5 rounded-full bg-blue-600 px-1.5 py-0.5 text-center text-[8px] text-white">{count}</span>}</button>
@@ -1345,6 +1345,7 @@ function DesktopNavigation({ activePage, profile, attentionCount, onNavigate }) 
 
 export default function App() {
   const initialRoute = useMemo(() => readRouteFromLocation(), []);
+  const [theme, setTheme] = useState(() => document.documentElement.dataset.theme === "poster" ? "poster" : "archive");
   const [session, setSession] = useState(null);
   const [authReady, setAuthReady] = useState(!supabaseEnabled);
   const [dataReady, setDataReady] = useState(!supabaseEnabled);
@@ -1392,6 +1393,11 @@ export default function App() {
   const scrollRestorationRef = useRef("auto");
   const passwordModalModeRef = useRef(null);
   const lastRefreshRef = useRef(0);
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    document.querySelector('meta[name="theme-color"]')?.setAttribute("content", theme === "poster" ? "#050506" : "#09090b");
+    try { localStorage.setItem("adn-theme", theme); } catch { /* Theme still works for this visit. */ }
+  }, [theme]);
   useEffect(() => {
     if (!successMessage) return undefined;
     const timeout = window.setTimeout(() => setSuccessMessage(""), 4000);
@@ -1967,13 +1973,13 @@ export default function App() {
     <main className="adn-shell min-h-screen bg-zinc-950 text-zinc-100 md:flex">
       <DesktopNavigation activePage={activePage} profile={appProfile} attentionCount={friendRequests.filter((request) => request.direction === "incoming").length + concertInvitations.length} onNavigate={changePage} />
       {/* Desktop-only fixed Menu button */}
-      <button onClick={() => setSidebarOpen(true)} className="menu-button-desktop fixed left-4 top-4 z-40 h-11 w-11 rounded-md border border-[#30343a] bg-[#111418] text-sm text-zinc-100 shadow-lg transition-colors hover:border-zinc-500 hover:bg-[#171b20] lg:hidden" aria-label="Open menu" aria-expanded={sidebarOpen} aria-controls="main-navigation"><i className="fa-solid fa-bars text-xs" aria-hidden="true" /></button>
+      <button onClick={() => setSidebarOpen(true)} className="menu-button-desktop fixed left-4 top-4 z-40 h-11 w-11 rounded-md border border-[#30343a] bg-[#111418] text-sm text-zinc-100 shadow-lg transition-colors hover:border-zinc-500 hover:bg-[#171b20] lg:hidden" aria-label="Open menu" aria-expanded={sidebarOpen} aria-controls="main-navigation"><i className="fa-solid fa-bars text-xs" aria-hidden="true" /><span className="menu-button-label">Menu</span></button>
       {/* Touch-device Menu starts at the top of the page and scrolls away with it */}
       <button onClick={() => setSidebarOpen(true)} className="menu-button-touch touch-target absolute left-4 top-4 z-40 h-11 w-11 rounded-md border border-[#30343a] bg-[#111418] text-sm text-zinc-100 shadow-lg transition-colors hover:border-zinc-500 hover:bg-[#171b20]" aria-label="Open menu" title="Menu" aria-expanded={sidebarOpen} aria-controls="main-navigation"><i className="fa-solid fa-bars text-xs" aria-hidden="true" /></button>
 
-      <button disabled={!sidebarOpen} aria-hidden={!sidebarOpen} tabIndex={sidebarOpen ? 0 : -1} className={`fixed inset-0 z-40 bg-black/60 transition-opacity duration-150 lg:hidden ${sidebarOpen ? "opacity-100" : "pointer-events-none opacity-0"}`} onClick={() => setSidebarOpen(false)} aria-label="Close menu overlay" />
+      <button disabled={!sidebarOpen} aria-hidden={!sidebarOpen} tabIndex={sidebarOpen ? 0 : -1} className={`adn-menu-overlay fixed inset-0 z-40 bg-black/60 transition-opacity duration-150 lg:hidden ${sidebarOpen ? "opacity-100" : "pointer-events-none opacity-0"}`} onClick={() => setSidebarOpen(false)} aria-label="Close menu overlay" />
 
-      <aside id="main-navigation" aria-label="Mobile navigation" aria-hidden={!sidebarOpen} inert={!sidebarOpen ? "" : undefined} className={`adn-navigation fixed inset-y-0 left-0 z-50 flex w-[min(17rem,88vw)] flex-col border-r border-[#20242a] bg-[#0c1015] transition-transform duration-300 lg:hidden ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}>
+      <aside id="main-navigation" aria-label="Main navigation" aria-hidden={!sidebarOpen} inert={!sidebarOpen ? "" : undefined} className={`adn-navigation adn-drawer-navigation fixed inset-y-0 left-0 z-50 flex w-[min(17rem,88vw)] flex-col border-r border-[#20242a] bg-[#0c1015] transition-transform duration-300 lg:hidden ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}>
         <div className="flex min-h-[105px] items-center justify-between gap-3 border-b border-[#20242a] px-5 pt-[env(safe-area-inset-top)]">
           <button onClick={() => changePage("home")} className="min-w-0 text-left" aria-label="Go to dashboard"><span className="block truncate text-[15px] font-black uppercase tracking-tight text-zinc-50">A Deafening Noise</span><span className="mt-1 block text-[11px] font-bold uppercase tracking-[0.08em] text-zinc-400">Concert archive</span></button>
           <button onClick={() => setSidebarOpen(false)} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md text-zinc-400 transition-colors hover:bg-[#171b20] hover:text-zinc-100" aria-label="Close menu"><i className="fa-solid fa-xmark" aria-hidden="true" /></button>
@@ -2047,7 +2053,7 @@ export default function App() {
           /></DeferredPage></>
         ) : isSuggestions ? suggestionsPage
         : isAdminPage ? <DeferredPage><AdminPage currentUserId={currentUserId} onChanged={reloadAppData} onConfirm={(confirmation) => { setSaveError(""); setConfirmAction(confirmation); }} /></DeferredPage>
-        : isProfile ? <DeferredPage><ProfilePage profile={appProfile} futureArtists={[...new Set(concertItems.filter((concert) => !isPastConcert(concert)).map((concert) => concert.artist))]} isAdmin={isAdmin} onAdmin={() => changePage("admin")} onSignOut={() => supabase.auth.signOut()} onSave={async (payload) => { await updateMyProfile(payload); await reloadAppData(); }} onExport={handleProfileExport} onDelete={async () => { await deleteMyAccount(); await supabase.auth.signOut(); }} onPassword={() => setPasswordModalMode("change")} onConfirm={(confirmation) => { setSaveError(""); setConfirmAction(confirmation); }} onSpotifyChanged={reloadAppData} /></DeferredPage>
+        : isProfile ? <DeferredPage><ProfilePage profile={appProfile} futureArtists={[...new Set(concertItems.filter((concert) => !isPastConcert(concert)).map((concert) => concert.artist))]} theme={theme} isAdmin={isAdmin} onThemeChange={setTheme} onAdmin={() => changePage("admin")} onSignOut={() => supabase.auth.signOut()} onSave={async (payload) => { await updateMyProfile(payload); await reloadAppData(); }} onExport={handleProfileExport} onDelete={async () => { await deleteMyAccount(); await supabase.auth.signOut(); }} onPassword={() => setPasswordModalMode("change")} onConfirm={(confirmation) => { setSaveError(""); setConfirmAction(confirmation); }} onSpotifyChanged={reloadAppData} /></DeferredPage>
         : isActivity ? <DeferredPage><ActivityPage notifications={notifications} onRead={async (ids) => { await markNotificationsRead(ids); await reloadAppData(); }} onOpenFriends={() => changePage("friends")} /></DeferredPage>
         : isFriends ? <DeferredPage><FriendsPage friends={friends} requests={friendRequests} invitations={concertInvitations} onSearch={searchProfiles} onSendRequest={(userId) => runSocialAction(() => sendFriendRequest(userId))} onRespondRequest={(requestId, accept) => runSocialAction(() => respondFriendRequest(requestId, accept))} onRequestRemoveFriend={(friend) => { setSaveError(""); setConfirmRemoveFriend(friend); }} onRespondInvitation={(concertId, accept, bought) => runSocialAction(() => respondConcertInvitation(concertId, accept, bought))} /></DeferredPage> : isStats ? <>{headerControlsNode && statsScopeControl && createPortal(statsScopeControl, headerControlsNode)}<DeferredPage><StatsPage historyItems={scopedHistoryItems} onOpenArtist={openArtistDetail} onOpenVenue={openVenueDetail} onOpenYearReview={openYearReview} /></DeferredPage></> : (
           <>

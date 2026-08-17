@@ -10,6 +10,10 @@
     <meta property="og:title" content="A Deafening Noise" />
     <meta property="og:description" content="A searchable personal concert archive." />
     <meta property="og:type" content="website" />
+    <script>
+      try { document.documentElement.dataset.theme = localStorage.getItem("adn-theme") === "poster" ? "poster" : "archive"; }
+      catch { document.documentElement.dataset.theme = "archive"; }
+    </script>
     <title>A Deafening Noise</title>
   </head>
   <body>
