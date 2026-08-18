@@ -255,6 +255,8 @@ test("Profile theme choice persists after reload", async ({ page }, testInfo) =>
   const defaultNavigation = page.locator(".adn-desktop-navigation");
   const defaultNavigationWidth = testInfo.project.name === "desktop" ? (await defaultNavigation.boundingBox())?.width : null;
   await page.getByRole("radio", { name: /Concert poster/ }).click();
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "archive");
+  await page.getByRole("button", { name: "Save appearance" }).click();
   await expect(page.locator("html")).toHaveAttribute("data-theme", "poster");
   if (testInfo.project.name === "desktop") {
     await expect(page.locator(".adn-desktop-navigation")).toBeHidden();

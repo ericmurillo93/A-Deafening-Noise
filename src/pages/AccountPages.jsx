@@ -8,16 +8,26 @@ export function ProfilePage({ profile, futureArtists, theme, isAdmin, onThemeCha
   const [form, setForm] = useState({ displayName: "", avatarUrl: "", city: "", country: "", discoverable: true, suggestionEmailEnabled: false });
   const [status, setStatus] = useState("");
   const [saving, setSaving] = useState(false);
+  const [themeDraft, setThemeDraft] = useState(theme);
+  const [themeSaving, setThemeSaving] = useState(false);
+  const [themeStatus, setThemeStatus] = useState("");
   const [avatarFile, setAvatarFile] = useState(null);
   const [avatarPreview, setAvatarPreview] = useState("");
   const [avatarRemoved, setAvatarRemoved] = useState(false);
   const [spotify, setSpotify] = useState({ loading: true, connected: false, error: "" });
-  useEffect(() => setForm({ displayName: profile?.displayName || "", avatarUrl: profile?.avatarUrl || "", city: profile?.city || "", country: profile?.country || "", discoverable: profile?.discoverable !== false, suggestionEmailEnabled: profile?.suggestionEmailEnabled === true }), [profile]);
+  useEffect(() => setForm({ displayName: profile?.displayName || "", avatarUrl: profile?.avatarUrl || "", city: profile?.city || "", country: profile?.country || "", discoverable: profile?.discoverable !== false, suggestionEmailEnabled: profile?.suggestionEmailEnabled === true }), [profile?.id]);
+  useEffect(() => setThemeDraft(theme), [theme]);
   useEffect(() => { if (!avatarFile) { setAvatarPreview(""); return undefined; } const url = URL.createObjectURL(avatarFile); setAvatarPreview(url); return () => URL.revokeObjectURL(url); }, [avatarFile]);
   const field = (key) => (event) => setForm((current) => ({ ...current, [key]: event.target.value }));
   async function submit(event) {
     event.preventDefault(); setSaving(true); setStatus("");
-    try { const avatarUrl = avatarFile ? await uploadMyAvatar(avatarFile) : form.avatarUrl; await onSave({ ...form, avatarUrl }); if (avatarRemoved) await removeMyAvatar(); setAvatarFile(null); setAvatarRemoved(false); setStatus("Profile saved."); } catch (error) { setStatus(error.message || "Could not save your profile."); } finally { setSaving(false); }
+    try { const avatarUrl = avatarFile ? await uploadMyAvatar(avatarFile) : form.avatarUrl; await onSave({ ...form, avatarUrl }); if (avatarRemoved) await removeMyAvatar(); setForm((current) => ({ ...current, avatarUrl })); setAvatarFile(null); setAvatarRemoved(false); setStatus("Profile saved."); } catch (error) { setStatus(error.message || "Could not save your profile."); } finally { setSaving(false); }
+  }
+  async function saveTheme() {
+    setThemeSaving(true); setThemeStatus("");
+    try { await onThemeChange(themeDraft); setThemeStatus("Appearance saved."); }
+    catch (error) { setThemeStatus(error.message || "Could not save your appearance."); }
+    finally { setThemeSaving(false); }
   }
   function requestAvatarRemoval() {
     onConfirm({
@@ -85,17 +95,19 @@ export function ProfilePage({ profile, futureArtists, theme, isAdmin, onThemeCha
     <section className="rounded-3xl border border-zinc-800 bg-zinc-900 p-5 md:p-7">
       <PanelHeading icon="fa-palette" title="Appearance" description="Choose how your concert archive feels on this device." />
       <div className="grid gap-3 sm:grid-cols-2" role="radiogroup" aria-label="Theme">
-        <button type="button" role="radio" aria-checked={theme === "archive"} onClick={() => onThemeChange("archive")} className={`adn-theme-choice ${theme === "archive" ? "adn-theme-choice-active" : ""}`}>
+        <button type="button" role="radio" aria-checked={themeDraft === "archive"} onClick={() => { setThemeDraft("archive"); setThemeStatus(""); }} className={`adn-theme-choice ${themeDraft === "archive" ? "adn-theme-choice-active" : ""}`}>
           <span className="adn-theme-preview adn-theme-preview-archive" aria-hidden="true"><span /><span /><span /></span>
           <span><strong>Default</strong><small>Compact panels and blue actions</small></span>
           <i className="fa-solid fa-check" aria-hidden="true" />
         </button>
-        <button type="button" role="radio" aria-checked={theme === "poster"} onClick={() => onThemeChange("poster")} className={`adn-theme-choice ${theme === "poster" ? "adn-theme-choice-active" : ""}`}>
+        <button type="button" role="radio" aria-checked={themeDraft === "poster"} onClick={() => { setThemeDraft("poster"); setThemeStatus(""); }} className={`adn-theme-choice ${themeDraft === "poster" ? "adn-theme-choice-active" : ""}`}>
           <span className="adn-theme-preview adn-theme-preview-poster" aria-hidden="true"><span /><span /><span /></span>
           <span><strong>Concert poster</strong><small>Deeper blacks and bold white actions</small></span>
           <i className="fa-solid fa-check" aria-hidden="true" />
         </button>
       </div>
+      {themeStatus && <p className="mt-4 text-sm text-zinc-300" role="status">{themeStatus}</p>}
+      <button type="button" disabled={themeSaving || themeDraft === theme} onClick={saveTheme} className="adn-button-primary mt-5">{themeSaving ? "Saving…" : "Save appearance"}</button>
     </section>
     <section className="rounded-3xl border border-zinc-800 bg-zinc-900 p-5 md:p-7">
       <div className="mb-5 flex items-start gap-3"><div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-[#30343a] bg-[#111418]"><img src={spotifyIcon} alt="" className="h-4 w-4" style={{ filter: "invert(55%) sepia(79%) saturate(1118%) hue-rotate(98deg) brightness(90%) contrast(86%)" }} /></div><div><h2 className="text-base font-black uppercase tracking-[0.025em] text-zinc-100">Spotify</h2><p className="mt-1 text-sm text-zinc-400">Use your top artists to personalise concert suggestions.</p></div></div>

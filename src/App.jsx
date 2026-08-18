@@ -1809,10 +1809,12 @@ export default function App() {
     setTheme(nextTheme);
     if (!supabaseEnabled) return;
     try {
-      await updateMyProfile({ theme: nextTheme });
+      const updatedProfile = await updateMyProfile({ theme: nextTheme });
+      if (updatedProfile?.theme !== nextTheme) throw new Error("Your appearance could not be saved to your account.");
     } catch (error) {
       setTheme(previousTheme);
       setSaveError(error.message || "Could not save your theme.");
+      throw error;
     }
   }
 
