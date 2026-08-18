@@ -1810,7 +1810,6 @@ export default function App() {
     if (!supabaseEnabled) return;
     try {
       await updateMyProfile({ theme: nextTheme });
-      await reloadAppData();
     } catch (error) {
       setTheme(previousTheme);
       setSaveError(error.message || "Could not save your theme.");

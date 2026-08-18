@@ -248,6 +248,10 @@ test("Profile chooses an avatar without exposing its local filename", async ({ p
 
 test("Profile theme choice persists after reload", async ({ page }, testInfo) => {
   await page.goto("/profile");
+  const displayName = page.getByLabel("Display name");
+  const discoverable = page.getByRole("checkbox", { name: "Allow other users to find me" });
+  await displayName.fill("Unsaved profile name");
+  await discoverable.uncheck();
   const defaultNavigation = page.locator(".adn-desktop-navigation");
   const defaultNavigationWidth = testInfo.project.name === "desktop" ? (await defaultNavigation.boundingBox())?.width : null;
   await page.getByRole("radio", { name: /Concert poster/ }).click();
@@ -259,6 +263,8 @@ test("Profile theme choice persists after reload", async ({ page }, testInfo) =>
     await expect(posterNavigation).toBeVisible();
     expect((await posterNavigation.boundingBox())?.width).toBeCloseTo(defaultNavigationWidth, 4);
   }
+  await expect(displayName).toHaveValue("Unsaved profile name");
+  await expect(discoverable).not.toBeChecked();
   await page.reload();
   await expect(page.locator("html")).toHaveAttribute("data-theme", "poster");
 });
