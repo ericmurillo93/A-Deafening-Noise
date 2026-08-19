@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-17T05:02:39.057Z",
+  "generatedAt": "2026-08-19T04:56:22.181Z",
   "source": "Connected Spotify profiles",
   "matchingRule": "Current top artists from connected users",
   "artists": [
@@ -96,6 +96,12 @@
     {
       "artist": "Avenged Sevenfold",
       "spotifyId": "catalog:555806e1250433e8e9e1c11ad303f8d0d9ae4de5d2dcddffee39d586f60177f2",
+      "listenCount": 1,
+      "totalMsPlayed": 3600000
+    },
+    {
+      "artist": "Ayax y Prok",
+      "spotifyId": "catalog:79ee38be1c6741dfe1c9d15762a597182e92aee148acbc61f9aab3da49981fc5",
       "listenCount": 1,
       "totalMsPlayed": 3600000
     },
