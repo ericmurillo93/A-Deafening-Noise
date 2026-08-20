@@ -22,7 +22,8 @@
     "breakpoints": [
       { "name": "sm", "value": "640px" },
       { "name": "md", "value": "768px" },
-      { "name": "xl", "value": "1280px" }
+      { "name": "xl", "value": "1280px" },
+      { "name": "poster-wide", "value": "1920px" }
     ]
   },
   "components": [],
@@ -33,7 +34,7 @@
     "rules": [
       { "name": "Data Provides the Texture", "body": "Use chronology, artists, venues and setlists as the primary texture; the home dashboard may use anonymous darkened concert-stage photography as its approved atmospheric exception.", "section": "layout" },
       { "name": "Application Shell", "body": "Authenticated desktop views use a fixed compact sidebar, blue primary actions, compact left-aligned headers and dense viewport-filling layouts; mobile returns to the menu drawer and a single-column stack.", "section": "layout" },
-      { "name": "Theme Pair", "body": "Default uses compact corners and blue primary actions. Concert Poster uses deeper blacks, zinc surfaces, generous rounded panels, concert-white primary actions, centered content and an on-demand drawer without changing behavior or semantic concert colors. The account preference is synchronized through Supabase and cached locally for flash-free startup.", "section": "color" }
+      { "name": "Theme Pair", "body": "Default uses compact corners and blue primary actions. Concert Poster uses deeper blacks, zinc surfaces, generous rounded panels, concert-white primary actions, centered content and an on-demand drawer without changing behavior or semantic concert colors. Poster stays 1280px wide at 1920px, then preserves a two-thirds viewport proportion on larger displays. The account preference is synchronized through Supabase and cached locally for flash-free startup.", "section": "color" }
     ],
     "dos": ["Preserve semantic concert colors", "Reserve heavy uppercase typography for hierarchy"],
     "donts": ["Invent artist likenesses", "Use hidden gestures as the only action path"]

@@ -198,6 +198,25 @@ test("Home keeps today's concert until midnight, then advances", async ({ page }
   await expect(nextConcert).toContainText("Tue, Aug 18, 2026");
 });
 
+test("Home countdown fits inside the next-concert card in phone landscape", async ({ page }) => {
+  await page.setViewportSize({ width: 1017, height: 505 });
+  await page.clock.install({ time: new Date("2026-08-16T12:00:00") });
+  await page.goto("/home");
+  const card = page.getByRole("button", { name: /Next concert/i });
+  const seconds = card.getByText("Secs", { exact: true });
+  const [cardBox, secondsBox] = await Promise.all([card.boundingBox(), seconds.boundingBox()]);
+  expect(cardBox && secondsBox && secondsBox.y + secondsBox.height <= cardBox.y + cardBox.height).toBe(true);
+});
+
+test("Concert Poster scales proportionally beyond a 1920px viewport", async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem("adn-theme", "poster"));
+  await page.setViewportSize({ width: 1920, height: 900 });
+  await page.goto("/home");
+  expect((await page.locator(".adn-content").boundingBox())?.width).toBeCloseTo(1280, 0);
+  await page.setViewportSize({ width: 2560, height: 1080 });
+  expect((await page.locator(".adn-content").boundingBox())?.width).toBeCloseTo(2560 * 2 / 3, 0);
+});
+
 test("Home dashboard reviews concert suggestions without leaving the page", async ({ page }) => {
   let savedData;
   await page.route("**/.netlify/functions/save-concerts", (route) => { savedData = route.request().postDataJSON().data; return route.fulfill({ status: 200, contentType: "application/json", body: '{"ok":true}' }); });

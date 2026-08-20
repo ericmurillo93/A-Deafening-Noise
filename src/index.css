@@ -343,6 +343,13 @@ button[aria-label="View activity"] { display: flex; }
   [data-theme="poster"] .menu-button-label { display: inline; font-size: .75rem; font-weight: 800; }
 }
 
+@media (min-width: 1920px) {
+  [data-theme="poster"] .adn-content {
+    width: 66.6667%;
+    max-width: none;
+  }
+}
+
 @media (pointer: coarse) {
   .touch-target {
     min-width: 44px;
@@ -351,7 +358,6 @@ button[aria-label="View activity"] { display: flex; }
 }
 
 @media (max-width: 1023px) {
-  .adn-home .h-\[318px\],
   .adn-home .h-\[165px\],
   .adn-home .h-\[328px\],
   .adn-home .h-\[111px\],
