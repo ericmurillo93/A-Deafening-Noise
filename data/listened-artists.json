@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-19T04:56:22.181Z",
+  "generatedAt": "2026-08-21T04:58:28.621Z",
   "source": "Connected Spotify profiles",
   "matchingRule": "Current top artists from connected users",
   "artists": [
@@ -258,6 +258,12 @@
     {
       "artist": "Dua Lipa",
       "spotifyId": "catalog:683ab57a0f7ce050f713c64c687194c7befae62e1466a63072d660e55f1f3394",
+      "listenCount": 1,
+      "totalMsPlayed": 3600000
+    },
+    {
+      "artist": "Duki",
+      "spotifyId": "catalog:6f9b1c08b4f29854427b76a0b68c7ebd4519dbf41ca03c13a1be7fda66cf8692",
       "listenCount": 1,
       "totalMsPlayed": 3600000
     },
