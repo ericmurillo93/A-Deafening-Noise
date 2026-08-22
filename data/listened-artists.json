@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-21T04:58:28.621Z",
+  "generatedAt": "2026-08-22T04:54:24.537Z",
   "source": "Connected Spotify profiles",
   "matchingRule": "Current top artists from connected users",
   "artists": [
@@ -864,6 +864,12 @@
     {
       "artist": "Vetusta Morla",
       "spotifyId": "catalog:7aaf9d97f6fe1ae39d5bf20e373c173f8e4cb41e7bde12462085fdeac8ad08f9",
+      "listenCount": 1,
+      "totalMsPlayed": 3600000
+    },
+    {
+      "artist": "Viva Suecia",
+      "spotifyId": "catalog:9d2181502bc48398a0e0e4b2d86e10c64de1a4f66181f3bb8ad24cc81bf1ddec",
       "listenCount": 1,
       "totalMsPlayed": 3600000
     },
