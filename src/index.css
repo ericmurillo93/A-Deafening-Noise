@@ -358,19 +358,6 @@ button[aria-label="View activity"] { display: flex; }
 }
 
 @media (max-width: 1023px) {
-  .adn-popover {
-    position: fixed;
-    z-index: 70;
-    right: 1rem !important;
-    bottom: max(1rem, env(safe-area-inset-bottom));
-    left: 1rem !important;
-    top: auto;
-    width: auto;
-    max-width: none;
-    max-height: calc(100dvh - 2rem);
-    transform-origin: bottom center;
-  }
-
   .adn-home .h-\[165px\],
   .adn-home .h-\[328px\],
   .adn-home .h-\[111px\],
