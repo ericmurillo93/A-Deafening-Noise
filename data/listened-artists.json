@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-22T04:54:24.537Z",
+  "generatedAt": "2026-08-24T05:06:07.979Z",
   "source": "Connected Spotify profiles",
   "matchingRule": "Current top artists from connected users",
   "artists": [
@@ -888,6 +888,12 @@
     {
       "artist": "While She Sleeps",
       "spotifyId": "catalog:2804584dd5b9cb58c7a7a39a018b4102b61702c62d895b98650f49c900ee146d",
+      "listenCount": 1,
+      "totalMsPlayed": 3600000
+    },
+    {
+      "artist": "WOS",
+      "spotifyId": "catalog:a1b0d30e72f4ba701a1ba20d40ae4977dd501250e017913b4f8fd6f02a54791f",
       "listenCount": 1,
       "totalMsPlayed": 3600000
     },
