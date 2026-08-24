@@ -1,6 +1,17 @@
 {
-  "generatedAt": "2026-08-16T04:58:09.009Z",
+  "generatedAt": "2026-08-24T20:44:53.526Z",
   "suggestions": [
+    {
+      "id": "dice-6a86c3dc1da3aa00018ae6ea-playboi-carti",
+      "artist": "Playboi Carti",
+      "venue": "Opium Barcelona",
+      "city": "Barcelona",
+      "country": "ES",
+      "date": "01/09/2026",
+      "title": "PLAYBOI CARTI",
+      "source": "DICE",
+      "sourceUrl": "https://dice.fm/event/6dogm7-playboi-carti-1st-sep-opium-barcelona-barcelona-tickets"
+    },
     {
       "id": "razzmatazz-11092026-11-09-2026-rigoberta-bandini-rigoberta-bandini",
       "artist": "Rigoberta Bandini",
@@ -11,6 +22,28 @@
       "title": "Rigoberta Bandini",
       "source": "Sala Razzmatazz",
       "sourceUrl": "https://www.salarazzmatazz.com/agenda/11-09-2026-rigoberta-bandini/"
+    },
+    {
+      "id": "doctor-music-475-11/09/2026-Barcelona-sigur-ros",
+      "artist": "Sigur Rós",
+      "venue": "Auditori Fòrum CCIB",
+      "city": "Barcelona",
+      "country": "ES",
+      "date": "11/09/2026",
+      "title": "Sigur Rós: The Orchestral Tour",
+      "source": "Doctor Music",
+      "sourceUrl": "https://www.entradas.com/artist/sigur-ros/sigur-ros-4114060/?affiliate=DMC"
+    },
+    {
+      "id": "doctor-music-475-15/09/2026-Bilbao-sigur-ros",
+      "artist": "Sigur Rós",
+      "venue": "Palacio Euskalduna",
+      "city": "Bilbao",
+      "country": "ES",
+      "date": "15/09/2026",
+      "title": "Sigur Rós: The Orchestral Tour",
+      "source": "Doctor Music",
+      "sourceUrl": "https://www.euskalduna.eus/es/detalle/SIGUR26@Janto_KB/PAEU1"
     },
     {
       "id": "dice-692da6c8d7ee02000114da39-guitarricadelafuente",
@@ -26,6 +59,17 @@
     {
       "id": "dice-692da6c8d7ee02000114da39-natalia-lacunza",
       "artist": "Natalia Lacunza",
+      "venue": "Parc del Fòrum",
+      "city": "Barcelona",
+      "country": "ES",
+      "date": "17/09/2026",
+      "title": "Festival•B 2026",
+      "source": "DICE",
+      "sourceUrl": "https://dice.fm/event/7dq2b6-festivalb-2026-17th-sep-parc-del-frum-barcelona-tickets"
+    },
+    {
+      "id": "dice-692da6c8d7ee02000114da39-pablopablo",
+      "artist": "pablopablo",
       "venue": "Parc del Fòrum",
       "city": "Barcelona",
       "country": "ES",
@@ -57,6 +101,50 @@
       "sourceUrl": "https://dice.fm/event/7dq2b6-festivalb-2026-17th-sep-parc-del-frum-barcelona-tickets"
     },
     {
+      "id": "dice-69bd2ba9b9555c000158359b-kinder-malo",
+      "artist": "Kinder Malo",
+      "venue": "Sala Copérnico",
+      "city": "Madrid",
+      "country": "ES",
+      "date": "31/10/2026",
+      "title": "Dora Band (Pimp Flaco + Kinder Malo) en MAZO",
+      "source": "DICE",
+      "sourceUrl": "https://dice.fm/event/eoyp22-dora-band-pimp-flaco-kinder-malo-en-mazo-31st-oct-sala-coprnico-madrid-tickets"
+    },
+    {
+      "id": "resurrection-route-the-browning-tour-2026-02112026-abbie-falls",
+      "artist": "Abbie Falls",
+      "venue": "Razzmatazz 2",
+      "city": "Barcelona",
+      "country": "ES",
+      "date": "02/11/2026",
+      "title": "The Browning",
+      "source": "Resurrection Fest Route",
+      "sourceUrl": "https://www.resurrectionfest.es/route/the-browning-tour-2026/"
+    },
+    {
+      "id": "razzmatazz-17112026-17-11-2026-ed-maverick-ed-maverick",
+      "artist": "Ed Maverick",
+      "venue": "Razzmatazz",
+      "city": "Barcelona",
+      "country": "ES",
+      "date": "17/11/2026",
+      "title": "Ed Maverick",
+      "source": "Sala Razzmatazz",
+      "sourceUrl": "https://www.salarazzmatazz.com/agenda/17-11-2026-ed-maverick/"
+    },
+    {
+      "id": "dice-69f9efd045d5be0001a2c5ad-cecilio-g",
+      "artist": "Cecilio G.",
+      "venue": "Sala But",
+      "city": "Madrid",
+      "country": "ES",
+      "date": "10/12/2026",
+      "title": "Cecilio G en MAZO",
+      "source": "DICE",
+      "sourceUrl": "https://dice.fm/event/oed76y-cecilio-g-en-mazo-10th-dec-sala-but-madrid-tickets"
+    },
+    {
       "id": "razzmatazz-06022027-06-02-2027-nina-polaca-nina-polaca",
       "artist": "Niña Polaca",
       "venue": "Razzmatazz",
@@ -66,6 +154,72 @@
       "title": "Niña Polaca",
       "source": "Sala Razzmatazz",
       "sourceUrl": "https://www.salarazzmatazz.com/agenda/06-02-2027-nina-polaca/"
+    },
+    {
+      "id": "sala-apolo-7439-amorphis",
+      "artist": "Amorphis",
+      "venue": "Sala Apolo",
+      "city": "Barcelona",
+      "country": "ES",
+      "date": "09/02/2027",
+      "title": "Amorphis",
+      "source": "Sala Apolo",
+      "sourceUrl": "https://www.sala-apolo.com/es/evento/amorphis-20270209-7439"
+    },
+    {
+      "id": "razzmatazz-02032027-02-03-2027-the-halo-effect-the-halo-effect",
+      "artist": "The Halo Effect",
+      "venue": "Razzmatazz",
+      "city": "Barcelona",
+      "country": "ES",
+      "date": "02/03/2027",
+      "title": "The Halo Effect",
+      "source": "Sala Razzmatazz",
+      "sourceUrl": "https://www.salarazzmatazz.com/agenda/02-03-2027-the-halo-effect/"
+    },
+    {
+      "id": "resurrection-route-megadeth-tour-2027-10042027-megadeth",
+      "artist": "Megadeth",
+      "venue": "Olimpic Arena Badalona",
+      "city": "Barcelona",
+      "country": "ES",
+      "date": "10/04/2027",
+      "title": "Megadeth",
+      "source": "Resurrection Fest Route",
+      "sourceUrl": "https://www.resurrectionfest.es/route/megadeth-tour-2027/"
+    },
+    {
+      "id": "livenation-1670572-olivia-rodrigo",
+      "artist": "Olivia Rodrigo",
+      "venue": "Palau Sant Jordi",
+      "city": "Barcelona",
+      "country": "ES",
+      "date": "01/05/2027",
+      "title": "Olivia Rodrigo: The Unraveled Tour",
+      "source": "Live Nation Spain",
+      "sourceUrl": "https://www.livenation.es/event/olivia-rodrigo-the-unraveled-tour-barcelona-tickets-edp1670572"
+    },
+    {
+      "id": "livenation-1670577-olivia-rodrigo",
+      "artist": "Olivia Rodrigo",
+      "venue": "Palau Sant Jordi",
+      "city": "Barcelona",
+      "country": "ES",
+      "date": "02/05/2027",
+      "title": "Olivia Rodrigo: The Unraveled Tour",
+      "source": "Live Nation Spain",
+      "sourceUrl": "https://www.livenation.es/event/olivia-rodrigo-the-unraveled-tour-barcelona-tickets-edp1670577"
+    },
+    {
+      "id": "razzmatazz-21052027-21-05-2027-el-chojin-el-chojin",
+      "artist": "El Chojin",
+      "venue": "Razzmatazz",
+      "city": "Barcelona",
+      "country": "ES",
+      "date": "21/05/2027",
+      "title": "El Chojin",
+      "source": "Sala Razzmatazz",
+      "sourceUrl": "https://www.salarazzmatazz.com/agenda/21-05-2027-el-chojin/"
     }
   ]
 }
