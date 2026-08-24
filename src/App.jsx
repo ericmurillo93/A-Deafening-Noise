@@ -1393,6 +1393,7 @@ export default function App() {
   const scrollRestorationRef = useRef("auto");
   const passwordModalModeRef = useRef(null);
   const lastRefreshRef = useRef(0);
+  const refreshFailuresRef = useRef(0);
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
     document.querySelector('meta[name="theme-color"]')?.setAttribute("content", theme === "poster" ? "#050506" : "#09090b");
@@ -1602,7 +1603,7 @@ export default function App() {
       } catch (error) {
         if (!cancelled) {
           const message = error.message || "Could not refresh the archive";
-          if (hasCachedData) setSyncError(message);
+          if (hasCachedData) setSyncError(navigator.onLine ? "" : "offline");
           else setDataLoadError(message);
         }
       } finally {
@@ -1614,15 +1615,33 @@ export default function App() {
 
   useEffect(() => {
     if (!supabaseEnabled || !currentUserId || !dataReady) return undefined;
-    async function refreshWhenVisible() {
-      if (document.visibilityState !== "visible" || Date.now() - lastRefreshRef.current < 30_000) return;
-      try { await reloadAppData(); setSyncError(""); }
-      catch (error) { setSyncError(error.message || "Could not refresh the archive"); }
+    async function refreshWhenVisible(force = false) {
+      if (document.visibilityState !== "visible" || (!force && Date.now() - lastRefreshRef.current < 30_000)) return;
+      if (!navigator.onLine) { setSyncError("offline"); return; }
+      try {
+        await reloadAppData();
+        refreshFailuresRef.current = 0;
+        setSyncError("");
+      } catch {
+        refreshFailuresRef.current += 1;
+        if (refreshFailuresRef.current >= 3) setSyncError("refresh");
+      }
     }
     const timer = window.setInterval(refreshWhenVisible, 60_000);
-    window.addEventListener("focus", refreshWhenVisible);
-    document.addEventListener("visibilitychange", refreshWhenVisible);
-    return () => { window.clearInterval(timer); window.removeEventListener("focus", refreshWhenVisible); document.removeEventListener("visibilitychange", refreshWhenVisible); };
+    const refreshOnFocus = () => refreshWhenVisible();
+    const refreshOnline = () => refreshWhenVisible(true);
+    const showOffline = () => setSyncError("offline");
+    window.addEventListener("focus", refreshOnFocus);
+    window.addEventListener("online", refreshOnline);
+    window.addEventListener("offline", showOffline);
+    document.addEventListener("visibilitychange", refreshOnFocus);
+    return () => {
+      window.clearInterval(timer);
+      window.removeEventListener("focus", refreshOnFocus);
+      window.removeEventListener("online", refreshOnline);
+      window.removeEventListener("offline", showOffline);
+      document.removeEventListener("visibilitychange", refreshOnFocus);
+    };
   }, [currentUserId, dataReady]);
 
   useEffect(() => {
@@ -1802,6 +1821,16 @@ export default function App() {
       lastRefreshRef.current = Date.now();
       setSyncError("");
     } finally { setIsRefreshing(false); }
+  }
+
+  async function retrySync() {
+    if (!navigator.onLine) { setSyncError("offline"); return; }
+    try {
+      await reloadAppData();
+      refreshFailuresRef.current = 0;
+    } catch {
+      setSyncError("refresh");
+    }
   }
 
   async function changeTheme(nextTheme) {
@@ -1984,7 +2013,7 @@ export default function App() {
     <>
     {passwordModal}
     {isRefreshing && <span className="sr-only" role="status">Syncing your latest data</span>}
-    {syncError && <div className="fixed bottom-4 left-1/2 z-[80] max-w-[calc(100vw-2rem)] -translate-x-1/2 rounded-full border border-amber-900 bg-zinc-950 px-4 py-2 text-center text-xs font-semibold text-amber-300 shadow-2xl" role="status">Offline · showing saved data</div>}
+    {syncError && <div className="fixed bottom-4 left-1/2 z-[80] flex max-w-[calc(100vw-2rem)] -translate-x-1/2 items-center gap-3 rounded-full border border-amber-900 bg-zinc-950 px-4 py-2 text-xs font-semibold text-amber-300 shadow-2xl" role="status" aria-live="polite"><span className="whitespace-nowrap">{syncError === "offline" ? "You’re offline · showing saved data" : "Couldn’t refresh · showing saved data"}</span>{syncError === "refresh" && <button type="button" onClick={retrySync} disabled={isRefreshing} className="min-h-11 rounded-full px-2 font-black text-zinc-100 transition-colors hover:bg-zinc-800 disabled:opacity-50">{isRefreshing ? "Retrying…" : "Retry"}</button>}</div>}
     <main className="adn-shell min-h-screen bg-zinc-950 text-zinc-100 md:flex">
       <DesktopNavigation activePage={activePage} profile={appProfile} attentionCount={friendRequests.filter((request) => request.direction === "incoming").length + concertInvitations.length} onNavigate={changePage} />
       {/* Desktop-only fixed Menu button */}

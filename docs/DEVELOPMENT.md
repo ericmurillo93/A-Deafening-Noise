@@ -404,7 +404,7 @@ before production with `npx supabase db push` and
 
 ### Client cache and synchronization
 
-Authenticated application data is cached per user in IndexedDB. On repeat visits the cached archive renders first and `get_app_data()` revalidates it silently; returning to a visible tab refreshes data at most once every 30 seconds. Successful mutations refresh both Supabase state and the local cache. Logout clears every cached user snapshot so data is not exposed to the next person using a shared browser. Cache records carry an explicit schema version in `src/lib/app-cache.js`; increment it whenever an incompatible response shape is deployed.
+Authenticated application data is cached per user in IndexedDB. On repeat visits the cached archive renders first and `get_app_data()` revalidates it silently; returning to a visible tab refreshes data at most once every 30 seconds. Transient refresh failures remain silent while cached data is usable. The interface reports offline state only when the browser confirms that connectivity is unavailable, and exposes a retry action only after three consecutive online refresh failures. Successful mutations refresh both Supabase state and the local cache. Logout clears every cached user snapshot so data is not exposed to the next person using a shared browser. Cache records carry an explicit schema version in `src/lib/app-cache.js`; increment it whenever an incompatible response shape is deployed.
 
 The geographic map is a lazy-loaded chunk and must remain outside the initial archive/calendar bundle. New page-specific heavy dependencies should follow the same pattern.
 
