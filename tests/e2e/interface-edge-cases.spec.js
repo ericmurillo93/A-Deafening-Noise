@@ -217,6 +217,14 @@ test("Concert Poster scales proportionally beyond a 1920px viewport", async ({ p
   expect((await page.locator(".adn-content").boundingBox())?.width).toBeCloseTo(2560 * 2 / 3, 0);
 });
 
+test("Stats year dropdown stays inside the phone viewport", async ({ page }) => {
+  await page.setViewportSize({ width: 851, height: 393 });
+  await page.goto("/year-review");
+  await page.locator("summary[aria-label='Choose review year']").click();
+  const box = await page.locator("details:has([aria-label='Choose review year']) .adn-popover").boundingBox();
+  expect(box && box.x >= 0 && box.y >= 0 && box.x + box.width <= 851 && box.y + box.height <= 393).toBe(true);
+});
+
 test("Home dashboard reviews concert suggestions without leaving the page", async ({ page }) => {
   let savedData;
   await page.route("**/.netlify/functions/save-concerts", (route) => { savedData = route.request().postDataJSON().data; return route.fulfill({ status: 200, contentType: "application/json", body: '{"ok":true}' }); });
