@@ -35,6 +35,7 @@ for (const inputPath of inputPaths) {
         title: suggestion.title || artist,
         source: suggestion.source,
         sourceUrl: suggestion.sourceUrl,
+        imageUrl: suggestion.imageUrl || "",
       });
     }
   }

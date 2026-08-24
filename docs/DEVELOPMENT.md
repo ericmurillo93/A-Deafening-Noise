@@ -256,7 +256,7 @@ Netlify builds production with `npm run build` and publishes `dist`.
 | Concert writes | Supabase RPC | Supabase RPC |
 | Setlist requests | Vite development middleware | Netlify function |
 | Secrets | `.env.local` | Netlify environment variables |
-| Git commits | Manual | Discovery creates a JSON backup commit before scraping |
+| Git commits | Manual | Manual; discovery writes directly to Supabase |
 
 The Netlify site requires:
 
@@ -315,7 +315,7 @@ To run the complete pipeline locally:
 npm run suggestions:refresh
 ```
 
-Scraped lineups are matched against `data/listened-artists.json`, which contains the deduplicated union of artists observed across connected accounts without identifying which user listens to whom. Eric's historical import ignores plays shorter than 30 seconds and requires at least one accumulated listening hour per artist; connected Spotify Top Artists remain eligible directly. Reseeding replaces the previous historical rows so artists below that threshold are removed. Run `node scripts/sync-spotify-accounts.mjs --seed-only` with the normal server-side Supabase variables to repair the historical seed without calling Spotify. Later top-artist refreshes accumulate instead of deleting older affinity. The workflow combines and deduplicates results into `data/suggestions.json`; the application then filters that shared output against each user's own Spotify catalog and overlays their personal Interested or Not Interested state. Suggestions never appear directly as calendar events and are reviewed on the dedicated **Concert suggestions** page.
+Scraped lineups are matched against the runtime `data/listened-artists.json`, which contains the deduplicated union of artists observed across connected accounts without identifying which user listens to whom. Eric's historical import ignores plays shorter than 30 seconds and requires at least one accumulated listening hour per artist; connected Spotify Top Artists remain eligible directly. Reseeding replaces the previous historical rows so artists below that threshold are removed. Run `node scripts/sync-spotify-accounts.mjs --seed-only` with the normal server-side Supabase variables to repair the historical seed without calling Spotify. Later top-artist refreshes accumulate instead of deleting older affinity. The workflow downloads the current catalog, combines and deduplicates scraper results, resolves exact Spotify artist artwork, sends new-match emails, and atomically publishes the catalog to Supabase. It creates no commit and no Netlify deployment. The checked-in JSON files remain local fallbacks only.
 
 ### Import Spotify listening history
 
@@ -338,9 +338,9 @@ http://127.0.0.1:5173/spotify/callback
 
 Set `VITE_SPOTIFY_CLIENT_ID` locally and in Netlify. The Client ID is public configuration; no Spotify Client Secret is used. The browser fetches up to 50 top artists for short-, medium-, and long-term affinity, sends artist IDs, names, Spotify-hosted image URLs, matching ranges, and the refresh token to an authenticated Supabase RPC, then discards the access token. Artists attached to future concerts but absent from Top Artists are looked up by exact normalized name and stored in a separate per-user artwork catalog, so artwork never expands suggestion affinity. The same image metadata is refreshed by the daily workflow and supplies dashboard, future-concert, and suggestion artwork, with the bundled stage image as fallback. Supabase Vault stores the refresh token encrypted and exposes it only to the service-role workflow. Tracks and raw listening history are never stored. Development Mode users must still be added once to Spotify's allowlist; Spotify does not provide an API for bypassing that platform restriction.
 
-Users may opt into new-suggestion emails from Profile. The daily workflow compares the previous and refreshed suggestion files, applies each recipient's Spotify artists, archive, and dismissals, and sends only genuinely new matches through Resend. Every recipient receives at most one responsive digest per day containing all of that day's matches; a per-user/day Resend idempotency key prevents retries or manual reruns from duplicating delivery. The email links to each source, provides a plain-text fallback and exposes the Profile preference control. The free Resend tier currently supports one custom domain, 3,000 emails per month, and 100 per day.
+Users may opt into new-suggestion emails from Profile. The daily workflow compares the previous Supabase catalog with the refreshed runtime snapshot, applies each recipient's Spotify artists, archive, and dismissals, and sends only genuinely new matches through Resend. Every recipient receives at most one responsive digest per day containing all of that day's matches; a per-user/day Resend idempotency key prevents retries or manual reruns from duplicating delivery. The email links to each source, provides a plain-text fallback and exposes the Profile preference control.
 
-Select **Interested** to open the normal Add Concert modal with artist, venue, and date prefilled, or **Not interested** to record a dismissal. Each choice is written to Supabase immediately and the suggestion remains visible with its current state. Interested suggestions are ordinary upcoming concerts and therefore appear in the calendar. Changing one to Not Interested requires confirmation and removes only that user's calendar entry. The shared discovery file is never filtered by one user's archive or dismissals.
+Select **Interested** to open the normal Add Concert modal with artist, venue, and date prefilled, or **Not interested** to record a dismissal. Each choice is written to Supabase immediately and the suggestion remains visible with its current state. Interested suggestions are ordinary upcoming concerts and therefore appear in the calendar. Changing one to Not Interested requires confirmation and removes only that user's calendar entry. The shared Supabase catalog is never filtered by one user's archive or dismissals.
 
 Run the complete pipeline locally:
 
@@ -357,7 +357,7 @@ node scripts/combine-concert-suggestions.mjs \
   --output=/tmp/suggestions.json
 ```
 
-Review `/tmp/suggestions.json` before manually replacing the checked-in suggestions file.
+Review `/tmp/suggestions.json` before publishing it with `node scripts/publish-concert-suggestions.mjs /tmp/suggestions.json` using server-side Supabase credentials.
 
 If GitHub rejects a push that creates or modifies `.github/workflows/*`, authorize the required scope once:
 
@@ -368,7 +368,7 @@ gh auth setup-git
 
 ## Data model
 
-Supabase is the production source of truth. The normalized model uses `profiles`, canonical `concerts`, per-user `concert_participants`, mutual `friendships`, durable `notifications`, per-user `user_dismissed_suggestions`, and encrypted Spotify connections. Each authenticated user manages their own archive, calendar, Spotify taste profile, and suggestions; Eric's `admin` role additionally grants user administration. Profiles include a display name, optional avatar URL and location, discoverability, email-notification and theme preferences, role, and account status. The theme is also cached locally so it can be applied before React renders. `data/concerts.json` remains Eric's compatible local fallback and GitHub backup:
+Supabase is the production source of truth. The normalized model uses `profiles`, canonical `concerts`, per-user `concert_participants`, mutual `friendships`, durable `notifications`, per-user `user_dismissed_suggestions`, the atomic `concert_suggestion_catalog`, and encrypted Spotify connections. Each authenticated user manages their own archive, calendar, Spotify taste profile, and suggestions; Eric's `admin` role additionally grants user administration. Profiles include a display name, optional avatar URL and location, discoverability, email-notification and theme preferences, role, and account status. The theme is also cached locally so it can be applied before React renders. `data/concerts.json` remains Eric's compatible local fallback and GitHub backup:
 
 ```json
 {
@@ -439,8 +439,8 @@ reduce file length.
 ├── docs/DEVELOPMENT.md               Detailed contributor and operations guide
 ├── data/
 │   ├── concerts.json                 Canonical concert dataset
-│   ├── listened-artists.json          Privacy-reduced Spotify artist catalog
-│   └── suggestions.json              Generated, reviewable suggestions
+│   ├── listened-artists.json          Local privacy-reduced artist fallback
+│   └── suggestions.json              Local suggestion fallback
 ├── netlify/functions/
 │   ├── get-setlist.js                Production setlist.fm proxy
 │   └── save-concerts.js              Production GitHub write proxy

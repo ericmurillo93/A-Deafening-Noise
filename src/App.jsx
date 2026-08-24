@@ -1369,6 +1369,7 @@ export default function App() {
   const [setlistTarget, setSetlistTarget] = useState(null);
   const [calendarTarget, setCalendarTarget] = useState(null);
   const [concertItems, setConcertItems] = useState(fallbackConcerts);
+  const [suggestionCatalog, setSuggestionCatalog] = useState(suggestionsData.suggestions || []);
   const [dismissedSuggestions, setDismissedSuggestions] = useState(fallbackDismissedSuggestions);
   const [listenedArtists, setListenedArtists] = useState([]);
   const [artistImageRows, setArtistImageRows] = useState([]);
@@ -1494,9 +1495,9 @@ export default function App() {
 
   const listenedArtistKeys = useMemo(() => new Set(listenedArtists.map(normalize)), [listenedArtists]);
   const artistImages = useMemo(() => new Map(artistImageRows.map(({ artist, imageUrl }) => [normalize(artist), imageUrl])), [artistImageRows]);
-  const availableSuggestions = useMemo(() => suggestionsData.suggestions.filter((suggestion) =>
+  const availableSuggestions = useMemo(() => suggestionCatalog.filter((suggestion) =>
     !supabaseEnabled || listenedArtistKeys.has(normalize(suggestion.artist))
-  ), [listenedArtistKeys]);
+  ), [listenedArtistKeys, suggestionCatalog]);
   const suggestionReviews = useMemo(() => Object.fromEntries(availableSuggestions.flatMap((suggestion) => {
     const concert = concertItems.find((item) => normalize(item.artist) === normalize(suggestion.artist) && item.date === suggestion.date);
     if (concert) return [[suggestion.id, { decision: "interested", concert }]];
@@ -1799,6 +1800,7 @@ export default function App() {
 
   function applyAppData(archive) {
     setConcertItems(archive.concerts || []);
+    setSuggestionCatalog(archive.suggestions || []);
     setDismissedSuggestions(archive.dismissedSuggestions || []);
     setListenedArtists(archive.listenedArtists || []);
     setArtistImageRows(archive.artistImages || []);

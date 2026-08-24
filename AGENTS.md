@@ -13,8 +13,7 @@ Keep the project's existing **A Deafening Noise** Notion page current when a cha
 - React/Vite single-page application; most UI and state live in `src/App.jsx`.
 - Supabase is the production source of truth for profiles, concerts, participants, friendships, notifications, and dismissed suggestions.
 - `data/concerts.json` is the local fallback and GitHub backup dataset.
-- `data/listened-artists.json` is the privacy-reduced Spotify artist catalog used for suggestion affinity.
-- `data/suggestions.json` is generated discovery output, never canonical concert data.
+- `data/listened-artists.json` and `data/suggestions.json` are local workflow inputs/fallback snapshots; Supabase is canonical in production.
 - Supabase Auth and security-definer RPCs provide per-user visibility and writes. Eric is the admin; only administration remains admin-only.
 - `netlify/functions/save-concerts.js` is retained as a protected legacy/backup writer.
 - `netlify/functions/get-setlist.js` proxies setlist.fm in production.
@@ -73,7 +72,7 @@ Keep the project's existing **A Deafening Noise** Notion page current when a cha
 - Interested opens the normal prefilled calendar Add modal; Not Interested persists an artist/date dismissal immediately.
 - Home shows only untreated suggestions. Interested adds the concert immediately as not bought and removes it from Home; Not Interested also removes it from Home. The Suggestions page keeps treated entries under the collapsed Past suggestions section, where decisions can still be changed.
 - Supabase stores suggestion decisions immediately. Preserve `dismissedSuggestions` on every archive replacement; the shared discovery catalog must not be filtered by one user's concerts or dismissals.
-- `.github/workflows/concert-suggestions.yml` runs daily or on demand, refreshes connected Spotify profiles before scraping, emails opted-in users about new matches, and commits only changed discovery data.
+- `.github/workflows/concert-suggestions.yml` runs daily or on demand, refreshes connected Spotify profiles, resolves suggestion artwork, publishes the catalog to Supabase, and emails opted-in users. It must not commit generated data or trigger a Netlify deploy.
 
 ## Verification
 

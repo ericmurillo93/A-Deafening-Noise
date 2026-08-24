@@ -1,5 +1,5 @@
-import { getGitHubConfig, getLatestSuggestionRun, githubRequest } from "./lib/github.js";
-import { requireArchiveUser } from "./lib/supabase-auth.js";
+import { getGitHubConfig, getLatestSuggestionRun } from "./lib/github.js";
+import { getSupabaseConfiguration, requireArchiveUser } from "./lib/supabase-auth.js";
 
 export async function handler(event) {
   try {
@@ -9,10 +9,11 @@ export async function handler(event) {
     const run = await getLatestSuggestionRun(token);
     let generatedAt = null;
     if (run?.status === "completed" && run.conclusion === "success") {
-      const suggestionsResponse = await githubRequest(token, "/contents/data/suggestions.json?ref=main");
+      const { url, key } = getSupabaseConfiguration();
+      const authorization = event.headers?.authorization || event.headers?.Authorization || "";
+      const suggestionsResponse = await fetch(`${url}/rest/v1/rpc/get_concert_suggestions`, { method: "POST", headers: { apikey: key, Authorization: authorization, "Content-Type": "application/json" }, body: "{}" });
       if (suggestionsResponse.ok) {
-        const file = await suggestionsResponse.json();
-        const suggestions = JSON.parse(Buffer.from(file.content, "base64").toString("utf8"));
+        const suggestions = await suggestionsResponse.json();
         generatedAt = suggestions.generatedAt || null;
       }
     }

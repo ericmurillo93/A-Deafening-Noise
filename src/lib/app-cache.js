@@ -1,7 +1,7 @@
 const DATABASE_NAME = "a-deafening-noise";
 const DATABASE_VERSION = 1;
 const STORE_NAME = "user-data";
-const CACHE_SCHEMA_VERSION = 2;
+const CACHE_SCHEMA_VERSION = 3;
 
 function openDatabase() {
   if (typeof indexedDB === "undefined") return Promise.resolve(null);

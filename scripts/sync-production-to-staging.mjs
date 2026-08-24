@@ -100,12 +100,13 @@ const production = client(productionUrl, productionKey);
 const staging = client(stagingUrl, stagingKey);
 
 process.stdout.write("Reading production data (production remains read-only)...\n");
-const [profiles, concerts, participants, friendships, dismissals, stagingProfiles] = await Promise.all([
+const [profiles, concerts, participants, friendships, dismissals, suggestionCatalog, stagingProfiles] = await Promise.all([
   allRows(production, "profiles", "email"),
   allRows(production, "concerts", "id"),
   allRows(production, "concert_participants", "concert_id"),
   allRows(production, "friendships", "id"),
   allRows(production, "dismissed_suggestions", "suggestion_key"),
+  allRows(production, "concert_suggestion_catalog", "singleton"),
   allRows(staging, "profiles", "email"),
 ]);
 
@@ -133,6 +134,7 @@ await deleteAll(staging, "concert_participants", "concert_id");
 await deleteAll(staging, "friendships", "id");
 await deleteAll(staging, "concerts", "id");
 await deleteAll(staging, "dismissed_suggestions", "suggestion_key");
+await deleteAll(staging, "concert_suggestion_catalog", "singleton");
 
 process.stdout.write("Updating staging profiles...\n");
 for (const source of profiles) {
@@ -205,19 +207,21 @@ await insertMany(staging, "friendships", friendships.map((source) => {
   };
 }));
 await insertMany(staging, "dismissed_suggestions", dismissals.map(({ suggestion_key, created_at }) => ({ suggestion_key, created_at })));
+await insertMany(staging, "concert_suggestion_catalog", suggestionCatalog);
 
 // Inserts can generate activity notifications. Staging intentionally starts without historical activity.
 await deleteAll(staging, "notifications", "id");
 
-const [stagingConcerts, stagingParticipants, stagingFriendships, stagingDismissals, stagingNotifications] = await Promise.all([
+const [stagingConcerts, stagingParticipants, stagingFriendships, stagingDismissals, stagingSuggestions, stagingNotifications] = await Promise.all([
   countRows(staging, "concerts"),
   countRows(staging, "concert_participants"),
   countRows(staging, "friendships"),
   countRows(staging, "dismissed_suggestions"),
+  countRows(staging, "concert_suggestion_catalog"),
   countRows(staging, "notifications"),
 ]);
-const expected = [concerts.length, participants.length, friendships.length, dismissals.length, 0];
-const actual = [stagingConcerts, stagingParticipants, stagingFriendships, stagingDismissals, stagingNotifications];
+const expected = [concerts.length, participants.length, friendships.length, dismissals.length, suggestionCatalog.length, 0];
+const actual = [stagingConcerts, stagingParticipants, stagingFriendships, stagingDismissals, stagingSuggestions, stagingNotifications];
 if (expected.some((value, index) => value !== actual[index])) {
   throw new Error(`Verification failed. Expected ${expected.join("/")}, found ${actual.join("/")}`);
 }

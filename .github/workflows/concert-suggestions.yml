@@ -12,7 +12,7 @@ on:
     - cron: "23 4 * * *"
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: concert-suggestions
@@ -53,8 +53,11 @@ jobs:
         with:
           node-version: 24
 
-      - name: Preserve previous suggestions
-        run: cp data/suggestions.json /tmp/previous-suggestions.json
+      - name: Download current suggestions
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: node scripts/publish-concert-suggestions.mjs --download=data/suggestions.json
 
       - name: Sync connected Spotify profiles
         env:
@@ -66,22 +69,24 @@ jobs:
       - name: Run concert scrapers
         run: npm run suggestions:refresh
 
+      - name: Resolve suggestion artwork
+        continue-on-error: true
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          SPOTIFY_CLIENT_ID: ${{ secrets.SPOTIFY_CLIENT_ID }}
+        run: node scripts/enrich-suggestion-images.mjs data/suggestions.json
+
       - name: Notify users about new suggestions
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           RESEND_FROM_EMAIL: ${{ secrets.RESEND_FROM_EMAIL }}
-        run: node scripts/notify-concert-suggestions.mjs /tmp/previous-suggestions.json data/suggestions.json
+        run: node scripts/notify-concert-suggestions.mjs data/suggestions.json
 
-      - name: Commit refreshed suggestions
-        run: |
-          if git diff --quiet -- data/listened-artists.json data/suggestions.json; then
-            echo "No suggestion changes"
-            exit 0
-          fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/listened-artists.json data/suggestions.json
-          git commit -m "Refresh concert suggestions"
-          git push
+      - name: Publish suggestions
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: node scripts/publish-concert-suggestions.mjs data/suggestions.json

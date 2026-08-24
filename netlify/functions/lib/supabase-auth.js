@@ -21,19 +21,3 @@ export async function requireArchiveUser(event, { admin = false } = {}) {
   if (admin && profile.role !== "admin") return { error: { statusCode: 403, body: "Forbidden" } };
   return { profile };
 }
-
-export async function getArchiveData(event) {
-  const authorization = event.headers?.authorization || event.headers?.Authorization || "";
-  const { url, key } = getSupabaseConfiguration();
-  const response = await fetch(`${url}/rest/v1/rpc/get_concert_data`, {
-    method: "POST",
-    headers: {
-      apikey: key,
-      Authorization: authorization,
-      "Content-Type": "application/json",
-    },
-    body: "{}",
-  });
-  if (!response.ok) throw new Error(`Could not read the Supabase archive (${response.status})`);
-  return response.json();
-}
