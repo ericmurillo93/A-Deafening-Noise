@@ -32,7 +32,7 @@ function concertCountry(concert) {
 }
 
 function Status({ bought }) {
-  return <span className={`inline-flex items-center gap-1.5 whitespace-nowrap text-[10px] font-black uppercase tracking-wide ${bought ? "text-emerald-400" : "text-amber-400"}`}><i className={`fa-solid ${bought ? "fa-circle-check" : "fa-circle-exclamation"}`} aria-hidden="true" />{bought ? "Ticket bought" : "Tickets not bought"}</span>;
+  return <span className={`inline-flex items-center gap-1.5 whitespace-nowrap text-[10px] font-black uppercase tracking-wide ${bought ? "text-emerald-400" : "text-amber-400"}`}><i className={`fa-solid ${bought ? "fa-circle-check" : "fa-circle-exclamation"}`} aria-hidden="true" />{bought ? "Ticket bought" : "Not bought"}</span>;
 }
 
 function SectionTitle({ title, action, onAction, showArrow = true }) {
