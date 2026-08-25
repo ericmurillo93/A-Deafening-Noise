@@ -11,7 +11,10 @@
     <meta property="og:description" content="A searchable personal concert archive." />
     <meta property="og:type" content="website" />
     <script>
-      try { document.documentElement.dataset.theme = localStorage.getItem("adn-theme") === "poster" ? "poster" : "archive"; }
+      try {
+        const theme = localStorage.getItem("adn-theme");
+        document.documentElement.dataset.theme = ["archive", "poster", "signal"].includes(theme) ? theme : "archive";
+      }
       catch { document.documentElement.dataset.theme = "archive"; }
     </script>
     <title>A Deafening Noise</title>

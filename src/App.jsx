@@ -826,6 +826,10 @@ function FriendStatsMenu({ friends, selectedIds, onChange }) {
   return <details ref={detailsRef} className="group relative min-w-0 w-full md:w-auto"><summary aria-label="Filter stats by friends" className="relative ml-auto flex h-12 w-12 cursor-pointer list-none items-center justify-center rounded-md border border-[#30343a] bg-[#15191e] text-zinc-100 transition hover:border-zinc-500 [&::-webkit-details-marker]:hidden"><i className="fa-solid fa-user-group" aria-hidden="true" />{selectedIds.length > 0 && <span className="absolute -right-1 -top-1 min-w-5 rounded-full bg-blue-600 px-1 text-center text-[9px] font-black leading-5 text-white">{selectedIds.length}</span>}</summary><div className="adn-popover absolute right-0 top-full z-30 mt-2 max-h-72 w-64 max-w-[calc(100vw-2rem)] overflow-y-auto rounded-2xl border border-zinc-700 bg-zinc-950 p-2 shadow-2xl"><button type="button" onClick={() => onChange([])} className={`mb-1 flex min-h-11 w-full items-center rounded-xl px-3 text-left text-sm font-semibold hover:bg-zinc-800 ${selectedIds.length === 0 ? "text-blue-400" : "text-zinc-300"}`}>All my concerts</button>{friends.map((friend) => <label key={friend.id} className="flex min-h-11 cursor-pointer items-center gap-3 rounded-xl px-3 text-sm font-semibold text-zinc-300 hover:bg-zinc-800"><input type="checkbox" checked={selectedIds.includes(friend.id)} onChange={() => toggle(friend.id)} className="h-4 w-4 accent-blue-600" /><span className="truncate">With {friend.displayName}</span></label>)}</div></details>;
 }
 
+function calendarEventTone(concert) {
+  return `adn-calendar-event-${concert.isPast ? "history" : concert.bought ? "bought" : "not-bought"}`;
+}
+
 function NextConcertCalendar({ items, onOpen, onContextMenu, onContextMenuAt }) {
   const [monthPickerOpen, setMonthPickerOpen] = useState(false);
   const [highlightedDay, setHighlightedDay] = useState(null);
@@ -907,7 +911,7 @@ function NextConcertCalendar({ items, onOpen, onContextMenu, onContextMenuAt }) 
   }
 
   return (
-    <section className="rounded-3xl border border-zinc-800 bg-zinc-900 p-3 md:p-6">
+    <section className="adn-calendar rounded-3xl border border-zinc-800 bg-zinc-900 p-3 md:p-6">
       <div ref={monthPickerRef} className="relative mb-5 flex flex-wrap items-center justify-start gap-2">
         <button onClick={() => { setVisibleMonth(new Date(today.getFullYear(), today.getMonth(), 1)); setHighlightedDay(null); setMonthPickerOpen(false); }} className="rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-2.5 text-sm font-black text-zinc-100 transition hover:border-zinc-500">Today</button>
         <button onClick={() => moveMonth(-1)} className="rounded-xl px-3 py-2.5 text-sm text-zinc-400 transition hover:bg-zinc-800 hover:text-white" aria-label="Previous month"><i className="fa-solid fa-chevron-up" aria-hidden="true" /></button>
@@ -955,7 +959,7 @@ function NextConcertCalendar({ items, onOpen, onContextMenu, onContextMenuAt }) 
         }}
         onTouchCancel={() => { swipeStartRef.current = null; }}
       >
-        {weekdays.map((day) => <div key={day} className="pb-2 text-center text-[10px] font-bold uppercase text-zinc-600 md:text-xs">{day}</div>)}
+        {weekdays.map((day) => <div key={day} className="adn-calendar-weekday pb-2 text-center text-[10px] font-bold uppercase text-zinc-600 md:text-xs">{day}</div>)}
         {Array.from({ length: leadingDays }).map((_, index) => <div key={`empty-${index}`} className="min-h-20 rounded-xl bg-zinc-950/30 md:min-h-32" />)}
         {Array.from({ length: daysInMonth }, (_, index) => {
           const day = index + 1;
@@ -963,11 +967,11 @@ function NextConcertCalendar({ items, onOpen, onContextMenu, onContextMenuAt }) 
           const concerts = datedItems.filter(({ range }) => calendarDay >= range.start && calendarDay <= range.end);
           const isToday = calendarDay.getTime() === today.getTime();
           return (
-            <div key={day} className={`relative h-20 overflow-hidden rounded-xl border p-1.5 md:h-auto md:min-h-32 md:overflow-visible md:rounded-2xl md:p-2 ${concerts.length ? "border-zinc-700 bg-zinc-950" : "border-zinc-800/60 bg-zinc-950/40"}`}>
-              <div className="mb-1 flex justify-end text-[10px] font-bold md:text-xs"><span className={`inline-flex h-5 w-5 items-center justify-center rounded-full ${isToday ? "bg-blue-500/15 text-blue-300 ring-1 ring-inset ring-blue-500/30" : "text-zinc-600"}`} aria-current={isToday ? "date" : undefined}>{day}</span></div>
+            <div key={day} className={`adn-calendar-day relative h-20 overflow-hidden rounded-xl border p-1.5 md:h-auto md:min-h-32 md:overflow-visible md:rounded-2xl md:p-2 ${concerts.length ? "adn-calendar-day-populated border-zinc-700 bg-zinc-950" : "border-zinc-800/60 bg-zinc-950/40"}`}>
+              <div className="mb-1 flex justify-end text-[10px] font-bold md:text-xs"><span className={`adn-calendar-date inline-flex h-5 w-5 items-center justify-center rounded-full ${isToday ? "adn-calendar-today" : "text-zinc-600"}`} aria-current={isToday ? "date" : undefined}>{day}</span></div>
               {concerts.length > 0 && (
                 <div className="md:hidden">
-                  <button type="button" aria-pressed={highlightedDay === calendarDay.getTime()} aria-label={`Highlight ${concerts.length === 1 ? concerts[0].artist : `${concerts.length} concerts`} in the monthly list`} onClick={() => setHighlightedDay(calendarDay.getTime())} className={`block w-full truncate rounded-md border px-1 py-1 text-center text-[8px] font-bold text-zinc-100 transition-[filter,box-shadow] ${concerts.some((concert) => concert.isPast) ? "border-blue-700 bg-blue-950" : concerts.some((concert) => concert.bought) ? "border-emerald-700 bg-emerald-900" : "border-amber-700 bg-amber-950"} ${highlightedDay === calendarDay.getTime() ? "brightness-110 ring-1 ring-inset ring-white/40" : ""}`}>
+                  <button type="button" aria-pressed={highlightedDay === calendarDay.getTime()} aria-label={`Highlight ${concerts.length === 1 ? concerts[0].artist : `${concerts.length} concerts`} in the monthly list`} onClick={() => setHighlightedDay(calendarDay.getTime())} className={`adn-calendar-event ${calendarEventTone(concerts.find((concert) => concert.isPast) || concerts.find((concert) => concert.bought) || concerts[0])} block w-full truncate rounded-md border px-1 py-1 text-center text-[8px] font-bold text-zinc-100 transition-[filter,box-shadow] ${concerts.some((concert) => concert.isPast) ? "border-blue-700 bg-blue-950" : concerts.some((concert) => concert.bought) ? "border-emerald-700 bg-emerald-900" : "border-amber-700 bg-amber-950"} ${highlightedDay === calendarDay.getTime() ? "adn-calendar-event-highlighted brightness-110 ring-1 ring-inset ring-white/40" : ""}`}>
                     {concerts.length === 1 ? concerts[0].artist : `${concerts.length} shows`}
                   </button>
                 </div>
@@ -978,7 +982,7 @@ function NextConcertCalendar({ items, onOpen, onContextMenu, onContextMenuAt }) 
                     key={`${concert.source}-${concert.artist}-${concert.date}-${concert.show || ""}`}
                     {...eventInteractionProps(concert)}
                     onClick={(event) => { event.stopPropagation(); eventInteractionProps(concert).onClick(event); }}
-                    className={`block w-full overflow-hidden rounded-md border px-1.5 py-1 text-left text-[8px] font-bold leading-tight text-zinc-100 transition hover:brightness-110 md:rounded-lg md:px-2 md:py-1.5 md:text-[11px] ${concert.isPast ? "border-blue-700 bg-blue-950" : concert.bought ? "border-emerald-700 bg-emerald-900" : "border-amber-700 bg-amber-950"}`}
+                    className={`adn-calendar-event ${calendarEventTone(concert)} block w-full overflow-hidden rounded-md border px-1.5 py-1 text-left text-[8px] font-bold leading-tight text-zinc-100 transition hover:brightness-110 md:rounded-lg md:px-2 md:py-1.5 md:text-[11px] ${concert.isPast ? "border-blue-700 bg-blue-950" : concert.bought ? "border-emerald-700 bg-emerald-900" : "border-amber-700 bg-amber-950"}`}
                     title={`${concert.artist} — ${concert.date}${concert.venue ? ` — ${concert.venue}` : ""}`}
                   >
                     <span className="block truncate">{concert.artist}</span>
@@ -997,19 +1001,19 @@ function NextConcertCalendar({ items, onOpen, onContextMenu, onContextMenuAt }) 
           <div className="space-y-2">
             {datedItems.filter(({ range }) => range.start <= new Date(year, month + 1, 0) && range.end >= new Date(year, month, 1)).map((concert) => {
               const highlighted = highlightedDay !== null && highlightedDay >= concert.range.start.getTime() && highlightedDay <= concert.range.end.getTime();
-              return <button key={`month-${concert.source}-${concert.artist}-${concert.date}-${concert.venue || ""}`} data-calendar-highlighted={highlighted || undefined} {...eventInteractionProps(concert)} className={`flex min-h-12 w-full items-center gap-3 rounded-lg border px-3 py-2 text-left transition-[filter,box-shadow] ${concert.isPast ? "border-blue-700 bg-blue-950" : concert.bought ? "border-emerald-700 bg-emerald-900" : "border-amber-700 bg-amber-950"} ${highlighted ? "brightness-110 ring-1 ring-inset ring-white/40" : ""}`}>
-                <span className="w-12 shrink-0 text-xs font-black tabular-nums text-zinc-100">{concert.date.slice(0, 5)}</span>
-                <span className="min-w-0"><span className="block truncate text-xs font-black uppercase text-zinc-100">{concert.artist}</span>{concert.venue && <span className="mt-0.5 block truncate text-[10px] text-zinc-300">{concert.venue}</span>}</span>
+              return <button key={`month-${concert.source}-${concert.artist}-${concert.date}-${concert.venue || ""}`} data-calendar-highlighted={highlighted || undefined} {...eventInteractionProps(concert)} className={`adn-calendar-event adn-calendar-list-event ${calendarEventTone(concert)} flex min-h-12 w-full items-center gap-3 rounded-lg border px-3 py-2 text-left transition-[filter,box-shadow] ${concert.isPast ? "border-blue-700 bg-blue-950" : concert.bought ? "border-emerald-700 bg-emerald-900" : "border-amber-700 bg-amber-950"} ${highlighted ? "adn-calendar-event-highlighted brightness-110 ring-1 ring-inset ring-white/40" : ""}`}>
+                <span className="adn-calendar-event-date w-12 shrink-0 text-xs font-black tabular-nums text-zinc-100">{concert.date.slice(0, 5)}</span>
+                <span className="min-w-0"><span className="block truncate text-xs font-black uppercase text-zinc-100">{concert.artist}</span>{concert.venue && <span className="adn-calendar-event-venue mt-0.5 block truncate text-[10px] text-zinc-300">{concert.venue}</span>}</span>
               </button>;
             })}
           </div>
         </section>
       )}
 
-      <div className="mt-5 flex flex-wrap items-center justify-center gap-4 text-xs text-zinc-500">
-        <span className="flex items-center gap-2"><span className="h-3 w-3 rounded-sm border border-blue-700 bg-blue-950" /> History</span>
-        <span className="flex items-center gap-2"><span className="h-3 w-3 rounded-sm border border-emerald-700 bg-emerald-900" /> Bought</span>
-        <span className="flex items-center gap-2"><span className="h-3 w-3 rounded-sm border border-amber-700 bg-amber-950" /> Not bought</span>
+      <div className="adn-calendar-legend mt-5 flex flex-wrap items-center justify-center gap-4 text-xs text-zinc-500">
+        <span className="flex items-center gap-2"><span className="adn-calendar-legend-dot adn-calendar-event-history h-3 w-3 rounded-sm border border-blue-700 bg-blue-950" /> History</span>
+        <span className="flex items-center gap-2"><span className="adn-calendar-legend-dot adn-calendar-event-bought h-3 w-3 rounded-sm border border-emerald-700 bg-emerald-900" /> Bought</span>
+        <span className="flex items-center gap-2"><span className="adn-calendar-legend-dot adn-calendar-event-not-bought h-3 w-3 rounded-sm border border-amber-700 bg-amber-950" /> Not bought</span>
       </div>
 
     </section>
@@ -1046,7 +1050,7 @@ function CalendarConcertModal({ target, artistImages, onClose, onEdit }) {
           <div className="p-4">
             <div className="flex items-start justify-between gap-4">
               {target.venue || concertLocation(target) ? <div className="flex min-w-0 gap-2 text-sm font-semibold text-zinc-100"><Icon type="map" /><span className="break-words">{[target.venue, concertLocation(target)].filter(Boolean).join(" · ")}</span></div> : <span />}
-              <span className={`shrink-0 rounded-full border px-3 py-1 text-xs font-bold text-zinc-100 ${isPast ? "border-blue-800 bg-blue-950" : target.bought ? "border-emerald-800 bg-emerald-950" : "border-amber-800 bg-amber-950"}`}>
+              <span className={`adn-calendar-status ${calendarEventTone({ ...target, isPast })} shrink-0 rounded-full border px-3 py-1 text-xs font-bold text-zinc-100 ${isPast ? "border-blue-800 bg-blue-950" : target.bought ? "border-emerald-800 bg-emerald-950" : "border-amber-800 bg-amber-950"}`}>
                 {isPast ? "History" : target.bought ? "Bought" : "Not bought"}
               </span>
             </div>
@@ -1345,7 +1349,7 @@ function DesktopNavigation({ activePage, profile, attentionCount, onNavigate }) 
 
 export default function App() {
   const initialRoute = useMemo(() => readRouteFromLocation(), []);
-  const [theme, setTheme] = useState(() => document.documentElement.dataset.theme === "poster" ? "poster" : "archive");
+  const [theme, setTheme] = useState(() => document.documentElement.dataset.theme || "archive");
   const [session, setSession] = useState(null);
   const [authReady, setAuthReady] = useState(!supabaseEnabled);
   const [dataReady, setDataReady] = useState(!supabaseEnabled);
@@ -1397,7 +1401,7 @@ export default function App() {
   const refreshFailuresRef = useRef(0);
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
-    document.querySelector('meta[name="theme-color"]')?.setAttribute("content", theme === "poster" ? "#050506" : "#09090b");
+    document.querySelector('meta[name="theme-color"]')?.setAttribute("content", ({ poster: "#050506", signal: "#07090d" })[theme] || "#09090b");
     try { localStorage.setItem("adn-theme", theme); } catch { /* Theme still works for this visit. */ }
   }, [theme]);
   useEffect(() => {

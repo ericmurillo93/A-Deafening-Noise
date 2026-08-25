@@ -5,6 +5,11 @@ import { connectSpotify, finishSpotifyConnection } from "../lib/spotify";
 import { EmptyState, PanelHeading, UserAvatar } from "../components/SharedUi";
 
 export function ProfilePage({ profile, futureArtists, theme, isAdmin, onThemeChange, onAdmin, onSignOut, onSave, onExport, onDelete, onPassword, onConfirm, onSpotifyChanged }) {
+  const themes = [
+    ["archive", "Default", "Compact panels and blue actions"],
+    ["poster", "Concert poster", "Deeper blacks and bold white actions"],
+    ["signal", "Signal", "Immersive depth and precise live-energy detail"],
+  ];
   const [form, setForm] = useState({ displayName: "", avatarUrl: "", city: "", country: "", discoverable: true, suggestionEmailEnabled: false });
   const [status, setStatus] = useState("");
   const [saving, setSaving] = useState(false);
@@ -95,16 +100,11 @@ export function ProfilePage({ profile, futureArtists, theme, isAdmin, onThemeCha
     <section className="rounded-3xl border border-zinc-800 bg-zinc-900 p-5 md:p-7">
       <PanelHeading icon="fa-palette" title="Appearance" description="Choose how your concert archive feels on this device." />
       <div className="grid gap-3 sm:grid-cols-2" role="radiogroup" aria-label="Theme">
-        <button type="button" role="radio" aria-checked={themeDraft === "archive"} onClick={() => { setThemeDraft("archive"); setThemeStatus(""); }} className={`adn-theme-choice ${themeDraft === "archive" ? "adn-theme-choice-active" : ""}`}>
-          <span className="adn-theme-preview adn-theme-preview-archive" aria-hidden="true"><span /><span /><span /></span>
-          <span><strong>Default</strong><small>Compact panels and blue actions</small></span>
+        {themes.map(([value, label, description]) => <button key={value} type="button" role="radio" aria-checked={themeDraft === value} onClick={() => { setThemeDraft(value); setThemeStatus(""); }} className={`adn-theme-choice ${themeDraft === value ? "adn-theme-choice-active" : ""}`}>
+          <span className={`adn-theme-preview adn-theme-preview-${value}`} aria-hidden="true"><span /><span /><span /></span>
+          <span><strong>{label}</strong><small>{description}</small></span>
           <i className="fa-solid fa-check" aria-hidden="true" />
-        </button>
-        <button type="button" role="radio" aria-checked={themeDraft === "poster"} onClick={() => { setThemeDraft("poster"); setThemeStatus(""); }} className={`adn-theme-choice ${themeDraft === "poster" ? "adn-theme-choice-active" : ""}`}>
-          <span className="adn-theme-preview adn-theme-preview-poster" aria-hidden="true"><span /><span /><span /></span>
-          <span><strong>Concert poster</strong><small>Deeper blacks and bold white actions</small></span>
-          <i className="fa-solid fa-check" aria-hidden="true" />
-        </button>
+        </button>)}
       </div>
       {themeStatus && <p className="mt-4 text-sm text-zinc-300" role="status">{themeStatus}</p>}
       <button type="button" disabled={themeSaving || themeDraft === theme} onClick={saveTheme} className="adn-button-primary mt-5">{themeSaving ? "Saving…" : "Save appearance"}</button>

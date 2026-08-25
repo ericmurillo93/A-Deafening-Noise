@@ -14,6 +14,12 @@ colors:
   possibility-amber: "#451a03"
   stage-blue: "#2563eb"
   panel-border: "#30343a"
+  signal-stage: "#07090d"
+  signal-panel: "#10141b"
+  signal-card: "#171c25"
+  signal-border: "#303846"
+  signal-blue: "#2563eb"
+  signal-blue-hover: "#3b82f6"
 typography:
   display:
     fontFamily: "ui-sans-serif, system-ui, sans-serif"
@@ -61,7 +67,9 @@ The design is dark because the product is commonly used around live music and pe
 
 Near-black tonal layers establish hierarchy. Concert white carries primary information, while readable cool gray supports metadata. Colored surfaces must use foregrounds from the same hue family or near-white, never washed-out gray.
 
-The interface offers two complete dark themes without changing information architecture or behavior. **Default** uses compact corners, blue primary actions, cool layered panels and a persistent desktop sidebar. **Concert Poster** restores the earlier visual character with a deeper black canvas, zinc surfaces, generous rounded panels, concert-white primary actions, a centered composition and an on-demand navigation drawer at every viewport. Its content remains 1280px wide at a 1920px viewport, then preserves that two-thirds proportion on larger displays instead of becoming visually undersized. Semantic history, bought and possibility colors remain unchanged in both themes. The selected theme is an account preference synchronized through Supabase and cached on the device so it applies before React renders without a flash of the other theme.
+The interface offers three complete dark themes without changing information architecture or behavior. **Default** uses compact corners, blue primary actions, cool layered panels and a persistent desktop sidebar. **Concert Poster** restores the earlier visual character with a deeper black canvas, zinc surfaces, generous rounded panels, concert-white primary actions, a centered composition and an on-demand navigation drawer at every viewport. Its content remains 1280px wide at a 1920px viewport, then preserves that two-thirds proportion on larger displays instead of becoming visually undersized. **Signal** interprets the archive as a premium live-production control room: obsidian space, titanium surfaces, a floating desktop navigation rail and electric-blue primary actions. Its depth comes from restrained spatial lighting and translucent floating surfaces, never from decoration without hierarchy.
+
+Default and Concert Poster retain the established blue, green and amber concert treatments. Signal refines those calendar states into predominantly neutral surfaces with restrained blue, green and orange tint, borders and markers. Signal additionally keeps destructive actions red, neutral actions titanium, Interested green and Not Interested red. The selected theme is an account preference synchronized through Supabase and cached on the device so it applies before React renders without a flash of the other theme.
 
 ## Typography
 
@@ -87,11 +95,11 @@ Panels use 6px corners, matching the approved dashboard reference. Controls and 
 ## Components
 
 - **Page titles:** system sans 900, uppercase, tight leading, fluid mobile scale.
-- **Primary actions:** restrained stage blue fill with white text, clear disabled state and visible keyboard focus.
+- **Primary actions:** stage blue in Default, concert white in Concert Poster and electric blue in Signal; all share the same dimensions, loading, disabled and press behavior.
 - **Cards:** raised black with a single border; hover changes border/surface only when the card is interactive.
 - **Dialogs:** centered, labelled, modal to assistive technology, internally scrollable, with focus trapped and restored.
 - **Navigation:** quiet zinc by default, near-white on active/hover, with semantic notification badges.
-- **Concert status:** history blue, bought green, possibility amber across cards, calendar, legend and details.
+- **Concert status:** history blue, bought green and possibility amber across cards, calendar, legend and details. Signal alone uses a brighter orange possibility accent and predominantly neutral event surfaces across its desktop grid, mobile list, legend and details.
 
 ## Do's and Don'ts
 
@@ -104,7 +112,7 @@ Panels use 6px corners, matching the approved dashboard reference. Controls and 
 
 ### Don't:
 
-- **Don't** add decorative gradients, glass effects, generic dashboard ornaments or invented artist likenesses. The dashboard's anonymous concert-stage image is the approved atmospheric exception.
+- **Don't** add decorative gradients, generic glass effects, dashboard ornaments or invented artist likenesses. Signal may use its documented spatial lighting and translucent floating surfaces only where they communicate hierarchy. The dashboard's anonymous concert-stage image remains the approved atmospheric exception.
 - **Don't** infer shared attendance from users referencing the same canonical concert.
 - **Don't** rely on hover, right-click, long-press or color as the only way to understand an action or state.
 - **Don't** trade scanability for poster styling inside dense data surfaces.
