@@ -8,6 +8,7 @@ const PAGE_SIZE = 200;
 const MONTHS_AHEAD = 36;
 const EXCLUDED_STATUSES = new Set(["cancelled", "canceled", "postponed"]);
 const apiKey = process.env.TICKETMASTER_API_KEY;
+let lastRequestAt = 0;
 
 if (!apiKey) throw new Error("TICKETMASTER_API_KEY is required");
 
@@ -17,7 +18,10 @@ const formatDate = (value) => {
   return match ? `${match[3]}/${match[2]}/${match[1]}` : "";
 };
 
-async function fetchPage(country, start, end, page) {
+async function fetchPage(country, start, end, page, retry = true) {
+  const delay = 250 - (Date.now() - lastRequestAt);
+  if (delay > 0) await new Promise((resolve) => setTimeout(resolve, delay));
+  lastRequestAt = Date.now();
   const query = new URLSearchParams({
     apikey: apiKey,
     countryCode: country,
@@ -29,6 +33,10 @@ async function fetchPage(country, start, end, page) {
     sort: "date,asc",
   });
   const response = await fetch(`${API_URL}?${query}`, { headers: { "User-Agent": USER_AGENT, Accept: "application/json" } });
+  if (response.status === 429 && retry) {
+    await new Promise((resolve) => setTimeout(resolve, Math.max(1, Number(response.headers.get("retry-after")) || 1) * 1000));
+    return fetchPage(country, start, end, page, false);
+  }
   if (!response.ok) throw new Error(`Ticketmaster ${country} returned HTTP ${response.status}`);
   return response.json();
 }
