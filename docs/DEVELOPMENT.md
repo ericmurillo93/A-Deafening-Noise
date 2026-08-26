@@ -288,7 +288,7 @@ Functions directory: netlify/functions
 
 ## Concert suggestion automation
 
-The workflow `.github/workflows/concert-suggestions.yml` runs daily at 04:23 UTC and can also be started from GitHub's Actions UI. It first refreshes every active Spotify connection, rebuilds the privacy-reduced union artist catalog, and then refreshes Resurrection Fest Route, Live Nation Spain, Madness Live, Sala Razzmatazz, Sala Apolo, Sala Bikini, Paral·lel 62, Palau de la Música Catalana, Les Docks, Montreux Jazz Festival, DICE, and Doctor Music listings in Spain and Switzerland. The non-round cron minute reduces the chance of GitHub scheduling delays.
+The workflow `.github/workflows/concert-suggestions.yml` runs daily at 04:23 UTC and can also be started from GitHub's Actions UI. It first refreshes every active Spotify connection, rebuilds the privacy-reduced union artist catalog, and then refreshes Resurrection Fest Route, Live Nation Spain, Madness Live, Sala Razzmatazz, Sala Apolo, Sala Bikini, Paral·lel 62, Palau de la Música Catalana, Les Docks, Montreux Jazz Festival, DICE, Doctor Music, and Ticketmaster listings. Resurrection Route and Live Nation query all available Spanish cities. Ticketmaster uses its official Discovery API for country-wide Spain and Switzerland coverage. DICE queries its supported Spanish and Swiss city locations; venue, festival, and promoter adapters necessarily cover only their own programmes. The non-round cron minute reduces the chance of GitHub scheduling delays.
 
 Configure these GitHub Actions repository secrets:
 
@@ -298,9 +298,10 @@ SUPABASE_SERVICE_ROLE_KEY
 SPOTIFY_CLIENT_ID
 RESEND_API_KEY
 RESEND_FROM_EMAIL
+TICKETMASTER_API_KEY
 ```
 
-The service-role key and Resend key are server-only and must never be placed in Netlify `VITE_` variables or repository files. `RESEND_FROM_EMAIL` must use a sender on the domain verified in Resend, for example `A Deafening Noise <concerts@adeafeningnoise.com>`. Without both Resend values, discovery still runs and email delivery is skipped.
+The service-role, Resend, and Ticketmaster keys are server-only and must never be placed in Netlify `VITE_` variables or repository files. `RESEND_FROM_EMAIL` must use a sender on the domain verified in Resend, for example `A Deafening Noise <concerts@adeafeningnoise.com>`. Without both Resend values, discovery still runs and email delivery is skipped. Without `TICKETMASTER_API_KEY`, the other discovery sources still run but Ticketmaster coverage is skipped until the secret is configured.
 
 GitHub's Actions UI remains a fallback:
 
@@ -349,11 +350,13 @@ node scripts/scrape-resurrection-route.mjs --output=/tmp/resurrection.json
 node scripts/scrape-livenation-events.mjs --output=/tmp/livenation.json
 node scripts/scrape-madness-live.mjs --output=/tmp/madness-live.json
 node scripts/scrape-doctor-music.mjs --output=/tmp/doctor-music.json
+TICKETMASTER_API_KEY=... node scripts/scrape-ticketmaster.mjs --output=/tmp/ticketmaster.json
 node scripts/combine-concert-suggestions.mjs \
   /tmp/resurrection.json \
   /tmp/livenation.json \
   /tmp/madness-live.json \
   /tmp/doctor-music.json \
+  /tmp/ticketmaster.json \
   --output=/tmp/suggestions.json
 ```
 
@@ -450,6 +453,7 @@ reduce file length.
 │   ├── scrape-madness-live.mjs
 │   ├── scrape-doctor-music.mjs
 │   ├── scrape-resurrection-route.mjs
+│   ├── scrape-ticketmaster.mjs
 │   └── setup-local.mjs
 ├── src/
 │   ├── App.jsx                       Application shell and orchestration

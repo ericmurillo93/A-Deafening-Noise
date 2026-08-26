@@ -4,9 +4,7 @@ import { context, normalize, USER_AGENT, writeResult } from "./lib/suggestion-sc
 const BASE_URL = "https://www.livenation.es";
 const API_URL = `${BASE_URL}/api/search/events`;
 const PAGE_SIZE = 50;
-const DEFAULT_CITY_ID = "7243";
 const DEFAULT_COUNTRY_ID = "206";
-const DEFAULT_GENRES = "rock,hard-rock-and-metal";
 const EXCLUDED_STATUSES = new Map([
   [5, "cancelled"],
   [6, "postponed"],
@@ -16,9 +14,9 @@ function argument(name, fallback) {
   return process.argv.find((value) => value.startsWith(`--${name}=`))?.slice(name.length + 3) || fallback;
 }
 
-const cityId = argument("city-id", DEFAULT_CITY_ID);
+const cityId = argument("city-id", "");
 const countryId = argument("country-id", DEFAULT_COUNTRY_ID);
-const genres = argument("genres", DEFAULT_GENRES);
+const genres = argument("genres", "");
 
 function formatDate(value) {
   const match = String(value || "").match(/^(\d{4})-(\d{2})-(\d{2})/);
@@ -42,11 +40,11 @@ async function fetchPage(page) {
     Url: "/event/allevents",
     IncludePostponed: "true",
     IncludeCancelled: "true",
-    CityIds: cityId,
     CountryIds: countryId,
-    Genres: genres,
     Page: String(page),
   });
+  if (cityId) query.set("CityIds", cityId);
+  if (genres) query.set("Genres", genres);
   const response = await fetch(`${API_URL}?${query}`, {
     headers: {
       "User-Agent": USER_AGENT,
@@ -75,7 +73,9 @@ async function fetchEvents() {
 
 const { listened: listenedArtistsByKey, existing: existingArtistDates } = await context();
 
-const listingQuery = new URLSearchParams({ CityIds: cityId, CountryIds: countryId, Genres: genres });
+const listingQuery = new URLSearchParams({ CountryIds: countryId });
+if (cityId) listingQuery.set("CityIds", cityId);
+if (genres) listingQuery.set("Genres", genres);
 const listingUrl = `${BASE_URL}/event/allevents?${listingQuery}`;
 const { events, pageCount, total } = await fetchEvents();
 const suggestions = [];

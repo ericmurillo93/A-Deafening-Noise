@@ -61,7 +61,8 @@ Keep the project's existing **A Deafening Noise** Notion page current when a cha
 
 ## Suggestion pipeline
 
-- Scrapers: Resurrection Fest Route, Live Nation Spain, Madness Live, Sala Razzmatazz, Sala Apolo, Sala Bikini, Paral·lel 62, Palau de la Música Catalana, Les Docks, Montreux Jazz Festival, and DICE.
+- Scrapers: Resurrection Fest Route, Live Nation Spain, Madness Live, Sala Razzmatazz, Sala Apolo, Sala Bikini, Paral·lel 62, Palau de la Música Catalana, Les Docks, Montreux Jazz Festival, DICE, Doctor Music, and the official Ticketmaster Discovery API.
+- National aggregators query all available events in Spain and Switzerland where their APIs support country-wide discovery. Venue, festival, and promoter sources cover only their own published programmes. Ticketmaster web pages must never be scraped; use `TICKETMASTER_API_KEY` with the official API.
 - Match only billed artists in `data/listened-artists.json`. Historical imports ignore plays shorter than 30 seconds and require at least one accumulated listening hour per artist; connected Spotify Top Artists remain eligible directly.
 - Exclude an artist/date already present in `data/concerts.json`.
 - Generate the listened catalog with `npm run import:spotify`; never commit raw Spotify exports.
@@ -101,6 +102,8 @@ node --check scripts/scrape-montreux-jazz-festival.mjs
 node --check scripts/scrape-sala-apolo.mjs
 node --check scripts/scrape-bikini-barcelona.mjs
 node --check scripts/scrape-dice.mjs
+node --check scripts/scrape-doctor-music.mjs
+node --check scripts/scrape-ticketmaster.mjs
 ```
 
 Validate JSON files with `JSON.parse` before committing. Test high-risk calendar/modal changes on both desktop and phone-sized layouts when possible.

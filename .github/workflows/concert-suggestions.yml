@@ -67,6 +67,8 @@ jobs:
         run: npm run spotify:sync
 
       - name: Run concert scrapers
+        env:
+          TICKETMASTER_API_KEY: ${{ secrets.TICKETMASTER_API_KEY }}
         run: npm run suggestions:refresh
 
       - name: Resolve suggestion artwork

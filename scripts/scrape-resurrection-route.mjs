@@ -1,7 +1,7 @@
 import { context, fetchText, normalize, textContent, writeResult } from "./lib/suggestion-scraper-utils.mjs";
 
 const BASE_URL = "https://www.resurrectionfest.es";
-const city = (process.argv.find((argument) => argument.startsWith("--city="))?.split("=")[1] || "barcelona").toLowerCase();
+const city = process.argv.find((argument) => argument.startsWith("--city="))?.split("=")[1]?.toLowerCase();
 
 function eventLinks(listingHtml) {
   return [...new Set(
@@ -44,7 +44,7 @@ function billedPerformerNames(detailHtml) {
 const { listened, existing: existingArtistDates } = await context();
 const listenedArtists = [...listened.values()].sort((a, b) => b.length - a.length);
 
-const listingUrl = `${BASE_URL}/route/?filter_city=${encodeURIComponent(city)}&q=&filter_date_range=`;
+const listingUrl = `${BASE_URL}/route/?filter_city=${encodeURIComponent(city || "")}&q=&filter_date_range=`;
 const listingHtml = await fetchText(listingUrl);
 const links = eventLinks(listingHtml);
 const suggestions = [];
@@ -59,7 +59,7 @@ for (const [index, sourceUrl] of links.entries()) {
   const matchedArtists = listenedArtists.filter((artist) => billedNames.has(normalize(artist)));
   if (!matchedArtists.length) continue;
 
-  for (const stop of routeStops(detailHtml).filter((entry) => normalize(entry.city) === normalize(city))) {
+  for (const stop of routeStops(detailHtml).filter((entry) => !city || normalize(entry.city) === normalize(city))) {
     matchedStops += 1;
     const newArtists = matchedArtists.filter((artist) =>
       !existingArtistDates.has(`${normalize(artist)}|${stop.date}`)
@@ -84,7 +84,7 @@ for (const [index, sourceUrl] of links.entries()) {
 
 await writeResult({
   source: listingUrl,
-  city,
+  city: city || null,
   pagesScanned: links.length,
   matchedStops,
   alreadyTracked,
