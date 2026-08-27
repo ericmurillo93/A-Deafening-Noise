@@ -278,6 +278,8 @@ In **Supabase → Authentication → Providers → Email**, enable **Secure pass
 
 Authenticated password changes use Supabase reauthentication: an email code is required before the new password is accepted. The login screen's **Forgot password?** action sends Supabase's recovery link back to `?password-recovery=1`; the app consumes the recovery session, asks for a new password, then signs out. The browser enforces a shared 60-second cooldown between authentication emails, including across reloads. Keep Supabase Auth responsible for these security flows; for production delivery, configure Resend as Supabase custom SMTP with a dedicated authentication sender instead of building a parallel password-email system or relying on Supabase's limited shared service.
 
+Keep **Email OTP length** at **6** in both hosted projects and `otp_length = 6` in `supabase/config.toml`. Supabase's password-change reauthentication endpoint validates a six-digit nonce even though other email OTP flows support configurable lengths; using eight digits produces an email that cannot complete the password change.
+
 Authentication email source files live in `supabase/templates/` and are generated from the shared brand template with `npm run emails:build`; `npm run emails:check` verifies that the checked-in HTML is current. Local Supabase reads these files through `supabase/config.toml`. Hosted Supabase projects do not deploy email templates with database migrations: copy each corresponding HTML file and subject into **Authentication → Email Templates**, enable the Password changed and Email changed security notifications, and configure Resend under **Authentication → Email → SMTP Settings**:
 
 ```text

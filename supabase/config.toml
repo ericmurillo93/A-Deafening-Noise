@@ -15,7 +15,7 @@ minimum_password_length = 8
 enable_signup = true
 enable_confirmations = true
 max_frequency = "1m"
-otp_length = 8
+otp_length = 6
 
 [auth.email.template.confirmation]
 subject = "Confirm your A Deafening Noise account"

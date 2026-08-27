@@ -1153,6 +1153,7 @@ function LoginGate({ onSignedIn }) {
         if (!authError) {
           if (data.session) onSignedIn();
           else {
+            emailCooldown.start();
             setMode("sign-in");
             setDisplayName("");
             setPassword("");
@@ -1365,7 +1366,7 @@ function ChangePasswordModal({ mode, email, onClose }) {
         ) : (
           <form onSubmit={submit} className="space-y-4">
             {!isRecovery && <p className="text-sm text-zinc-400">Enter the verification code sent to {email}.</p>}
-            {!isRecovery && <input type="text" inputMode="numeric" value={nonce} onChange={(event) => { setNonce(event.target.value.replace(/\D/g, "").slice(0, 8)); setError(""); }} placeholder="8-digit verification code" autoComplete="one-time-code" pattern="[0-9]{8}" autoFocus required className="w-full rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3.5 text-zinc-100 outline-none transition placeholder:text-zinc-600 focus:border-zinc-400" />}
+            {!isRecovery && <input type="text" inputMode="numeric" value={nonce} onChange={(event) => { setNonce(event.target.value.replace(/\D/g, "").slice(0, 6)); setError(""); }} placeholder="6-digit verification code" autoComplete="one-time-code" pattern="[0-9]{6}" autoFocus required className="w-full rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3.5 text-zinc-100 outline-none transition placeholder:text-zinc-600 focus:border-zinc-400" />}
             <input type="password" value={newPassword} onChange={(event) => { setNewPassword(event.target.value); setError(""); }} placeholder="New password" autoComplete="new-password" minLength={8} required className="w-full rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3.5 text-zinc-100 outline-none transition placeholder:text-zinc-600 focus:border-zinc-400" />
             <input type="password" value={confirmation} onChange={(event) => { setConfirmation(event.target.value); setError(""); }} placeholder="Confirm new password" autoComplete="new-password" minLength={8} required className="w-full rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3.5 text-zinc-100 outline-none transition placeholder:text-zinc-600 focus:border-zinc-400" />
             <p className="text-xs text-zinc-600">Use at least 8 characters.</p>
