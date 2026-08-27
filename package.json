@@ -11,6 +11,8 @@
     "codex:login": "npx --yes @openai/codex login",
     "import:spotify": "node scripts/import-spotify-history.mjs",
     "spotify:sync": "node scripts/sync-spotify-accounts.mjs",
+    "emails:build": "node scripts/build-auth-email-templates.mjs",
+    "emails:check": "node scripts/build-auth-email-templates.mjs --check",
     "suggestions:refresh": "node scripts/refresh-concert-suggestions.mjs",
     "dev": "vite --host 127.0.0.1",
     "dev:network": "vite --host 0.0.0.0",

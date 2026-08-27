@@ -1109,9 +1109,13 @@ function ConfirmActionModal({ confirmation, onClose, onConfirm, isSaving, error 
 // ─── LoginGate ────────────────────────────────────────────────────────────────
 
 function LoginGate({ onSignedIn }) {
+  const [mode, setMode] = useState("sign-in");
+  const [displayName, setDisplayName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [passwordConfirmation, setPasswordConfirmation] = useState("");
   const [error, setError] = useState("");
+  const [signUpSent, setSignUpSent] = useState(false);
   const [loading, setLoading] = useState(false);
   const [resetLoading, setResetLoading] = useState(false);
   const [resetSent, setResetSent] = useState(false);
@@ -1122,16 +1126,69 @@ function LoginGate({ onSignedIn }) {
     event.preventDefault();
     setLoading(true);
     setError("");
-    const { error: authError } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
-    if (!authError) {
-      onSignedIn();
-      return;
+    setSignUpSent(false);
+    try {
+      if (mode === "sign-up") {
+        const name = displayName.trim();
+        if (name.length < 2) {
+          setError("Enter your name.");
+          setLoading(false);
+          return;
+        }
+        if (password.length < 8) {
+          setError("Use at least 8 characters for your password.");
+          setLoading(false);
+          return;
+        }
+        if (password !== passwordConfirmation) {
+          setError("The passwords do not match.");
+          setLoading(false);
+          return;
+        }
+        const { data, error: authError } = await supabase.auth.signUp({
+          email: email.trim(),
+          password,
+          options: { data: { display_name: name }, emailRedirectTo: `${window.location.origin}/` },
+        });
+        if (!authError) {
+          if (data.session) onSignedIn();
+          else {
+            setMode("sign-in");
+            setDisplayName("");
+            setPassword("");
+            setPasswordConfirmation("");
+            setSignUpSent(true);
+            setLoading(false);
+          }
+          return;
+        }
+        setError(authError.message?.toLowerCase().includes("password") ? authError.message : "Could not create your account. Check the details and try again.");
+      } else {
+        const { error: authError } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+        if (!authError) {
+          onSignedIn();
+          return;
+        }
+        setError("Incorrect email or password.");
+      }
+    } catch {
+      setError(mode === "sign-up" ? "Could not create your account. Check your connection and try again." : "Could not sign in. Check your connection and try again.");
     }
-    setError("Incorrect email or password.");
     setPassword("");
+    setPasswordConfirmation("");
     setShake(true);
     setTimeout(() => setShake(false), 500);
     setLoading(false);
+  }
+
+  function changeMode(nextMode) {
+    setMode(nextMode);
+    setDisplayName("");
+    setPassword("");
+    setPasswordConfirmation("");
+    setError("");
+    setResetSent(false);
+    setSignUpSent(false);
   }
 
   async function requestPasswordReset() {
@@ -1170,15 +1227,19 @@ function LoginGate({ onSignedIn }) {
         <div className="mb-10 text-center">
           <p className="mb-3 text-xs font-semibold uppercase tracking-[0.45em] text-zinc-500">A Deafening Noise</p>
           <h1 className="text-4xl font-black uppercase tracking-tight text-zinc-100">Concert Archive</h1>
-          <p className="mt-3 text-sm text-zinc-500">Sign in to open your concert history.</p>
+          <p className="mt-3 text-sm text-zinc-500">{mode === "sign-up" ? "Create your personal concert archive." : "Sign in to open your concert history."}</p>
         </div>
         <form onSubmit={attempt} className="space-y-4">
-          <input type="email" value={email} onChange={(e) => { setEmail(e.target.value); setError(""); setResetSent(false); }} placeholder="Email" autoComplete="email" autoFocus className={`w-full rounded-2xl border bg-zinc-900 px-5 py-4 text-zinc-100 outline-none transition placeholder:text-zinc-600 ${error ? "border-red-700" : "border-zinc-700 focus:border-zinc-400"}`} />
-          <input type="password" value={password} onChange={(e) => { setPassword(e.target.value); setError(""); }} placeholder="Password" autoComplete="current-password" className={`w-full rounded-2xl border bg-zinc-900 px-5 py-4 text-zinc-100 outline-none transition placeholder:text-zinc-600 ${error ? "border-red-700 text-red-300" : "border-zinc-700 focus:border-zinc-400"}`} />
-          {error && <p className="text-center text-sm text-red-400">{error}</p>}
+          {mode === "sign-up" && <input type="text" value={displayName} onChange={(e) => { setDisplayName(e.target.value); setError(""); }} placeholder="Display name" autoComplete="name" autoFocus maxLength="80" required className={`w-full rounded-2xl border bg-zinc-900 px-5 py-4 text-zinc-100 outline-none transition placeholder:text-zinc-600 ${error ? "border-red-700" : "border-zinc-700 focus:border-zinc-400"}`} />}
+          <input type="email" value={email} onChange={(e) => { setEmail(e.target.value); setError(""); setResetSent(false); setSignUpSent(false); }} placeholder="Email" autoComplete="email" autoFocus={mode === "sign-in"} required className={`w-full rounded-2xl border bg-zinc-900 px-5 py-4 text-zinc-100 outline-none transition placeholder:text-zinc-600 ${error ? "border-red-700" : "border-zinc-700 focus:border-zinc-400"}`} />
+          <input type="password" value={password} onChange={(e) => { setPassword(e.target.value); setError(""); }} placeholder="Password" autoComplete={mode === "sign-up" ? "new-password" : "current-password"} minLength={mode === "sign-up" ? 8 : undefined} required className={`w-full rounded-2xl border bg-zinc-900 px-5 py-4 text-zinc-100 outline-none transition placeholder:text-zinc-600 ${error ? "border-red-700 text-red-300" : "border-zinc-700 focus:border-zinc-400"}`} />
+          {mode === "sign-up" && <input type="password" value={passwordConfirmation} onChange={(e) => { setPasswordConfirmation(e.target.value); setError(""); }} placeholder="Confirm password" autoComplete="new-password" minLength="8" required className={`w-full rounded-2xl border bg-zinc-900 px-5 py-4 text-zinc-100 outline-none transition placeholder:text-zinc-600 ${error ? "border-red-700 text-red-300" : "border-zinc-700 focus:border-zinc-400"}`} />}
+          {error && <p className="text-center text-sm text-red-400" role="alert">{error}</p>}
           {resetSent && <p className="rounded-2xl border border-emerald-900 bg-emerald-950/40 px-4 py-3 text-center text-sm text-emerald-300">If that account exists, a recovery link has been sent.</p>}
-          <button type="submit" disabled={loading} className="w-full rounded-lg bg-blue-600 py-4 font-black uppercase tracking-widest text-white shadow-lg shadow-blue-950/30 transition hover:bg-blue-500 disabled:opacity-50">{loading ? "Signing in…" : "Sign in"}</button>
-          <button type="button" onClick={requestPasswordReset} disabled={loading || resetLoading || emailCooldown.seconds > 0} className="w-full py-2 text-sm font-semibold text-zinc-500 transition hover:text-zinc-200 disabled:opacity-50">{resetLoading ? "Sending recovery email…" : emailCooldown.seconds > 0 ? `Try again in ${emailCooldown.seconds}s` : "Forgot password?"}</button>
+          {signUpSent && <p className="rounded-2xl border border-emerald-900 bg-emerald-950/40 px-4 py-3 text-center text-sm text-emerald-300" role="status">Check your email to confirm a new account. Already registered? Sign in or reset your password.</p>}
+          <button type="submit" disabled={loading} className="w-full rounded-lg bg-blue-600 py-4 font-black uppercase tracking-widest text-white shadow-lg shadow-blue-950/30 transition hover:bg-blue-500 disabled:opacity-50">{loading ? mode === "sign-up" ? "Creating account…" : "Signing in…" : mode === "sign-up" ? "Create account" : "Sign in"}</button>
+          {mode === "sign-in" && <button type="button" onClick={requestPasswordReset} disabled={loading || resetLoading || emailCooldown.seconds > 0} className="w-full py-2 text-sm font-semibold text-zinc-500 transition hover:text-zinc-200 disabled:opacity-50">{resetLoading ? "Sending recovery email…" : emailCooldown.seconds > 0 ? `Try again in ${emailCooldown.seconds}s` : "Forgot password?"}</button>}
+          <button type="button" onClick={() => changeMode(mode === "sign-in" ? "sign-up" : "sign-in")} disabled={loading || resetLoading} className="w-full py-2 text-sm font-semibold text-zinc-400 transition hover:text-zinc-100 disabled:opacity-50">{mode === "sign-in" ? "New here? Create an account" : "Already have an account? Sign in"}</button>
         </form>
       </div>
     </div>
@@ -1319,21 +1380,21 @@ function ChangePasswordModal({ mode, email, onClose }) {
 
 // ─── App ──────────────────────────────────────────────────────────────────────
 
-function mainNavigationItems(activePage, attentionCount) {
+function mainNavigationItems(activePage, attentionCount, hasConcerts) {
   const archiveActive = ["history", "artist", "venue"].includes(activePage);
   return [
     ["home", "fa-house", "Home", activePage === "home", 0],
-    ["history", "fa-box-archive", "Concert archive", archiveActive, 0],
-    ["timeline", "fa-clock-rotate-left", "Concert Timeline", activePage === "timeline", 0],
+    hasConcerts && ["history", "fa-box-archive", "Concert archive", archiveActive, 0],
+    hasConcerts && ["timeline", "fa-clock-rotate-left", "Concert Timeline", activePage === "timeline", 0],
     ["next", "fa-calendar-days", "Concert calendar", activePage === "next", 0],
     ["suggestions", "fa-wand-magic-sparkles", "Concert Suggestions", activePage === "suggestions", 0],
     ["stats", "fa-chart-column", "Stats", activePage === "stats" || activePage === "year-review", 0],
     ["friends", "fa-user-group", "Friends", activePage === "friends", attentionCount],
-  ];
+  ].filter(Boolean);
 }
 
-function DesktopNavigation({ activePage, profile, attentionCount, onNavigate }) {
-  const items = mainNavigationItems(activePage, attentionCount);
+function DesktopNavigation({ activePage, profile, attentionCount, hasConcerts, onNavigate }) {
+  const items = mainNavigationItems(activePage, attentionCount, hasConcerts);
   return <aside className="adn-desktop-navigation fixed inset-y-0 left-0 z-30 hidden flex-col border-r border-[#20242a] bg-[#0c1015] lg:flex">
     <button type="button" onClick={() => onNavigate("home")} className="h-[121px] border-b border-[#20242a] px-4 text-left"><span className="block whitespace-nowrap text-[15px] font-black uppercase tracking-tight text-zinc-50">A Deafening Noise</span><span className="mt-1 block text-[11px] font-bold uppercase tracking-[0.08em] text-zinc-400">Concert archive</span></button>
     <nav className="min-h-0 flex-1 space-y-1 overflow-y-auto" aria-label="Main navigation">{items.map(([page, icon, label, active, count]) =>
@@ -1512,6 +1573,11 @@ export default function App() {
     return [...set].sort((a, b) => a.localeCompare(b));
   }, [historyItems, nextItems]);
 
+  useEffect(() => {
+    if (!dataReady || dataOwnerId !== currentUserId || concertItems.length || !["history", "timeline", "artist", "venue"].includes(activePage)) return;
+    navigateTo({ page: "home" }, { replace: true });
+  }, [activePage, concertItems.length, currentUserId, dataOwnerId, dataReady]);
+
   const venueSuggestions = useMemo(() => {
     const set = new Set();
     historyItems.forEach(({ shows }) => {
@@ -1593,7 +1659,15 @@ export default function App() {
           setDataReady(true);
         }
         setIsRefreshing(true);
-        const archive = await loadConcertData();
+        let archive;
+        try {
+          archive = await loadConcertData();
+        } catch (error) {
+          if (hasCachedData) throw error;
+          await new Promise((resolve) => setTimeout(resolve, 300));
+          if (cancelled) return;
+          archive = await loadConcertData();
+        }
         if (!cancelled) {
           applyAppData(archive);
           if (archive.profile?.theme) setTheme(archive.profile.theme);
@@ -1729,8 +1803,8 @@ export default function App() {
   if (!supabaseEnabled && !IS_LOCAL) return <>{passwordModal}<div className="flex min-h-screen items-center justify-center bg-zinc-950 px-6 text-center text-red-300">Supabase is not configured for this deployment.</div></>;
   if (passwordModalMode === "recovery") return <>{passwordModal}<div className="min-h-screen bg-zinc-950" aria-hidden="true" /></>;
   if (supabaseEnabled && !session) return <>{passwordModal}<LoginGate onSignedIn={() => navigateTo({ page: "home" }, { replace: true })} /></>;
-  if (!dataReady || (supabaseEnabled && dataOwnerId !== currentUserId)) return <>{passwordModal}<AppBootstrapShell /></>;
   if (dataLoadError) return <>{passwordModal}<div className="flex min-h-screen items-center justify-center bg-zinc-950 px-6 text-center text-red-300">{dataLoadError}</div></>;
+  if (!dataReady || (supabaseEnabled && dataOwnerId !== currentUserId)) return <>{passwordModal}<AppBootstrapShell /></>;
 
   function navigateTo(route, { replace = false } = {}) {
     const updateHistory = replace ? window.history.replaceState.bind(window.history) : window.history.pushState.bind(window.history);
@@ -2017,7 +2091,7 @@ export default function App() {
     {isRefreshing && <span className="sr-only" role="status">Syncing your latest data</span>}
     {syncError && <div className="fixed bottom-4 left-1/2 z-[80] flex max-w-[calc(100vw-2rem)] -translate-x-1/2 items-center gap-3 rounded-full border border-amber-900 bg-zinc-950 px-4 py-2 text-xs font-semibold text-amber-300 shadow-2xl" role="status" aria-live="polite"><span className="whitespace-nowrap">{syncError === "offline" ? "You’re offline · showing saved data" : "Couldn’t refresh · showing saved data"}</span>{syncError === "refresh" && <button type="button" onClick={retrySync} disabled={isRefreshing} className="min-h-11 rounded-full px-2 font-black text-zinc-100 transition-colors hover:bg-zinc-800 disabled:opacity-50">{isRefreshing ? "Retrying…" : "Retry"}</button>}</div>}
     <main className="adn-shell min-h-screen bg-zinc-950 text-zinc-100 md:flex">
-      <DesktopNavigation activePage={activePage} profile={appProfile} attentionCount={friendRequests.filter((request) => request.direction === "incoming").length + concertInvitations.length} onNavigate={changePage} />
+      <DesktopNavigation activePage={activePage} profile={appProfile} attentionCount={friendRequests.filter((request) => request.direction === "incoming").length + concertInvitations.length} hasConcerts={concertItems.length > 0} onNavigate={changePage} />
       {/* Desktop-only fixed Menu button */}
       <button onClick={() => setSidebarOpen(true)} className="menu-button-desktop fixed left-4 top-4 z-40 h-11 w-11 rounded-md border border-[#30343a] bg-[#111418] text-sm text-zinc-100 shadow-lg transition-colors hover:border-zinc-500 hover:bg-[#171b20] lg:hidden" aria-label="Open menu" aria-expanded={sidebarOpen} aria-controls="main-navigation"><i className="fa-solid fa-bars text-xs" aria-hidden="true" /><span className="menu-button-label">Menu</span></button>
       {/* Touch-device Menu starts at the top of the page and scrolls away with it */}
@@ -2030,7 +2104,7 @@ export default function App() {
           <button onClick={() => changePage("home")} className="min-w-0 text-left" aria-label="Go to dashboard"><span className="block truncate text-[15px] font-black uppercase tracking-tight text-zinc-50">A Deafening Noise</span><span className="mt-1 block text-[11px] font-bold uppercase tracking-[0.08em] text-zinc-400">Concert archive</span></button>
           <button onClick={() => setSidebarOpen(false)} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md text-zinc-400 transition-colors hover:bg-[#171b20] hover:text-zinc-100" aria-label="Close menu"><i className="fa-solid fa-xmark" aria-hidden="true" /></button>
         </div>
-        <nav className="min-h-0 flex-1 overflow-y-auto overscroll-contain" aria-label="Main navigation">{mainNavigationItems(activePage, friendRequests.filter((request) => request.direction === "incoming").length + concertInvitations.length).map(([page, icon, label, active, count]) =>
+        <nav className="min-h-0 flex-1 overflow-y-auto overscroll-contain" aria-label="Main navigation">{mainNavigationItems(activePage, friendRequests.filter((request) => request.direction === "incoming").length + concertInvitations.length, concertItems.length > 0).map(([page, icon, label, active, count]) =>
           <button key={page} type="button" onClick={() => changePage(page)} aria-current={active ? "page" : undefined} className={`relative flex min-h-[58px] w-full items-center gap-3 px-5 text-left text-[12px] font-black uppercase tracking-wide transition-colors ${active ? "bg-[#171b20] text-zinc-50 before:absolute before:inset-y-0 before:left-0 before:w-0.5 before:bg-blue-500" : "text-zinc-400 hover:bg-[#171b20] hover:text-zinc-100"}`}><i className={`fa-solid ${icon} w-5 text-center text-[17px] ${active ? "text-zinc-100" : "text-zinc-400"}`} aria-hidden="true" /><span className="truncate">{label}</span>{count > 0 && <span className="ml-auto min-w-5 rounded-full bg-blue-600 px-1.5 py-0.5 text-center text-[8px] text-white">{count}</span>}</button>
         )}</nav>
         {currentUserName && <div className="mx-4 h-[90px] shrink-0 border-t border-[#2a2e34] pb-[env(safe-area-inset-bottom)]"><button type="button" onClick={() => changePage("profile")} aria-current={activePage === "profile" || activePage === "admin" ? "page" : undefined} className={`group relative flex h-full w-full items-center gap-3 text-left transition-colors ${activePage === "profile" || activePage === "admin" ? "before:absolute before:inset-y-5 before:-left-4 before:w-0.5 before:bg-blue-500" : ""}`}><UserAvatar person={appProfile} size="h-8 w-8" /><span className={`min-w-0 flex-1 truncate text-xs font-bold transition-colors group-hover:text-white ${activePage === "profile" || activePage === "admin" ? "text-white" : "text-zinc-300"}`}>{currentUserName}</span>{isAdmin && <span className="rounded-full border border-zinc-700 px-1.5 py-0.5 text-[8px] font-black uppercase tracking-wider text-zinc-500">Admin</span>}<i className={`fa-solid fa-chevron-right text-[9px] transition-[color,transform] group-hover:translate-x-0.5 group-hover:text-blue-400 ${activePage === "profile" || activePage === "admin" ? "text-blue-400" : "text-zinc-500"}`} aria-hidden="true" /></button></div>}

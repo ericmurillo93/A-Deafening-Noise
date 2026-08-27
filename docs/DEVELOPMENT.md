@@ -272,9 +272,24 @@ VITE_SPOTIFY_CLIENT_ID
 
 ### Password recovery
 
+In **Supabase → Authentication → Providers → Email**, keep public email sign-up enabled and require email confirmation. New accounts are created through the login screen and migration `20260825120000_public_user_signup.sql` automatically provisions a normal active profile; never create client-side profile rows or grant elevated roles from sign-up metadata. Add the production and local roots to **Authentication → URL Configuration → Redirect URLs** so confirmation links can return to the application.
+
 In **Supabase → Authentication → Providers → Email**, enable **Secure password change**. In **Authentication → URL Configuration**, use `https://adeafeningnoise.com` as the Site URL. Allow `https://adeafeningnoise.com/**` and the local development roots (for example `http://localhost:5173/**`) as Redirect URLs.
 
 Authenticated password changes use Supabase reauthentication: an email code is required before the new password is accepted. The login screen's **Forgot password?** action sends Supabase's recovery link back to `?password-recovery=1`; the app consumes the recovery session, asks for a new password, then signs out. The browser enforces a shared 60-second cooldown between authentication emails, including across reloads. Keep Supabase Auth responsible for these security flows; for production delivery, configure Resend as Supabase custom SMTP with a dedicated authentication sender instead of building a parallel password-email system or relying on Supabase's limited shared service.
+
+Authentication email source files live in `supabase/templates/` and are generated from the shared brand template with `npm run emails:build`; `npm run emails:check` verifies that the checked-in HTML is current. Local Supabase reads these files through `supabase/config.toml`. Hosted Supabase projects do not deploy email templates with database migrations: copy each corresponding HTML file and subject into **Authentication → Email Templates**, enable the Password changed and Email changed security notifications, and configure Resend under **Authentication → Email → SMTP Settings**:
+
+```text
+Host: smtp.resend.com
+Port: 465
+Username: resend
+Password: a dedicated Resend API key
+Sender name: A Deafening Noise
+Sender email: auth@adeafeningnoise.com
+```
+
+Use a dedicated authentication sender rather than `RESEND_FROM_EMAIL`, which remains the suggestion-digest sender. Configure staging first, test sign-up confirmation, password recovery, reauthentication and both security notifications, then repeat the same dashboard settings in production. Never store the SMTP password or Resend API key in the repository, Netlify browser variables, Supabase tables, or Notion.
 
 The application uses clean History API routes such as `/home`, `/history`, `/calendar`, `/timeline`, `/stats`, `/year-review`, `/artist/:name`, and `/venue/:name`. Authenticated sessions open on the personal `/home` dashboard. Netlify's checked-in SPA fallback serves `index.html` for direct route requests. Legacy hash URLs are converted to their clean equivalent on first load.
 
