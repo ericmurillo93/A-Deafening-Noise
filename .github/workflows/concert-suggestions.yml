@@ -53,6 +53,13 @@ jobs:
         with:
           node-version: 24
 
+      - name: Start operational telemetry
+        continue-on-error: true
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: node scripts/record-discovery-run.mjs running
+
       - name: Download current suggestions
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
@@ -69,7 +76,7 @@ jobs:
       - name: Run concert scrapers
         env:
           TICKETMASTER_API_KEY: ${{ secrets.TICKETMASTER_API_KEY }}
-        run: npm run suggestions:refresh
+        run: node scripts/refresh-concert-suggestions.mjs --report=/tmp/discovery-scrapers.json
 
       - name: Resolve suggestion artwork
         continue-on-error: true
@@ -85,10 +92,18 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           RESEND_FROM_EMAIL: ${{ secrets.RESEND_FROM_EMAIL }}
-        run: node scripts/notify-concert-suggestions.mjs data/suggestions.json
+        run: node scripts/notify-concert-suggestions.mjs data/suggestions.json --report=/tmp/discovery-emails.json
 
       - name: Publish suggestions
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: node scripts/publish-concert-suggestions.mjs data/suggestions.json
+
+      - name: Finish operational telemetry
+        if: always()
+        continue-on-error: true
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: node scripts/record-discovery-run.mjs ${{ job.status == 'success' && 'success' || 'failed' }}

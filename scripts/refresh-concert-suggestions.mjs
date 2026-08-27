@@ -5,6 +5,7 @@ import { spawn } from "node:child_process";
 
 const root = process.cwd();
 const temp = await fs.mkdtemp(path.join(os.tmpdir(), "adn-suggestions-"));
+const reportPath = process.argv.find((argument) => argument.startsWith("--report="))?.slice(9);
 const scrapers = [
   ["resurrection", "scrape-resurrection-route.mjs", "Resurrection Fest Route"],
   ["livenation", "scrape-livenation-events.mjs", "Live Nation Spain"],
@@ -36,18 +37,28 @@ try {
     // A first run has no results to preserve when a source is unavailable.
   }
   const outputs = [];
+  const sources = [];
   for (const [name, script, source] of scrapers) {
     const output = path.join(temp, `${name}.json`);
+    const startedAt = Date.now();
+    let status = "success";
+    let failure = "";
     try {
       await run(script, [`--output=${output}`]);
     } catch (error) {
+      status = "preserved";
+      failure = error.message;
       const preserved = previousSuggestions.filter((item) => item.source === source);
-      await fs.writeFile(output, `${JSON.stringify({ source, preserved: true, suggestions: preserved }, null, 2)}\n`, "utf8");
+      await fs.writeFile(output, `${JSON.stringify({ source, preserved: true, eventsFound: 0, suggestions: preserved }, null, 2)}\n`, "utf8");
       process.stderr.write(`Warning: ${source} could not be refreshed; preserving ${preserved.length} previous suggestions. ${error.message}\n`);
     }
+    const result = JSON.parse(await fs.readFile(output, "utf8"));
+    const eventsFound = result.eventsFound ?? result.listingEventsFound ?? result.coverage?.reduce((sum, item) => sum + Number(item.eventsFound || 0), 0) ?? result.locations?.reduce((sum, item) => sum + Number(item.eventsFound || 0), 0) ?? result.pagesScanned ?? 0;
+    sources.push({ source, status, eventsFound: Number(eventsFound), suggestionsFound: (result.suggestions || []).length, durationMs: Date.now() - startedAt, error: failure });
     outputs.push(output);
   }
   await run("combine-concert-suggestions.mjs", [...outputs, "--output=data/suggestions.json"]);
+  if (reportPath) await fs.writeFile(reportPath, `${JSON.stringify({ sources }, null, 2)}\n`, "utf8");
 } finally {
   await fs.rm(temp, { recursive: true, force: true });
 }

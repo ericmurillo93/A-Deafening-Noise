@@ -24,6 +24,7 @@ The product combines a private concert archive, a personal upcoming calendar, fr
 
 - Users browse and edit the archive on desktop and phones in portrait and landscape.
 - After login, a personal dashboard summarizes the next concert, the current year, upcoming shows, activity, and discovery matches without blocking on a fresh network request.
+- Accounts without concerts see a non-blocking Home activation view: adding the first real concert is primary, while Spotify connection and friend discovery remain optional; the normal dashboard appears automatically after that first save.
 - Past concerts are explored as cards, timeline entries, artist and venue pages, maps, lifetime statistics, and year reviews.
 - Future concerts are managed in a calendar and can be exported or shared through WhatsApp.
 - Friends become mutual after acceptance; selecting a friend on a concert sends an invitation that must be confirmed before it enters their archive.
@@ -41,6 +42,7 @@ The product combines a private concert archive, a personal upcoming calendar, fr
 - Production deploys automatically from GitHub through Netlify. Supabase is canonical; checked-in JSON remains fallback and backup data.
 - Suggestions are restricted to Spain and Switzerland sources, refreshed daily from connected Spotify profiles, and filtered to each user's own artists. Personal Interested and Not Interested states persist immediately without removing entries from the shared discovery catalog.
 - Connected Spotify artist images provide dashboard and suggestion artwork and enrich future-concert details, with the bundled concert-stage image as a fallback where appropriate.
+- Eric's administration panel summarizes account health and recent usage, supports user search and status filtering, and manages roles, blocking, and restoration through protected admin RPCs. Its operational view retains 90 days of discovery-run telemetry, reports source-level scraper health, suggestion volume, email delivery, Spotify reconnections, canonical duplicates, and the measurable Supabase/GitHub/Resend footprint; Netlify credit consumption remains in the provider dashboard because Netlify does not expose that meter through its public API.
 
 ## Brand Commitments
 

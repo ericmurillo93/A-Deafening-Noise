@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import spotifyIcon from "@fortawesome/fontawesome-free/svgs/brands/spotify.svg";
 import stageImage from "../assets/dashboard-concert-stage.jpg";
 import { normalize, parseDate } from "../lib/concerts";
 import { SuggestionDecisionButtons, UserAvatar } from "../components/SharedUi";
@@ -39,7 +40,26 @@ function SectionTitle({ title, action, onAction, showArrow = true }) {
   return <div className="flex h-7 items-center justify-between gap-4"><h2 className="text-xs font-black uppercase tracking-[0.06em] text-zinc-100">{title}</h2>{action && <button type="button" onClick={onAction} className="relative inline-flex h-7 items-center gap-1.5 whitespace-nowrap text-[10px] font-black uppercase tracking-wide text-blue-400 transition-colors after:absolute after:-inset-y-2 hover:text-blue-300">{action}{showArrow && <i className="fa-solid fa-arrow-right" aria-hidden="true" />}</button>}</div>;
 }
 
-export default function HomePage({ profile, concerts, suggestions, artistImages, suggestionReviews, suggestionError, notifications, onAdd, onOpenConcert, onSuggestionInterested, onSuggestionNotInterested, onNavigate, onOpenYearReview, DropdownMenu }) {
+function EmptyArchiveOnboarding({ firstName, spotifyConnected, friendCount, onAdd, onNavigate }) {
+  const steps = [
+    { icon: "fa-ticket", title: "Add your first concert", description: "Start with any show you remember.", complete: false, action: onAdd, label: "Add concert" },
+    { iconSrc: spotifyIcon, title: "Connect Spotify", description: "Get suggestions from artists you listen to.", complete: spotifyConnected, action: () => onNavigate("profile"), label: spotifyConnected ? "Connected" : "Connect" },
+    { icon: "fa-user-group", title: "Find your people", description: "Add friends and share attendance.", complete: friendCount > 0, action: () => onNavigate("friends"), label: friendCount > 0 ? "Friends added" : "Find friends" },
+  ];
+  return <div className="adn-home space-y-5">
+    <header className="pb-2 pt-14 lg:pt-2"><h1 className="text-3xl font-black uppercase leading-none tracking-[0.025em] text-zinc-50 lg:text-[1.75rem]">Welcome, {firstName}</h1><p className="mt-2.5 text-sm text-zinc-500">Your concert archive starts here.</p></header>
+    <div className="grid overflow-hidden rounded-md border border-[#30343a] bg-[#15191e] lg:grid-cols-[1.2fr_0.8fr]">
+      <section className="relative flex min-h-[360px] items-end overflow-hidden p-6 sm:p-8">
+        <img src={stageImage} alt="" className="absolute inset-0 h-full w-full object-cover opacity-55" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/80 to-black/20" />
+        <div className="relative max-w-xl"><h2 className="text-4xl font-black uppercase leading-[0.95] text-white sm:text-5xl">Start with a show you remember</h2><p className="mt-4 max-w-lg text-sm leading-6 text-zinc-300">One concert unlocks your timeline, statistics and year review. Add the artist, venue and date — everything else is optional.</p><button type="button" onClick={onAdd} className="adn-button-primary mt-6 min-h-12 px-6"><i className="fa-solid fa-plus" aria-hidden="true" />Add your first concert</button></div>
+      </section>
+      <section className="p-5 sm:p-7" aria-labelledby="onboarding-steps-title"><h2 id="onboarding-steps-title" className="text-lg font-black uppercase text-zinc-100">Make it yours</h2><p className="mt-2 text-sm leading-6 text-zinc-500">Three useful places to begin. Explore in any order.</p><ol className="mt-5 divide-y divide-[#30343a]">{steps.map((step) => <li key={step.title} className="flex items-center gap-4 py-4"><span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-md border ${step.complete ? "border-emerald-800 bg-emerald-950/40 text-emerald-400" : "border-[#30343a] bg-[#111418] text-blue-400"}`}>{step.iconSrc ? <img src={step.iconSrc} alt="" className="h-4 w-4" style={{ filter: "invert(55%) sepia(79%) saturate(1118%) hue-rotate(98deg) brightness(90%) contrast(86%)" }} /> : <i className={`fa-solid ${step.icon}`} aria-hidden="true" />}</span><span className="min-w-0 flex-1"><strong className="block text-sm font-black text-zinc-100">{step.title}</strong><span className="mt-1 block text-xs leading-5 text-zinc-500">{step.description}</span></span><button type="button" onClick={step.action} className={`min-h-11 shrink-0 px-2 text-xs font-black ${step.complete ? "text-emerald-400" : "text-blue-400 transition-colors hover:text-blue-300"}`}>{step.complete && <i className="fa-solid fa-check mr-1.5" aria-hidden="true" />}{step.label}</button></li>)}</ol></section>
+    </div>
+  </div>;
+}
+
+export default function HomePage({ profile, concerts, suggestions, artistImages, suggestionReviews, suggestionError, notifications, spotifyConnected, friendCount, onAdd, onOpenConcert, onSuggestionInterested, onSuggestionNotInterested, onNavigate, onOpenYearReview, DropdownMenu }) {
   const upcomingRef = useRef(null);
   const [now, setNow] = useState(Date.now());
   useEffect(() => { const timer = window.setInterval(() => setNow(Date.now()), 1000); return () => window.clearInterval(timer); }, []);
@@ -70,6 +90,7 @@ export default function HomePage({ profile, concerts, suggestions, artistImages,
     { icon: "fa-location-dot", value: cities.size, label: "Cities", detail: <><em className="text-blue-400">{newInYear(cities, (concert) => concert.city || concert.venue)}</em> new</> },
     { icon: "fa-globe", value: countries.size, label: "Countries", detail: <><em className="text-blue-400">{newInYear(countries, concertCountry)}</em> new</> },
   ];
+  if (concerts.length === 0) return <EmptyArchiveOnboarding firstName={firstName} spotifyConnected={spotifyConnected} friendCount={friendCount} onAdd={onAdd} onNavigate={onNavigate} />;
   return <div className="adn-home space-y-3">
       <header className="flex flex-col gap-5 pb-2 pt-14 sm:flex-row sm:items-start sm:justify-between lg:h-[71px] lg:pt-2">
         <div><h1 className="text-3xl font-black uppercase leading-none tracking-[0.025em] text-zinc-50 lg:text-[1.75rem]">{greeting()}, {firstName}</h1><p className="mt-2.5 text-sm text-zinc-500">Here&apos;s what&apos;s happening in your concert world.</p></div>

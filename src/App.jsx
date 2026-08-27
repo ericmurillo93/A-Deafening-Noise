@@ -2127,6 +2127,8 @@ export default function App() {
           suggestionReviews={suggestionReviews}
           suggestionError={saveError}
           notifications={notifications}
+          spotifyConnected={spotifyStatus.connected}
+          friendCount={friends.length}
           onAdd={() => { setSaveError(""); setAddInitial(null); setModalOpen(true); }}
           onOpenConcert={(concert) => setCalendarTarget({ ...concert, mode: isPastConcert(concert) ? "history" : "next" })}
           onSuggestionInterested={reviewSuggestionAsInterested}

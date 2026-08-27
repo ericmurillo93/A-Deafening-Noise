@@ -3,6 +3,7 @@ import path from "node:path";
 import { spawn } from "node:child_process";
 import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react";
+import { getAdminProviderStatus } from "./netlify/functions/admin-provider-status.js";
 
 const jsonResponse = (response, status, body) => {
   response.statusCode = status;
@@ -41,6 +42,12 @@ function localNetlifyFunctions(env) {
       server.middlewares.use("/.netlify/functions/suggestion-refresh-status", async (request, response) => {
         if (request.method !== "POST") return jsonResponse(response, 405, "Method not allowed");
         return jsonResponse(response, 200, suggestionRefresh);
+      });
+
+      server.middlewares.use("/.netlify/functions/admin-provider-status", async (request, response) => {
+        if (request.method !== "POST") return jsonResponse(response, 405, "Method not allowed");
+        try { return jsonResponse(response, 200, await getAdminProviderStatus(env)); }
+        catch (error) { return jsonResponse(response, 500, { error: error.message }); }
       });
 
       server.middlewares.use("/.netlify/functions/save-concerts", async (request, response) => {
