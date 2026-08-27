@@ -41,12 +41,15 @@ Keep the project's existing **A Deafening Noise** Notion page current when a cha
 - Optional fields: `setlistId`, friend attendees, guest attendees, and `ticketUrl`.
 - Every user manages their own archive, calendar, Spotify taste profile, and suggestion decisions. Eric alone has the `admin` role and administration access.
 - A concert is a canonical catalog event that several users may independently reference; this never implies that they attended together. `bought`, guest attendees, and invitation status belong to each participant.
+- Canonical events may include typed start/end dates, doors/start times, address/coordinates, promoter, festival/tour, lineup, status, source observations, and metadata freshness. Preserve `concert_artists` and `concert_sources`; never invent ambiguous scraper metadata.
 - Friends are mutual after acceptance. Selecting a friend on a concert sends an invitation; only accepted attendance appears in that person's archive.
+- Invitation states are invited (`pending` internally), interested, confirmed, and declined. Full-archive comparison requires separate, revocable `stats_shares` consent; friendship alone is insufficient.
 - A non-creator can leave a shared concert without deleting it for its creator. Concert details identify the creator and confirmed friends.
 - Profile/account controls include editable public metadata, password recovery, personal-data export, and confirmed account deletion. Eric's admin panel manages roles and blocked access.
 - Artist, venue, and date fields suggest canonical catalog events and fill the remaining fields when selected. Adding the same normalized artist, venue, and date reuses the event without exposing unrelated users to one another.
 - If attendees are empty, do not render the attendee section in concert details.
 - Setlist lookup prefers stored ID, falls back to artist/date, then persists a discovered ID.
+- JSON/CSV/ICS and bounded setlist.fm imports must be previewed and written through the single transactional import RPC, never a browser loop of partial saves.
 
 ## Interaction rules
 
@@ -55,6 +58,7 @@ Keep the project's existing **A Deafening Noise** Notion page current when a cha
 - Right-click/long-press exposes Edit and Delete.
 - Delete always needs confirmation and is not duplicated inside Edit.
 - Browser/phone Back closes the active modal before navigating away.
+- Global search groups only the already-authorised session snapshot; preserve its artist, venue, concert, city, friend, and year navigation and Cmd/Ctrl+K access.
 - Artist and venue detail navigation must preserve meaningful Back behavior across archive, timeline, stats, and nested detail pages.
 - Calendar colors are blue history, green bought future, orange unpurchased future.
 - Keep phone layouts usable in portrait and landscape; do not overlap the top Menu button with sticky controls.

@@ -76,7 +76,17 @@ function localNetlifyFunctions(env) {
         }
 
         try {
-          const { setlistId, artist, date } = await readJsonBody(request);
+          const { setlistId, artist, date, action, userId, pages } = await readJsonBody(request);
+          if (action === "attended") {
+            if (!userId || !/^[\w.-]{1,100}$/.test(userId)) return jsonResponse(response, 400, { error: "Enter a valid setlist.fm username" });
+            const setlists = []; const pageLimit = Math.min(Math.max(Number(pages) || 5, 1), 10);
+            for (let page = 1; page <= pageLimit; page += 1) {
+              const apiResponse = await fetch(`https://api.setlist.fm/rest/1.0/user/${encodeURIComponent(userId)}/attended?p=${page}`, { headers: { "x-api-key": env.SETLIST_API_KEY, Accept: "application/json" } });
+              const result = await apiResponse.json(); if (!apiResponse.ok) return jsonResponse(response, apiResponse.status, result);
+              setlists.push(...(result.setlist || [])); if (setlists.length >= Number(result.total || 0)) break;
+            }
+            return jsonResponse(response, 200, { setlist: setlists });
+          }
           let apiUrl;
           if (setlistId) {
             apiUrl = `https://api.setlist.fm/rest/1.0/setlist/${encodeURIComponent(setlistId)}`;

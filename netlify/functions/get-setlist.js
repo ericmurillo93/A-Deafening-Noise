@@ -4,9 +4,9 @@ export async function handler(event) {
   const auth = await requireArchiveUser(event);
   if (auth.error) return auth.error;
 
-  let setlistId, artist, date;
+  let setlistId, artist, date, action, userId, pages;
   try {
-    ({ setlistId, artist, date } = JSON.parse(event.body));
+    ({ setlistId, artist, date, action, userId, pages } = JSON.parse(event.body));
   } catch {
     return { statusCode: 400, body: "Invalid JSON body" };
   }
@@ -30,6 +30,20 @@ export async function handler(event) {
     headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
     body: typeof body === "string" ? body : JSON.stringify(body),
   });
+
+  if (action === "attended") {
+    if (!userId || !/^[\w.-]{1,100}$/.test(userId)) return respond(400, { error: "Enter a valid setlist.fm username" });
+    const pageLimit = Math.min(Math.max(Number(pages) || 5, 1), 10); const setlists = [];
+    try {
+      for (let page = 1; page <= pageLimit; page += 1) {
+        const res = await fetch(`https://api.setlist.fm/rest/1.0/user/${encodeURIComponent(userId)}/attended?p=${page}`, { headers });
+        if (!res.ok) return respond(res.status, await res.text());
+        const body = await res.json(); setlists.push(...(body.setlist || []));
+        if (setlists.length >= Number(body.total || 0)) break;
+      }
+      return respond(200, { setlist: setlists });
+    } catch (err) { return respond(500, { error: err.message }); }
+  }
 
   // ── Path 1: direct lookup by setlistId ──────────────────────────────────────
   if (setlistId) {

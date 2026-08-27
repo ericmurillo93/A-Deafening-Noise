@@ -11,7 +11,7 @@ import {
   loadConcertData,
   markNotificationsRead,
   removeFriend,
-  respondConcertInvitation,
+  setConcertInvitationStatus,
   respondFriendRequest,
   saveDismissedSuggestions,
   saveSetlistId,
@@ -27,6 +27,7 @@ import { clearAppCache, readAppCache, writeAppCache } from "./lib/app-cache";
 import { readRouteFromLocation, routeToPath } from "./lib/routes";
 import { getMostRecentShowDate, normalize, parseDate, parseShow } from "./lib/concerts";
 import { EmptyState, PanelHeading, UserAvatar } from "./components/SharedUi";
+import GlobalSearch from "./components/GlobalSearch";
 import { restorePageScroll, useDialogFocus, usePageScrollLock } from "./hooks/useUi";
 
 const ProfilePage = React.lazy(() => import("./pages/AccountPages").then(({ ProfilePage: Page }) => ({ default: Page })));
@@ -217,6 +218,9 @@ function updateConcert(items, target, data) {
       ...(data.setlistId?.trim() ? { setlistId: data.setlistId.trim() } : {}),
       attendeeUserIds: data.attendeeUserIds || [],
       guestAttendees: data.guestAttendees || [],
+      doorsAt: data.doorsAt || "", startsAt: data.startsAt || "", address: data.address || "", latitude: data.latitude || "", longitude: data.longitude || "", promoter: data.promoter || "",
+      festival: data.festival || "", tour: data.tour || "", eventStatus: data.eventStatus || "announced", lineup: data.lineup || [{ artist: uppercaseConcertLabel(data.artist.trim()) }],
+      source: data.source || "", sourceEventId: data.sourceEventId || "", sourceUrl: data.sourceUrl || "",
       attendees: data.guestAttendees || [],
       ...(normalizeTicketUrl(data.ticketUrl) ? { ticketUrl: normalizeTicketUrl(data.ticketUrl) } : {}),
     };
@@ -378,6 +382,25 @@ function ConcertCatalogField({ field, value, onChange, onPick, onSearch, placeho
   );
 }
 
+function EventMetadata({ concert }) {
+  const lineup = (concert.lineup || []).slice(1).map((item) => item.artist).filter(Boolean);
+  const rows = [
+    concert.doorsAt && ["Doors", new Date(concert.doorsAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })],
+    concert.startsAt && ["Start", new Date(concert.startsAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })],
+    concert.address && ["Address", concert.address], concert.promoter && ["Promoter", concert.promoter],
+    concert.latitude != null && concert.longitude != null && ["Coordinates", `${concert.latitude}, ${concert.longitude}`],
+    concert.festival && ["Festival", concert.festival], concert.tour && ["Tour", concert.tour],
+    lineup.length && ["Also playing", lineup.join(" · ")],
+    concert.sources?.length && ["Source", concert.sources.map((source) => source.source).join(" · ")],
+    concert.metadataUpdatedAt && ["Last updated", new Date(concert.metadataUpdatedAt).toLocaleDateString("en-GB")],
+  ].filter(Boolean);
+  if (!rows.length && (!concert.eventStatus || concert.eventStatus === "announced")) return null;
+  return <section className="mb-5 border-b border-zinc-900 pb-4">
+    {concert.eventStatus && concert.eventStatus !== "announced" && <span className={`mb-3 inline-flex rounded-md border px-2 py-1 text-[10px] font-black uppercase tracking-wide ${concert.eventStatus === "cancelled" ? "border-red-900 bg-red-950/40 text-red-300" : concert.eventStatus === "sold_out" ? "border-amber-900 bg-amber-950/30 text-amber-300" : "border-blue-900 bg-blue-950/30 text-blue-300"}`}>{concert.eventStatus.replace("_", " ")}</span>}
+    <dl className="grid gap-x-5 gap-y-2 sm:grid-cols-2">{rows.map(([label, value]) => <div key={label} className="min-w-0"><dt className="text-[9px] font-black uppercase tracking-widest text-zinc-600">{label}</dt><dd className="mt-0.5 break-words text-sm font-semibold text-zinc-300">{value}</dd></div>)}</dl>
+  </section>;
+}
+
 // ─── SetlistModal ─────────────────────────────────────────────────────────────
 
 function SetlistModal({ target, onClose, onEdit, onLeave, onIdDiscovered }) {
@@ -425,6 +448,7 @@ function SetlistModal({ target, onClose, onEdit, onLeave, onIdDiscovered }) {
         </div>
 
         <div className="overflow-y-auto flex-1">
+          <EventMetadata concert={target} />
           {target.attendees?.length > 0 && (
             <section className="mb-5 flex items-center gap-3 border-b border-zinc-900 pb-4">
               <div className="flex shrink-0 -space-x-2" aria-hidden="true">
@@ -516,10 +540,30 @@ function FriendAttendeePicker({ friends, selectedIds, lockedIds = [], onChange }
     <details className="group relative">
       <summary className="flex cursor-pointer list-none items-center gap-3 rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-zinc-300 transition hover:border-zinc-600 [&::-webkit-details-marker]:hidden"><i className="fa-solid fa-user-group text-xs text-zinc-600" aria-hidden="true" /><span className="flex-1">{selectedIds.length ? `${selectedIds.length} friend${selectedIds.length === 1 ? "" : "s"} selected` : "Select friends"}</span><i className="fa-solid fa-chevron-down text-[10px] text-zinc-600 transition-transform group-open:rotate-180" aria-hidden="true" /></summary>
       <div className="mt-2 max-h-52 space-y-1 overflow-y-auto rounded-2xl border border-zinc-700 bg-zinc-950 p-2">
-        {friends.length ? friends.map((friend) => <label key={friend.id} className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-zinc-300 ${locked.has(friend.id) ? "cursor-default" : "cursor-pointer hover:bg-zinc-900"}`}><input type="checkbox" checked={selected.has(friend.id)} disabled={locked.has(friend.id)} onChange={() => toggle(friend.id)} className="accent-zinc-100" /><span>{friend.displayName}</span>{locked.has(friend.id) && <span className="text-xs text-emerald-500">Confirmed</span>}<span className="ml-auto text-xs text-zinc-600">@{friend.username}</span></label>) : <p className="px-3 py-2 text-sm text-zinc-600">Add friends from the Friends page first.</p>}
+        {friends.length ? friends.map((friend,index) => <label key={friend.id} className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-zinc-300 ${locked.has(friend.id) ? "cursor-default" : "cursor-pointer hover:bg-zinc-900"}`}><input type="checkbox" checked={selected.has(friend.id)} disabled={locked.has(friend.id)} onChange={() => toggle(friend.id)} className="accent-zinc-100" /><span>{friend.displayName}</span>{locked.has(friend.id) ? <span className="text-xs text-emerald-500">Confirmed</span> : index<2&&friend.concertsTogether>0 ? <span className="text-[10px] font-bold text-blue-400">Often together</span>:null}<span className="ml-auto text-xs text-zinc-600">@{friend.username}</span></label>) : <p className="px-3 py-2 text-sm text-zinc-600">Add friends from the Friends page first.</p>}
       </div>
     </details>
   );
+}
+
+const EMPTY_EVENT_DETAILS = { doorsAt: "", startsAt: "", address: "", latitude: "", longitude: "", promoter: "", festival: "", tour: "", eventStatus: "announced", lineup: "" };
+function EventDetailsFields({ value, onChange, disabled = false }) {
+  const field = (key) => (event) => onChange({ ...value, [key]: event.target.value });
+  return <details className="group rounded-2xl border border-zinc-800 bg-zinc-900">
+    <summary className="flex min-h-12 cursor-pointer list-none items-center gap-3 px-4 text-sm font-bold text-zinc-300 [&::-webkit-details-marker]:hidden"><i className="fa-solid fa-circle-info text-xs text-blue-400" aria-hidden="true" /><span className="flex-1">Event details</span><i className="fa-solid fa-chevron-down text-[10px] text-zinc-600 transition-transform group-open:rotate-180" aria-hidden="true" /></summary>
+    <div className="grid gap-4 border-t border-zinc-800 p-4 sm:grid-cols-2">
+      <label className="text-xs font-bold uppercase tracking-widest text-zinc-500">Doors<input disabled={disabled} type="datetime-local" value={value.doorsAt} onChange={field("doorsAt")} className="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2.5 text-sm text-zinc-100" /></label>
+      <label className="text-xs font-bold uppercase tracking-widest text-zinc-500">Start<input disabled={disabled} type="datetime-local" value={value.startsAt} onChange={field("startsAt")} className="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2.5 text-sm text-zinc-100" /></label>
+      <label className="sm:col-span-2 text-xs font-bold uppercase tracking-widest text-zinc-500">Address<input disabled={disabled} value={value.address} onChange={field("address")} placeholder="Street and number" className="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2.5 text-sm text-zinc-100" /></label>
+      <label className="text-xs font-bold uppercase tracking-widest text-zinc-500">Latitude<input disabled={disabled} type="number" step="any" value={value.latitude} onChange={field("latitude")} placeholder="41.3851" className="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2.5 text-sm text-zinc-100" /></label>
+      <label className="text-xs font-bold uppercase tracking-widest text-zinc-500">Longitude<input disabled={disabled} type="number" step="any" value={value.longitude} onChange={field("longitude")} placeholder="2.1734" className="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2.5 text-sm text-zinc-100" /></label>
+      <label className="text-xs font-bold uppercase tracking-widest text-zinc-500">Promoter<input disabled={disabled} value={value.promoter} onChange={field("promoter")} className="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2.5 text-sm text-zinc-100" /></label>
+      <label className="text-xs font-bold uppercase tracking-widest text-zinc-500">Status<select disabled={disabled} value={value.eventStatus} onChange={field("eventStatus")} className="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2.5 text-sm text-zinc-100"><option value="announced">Announced</option><option value="postponed">Postponed</option><option value="cancelled">Cancelled</option><option value="sold_out">Sold out</option></select></label>
+      <label className="text-xs font-bold uppercase tracking-widest text-zinc-500">Festival<input disabled={disabled} value={value.festival} onChange={field("festival")} className="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2.5 text-sm text-zinc-100" /></label>
+      <label className="text-xs font-bold uppercase tracking-widest text-zinc-500">Tour<input disabled={disabled} value={value.tour} onChange={field("tour")} className="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2.5 text-sm text-zinc-100" /></label>
+      <label className="sm:col-span-2 text-xs font-bold uppercase tracking-widest text-zinc-500">Supporting artists<input disabled={disabled} value={value.lineup} onChange={field("lineup")} placeholder="Comma separated" className="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2.5 text-sm text-zinc-100" /></label>
+    </div>
+  </details>;
 }
 
 function EditConcertModal({ isOpen, mode, initial, onClose, onSave, isSaving, saveError, artistSuggestions = [], venueSuggestions = [], friends = [] }) {
@@ -533,6 +577,7 @@ function EditConcertModal({ isOpen, mode, initial, onClose, onSave, isSaving, sa
   const [attendeeUserIds, setAttendeeUserIds] = useState([]);
   const [guestAttendees, setGuestAttendees] = useState("");
   const [ticketUrl, setTicketUrl] = useState("");
+  const [eventDetails, setEventDetails] = useState(EMPTY_EVENT_DETAILS);
   const [validationError, setValidationError] = useState("");
   const dialogRef = useDialogFocus(isOpen);
 
@@ -548,6 +593,7 @@ function EditConcertModal({ isOpen, mode, initial, onClose, onSave, isSaving, sa
       setAttendeeUserIds((initial.attendeeUsers || []).filter((person) => person.status === "confirmed" || person.status === "pending").map((person) => person.id));
       setGuestAttendees((initial.guestAttendees || []).join(", "));
       setTicketUrl(initial.ticketUrl || "");
+      setEventDetails({ ...EMPTY_EVENT_DETAILS, doorsAt: initial.doorsAt?.slice(0, 16) || "", startsAt: initial.startsAt?.slice(0, 16) || "", address: initial.address || "", latitude: initial.latitude || "", longitude: initial.longitude || "", promoter: initial.promoter || "", festival: initial.festival || "", tour: initial.tour || "", eventStatus: initial.eventStatus || "announced", lineup: (initial.lineup || []).slice(1).map((item) => item.artist).join(", ") });
       setValidationError("");
     }
   }, [isOpen, initial]);
@@ -571,6 +617,8 @@ function EditConcertModal({ isOpen, mode, initial, onClose, onSave, isSaving, sa
       attendeeUserIds,
       guestAttendees: [...new Set(guestAttendees.split(",").map((name) => name.trim()).filter(Boolean))],
       ticketUrl: normalizeTicketUrl(ticketUrl),
+      ...eventDetails,
+      lineup: [artist, ...eventDetails.lineup.split(",").map((name) => uppercaseConcertLabel(name.trim())).filter(Boolean)].map((name) => ({ artist: name })),
     });
   }
 
@@ -590,6 +638,7 @@ function EditConcertModal({ isOpen, mode, initial, onClose, onSave, isSaving, sa
             <span className="mb-2 block text-xs font-bold uppercase tracking-widest text-zinc-500">Artist</span>
             {canEditEvent ? <AutoSuggestField value={artist} onChange={(value) => setArtist(uppercaseConcertLabel(value))} suggestions={artistSuggestions} placeholder="Artist name" /> : <div className="rounded-2xl border border-zinc-800 bg-zinc-900 px-4 py-3 text-zinc-500">{artist}</div>}
           </label>
+          <EventDetailsFields value={eventDetails} onChange={setEventDetails} disabled={!canEditEvent} />
           <div className="grid grid-cols-[minmax(0,1fr)_7rem] gap-3">
             <label className="block"><span className="mb-2 block text-xs font-bold uppercase tracking-widest text-zinc-500">City</span><input value={city} onChange={(event) => setCity(event.target.value)} disabled={!canEditEvent} placeholder="Barcelona" className="w-full rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-zinc-100 outline-none focus:border-zinc-400 disabled:border-zinc-800 disabled:text-zinc-500" /></label>
             <label className="block"><span className="mb-2 block text-xs font-bold uppercase tracking-widest text-zinc-500">Country</span><input value={country} onChange={(event) => setCountry(event.target.value.toUpperCase().slice(0, 2))} disabled={!canEditEvent} placeholder="ES" maxLength="2" className="w-full rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3 uppercase text-zinc-100 outline-none focus:border-zinc-400 disabled:border-zinc-800 disabled:text-zinc-500" /></label>
@@ -643,6 +692,7 @@ function AddConcertModal({ isOpen, initial, onClose, onSave, isSaving, saveError
   const [attendeeUserIds, setAttendeeUserIds] = useState([]);
   const [guestAttendees, setGuestAttendees] = useState("");
   const [ticketUrl, setTicketUrl] = useState("");
+  const [eventDetails, setEventDetails] = useState(EMPTY_EVENT_DETAILS);
   const [validationError, setValidationError] = useState("");
   const dialogRef = useDialogFocus(isOpen);
 
@@ -657,6 +707,7 @@ function AddConcertModal({ isOpen, initial, onClose, onSave, isSaving, saveError
     setAttendeeUserIds((initial?.attendeeUsers || []).map((person) => person.id));
     setGuestAttendees((initial?.guestAttendees || []).join(", "));
     setTicketUrl(initial?.ticketUrl || "");
+    setEventDetails({ ...EMPTY_EVENT_DETAILS, doorsAt: initial?.doorsAt?.slice(0, 16) || "", startsAt: initial?.startsAt?.slice(0, 16) || "", address: initial?.address || "", latitude: initial?.latitude || "", longitude: initial?.longitude || "", promoter: initial?.promoter || "", festival: initial?.festival || "", tour: initial?.tour || "", eventStatus: initial?.eventStatus || "announced", lineup: (initial?.lineup || []).slice(1).map((item) => item.artist).join(", ") });
     setValidationError("");
   }, [isOpen, initial]);
 
@@ -667,7 +718,7 @@ function AddConcertModal({ isOpen, initial, onClose, onSave, isSaving, saveError
     if (!artist.trim() || !date.trim() || !city.trim() || !/^[A-Z]{2}$/i.test(country.trim())) { setValidationError("Add an artist, date, city and two-letter country code before saving."); return; }
     if (isPastDate && !venue.trim()) { setValidationError("Add a venue for this past concert."); return; }
     setValidationError("");
-    onSave({ concertId: initial?.concertId || null, artist, venue, city: city.trim(), country: country.trim().toUpperCase(), date, bought: isPastDate ? true : bought, ticketUrl: isPastDate ? "" : normalizeTicketUrl(ticketUrl), attendeeUserIds, guestAttendees: [...new Set(guestAttendees.split(",").map((name) => name.trim()).filter(Boolean))] });
+    onSave({ concertId: initial?.concertId || null, artist, venue, city: city.trim(), country: country.trim().toUpperCase(), date, bought: isPastDate ? true : bought, ticketUrl: isPastDate ? "" : normalizeTicketUrl(ticketUrl), attendeeUserIds, guestAttendees: [...new Set(guestAttendees.split(",").map((name) => name.trim()).filter(Boolean))], ...eventDetails, lineup: [artist, ...eventDetails.lineup.split(",").map((name) => uppercaseConcertLabel(name.trim())).filter(Boolean)].map((name) => ({ artist: name })) });
   }
 
   function pickCatalogConcert(concert) {
@@ -713,6 +764,7 @@ function AddConcertModal({ isOpen, initial, onClose, onSave, isSaving, saveError
               <input type="url" value={ticketUrl} onChange={(e) => setTicketUrl(e.target.value)} placeholder="https://…" className="w-full rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-zinc-100 outline-none focus:border-zinc-400" />
             </label>
           )}
+          <EventDetailsFields value={eventDetails} onChange={setEventDetails} />
           <label className="block">
             <span className="mb-2 block text-xs font-bold uppercase tracking-widest text-zinc-500">Attended with <span className="normal-case tracking-normal text-zinc-600">(optional)</span></span>
             <FriendAttendeePicker friends={friends} selectedIds={attendeeUserIds} onChange={setAttendeeUserIds} />
@@ -1064,7 +1116,8 @@ function CalendarConcertModal({ target, artistImages, onClose, onEdit }) {
             </div>
           )}
         </div>
-        {!isPast && target.attendeeUsers?.length > 0 && <section className="mt-4 rounded-2xl border border-zinc-800 bg-zinc-950/60 p-4"><p className="mb-3 text-[10px] font-bold uppercase tracking-widest text-zinc-500">Coming with</p><div className="space-y-2">{target.attendeeUsers.map((person) => <div key={person.id} className="flex items-center justify-between gap-3 text-sm"><span className="font-semibold text-zinc-200">{person.displayName}</span><span className={`rounded-full border px-2.5 py-1 text-[10px] font-bold ${person.status === "confirmed" ? "border-emerald-900 bg-emerald-950/40 text-emerald-300" : "border-amber-900 bg-amber-950/40 text-amber-300"}`}>{person.status === "confirmed" ? "Confirmed" : "Pending"}</span></div>)}</div></section>}
+        <div className="mt-4"><EventMetadata concert={target} /></div>
+        {!isPast && target.attendeeUsers?.length > 0 && <section className="mt-4 rounded-2xl border border-zinc-800 bg-zinc-950/60 p-4"><p className="mb-3 text-[10px] font-bold uppercase tracking-widest text-zinc-500">Coming with</p><div className="space-y-2">{target.attendeeUsers.map((person) => { const status = person.status || "pending"; const positive = status === "confirmed"; const negative = status === "declined"; return <div key={person.id} className="flex items-center justify-between gap-3 text-sm"><span className="font-semibold text-zinc-200">{person.displayName}</span><span className={`rounded-full border px-2.5 py-1 text-[10px] font-bold ${positive ? "border-emerald-900 bg-emerald-950/40 text-emerald-300" : negative ? "border-red-900 bg-red-950/40 text-red-300" : "border-amber-900 bg-amber-950/40 text-amber-300"}`}>{status[0].toUpperCase() + status.slice(1)}</span></div>; })}</div></section>}
       </article>
     </div>
   );
@@ -1394,11 +1447,12 @@ function mainNavigationItems(activePage, attentionCount, hasConcerts) {
   ].filter(Boolean);
 }
 
-function DesktopNavigation({ activePage, profile, attentionCount, hasConcerts, onNavigate }) {
+function DesktopNavigation({ activePage, profile, attentionCount, hasConcerts, onNavigate, onSearch }) {
   const items = mainNavigationItems(activePage, attentionCount, hasConcerts);
   return <aside className="adn-desktop-navigation fixed inset-y-0 left-0 z-30 hidden flex-col border-r border-[#20242a] bg-[#0c1015] lg:flex">
     <button type="button" onClick={() => onNavigate("home")} className="h-[121px] border-b border-[#20242a] px-4 text-left"><span className="block whitespace-nowrap text-[15px] font-black uppercase tracking-tight text-zinc-50">A Deafening Noise</span><span className="mt-1 block text-[11px] font-bold uppercase tracking-[0.08em] text-zinc-400">Concert archive</span></button>
-    <nav className="min-h-0 flex-1 space-y-1 overflow-y-auto" aria-label="Main navigation">{items.map(([page, icon, label, active, count]) =>
+    <button type="button" onClick={onSearch} className="mx-3 mt-3 flex min-h-11 items-center gap-3 rounded-md border border-[#30343a] bg-[#111418] px-3 text-xs font-bold text-zinc-400 transition-colors hover:border-zinc-500 hover:text-zinc-100"><i className="fa-solid fa-magnifying-glass" aria-hidden="true" /><span className="flex-1 text-left">Search</span><kbd className="text-[9px] text-zinc-600">⌘K</kbd></button>
+    <nav className="mt-2 min-h-0 flex-1 space-y-1 overflow-y-auto" aria-label="Main navigation">{items.map(([page, icon, label, active, count]) =>
       <button key={page} type="button" onClick={() => onNavigate(page)} aria-current={active ? "page" : undefined} className={`relative flex min-h-[61px] w-full items-center gap-3 px-5 text-left text-[12px] font-black uppercase tracking-wide transition-colors ${active ? "bg-[#171b20] text-zinc-50 before:absolute before:inset-y-0 before:left-0 before:w-0.5 before:bg-blue-500" : "text-zinc-400 hover:bg-[#171b20] hover:text-zinc-100"}`}><i className={`fa-solid ${icon} w-5 text-center text-[17px] ${active ? "text-zinc-100" : "text-zinc-400"}`} aria-hidden="true" /><span className="truncate">{label}</span>{count > 0 && <span className="ml-auto min-w-5 rounded-full bg-blue-600 px-1.5 py-0.5 text-center text-[8px] text-white">{count}</span>}</button>
     )}</nav>
     <div className="mx-4 h-[98px] border-t border-[#2a2e34]"><button type="button" onClick={() => onNavigate("profile")} aria-current={activePage === "profile" || activePage === "admin" ? "page" : undefined} className={`group relative flex h-full w-full items-center gap-3 rounded-lg text-left transition-colors ${activePage === "profile" || activePage === "admin" ? "before:absolute before:inset-y-6 before:-left-4 before:w-0.5 before:bg-blue-500" : ""}`}><UserAvatar person={profile} size="h-8 w-8" /><span className={`min-w-0 flex-1 truncate text-xs font-bold transition-colors group-hover:text-white ${activePage === "profile" || activePage === "admin" ? "text-white" : "text-zinc-300"}`}>{profile?.displayName || profile?.username || "Profile"}</span><i className={`fa-solid fa-chevron-right text-[9px] transition-[color,transform] group-hover:translate-x-0.5 group-hover:text-blue-400 ${activePage === "profile" || activePage === "admin" ? "text-blue-400" : "text-zinc-500"}`} aria-hidden="true" /></button></div>
@@ -1423,6 +1477,7 @@ export default function App() {
   const [selectedVenue, setSelectedVenue] = useState(initialRoute.venue);
   const [selectedReviewYear, setSelectedReviewYear] = useState(initialRoute.year || "");
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [globalSearchOpen, setGlobalSearchOpen] = useState(false);
   const [headerControlsNode, setHeaderControlsNode] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [addInitial, setAddInitial] = useState(null);
@@ -1468,8 +1523,8 @@ export default function App() {
     return () => window.clearTimeout(timeout);
   }, [successMessage]);
   passwordModalModeRef.current = passwordModalMode;
-  const anyDialogOpen = modalOpen || Boolean(editTarget) || Boolean(setlistTarget) || Boolean(calendarTarget) || Boolean(confirmRemoveFriend) || Boolean(confirmAction) || Boolean(passwordModalMode);
-  const anyPageOverlayOpen = sidebarOpen || contextMenu.open || anyDialogOpen;
+  const anyDialogOpen = globalSearchOpen || modalOpen || Boolean(editTarget) || Boolean(setlistTarget) || Boolean(calendarTarget) || Boolean(confirmRemoveFriend) || Boolean(confirmAction) || Boolean(passwordModalMode);
+  const anyPageOverlayOpen = sidebarOpen || globalSearchOpen || contextMenu.open || anyDialogOpen;
   if (anyPageOverlayOpen && !pageOverlayWasOpenRef.current) overlayScrollYRef.current = window.scrollY;
   pageOverlayWasOpenRef.current = anyPageOverlayOpen;
   const currentUserId = session?.user?.id || "";
@@ -1477,6 +1532,14 @@ export default function App() {
   const currentUserName = appProfile?.displayName || "";
   const isAdmin = !supabaseEnabled || appProfile?.role === "admin";
   const canEdit = !supabaseEnabled || Boolean(appProfile);
+
+  useEffect(() => {
+    const openSearch = (event) => {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") { event.preventDefault(); setGlobalSearchOpen(true); }
+    };
+    window.addEventListener("keydown", openSearch);
+    return () => window.removeEventListener("keydown", openSearch);
+  }, []);
 
   const isNext = canEdit && activePage === "next";
   const isHome = activePage === "home";
@@ -1508,6 +1571,7 @@ export default function App() {
   const historyItems = useMemo(() => groupHistoryFromJson(historyConcerts), [historyConcerts]);
   const scopedHistoryConcerts = useMemo(() => statsFriendIds.length ? historyConcerts.filter((concert) => statsFriendIds.every((friendId) => concert.attendeeUsers?.some((person) => person.id === friendId && person.status === "confirmed"))) : historyConcerts, [historyConcerts, statsFriendIds]);
   const scopedHistoryItems = useMemo(() => groupHistoryFromJson(scopedHistoryConcerts), [scopedHistoryConcerts]);
+  const companionFriends = useMemo(() => friends.map((friend) => ({ ...friend, concertsTogether: historyConcerts.filter((concert) => concert.attendeeUsers?.some((person) => person.id === friend.id && person.status === "confirmed")).length })).sort((a,b)=>b.concertsTogether-a.concertsTogether||a.displayName.localeCompare(b.displayName)), [friends,historyConcerts]);
   const nextItems = useMemo(
     () => concertItems.filter((concert) => !isPastConcert(concert)),
     [concertItems]
@@ -1745,6 +1809,7 @@ export default function App() {
         dialogHistoryOpenRef.current = false;
         closingDialogWithBackRef.current = false;
         setModalOpen(false);
+        setGlobalSearchOpen(false);
         setAddInitial(null);
         setEditTarget(null);
         setSetlistTarget(null);
@@ -1936,6 +2001,9 @@ export default function App() {
       bought: pastConcert ? true : Boolean(data.bought),
       attendeeUserIds: data.attendeeUserIds || [],
       guestAttendees: data.guestAttendees || [],
+      doorsAt: data.doorsAt || "", startsAt: data.startsAt || "", address: data.address || "", latitude: data.latitude || "", longitude: data.longitude || "", promoter: data.promoter || "",
+      festival: data.festival || "", tour: data.tour || "", eventStatus: data.eventStatus || "announced", lineup: data.lineup || [{ artist: uppercaseConcertLabel(data.artist.trim()) }],
+      source: data.source || "", sourceEventId: data.sourceEventId || "", sourceUrl: data.sourceUrl || "",
       ...(data.guestAttendees?.length ? { attendees: data.guestAttendees } : {}),
       ...(!pastConcert && normalizeTicketUrl(data.ticketUrl) ? { ticketUrl: normalizeTicketUrl(data.ticketUrl) } : {}),
     };
@@ -2039,7 +2107,7 @@ export default function App() {
   function reviewSuggestionAsInterested(suggestion) {
     if (isSaving || suggestionReviews[suggestion.id]?.decision === "interested") return;
     setSaveError("");
-    void handleAddConcert({ artist: suggestion.artist, venue: suggestion.venue, city: suggestion.city || "", country: suggestion.country || "", date: suggestion.date, bought: false, ticketUrl: suggestion.sourceUrl || "" }, suggestion);
+    void handleAddConcert({ artist: suggestion.artist, venue: suggestion.venue, city: suggestion.city || "", country: suggestion.country || "", date: suggestion.date, bought: false, ticketUrl: suggestion.sourceUrl || "", source: suggestion.source, sourceEventId: suggestion.id, sourceUrl: suggestion.sourceUrl, eventStatus: suggestion.eventStatus || "announced" }, suggestion);
   }
 
   function reviewSuggestionAsNotInterested(suggestion) {
@@ -2092,7 +2160,8 @@ export default function App() {
     {isRefreshing && <span className="sr-only" role="status">Syncing your latest data</span>}
     {syncError && <div className="fixed bottom-4 left-1/2 z-[80] flex max-w-[calc(100vw-2rem)] -translate-x-1/2 items-center gap-3 rounded-full border border-amber-900 bg-zinc-950 px-4 py-2 text-xs font-semibold text-amber-300 shadow-2xl" role="status" aria-live="polite"><span className="whitespace-nowrap">{syncError === "offline" ? "You’re offline · showing saved data" : "Couldn’t refresh · showing saved data"}</span>{syncError === "refresh" && <button type="button" onClick={retrySync} disabled={isRefreshing} className="min-h-11 rounded-full px-2 font-black text-zinc-100 transition-colors hover:bg-zinc-800 disabled:opacity-50">{isRefreshing ? "Retrying…" : "Retry"}</button>}</div>}
     <main className="adn-shell min-h-screen bg-zinc-950 text-zinc-100 md:flex">
-      <DesktopNavigation activePage={activePage} profile={appProfile} attentionCount={friendRequests.filter((request) => request.direction === "incoming").length + concertInvitations.length} hasConcerts={concertItems.length > 0} onNavigate={changePage} />
+      <GlobalSearch open={globalSearchOpen} concerts={concertItems} friends={friends} onClose={() => setGlobalSearchOpen(false)} onArtist={openArtistDetail} onVenue={openVenueDetail} onConcert={openConcertDetails} onCity={(city)=>{setQuery(city);changePage("history");}} onFriends={() => changePage("friends")} onYear={openYearReview} />
+      <DesktopNavigation activePage={activePage} profile={appProfile} attentionCount={friendRequests.filter((request) => request.direction === "incoming").length + concertInvitations.length} hasConcerts={concertItems.length > 0} onNavigate={changePage} onSearch={() => setGlobalSearchOpen(true)} />
       {/* Desktop-only fixed Menu button */}
       <button onClick={() => setSidebarOpen(true)} className="menu-button-desktop fixed left-4 top-4 z-40 h-11 w-11 rounded-md border border-[#30343a] bg-[#111418] text-sm text-zinc-100 shadow-lg transition-colors hover:border-zinc-500 hover:bg-[#171b20] lg:hidden" aria-label="Open menu" aria-expanded={sidebarOpen} aria-controls="main-navigation"><i className="fa-solid fa-bars text-xs" aria-hidden="true" /><span className="menu-button-label">Menu</span></button>
       {/* Touch-device Menu starts at the top of the page and scrolls away with it */}
@@ -2105,10 +2174,11 @@ export default function App() {
           <button onClick={() => changePage("home")} className="min-w-0 text-left" aria-label="Go to dashboard"><span className="block truncate text-[15px] font-black uppercase tracking-tight text-zinc-50">A Deafening Noise</span><span className="mt-1 block text-[11px] font-bold uppercase tracking-[0.08em] text-zinc-400">Concert archive</span></button>
           <button onClick={() => setSidebarOpen(false)} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md text-zinc-400 transition-colors hover:bg-[#171b20] hover:text-zinc-100" aria-label="Close menu"><i className="fa-solid fa-xmark" aria-hidden="true" /></button>
         </div>
-        <nav className="min-h-0 flex-1 overflow-y-auto overscroll-contain" aria-label="Main navigation">{mainNavigationItems(activePage, friendRequests.filter((request) => request.direction === "incoming").length + concertInvitations.length, concertItems.length > 0).map(([page, icon, label, active, count]) =>
+        <button type="button" onClick={() => { setSidebarOpen(false); setGlobalSearchOpen(true); }} className="mx-4 mt-4 flex min-h-12 w-[calc(100%-2rem)] items-center gap-3 rounded-md border border-[#30343a] bg-[#111418] px-4 text-sm font-bold text-zinc-400"><i className="fa-solid fa-magnifying-glass" aria-hidden="true" />Search everything</button>
+        <nav className="mt-2 min-h-0 flex-1 overflow-y-auto overscroll-contain" aria-label="Main navigation">{mainNavigationItems(activePage, friendRequests.filter((request) => request.direction === "incoming").length + concertInvitations.length, concertItems.length > 0).map(([page, icon, label, active, count]) =>
           <button key={page} type="button" onClick={() => changePage(page)} aria-current={active ? "page" : undefined} className={`relative flex min-h-[58px] w-full items-center gap-3 px-5 text-left text-[12px] font-black uppercase tracking-wide transition-colors ${active ? "bg-[#171b20] text-zinc-50 before:absolute before:inset-y-0 before:left-0 before:w-0.5 before:bg-blue-500" : "text-zinc-400 hover:bg-[#171b20] hover:text-zinc-100"}`}><i className={`fa-solid ${icon} w-5 text-center text-[17px] ${active ? "text-zinc-100" : "text-zinc-400"}`} aria-hidden="true" /><span className="truncate">{label}</span>{count > 0 && <span className="ml-auto min-w-5 rounded-full bg-blue-600 px-1.5 py-0.5 text-center text-[8px] text-white">{count}</span>}</button>
         )}</nav>
-        {currentUserName && <div className="mx-4 h-[90px] shrink-0 border-t border-[#2a2e34] pb-[env(safe-area-inset-bottom)]"><button type="button" onClick={() => changePage("profile")} aria-current={activePage === "profile" || activePage === "admin" ? "page" : undefined} className={`group relative flex h-full w-full items-center gap-3 text-left transition-colors ${activePage === "profile" || activePage === "admin" ? "before:absolute before:inset-y-5 before:-left-4 before:w-0.5 before:bg-blue-500" : ""}`}><UserAvatar person={appProfile} size="h-8 w-8" /><span className={`min-w-0 flex-1 truncate text-xs font-bold transition-colors group-hover:text-white ${activePage === "profile" || activePage === "admin" ? "text-white" : "text-zinc-300"}`}>{currentUserName}</span>{isAdmin && <span className="rounded-full border border-zinc-700 px-1.5 py-0.5 text-[8px] font-black uppercase tracking-wider text-zinc-500">Admin</span>}<i className={`fa-solid fa-chevron-right text-[9px] transition-[color,transform] group-hover:translate-x-0.5 group-hover:text-blue-400 ${activePage === "profile" || activePage === "admin" ? "text-blue-400" : "text-zinc-500"}`} aria-hidden="true" /></button></div>}
+        {currentUserName && <div className="mx-4 h-[90px] shrink-0 border-t border-[#2a2e34] pb-[env(safe-area-inset-bottom)]"><button type="button" onClick={() => changePage("profile")} aria-current={activePage === "profile" || activePage === "admin" ? "page" : undefined} className={`group relative flex h-full w-full items-center gap-3 text-left transition-colors ${activePage === "profile" || activePage === "admin" ? "before:absolute before:inset-y-5 before:-left-4 before:w-0.5 before:bg-blue-500" : ""}`}><UserAvatar person={appProfile} size="h-8 w-8" /><span className={`min-w-0 flex-1 truncate text-xs font-bold transition-colors group-hover:text-white ${activePage === "profile" || activePage === "admin" ? "text-white" : "text-zinc-300"}`}>{currentUserName}</span><i className={`fa-solid fa-chevron-right text-[9px] transition-[color,transform] group-hover:translate-x-0.5 group-hover:text-blue-400 ${activePage === "profile" || activePage === "admin" ? "text-blue-400" : "text-zinc-500"}`} aria-hidden="true" /></button></div>}
       </aside>
 
       <section className={`adn-content w-full overflow-x-hidden ${isHome ? "px-4 pb-8 pt-5 lg:pb-10 lg:pl-[51px] lg:pr-[56px] lg:pt-8" : "px-4 pb-8 pt-5 md:px-8 md:py-10 lg:px-[51px] lg:py-8 lg:pr-[56px]"}`}>
@@ -2176,9 +2246,9 @@ export default function App() {
           /></DeferredPage></>
         ) : isSuggestions ? suggestionsPage
         : isAdminPage ? <DeferredPage><AdminPage currentUserId={currentUserId} onChanged={reloadAppData} onConfirm={(confirmation) => { setSaveError(""); setConfirmAction(confirmation); }} /></DeferredPage>
-        : isProfile ? <DeferredPage><ProfilePage profile={appProfile} futureArtists={[...new Set(concertItems.filter((concert) => !isPastConcert(concert)).map((concert) => concert.artist))]} theme={theme} isAdmin={isAdmin} onThemeChange={changeTheme} onAdmin={() => changePage("admin")} onSignOut={() => supabase.auth.signOut()} onSave={async (payload) => { await updateMyProfile(payload); await reloadAppData(); }} onExport={handleProfileExport} onDelete={async () => { await deleteMyAccount(); await supabase.auth.signOut(); }} onPassword={() => setPasswordModalMode("change")} onConfirm={(confirmation) => { setSaveError(""); setConfirmAction(confirmation); }} onSpotifyChanged={reloadAppData} /></DeferredPage>
-        : isActivity ? <DeferredPage><ActivityPage notifications={notifications} onRead={async (ids) => { await markNotificationsRead(ids); await reloadAppData(); }} onOpenFriends={() => changePage("friends")} /></DeferredPage>
-        : isFriends ? <DeferredPage><FriendsPage friends={friends} requests={friendRequests} invitations={concertInvitations} onSearch={searchProfiles} onSendRequest={(userId) => runSocialAction(() => sendFriendRequest(userId))} onRespondRequest={(requestId, accept) => runSocialAction(() => respondFriendRequest(requestId, accept))} onRequestRemoveFriend={(friend) => { setSaveError(""); setConfirmRemoveFriend(friend); }} onRespondInvitation={(concertId, accept, bought) => runSocialAction(() => respondConcertInvitation(concertId, accept, bought))} /></DeferredPage> : isStats ? <>{headerControlsNode && statsScopeControl && createPortal(statsScopeControl, headerControlsNode)}<DeferredPage><StatsPage historyItems={scopedHistoryItems} onOpenArtist={openArtistDetail} onOpenVenue={openVenueDetail} onOpenYearReview={openYearReview} /></DeferredPage></> : (
+        : isProfile ? <DeferredPage><ProfilePage profile={appProfile} futureArtists={[...new Set(concertItems.filter((concert) => !isPastConcert(concert)).map((concert) => concert.artist))]} theme={theme} isAdmin={isAdmin} onThemeChange={changeTheme} onAdmin={() => changePage("admin")} onSignOut={() => supabase.auth.signOut()} onSave={async (payload) => { await updateMyProfile(payload); await reloadAppData(); }} onExport={handleProfileExport} onDelete={async () => { await deleteMyAccount(); await supabase.auth.signOut(); }} onPassword={() => setPasswordModalMode("change")} onConfirm={(confirmation) => { setSaveError(""); setConfirmAction(confirmation); }} onSpotifyChanged={reloadAppData} onImported={reloadAppData} /></DeferredPage>
+        : isActivity ? <DeferredPage><ActivityPage notifications={notifications} onRead={async (ids) => { await markNotificationsRead(ids); await reloadAppData(); }} onOpenFriends={() => changePage("friends")} onNavigate={changePage} onOpenConcert={(item) => { const concert=concertItems.find((candidate)=>candidate.concertId===item.concertId); if(concert) setCalendarTarget({ ...concert, mode:isPastConcert(concert)?"history":"next" }); }} /></DeferredPage>
+        : isFriends ? <DeferredPage><FriendsPage friends={friends} requests={friendRequests} invitations={concertInvitations} onSearch={searchProfiles} onSendRequest={(userId) => runSocialAction(() => sendFriendRequest(userId))} onRespondRequest={(requestId, accept) => runSocialAction(() => respondFriendRequest(requestId, accept))} onRequestRemoveFriend={(friend) => { setSaveError(""); setConfirmRemoveFriend(friend); }} onSetInvitationStatus={(concertId,status,bought) => runSocialAction(() => setConcertInvitationStatus(concertId,status,bought))} /></DeferredPage> : isStats ? <>{headerControlsNode && statsScopeControl && createPortal(statsScopeControl, headerControlsNode)}<DeferredPage><StatsPage historyItems={scopedHistoryItems} historyConcerts={scopedHistoryConcerts} selectedFriends={friends.filter((friend)=>statsFriendIds.includes(friend.id))} onOpenArtist={openArtistDetail} onOpenVenue={openVenueDetail} onOpenYearReview={openYearReview} /></DeferredPage></> : (
           <>
             {headerControlsNode && createPortal(<div className="w-full space-y-2 md:space-y-0">
 
@@ -2293,8 +2363,8 @@ export default function App() {
         finally { setIsSaving(false); }
       }} />
 
-      {canEdit && <AddConcertModal isOpen={modalOpen} initial={addInitial} onClose={() => { setModalOpen(false); setAddInitial(null); }} onSave={handleAddConcert} isSaving={isSaving} saveError={saveError} friends={friends} onSearchCatalog={supabaseEnabled ? searchConcertCatalog : null} />}
-      {canEdit && <EditConcertModal isOpen={!!editTarget} mode={editTarget?.mode || mode} initial={editTarget} onClose={() => setEditTarget(null)} onSave={handleEditConcert} isSaving={isSaving} saveError={saveError} artistSuggestions={artistSuggestions} venueSuggestions={venueSuggestions} friends={friends} />}
+      {canEdit && <AddConcertModal isOpen={modalOpen} initial={addInitial} onClose={() => { setModalOpen(false); setAddInitial(null); }} onSave={handleAddConcert} isSaving={isSaving} saveError={saveError} friends={companionFriends} onSearchCatalog={supabaseEnabled ? searchConcertCatalog : null} />}
+      {canEdit && <EditConcertModal isOpen={!!editTarget} mode={editTarget?.mode || mode} initial={editTarget} onClose={() => setEditTarget(null)} onSave={handleEditConcert} isSaving={isSaving} saveError={saveError} artistSuggestions={artistSuggestions} venueSuggestions={venueSuggestions} friends={companionFriends} />}
       {canEdit && <ContextMenu open={contextMenu.open} x={contextMenu.x} y={contextMenu.y} onEdit={startEditFromContext} onDelete={deleteFromContext} onClose={closeContextMenu} />}
       <SetlistModal
         target={setlistTarget}
