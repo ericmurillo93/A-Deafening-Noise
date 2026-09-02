@@ -2,6 +2,18 @@ export function normalize(value) {
   return String(value).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 }
 
+export function cityKey(city, country = "") {
+  const plain = normalize(city).replace(/[’'`]/g, " ").replace(/[^a-z0-9]+/g, " ").trim();
+  const canonical = /(^| )hospitalet( de llobregat)?$/.test(plain.replace(/^l /, "")) ? "hospitalet de llobregat" : plain;
+  return `${String(country || "").toUpperCase()}|${canonical}`;
+}
+
+export function sameCity(left, right) {
+  const [leftCountry, leftCity] = cityKey(left?.city ?? left, left?.country).split("|");
+  const [rightCountry, rightCity] = cityKey(right?.city ?? right, right?.country).split("|");
+  return leftCity === rightCity && (!leftCountry || !rightCountry || leftCountry === rightCountry);
+}
+
 export function parseDate(date) {
   const match = String(date).match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
   if (!match) return 0;

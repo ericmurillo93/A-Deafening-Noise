@@ -9,7 +9,7 @@ const redirectUri = () => `${window.location.origin}/spotify/callback`;
 const artistKey = (value) => String(value || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, " ").trim();
 
 export async function connectSpotify() {
-  if (!clientId) throw new Error("Spotify is not configured for this environment.");
+  if (!clientId) throw new Error("Spotify connection isn’t available right now.");
   const verifier = random();
   const state = random();
   const challenge = encode(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(verifier)));
@@ -22,7 +22,7 @@ export async function connectSpotify() {
 
 async function spotifyRequest(path, accessToken) {
   const response = await fetch(`https://api.spotify.com/v1${path}`, { headers: { Authorization: `Bearer ${accessToken}` } });
-  if (!response.ok) throw new Error(response.status === 429 ? "Spotify is temporarily rate limiting requests. Try again later." : "Spotify could not return your listening profile.");
+  if (!response.ok) throw new Error(response.status === 429 ? "Spotify is busy right now. Try again later." : "We couldn’t load your Spotify listening profile.");
   return response.json();
 }
 
@@ -32,7 +32,7 @@ async function finish(search, futureArtists) {
   const code = params.get("code");
   const verifier = sessionStorage.getItem(verifierKey);
   const expectedState = sessionStorage.getItem(stateKey);
-  if (!code || !verifier || !expectedState || params.get("state") !== expectedState) throw new Error("Spotify could not verify this connection. Please try again.");
+  if (!code || !verifier || !expectedState || params.get("state") !== expectedState) throw new Error("We couldn’t verify your Spotify connection. Try again.");
 
   const tokenResponse = await fetch("https://accounts.spotify.com/api/token", {
     method: "POST",

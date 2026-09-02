@@ -4,7 +4,7 @@ A private, multi-user concert archive built with React, Vite, Tailwind CSS and S
 
 It provides:
 
-- searchable concert history, artist and venue detail pages;
+- searchable concert history with direct concert, artist, venue, city, country, and year pages;
 - a timeline, lifetime statistics, year reviews, and geographic views;
 - an upcoming-concert calendar with bought and unpurchased states;
 - concert details, attendees, setlist.fm integration, and calendar export;

@@ -33,9 +33,10 @@ let failed = 0;
 const deliveryDate = new Date().toLocaleDateString("sv-SE", { timeZone: "Europe/Berlin" });
 for (const recipient of recipients) {
   const artists = new Set(recipient.artists.map(normalize));
+  const countries = new Set((recipient.countries || []).map((country) => String(country).toUpperCase()));
   const dismissed = new Set(recipient.dismissed);
   const concerts = new Set(recipient.concerts.map((concertKey) => { const split = concertKey.lastIndexOf("|"); return `${normalize(concertKey.slice(0, split))}${concertKey.slice(split)}`; }));
-  const matches = added.filter((suggestion) => artists.has(normalize(suggestion.artist)) && !dismissed.has(key(suggestion)) && !concerts.has(key(suggestion)));
+  const matches = added.filter((suggestion) => artists.has(normalize(suggestion.artist)) && countries.has(String(suggestion.country || "").toUpperCase()) && !dismissed.has(key(suggestion)) && !concerts.has(key(suggestion)));
   if (!matches.length) continue;
   const message = renderSuggestionDigest(recipient.displayName, matches);
   const email = await fetch("https://api.resend.com/emails", {

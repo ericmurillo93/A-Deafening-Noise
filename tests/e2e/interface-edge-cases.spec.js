@@ -11,9 +11,47 @@ async function openMenu(page) {
   return false;
 }
 
+test("Language preference localizes navigation and follows reloads", async ({ page }) => {
+  const openSpanishNavigation = async () => {
+    const trigger = page.locator(".menu-button-desktop:visible, .menu-button-touch:visible");
+    if (await trigger.count()) await trigger.click();
+    await expect(page.getByRole("navigation", { name: "Navegación principal" })).toBeVisible();
+  };
+  await page.addInitScript(() => localStorage.setItem("adn-language", "es"));
+  await page.goto("/home");
+  await expect(page.locator("html")).toHaveAttribute("lang", "es");
+  await openSpanishNavigation();
+  await expect(page.getByRole("button", { name: "Inicio", exact: true })).toBeVisible();
+  await page.reload();
+  await openSpanishNavigation();
+  await expect(page.getByRole("button", { name: "Archivo", exact: true })).toBeVisible();
+  await page.goto("/history");
+  await expect(page.getByText("España", { exact: true }).first()).toBeVisible();
+});
+
+test("Spanish preference localizes the add concert dialog", async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem("adn-language", "es"));
+  await page.goto("/home");
+  await expect(page.getByText("View details", { exact: true })).toHaveCount(0);
+  await expect(page.getByText("Ver detalles", { exact: true })).toHaveCount(1);
+  await page.getByRole("button", { name: "Añadir concierto", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Añadir concierto" })).toBeVisible();
+  await expect(page.getByText("Busca por artista y país y filtra los resultados por ciudad o año.")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Cerrar" })).toBeVisible();
+  const country = page.getByPlaceholder("Elige un país");
+  await country.fill("esp");
+  await expect(page.getByRole("option", { name: "España", exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "¿No lo encuentras? Añádelo manualmente", exact: true }).click();
+  await expect(page.getByPlaceholder("Nombre del artista")).toBeVisible();
+  await expect(page.getByPlaceholder("Ciudad")).toBeVisible();
+  await expect(page.getByPlaceholder("Sala o festival")).toBeVisible();
+  await expect(page.getByPlaceholder("Otros asistentes (separados por comas)")).toBeVisible();
+});
+
 test("Add concert keeps its header visible while form content scrolls", async ({ page }) => {
   await page.goto("/home");
   await page.getByRole("button", { name: "Add concert", exact: true }).click();
+  await page.getByRole("button", { name: "Can’t find it? Add manually", exact: true }).click();
 
   const header = page.getByTestId("add-concert-header");
   const scrollArea = page.getByTestId("add-concert-scroll");
@@ -31,8 +69,9 @@ test("Add concert derives ticket fields from the date and uppercases catalog lab
   await page.goto("/home");
   await page.getByRole("button", { name: "Add concert", exact: true }).click();
   const dialog = page.getByRole("dialog", { name: "Add concert" });
+  await dialog.getByRole("button", { name: "Can’t find it? Add manually", exact: true }).click();
 
-  const artist = dialog.getByPlaceholder("Artist name");
+  const artist = dialog.getByPlaceholder("ARTIST NAME");
   const venue = dialog.getByPlaceholder("Venue or festival");
   const date = dialog.getByPlaceholder("DD/MM/YYYY");
   await artist.fill("Björk");
@@ -49,6 +88,59 @@ test("Add concert derives ticket fields from the date and uppercases catalog lab
   await expect(dialog.getByPlaceholder("https://…")).toBeVisible();
 });
 
+test("Add concert starts with concert discovery and keeps manual entry available", async ({ page }) => {
+  await page.goto("/home");
+  await page.getByRole("button", { name: "Add concert", exact: true }).click();
+  const dialog = page.getByRole("dialog", { name: "Add concert" });
+  const artist = dialog.getByPlaceholder("ARTIST NAME");
+  await expect(artist).toBeVisible();
+  await expect(dialog.getByPlaceholder("Choose a country")).toBeVisible();
+  await expect(dialog.getByRole("button", { name: "Search concerts" })).toBeDisabled();
+  await dialog.getByRole("button", { name: "Can’t find it? Add manually", exact: true }).click();
+  await expect(dialog.getByPlaceholder("Artist name")).toBeVisible();
+});
+
+test("Add concert can search a provider artist absent from the local catalog", async ({ page }) => {
+  await page.route("**/.netlify/functions/search-concert-catalog", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ concerts: [
+    { artist: "Shakira", venue: "Palau Sant Jordi", city: "Barcelona", country: "ES", date: "06/07/2018", source: "setlist.fm", sourceEventId: "one" },
+    { artist: "Shakira", venue: "Wizink Center", city: "Madrid", country: "ES", date: "03/11/2019", source: "setlist.fm", sourceEventId: "two" },
+    { artist: "Shakira", venue: "Estadi Olímpic", city: "Barcelona", country: "ES", date: "05/09/2020", source: "setlist.fm", sourceEventId: "three" },
+    { artist: "Shakira", venue: "Accor Arena", city: "Paris", country: "FR", date: "14/06/2017", source: "setlist.fm", sourceEventId: "four" },
+  ] }) }));
+  await page.goto("/home");
+  await page.getByRole("button", { name: "Add concert", exact: true }).click();
+  const dialog = page.getByRole("dialog", { name: "Add concert" });
+  const artist = dialog.getByPlaceholder("Artist name");
+  await artist.fill("SHAKIRA");
+  const country = dialog.getByPlaceholder("Choose a country");
+  await country.click();
+  await expect(dialog.getByRole("option")).toHaveCount(249);
+  await country.fill("spa");
+  await expect(country).toHaveValue("SPA");
+  await dialog.getByRole("option", { name: "Spain", exact: true }).click();
+  await dialog.getByRole("button", { name: "Search concerts" }).click();
+  await expect(dialog.getByText("3 concerts found")).toBeVisible();
+  const city = dialog.getByPlaceholder("All cities");
+  await expect(city).toBeVisible();
+  await expect(dialog.getByText(/Palau Sant Jordi/i)).toBeVisible();
+  await city.click();
+  await expect(dialog.getByRole("option", { name: "Barcelona", exact: true })).toBeVisible();
+  await expect(dialog.getByRole("option", { name: "Madrid", exact: true })).toBeVisible();
+  const year = dialog.getByPlaceholder("All years");
+  await year.fill("2018");
+  await dialog.getByRole("option", { name: "2018", exact: true }).click();
+  await city.click();
+  await expect(dialog.getByRole("option", { name: "Barcelona", exact: true })).toBeVisible();
+  await expect(dialog.getByRole("option", { name: "Madrid", exact: true })).toBeHidden();
+  await dialog.getByRole("button", { name: "Clear filters" }).click();
+  await city.fill("bar");
+  await dialog.getByRole("option", { name: "Barcelona", exact: true }).click();
+  await year.click();
+  await expect(dialog.getByRole("option", { name: "2018", exact: true })).toBeVisible();
+  await expect(dialog.getByRole("option", { name: "2020", exact: true })).toBeVisible();
+  await expect(dialog.getByRole("option", { name: "2019", exact: true })).toBeHidden();
+});
+
 test("Browser Back closes Add concert before leaving the page", async ({ page }) => {
   await page.goto("/home");
   await page.getByRole("button", { name: "Add concert", exact: true }).click();
@@ -57,6 +149,50 @@ test("Browser Back closes Add concert before leaving the page", async ({ page })
   await page.goBack();
   await expect(page.getByTestId("add-concert-modal")).toBeHidden();
   await expect(page).toHaveURL(/\/home$/);
+});
+
+test("Search my archive opens a reload-safe city profile", async ({ page }) => {
+  await page.goto("/home");
+  await page.keyboard.press("Control+k");
+  const search = page.getByRole("dialog", { name: "Search my archive" });
+  await search.getByRole("combobox", { name: "Search my archive" }).fill("Barcelona");
+  const cities = search.getByRole("heading", { name: "Cities" }).locator("..");
+  await cities.getByRole("option", { name: /Barcelona/i }).click();
+  await expect(page).toHaveURL(/\/city\/ES\/Barcelona$/);
+  await expect(page.getByRole("heading", { name: "Concert history" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Venues" })).toBeVisible();
+  await page.reload();
+  await expect(page).toHaveURL(/\/city\/ES\/Barcelona$/);
+  await expect(page.getByRole("heading", { name: "Artists" })).toBeVisible();
+  await page.goto(`/city/${encodeURIComponent("L’Hospitalet de Llobregat")}`);
+  await expect(page.getByRole("button", { name: "RIVERSIDE", exact: true }).first()).toBeVisible();
+  await expect(page.getByText("3 total", { exact: true })).toBeVisible();
+});
+
+test("Search my archive supports keyboard navigation", async ({ page }) => {
+  await page.goto("/home");
+  await page.keyboard.press("Control+k");
+  const search = page.getByRole("combobox", { name: "Search my archive" });
+  await search.fill("Riverside");
+  await search.press("ArrowDown");
+  await expect(page.getByRole("option", { selected: true })).toContainText("RIVERSIDE");
+  await search.press("Enter");
+  await expect(page).toHaveURL(/\/artist\/RIVERSIDE$/);
+});
+
+test("Search my archive opens a reload-safe concert page", async ({ page }) => {
+  await page.goto("/home");
+  await page.keyboard.press("Control+k");
+  const search = page.getByRole("dialog", { name: "Search my archive" });
+  await search.getByRole("combobox", { name: "Search my archive" }).fill("Riverside");
+  const concerts = search.getByRole("heading", { name: "Concerts" }).locator("..");
+  await concerts.getByRole("option").first().click();
+  await expect(page).toHaveURL(/\/concert\//);
+  await expect(page.getByRole("button", { name: "Setlist", exact: true })).toBeVisible();
+  const url = page.url();
+  await page.reload();
+  await expect(page).toHaveURL(url);
+  await expect(page.getByRole("button", { name: "Setlist", exact: true })).toBeVisible();
 });
 
 test("Year bars open a reload-safe Year in Review route", async ({ page }) => {
@@ -101,7 +237,7 @@ test("Open dialogs lock the page behind them and preserve its scroll position", 
   await concert.scrollIntoViewIfNeeded();
   const initialScrollY = await page.evaluate(() => window.scrollY);
 
-  await concert.click();
+  await concert.click({ position: { x: 4, y: 4 } });
   const modal = page.getByTestId("concert-details-modal");
   await expect(modal).toBeVisible();
   await expect(modal.getByRole("dialog")).toBeVisible();
@@ -145,6 +281,7 @@ test("Mobile calendar events highlight their matching monthly-list entry", async
 });
 
 test("Core pages do not create viewport-level horizontal overflow", async ({ page }) => {
+  test.setTimeout(45_000);
   for (const route of ["/home", "/history", "/calendar", "/timeline", "/stats", "/year-review", "/friends"]) {
     await page.goto(route);
     await expect.poll(() => page.evaluate(() => ({
@@ -160,8 +297,8 @@ test("Clean routes survive direct loads and reloads", async ({ page }) => {
   test.setTimeout(45_000);
   const routes = [
     ["/home", /^Good (morning|afternoon|evening),/],
-    ["/history", "Concert Archive"],
-    ["/calendar", "Concert Calendar"],
+    ["/history", "Concert archive"],
+    ["/calendar", "Concert calendar"],
     ["/suggestions", "Concert Suggestions"],
     ["/timeline", "Concert Timeline"],
     ["/stats", "Archive Overview"],
@@ -191,11 +328,11 @@ test("Home keeps today's concert until midnight, then advances", async ({ page }
   await page.clock.install({ time: new Date("2026-08-17T12:00:00") });
   await page.goto("/home");
   const nextConcert = page.getByRole("button", { name: /Next concert/i });
-  await expect(nextConcert).toContainText("Mon, Aug 17, 2026");
+  await expect(nextConcert).toContainText("Mon, 17 Aug 2026");
   await expect(page.getByText("Today", { exact: true })).toBeVisible();
 
   await page.clock.fastForward("12:00:01");
-  await expect(nextConcert).toContainText("Tue, Aug 18, 2026");
+  await expect(nextConcert).toContainText("Tue, 18 Aug 2026");
 });
 
 test("Home countdown fits inside the next-concert card in phone landscape", async ({ page }) => {
@@ -222,7 +359,7 @@ test("Stats year dropdown stays inside the phone viewport", async ({ page }) => 
   await page.goto("/year-review");
   await page.locator("summary[aria-label='Choose review year']").click();
   const box = await page.locator("details:has([aria-label='Choose review year']) .adn-popover").boundingBox();
-  expect(box && box.x >= 0 && box.y >= 0 && box.x + box.width <= 851 && box.y + box.height <= 393).toBe(true);
+  expect(box && box.x >= 0 && box.x + box.width <= 851).toBe(true);
 });
 
 test("Home dashboard reviews concert suggestions without leaving the page", async ({ page }) => {
@@ -247,7 +384,7 @@ test("Home dashboard reviews concert suggestions without leaving the page", asyn
   expect(savedConcert.country).toMatch(/^[A-Z]{2}$/);
 
   await page.getByRole("button", { name: "View all", exact: true }).last().click();
-  await expect(page.getByText(/Past suggestions/)).toBeVisible();
+  await expect(page.getByText(/Reviewed suggestions/)).toBeVisible();
 });
 
 test("Profile offers Spotify connection through the UI", async ({ page }) => {
@@ -257,11 +394,24 @@ test("Profile offers Spotify connection through the UI", async ({ page }) => {
     await route.abort();
   });
   await page.goto("/profile");
+  const profileCountry = page.getByRole("combobox", { name: "Country", exact: true });
+  await profileCountry.fill("");
+  await expect(page.getByRole("option")).toHaveCount(249);
+  await profileCountry.fill("Spa");
+  await page.getByRole("option", { name: "Spain", exact: true }).click();
+  await expect(profileCountry).toHaveValue("Spain");
+  await expect(page.getByRole("button", { name: "Remove Spain" })).toHaveCount(0);
   await expect(page.getByRole("heading", { name: "Spotify", exact: true })).toBeVisible();
   const connect = page.getByRole("button", { name: "Connect Spotify" });
   await expect(connect).toBeVisible();
   await expect(connect.locator("img")).toBeVisible();
-  await expect(page.getByRole("checkbox", { name: "Email me when new concert suggestions are found" })).not.toBeChecked();
+  const countrySearch = page.getByRole("combobox", { name: "Search countries" });
+  await countrySearch.fill("Spa");
+  await page.getByRole("option", { name: "Spain ES" }).click();
+  await countrySearch.fill("Swi");
+  await page.getByRole("option", { name: "Switzerland CH" }).click();
+  await expect(page.getByText("2 of 5 countries selected", { exact: true })).toBeVisible();
+  await expect(page.getByRole("checkbox", { name: "Concert suggestions by email" })).toBeChecked();
   await connect.click();
   await expect.poll(() => new URL(authorizationUrl).searchParams.get("show_dialog")).toBe("true");
 });

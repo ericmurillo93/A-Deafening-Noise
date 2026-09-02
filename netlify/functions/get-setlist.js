@@ -1,8 +1,19 @@
 import { requireArchiveUser } from "./lib/supabase-auth.js";
+import { createHash } from "node:crypto";
+
+const requestsByUser = new Map();
 
 export async function handler(event) {
+  if (event.httpMethod && event.httpMethod !== "POST") return { statusCode: 405, headers: { Allow: "POST" }, body: "Method not allowed" };
   const auth = await requireArchiveUser(event);
   if (auth.error) return auth.error;
+
+  const now = Date.now();
+  const userKey = createHash("sha256").update(event.headers?.authorization || event.headers?.Authorization || "").digest("hex");
+  const previous = requestsByUser.get(userKey);
+  const usage = !previous || now - previous.startedAt >= 60_000 ? { startedAt: now, count: 1 } : { ...previous, count: previous.count + 1 };
+  requestsByUser.set(userKey, usage);
+  if (usage.count > 60) return { statusCode: 429, headers: { "Content-Type": "application/json" }, body: JSON.stringify({ error: "Too many setlist requests. Try again shortly." }) };
 
   let setlistId, artist, date, action, userId, pages;
   try {
@@ -27,7 +38,7 @@ export async function handler(event) {
 
   const respond = (status, body) => ({
     statusCode: status,
-    headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
+    headers: { "Content-Type": "application/json", "Cache-Control": "private, max-age=300" },
     body: typeof body === "string" ? body : JSON.stringify(body),
   });
 

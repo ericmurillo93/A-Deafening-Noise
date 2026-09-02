@@ -2,11 +2,14 @@ import React, { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { normalize, parseDate, parseShow } from "../lib/concerts";
 import { getSocialComparison } from "../lib/supabase";
+import ConcertHistoryList from "../components/ConcertHistoryList";
+import { useI18n } from "../lib/i18n.jsx";
 
 const GeographicStatsMap = React.lazy(
   () => import("../components/GeographicStats"),
 );
 function GeographicStats(props) {
+  const { t } = useI18n();
   return (
     <React.Suspense
       fallback={
@@ -19,7 +22,7 @@ function GeographicStats(props) {
               className="fa-solid fa-circle-notch animate-spin text-blue-400"
               aria-hidden="true"
             />
-            Opening concert map…
+            {t("Opening concert map…")}
           </span>
         </div>
       }
@@ -30,8 +33,9 @@ function GeographicStats(props) {
 }
 
 function StatsBar({ data, max, accent = "bg-zinc-100", label }) {
+  const { t } = useI18n();
   if (!data.length)
-    return <p className="text-sm text-zinc-500">No data yet.</p>;
+    return <p className="text-sm text-zinc-500">{t("No concert data for this selection.")}</p>;
   return (
     <div className="space-y-3">
       {data.map(([name, value]) => {
@@ -71,8 +75,10 @@ function StatsPage({
   selectedFriends = [],
   onOpenArtist,
   onOpenVenue,
+  onOpenCountry,
   onOpenYearReview,
 }) {
+  const { t } = useI18n();
   const [comparison, setComparison] = useState(null);
   useEffect(() => {
     let active = true;
@@ -146,10 +152,10 @@ function StatsPage({
   }, [historyItems]);
 
   const summaryCards = [
-    { label: "Total artists", value: stats.totalArtists },
-    { label: "Total shows", value: stats.totalShows },
-    { label: "Years active", value: stats.yearsActive },
-    { label: "Avg shows/year", value: stats.avgPerYear },
+    { label: t("Total artists"), value: stats.totalArtists },
+    { label: t("Total shows"), value: stats.totalShows },
+    { label: t("Years active"), value: stats.yearsActive },
+    { label: t("Avg shows/year"), value: stats.avgPerYear },
   ];
   const together = useMemo(() => {
     if (!selectedFriends.length || !geographyShows.length) return null;
@@ -190,7 +196,7 @@ function StatsPage({
           <div>
             <div>
               <p className="text-[10px] font-black uppercase tracking-widest text-blue-400">
-                Together with
+                {t("Together with")}
               </p>
               <h2 className="mt-1 text-xl font-black text-zinc-100">
                 {selectedFriends
@@ -202,20 +208,20 @@ function StatsPage({
           <dl className="mt-5 grid gap-4 border-t border-blue-900/40 pt-4 sm:grid-cols-2 lg:grid-cols-4">
             {[
               [
-                "First concert",
+                t("First concert"),
                 together.first &&
                   `${together.first.artist || ""} ${together.first.date}`,
               ],
               [
-                "Latest concert",
+                t("Last concert"),
                 together.last &&
                   `${together.last.artist || ""} ${together.last.date}`,
               ],
-              ["Most shared city", together.city?.[0]],
+              [t("Most shared city"), together.city?.[0]],
               [
-                "Peak year",
+                t("Peak year"),
                 together.peak &&
-                  `${together.peak[0]} · ${together.peak[1]} concerts`,
+                  `${together.peak[0]} · ${together.peak[1]} ${t(together.peak[1] === 1 ? "concert" : "concerts")}`,
               ],
             ].map(([label, value]) => (
               <div key={label}>
@@ -232,18 +238,18 @@ function StatsPage({
       )}
       {comparison && (
         <section className="rounded-3xl border border-zinc-800 bg-zinc-900 p-5 md:p-6">
-          <p className="text-[10px] font-black uppercase tracking-widest text-blue-400">Consented archive comparison</p>
-          <h2 className="mt-1 text-xl font-black text-zinc-100">You and {selectedFriends[0].displayName}</h2>
+          <p className="text-[10px] font-black uppercase tracking-widest text-blue-400">{t("Stats with friends")}</p>
+          <h2 className="mt-1 text-xl font-black text-zinc-100">{t("You and {name}", { name: selectedFriends[0].displayName })}</h2>
           <div className="mt-5 grid grid-cols-3 divide-x divide-zinc-800 border-y border-zinc-800 py-4 text-center">
-            {[["Your archive",comparison.myConcerts],["Their archive",comparison.friendConcerts],["Same events",comparison.sameEvents]].map(([label,value])=><div key={label}><strong className={`text-2xl ${label==="Same events"?"text-blue-400":"text-white"}`}>{value}</strong><span className="mt-1 block text-[9px] uppercase text-zinc-600">{label}</span></div>)}
+            {[["Your archive",comparison.myConcerts],["Their archive",comparison.friendConcerts],["Concerts in common",comparison.sameEvents]].map(([label,value])=><div key={label}><strong className={`text-2xl ${label==="Concerts in common"?"text-blue-400":"text-white"}`}>{value}</strong><span className="mt-1 block text-[9px] uppercase text-zinc-600">{t(label)}</span></div>)}
           </div>
-          {comparison.sharedArtists?.length>0&&<p className="mt-4 text-sm text-zinc-400"><strong className="text-zinc-200">Artists in both archives:</strong> {comparison.sharedArtists.map((item)=>item.artist).join(" · ")}</p>}
+          {comparison.sharedArtists?.length>0&&<p className="mt-4 text-sm text-zinc-400"><strong className="text-zinc-200">{t("Artists you both saw:")}</strong> {comparison.sharedArtists.map((item)=>item.artist).join(" · ")}</p>}
         </section>
       )}
       <div className="grid gap-3 md:grid-cols-2">
         <div className="rounded-3xl border border-zinc-800 bg-zinc-900 p-6">
           <div className="text-[11px] font-bold uppercase tracking-widest text-zinc-500">
-            Most-seen artist
+            {t("Most-seen artist")}
           </div>
           <button
             onClick={() =>
@@ -255,12 +261,12 @@ function StatsPage({
           </button>
           <div className="mt-1 text-sm text-zinc-400">
             {stats.topArtistShows}{" "}
-            {stats.topArtistShows === 1 ? "show" : "shows"}
+            {t(stats.topArtistShows === 1 ? "show" : "shows")}
           </div>
         </div>
         <div className="rounded-3xl border border-zinc-800 bg-zinc-900 p-6">
           <div className="text-[11px] font-bold uppercase tracking-widest text-zinc-500">
-            Top venue
+            {t("Top venue")}
           </div>
           <button
             onClick={() =>
@@ -271,39 +277,39 @@ function StatsPage({
             {stats.topVenue}
           </button>
           <div className="mt-1 text-sm text-zinc-400">
-            {stats.topVenueShows} {stats.topVenueShows === 1 ? "show" : "shows"}
+            {stats.topVenueShows} {t(stats.topVenueShows === 1 ? "show" : "shows")}
           </div>
         </div>
       </div>
-      <GeographicStats shows={geographyShows} title="Lifetime geography" />
+      <GeographicStats shows={geographyShows} title={t("Lifetime geography")} onOpenCountry={onOpenCountry} />
       <div className="rounded-3xl border border-zinc-800 bg-zinc-900 p-6">
         <h3 className="mb-5 text-lg font-black uppercase tracking-tight text-zinc-100">
-          Top 10 artists
+          {t("Top 10 artists")}
         </h3>
         <StatsBar
           data={stats.topArtists}
           max={stats.maxArtist}
-          label="shows"
+          label={t("shows")}
           accent="bg-zinc-100"
         />
       </div>
       <div className="rounded-3xl border border-zinc-800 bg-zinc-900 p-6">
         <h3 className="mb-5 text-lg font-black uppercase tracking-tight text-zinc-100">
-          Top 10 venues
+          {t("Top 10 venues")}
         </h3>
         <StatsBar
           data={stats.topVenues}
           max={stats.maxVenue}
-          label="shows"
+          label={t("shows")}
           accent="bg-zinc-300"
         />
       </div>
       <div className="rounded-3xl border border-zinc-800 bg-zinc-900 p-6">
         <h3 className="mb-5 text-lg font-black uppercase tracking-tight text-zinc-100">
-          Concerts per year
+          {t("Concerts per year")}
         </h3>
         {stats.years.length === 0 ? (
-          <p className="text-sm text-zinc-500">No data yet.</p>
+          <p className="text-sm text-zinc-500">{t("No concert data for this selection.")}</p>
         ) : (
           <div className="flex items-end gap-2 overflow-x-auto pb-2">
             {stats.years.map(([year, count]) => {
@@ -316,7 +322,7 @@ function StatsPage({
                   key={year}
                   onClick={() => onOpenYearReview(year)}
                   className="group flex min-w-[36px] flex-1 cursor-pointer flex-col items-center gap-2 rounded-xl px-1 py-2 transition hover:bg-zinc-800 focus-visible:bg-zinc-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-600"
-                  aria-label={`Open ${year} year in review: ${count} ${count === 1 ? "concert" : "concerts"}`}
+                  aria-label={t("Open {year} year in review: {count} concerts", { year, count })}
                 >
                   <div className="flex h-44 w-full items-end">
                     <div
@@ -325,7 +331,7 @@ function StatsPage({
                         height: `${count === 0 ? 2 : heightPct}%`,
                         opacity: count === 0 ? 0.15 : 1,
                       }}
-                      title={`${count} ${count === 1 ? "show" : "shows"} in ${year}`}
+                      title={t("{count} shows in {year}", { count, year })}
                     />
                   </div>
                   <div className="text-[10px] font-semibold text-zinc-500 transition group-hover:text-zinc-300">
@@ -348,21 +354,24 @@ export default StatsPage;
 
 export function YearInReviewPage({
   historyItems,
+  historyConcerts = [],
   selectedYear,
   onYearChange,
   onOpenArtist,
   onOpenSetlist,
   onOpenVenue,
+  onOpenCity,
+  onOpenCountry,
   DropdownMenu,
   Icon,
   headerTarget,
 }) {
+  const { t, locale } = useI18n();
   const allShows = useMemo(
-    () =>
-      historyItems.flatMap(({ artist, shows }) =>
-        shows.map((show) => ({ artist, show, ...parseShow(show, "history") })),
-      ),
-    [historyItems],
+    () => historyConcerts.length
+      ? historyConcerts
+      : historyItems.flatMap(({ artist, shows }) => shows.map((show) => ({ artist, show, ...parseShow(show, "history") }))),
+    [historyConcerts, historyItems],
   );
   const years = useMemo(
     () =>
@@ -424,20 +433,6 @@ export function YearInReviewPage({
     const busiestMonth = Object.entries(monthCounts).sort(
       (a, b) => b[1] - a[1] || Number(a[0]) - Number(b[0]),
     )[0];
-    const monthNames = [
-      "Jan",
-      "Feb",
-      "Mar",
-      "Apr",
-      "May",
-      "Jun",
-      "Jul",
-      "Aug",
-      "Sep",
-      "Oct",
-      "Nov",
-      "Dec",
-    ];
     return {
       shows: yearShows,
       uniqueArtists,
@@ -448,7 +443,7 @@ export function YearInReviewPage({
       topVenue: topVenue?.[0] || "—",
       topVenueCount: topVenue?.[1] || 0,
       busiestMonth: busiestMonth
-        ? monthNames[Number(busiestMonth[0]) - 1]
+        ? new Intl.DateTimeFormat(locale, { month: "short" }).format(new Date(2020, Number(busiestMonth[0]) - 1, 1))
         : "—",
       busiestMonthCount: busiestMonth?.[1] || 0,
       previousYear,
@@ -460,22 +455,22 @@ export function YearInReviewPage({
   if (!review)
     return (
       <p className="py-16 text-center text-zinc-500">
-        No yearly concert data yet.
+        {t("No yearly concert data yet.")}
       </p>
     );
 
   const summaryCards = [
-    { label: "Concerts", value: review.shows.length },
-    { label: "Artists", value: review.uniqueArtists.length },
-    { label: "New artists", value: review.newArtists.length },
-    { label: "Returning", value: review.returningArtists.length },
+    { label: t("Concerts"), value: review.shows.length },
+    { label: t("Artists"), value: review.uniqueArtists.length },
+    { label: t("New artists"), value: review.newArtists.length },
+    { label: t("Returning"), value: review.returningArtists.length },
   ];
   const comparisonText =
     review.previousCount === 0
-      ? `No concerts recorded in ${review.previousYear}`
+      ? t("No concerts recorded in {year}", { year: review.previousYear })
       : review.change === 0
-        ? `The same number as ${review.previousYear}`
-        : `${Math.abs(review.change)} ${review.change > 0 ? "more" : "fewer"} than ${review.previousYear}`;
+        ? t("The same number as {year}", { year: review.previousYear })
+        : t(review.change > 0 ? "{count} more than {year}" : "{count} fewer than {year}", { count: Math.abs(review.change), year: review.previousYear });
 
   return (
     <div className="mx-auto max-w-5xl">
@@ -485,7 +480,7 @@ export function YearInReviewPage({
             <DropdownMenu
               value={activeYear}
               onChange={onYearChange}
-              ariaLabel="Choose review year"
+              ariaLabel={t("Choose review year")}
               className="w-40"
               centered
               options={years.map((year) => ({ value: year, label: year }))}
@@ -513,7 +508,7 @@ export function YearInReviewPage({
       <div className="mt-3 grid gap-3 md:grid-cols-3">
         <div className="rounded-3xl border border-zinc-800 bg-zinc-900 p-6">
           <div className="text-[11px] font-bold uppercase tracking-widest text-zinc-500">
-            Top venue
+            {t("Top venue")}
           </div>
           <button
             onClick={() =>
@@ -525,24 +520,24 @@ export function YearInReviewPage({
           </button>
           <div className="mt-1 text-sm text-zinc-400">
             {review.topVenueCount}{" "}
-            {review.topVenueCount === 1 ? "visit" : "visits"}
+            {t(review.topVenueCount === 1 ? "visit" : "visits")}
           </div>
         </div>
         <div className="rounded-3xl border border-zinc-800 bg-zinc-900 p-6">
           <div className="text-[11px] font-bold uppercase tracking-widest text-zinc-500">
-            Busiest month
+            {t("Busiest month")}
           </div>
           <div className="mt-2 text-xl font-black text-zinc-100">
             {review.busiestMonth}
           </div>
           <div className="mt-1 text-sm text-zinc-400">
             {review.busiestMonthCount}{" "}
-            {review.busiestMonthCount === 1 ? "concert" : "concerts"}
+            {t(review.busiestMonthCount === 1 ? "concert" : "concerts")}
           </div>
         </div>
         <div className="rounded-3xl border border-zinc-800 bg-zinc-900 p-6">
           <div className="text-[11px] font-bold uppercase tracking-widest text-zinc-500">
-            Year over year
+            {t("Year over year")}
           </div>
           <div
             className={`mt-2 text-xl font-black ${review.change > 0 ? "text-emerald-400" : review.change < 0 ? "text-amber-400" : "text-zinc-100"}`}
@@ -557,14 +552,15 @@ export function YearInReviewPage({
       <div className="mt-4">
         <GeographicStats
           shows={review.shows}
-          title={`${activeYear} geography`}
+          title={t("{year} geography", { year: activeYear })}
+          onOpenCountry={onOpenCountry}
         />
       </div>
 
       <div className="mt-4 grid gap-3 md:grid-cols-2">
         <div className="rounded-3xl border border-zinc-800 bg-zinc-900 p-6">
           <div className="text-[11px] font-bold uppercase tracking-widest text-zinc-500">
-            The year began with
+            {t("The year began with")}
           </div>
           {review.firstShow && (
             <>
@@ -582,7 +578,7 @@ export function YearInReviewPage({
         </div>
         <div className="rounded-3xl border border-zinc-800 bg-zinc-900 p-6">
           <div className="text-[11px] font-bold uppercase tracking-widest text-zinc-500">
-            The year ended with
+            {t("The year ended with")}
           </div>
           {review.lastShow && (
             <>
@@ -603,53 +599,13 @@ export function YearInReviewPage({
       <section className="mt-6">
         <div className="mb-6 flex items-end justify-between border-b border-zinc-800 pb-4">
           <h2 className="text-2xl font-black uppercase tracking-tight text-zinc-100">
-            The year in concerts
+            {t("The year in concerts")}
           </h2>
           <span className="text-sm text-zinc-500">
-            {review.shows.length} total
+            {t("{count} total", { count: review.shows.length })}
           </span>
         </div>
-        <div className="relative space-y-4 before:absolute before:bottom-6 before:left-[7px] before:top-6 before:w-px before:bg-zinc-800">
-          {review.shows.map(({ artist, show, venue, date, setlistId }) => (
-            <article key={`${artist}-${show}`} className="relative flex gap-4">
-              <span className="relative z-[1] mt-7 h-[15px] w-[15px] shrink-0 rounded-full border-4 border-zinc-950 bg-zinc-500" />
-              <div className="min-w-0 flex-1 rounded-3xl border border-zinc-800 bg-zinc-900 p-5 transition hover:border-zinc-600">
-                <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
-                  <div className="min-w-0">
-                    <button
-                      onClick={() => onOpenArtist(artist)}
-                      className="break-words text-left text-xl font-black uppercase leading-tight text-zinc-100 hover:underline hover:decoration-zinc-600 hover:underline-offset-4"
-                    >
-                      {artist}
-                    </button>
-                    <div className="mt-3 flex gap-2 text-sm font-semibold text-zinc-300">
-                      <Icon type="map" />
-                      <button
-                        onClick={() => onOpenVenue(venue)}
-                        className="break-words text-left hover:underline hover:decoration-zinc-600 hover:underline-offset-4"
-                      >
-                        {venue}
-                      </button>
-                    </div>
-                    <div className="mt-2 flex gap-2 text-sm text-zinc-400">
-                      <Icon type="calendar" />
-                      <span>{date}</span>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() =>
-                      onOpenSetlist({ artist, venue, date, setlistId, show })
-                    }
-                    className="flex shrink-0 items-center gap-2 self-start rounded-full border border-zinc-700 px-4 py-2 text-sm font-semibold text-zinc-400 transition hover:border-zinc-500 hover:text-zinc-100"
-                  >
-                    <Icon type="music" />
-                    Setlist
-                  </button>
-                </div>
-              </div>
-            </article>
-          ))}
-        </div>
+        <ConcertHistoryList concerts={review.shows} showArtist showVenue showCity showCountry onOpenArtist={onOpenArtist} onOpenVenue={onOpenVenue} onOpenCity={onOpenCity} onOpenCountry={onOpenCountry} onOpenConcert={onOpenSetlist} Icon={Icon} />
       </section>
     </div>
   );

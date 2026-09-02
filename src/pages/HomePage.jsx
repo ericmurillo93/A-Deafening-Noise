@@ -2,37 +2,20 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import spotifyIcon from "@fortawesome/fontawesome-free/svgs/brands/spotify.svg";
 import stageImage from "../assets/dashboard-concert-stage.jpg";
 import { normalize, parseDate } from "../lib/concerts";
+import { countryName } from "../lib/countries";
 import { SuggestionDecisionButtons, UserAvatar } from "../components/SharedUi";
-
-const dayFormat = new Intl.DateTimeFormat("en", { day: "2-digit" });
-const monthFormat = new Intl.DateTimeFormat("en", { month: "short" });
-const weekdayFormat = new Intl.DateTimeFormat("en", { weekday: "short" });
-const fullDateFormat = new Intl.DateTimeFormat("en", {
-  weekday: "short",
-  month: "short",
-  day: "numeric",
-  year: "numeric",
-});
-const suggestionDateFormat = new Intl.DateTimeFormat("en", {
-  month: "short",
-  day: "2-digit",
-  year: "numeric",
-});
-const relativeTimeFormat = new Intl.RelativeTimeFormat("en", {
-  numeric: "auto",
-  style: "narrow",
-});
+import { useI18n } from "../lib/i18n.jsx";
 
 function dateOf(concert) {
   return new Date(parseDate(concert.date));
 }
-function greeting() {
+function greeting(t) {
   const hour = new Date().getHours();
   return hour < 12
-    ? "Good morning"
+    ? t("Good morning")
     : hour < 18
-      ? "Good afternoon"
-      : "Good evening";
+      ? t("Good afternoon")
+      : t("Good evening");
 }
 function countdown(concert, now) {
   const remaining = Math.max(0, parseDate(concert.date) - now);
@@ -43,7 +26,7 @@ function countdown(concert, now) {
     Math.floor(remaining / 1_000) % 60,
   ];
 }
-function timeAgo(value, now) {
+function timeAgo(value, now, relativeTimeFormat) {
   const seconds = (new Date(value).getTime() - now) / 1000;
   const [divisor, unit] =
     Math.abs(seconds) < 3600
@@ -55,31 +38,23 @@ function timeAgo(value, now) {
     ? relativeTimeFormat.format(Math.round(seconds / divisor), unit)
     : "";
 }
-function concertCountry(concert) {
-  if (concert.country)
-    return (
-      {
-        ES: "Spain",
-        CH: "Switzerland",
-        FR: "France",
-        GB: "United Kingdom",
-        PT: "Portugal",
-      }[concert.country.toUpperCase()] || concert.country
-    );
+function concertCountry(concert, locale) {
+  if (concert.country) return countryName(concert.country, locale);
   const venue = String(concert.venue || "").toLowerCase();
   if (
     /(zurich|fribourg|geneve|lausanne|docks|montreux|metropole|yverdon|basel|pratteln|bern)/.test(
       venue,
     )
   )
-    return "Switzerland";
-  if (venue.includes("hellfest")) return "France";
-  if (venue.includes("o2 arena")) return "United Kingdom";
-  if (venue.includes("braga")) return "Portugal";
-  return "Spain";
+    return countryName("CH", locale);
+  if (venue.includes("hellfest")) return countryName("FR", locale);
+  if (venue.includes("o2 arena")) return countryName("GB", locale);
+  if (venue.includes("braga")) return countryName("PT", locale);
+  return countryName("ES", locale);
 }
 
 function Status({ bought }) {
+  const { t } = useI18n();
   return (
     <span
       className={`inline-flex items-center gap-1.5 whitespace-nowrap text-[10px] font-black uppercase tracking-wide ${bought ? "text-emerald-400" : "text-amber-400"}`}
@@ -88,7 +63,7 @@ function Status({ bought }) {
         className={`fa-solid ${bought ? "fa-circle-check" : "fa-circle-exclamation"}`}
         aria-hidden="true"
       />
-      {bought ? "Ticket bought" : "Not bought"}
+      {bought ? t("Ticket bought") : t("Ticket not bought")}
     </span>
   );
 }
@@ -118,52 +93,62 @@ function SectionTitle({ title, action, onAction, showArrow = true }) {
 function EmptyArchiveOnboarding({
   firstName,
   spotifyConnected,
+  discoveryCountryCount,
   friendCount,
   onAdd,
   onNavigate,
 }) {
+  const { t } = useI18n();
   const steps = [
     {
       icon: "fa-ticket",
-      title: "Add your first concert",
-      description: "Start with any show you remember.",
+      title: t("Add your first concert"),
+      description: t("Start with any show you remember."),
       complete: false,
       action: onAdd,
-      label: "Add concert",
+      label: t("Add concert"),
     },
     {
       iconSrc: spotifyIcon,
-      title: "Connect Spotify",
-      description: "Get suggestions from artists you listen to.",
+      title: t("Connect Spotify"),
+      description: t("Get suggestions based on what you listen to."),
       complete: spotifyConnected,
       action: () => onNavigate("profile"),
-      label: spotifyConnected ? "Connected" : "Connect",
+      label: spotifyConnected ? t("Connected") : t("Connect"),
+    },
+    {
+      icon: "fa-earth-europe",
+      title: t("Choose discovery countries"),
+      description: t("Tell us where you want to find upcoming shows."),
+      complete: discoveryCountryCount > 0,
+      action: () => onNavigate("profile"),
+      label: discoveryCountryCount > 0 ? t("Countries added") : t("Choose countries"),
     },
     {
       icon: "fa-user-group",
-      title: "Find your people",
-      description: "Add friends and share attendance.",
+      title: t("Find your friends"),
+      description: t("Share concerts and compare memories."),
       complete: friendCount > 0,
       action: () => onNavigate("friends"),
-      label: friendCount > 0 ? "Friends added" : "Find friends",
+      label: friendCount > 0 ? t("Friends added") : t("Find friends"),
     },
     {
       icon: "fa-file-import",
-      title: "Bring an existing archive",
-      description: "Import JSON, CSV, ICS or setlist.fm history.",
+      title: t("Import your concert history"),
+      description: t("Bring your previous concerts from a file or setlist.fm."),
       complete: false,
       action: () => onNavigate("profile"),
-      label: "Import",
+      label: t("Import"),
     },
   ];
   return (
     <div className="adn-home space-y-5">
       <header className="pb-2 pt-14 lg:pt-2">
         <h1 className="text-3xl font-black uppercase leading-none tracking-[0.025em] text-zinc-50 lg:text-[1.75rem]">
-          Welcome, {firstName}
+          {t("Welcome, {name}", { name: firstName })}
         </h1>
         <p className="mt-2.5 text-sm text-zinc-500">
-          Your concert archive starts here.
+          {t("Your concert archive starts here.")}
         </p>
       </header>
       <div className="grid overflow-hidden rounded-md border border-[#30343a] bg-[#15191e] lg:grid-cols-[1.2fr_0.8fr]">
@@ -176,11 +161,10 @@ function EmptyArchiveOnboarding({
           <div className="absolute inset-0 bg-gradient-to-t from-black via-black/80 to-black/20" />
           <div className="relative max-w-xl">
             <h2 className="text-4xl font-black uppercase leading-[0.95] text-white sm:text-5xl">
-              Start with a show you remember
+              {t("Start with a show you remember")}
             </h2>
             <p className="mt-4 max-w-lg text-sm leading-6 text-zinc-300">
-              One concert unlocks your timeline, statistics and year review. Add
-              the artist, venue and date — everything else is optional.
+              {t("One concert unlocks your timeline, statistics and year review. Add the artist, venue and date — everything else is optional.")}
             </p>
             <button
               type="button"
@@ -188,7 +172,7 @@ function EmptyArchiveOnboarding({
               className="adn-button-primary mt-6 min-h-12 px-6"
             >
               <i className="fa-solid fa-plus" aria-hidden="true" />
-              Add your first concert
+              {t("Add your first concert")}
             </button>
           </div>
         </section>
@@ -200,10 +184,10 @@ function EmptyArchiveOnboarding({
             id="onboarding-steps-title"
             className="text-lg font-black uppercase text-zinc-100"
           >
-            Make it yours
+            {t("Make it yours")}
           </h2>
           <p className="mt-2 text-sm leading-6 text-zinc-500">
-          Useful places to begin. Explore in any order.
+            {t("Useful places to begin. Explore in any order.")}
           </p>
           <ol className="mt-5 divide-y divide-[#30343a]">
             {steps.map((step) => (
@@ -273,6 +257,13 @@ export default function HomePage({
   onOpenYearReview,
   DropdownMenu,
 }) {
+  const { locale, t } = useI18n();
+  const dayFormat = useMemo(() => new Intl.DateTimeFormat(locale, { day: "2-digit" }), [locale]);
+  const monthFormat = useMemo(() => new Intl.DateTimeFormat(locale, { month: "short" }), [locale]);
+  const weekdayFormat = useMemo(() => new Intl.DateTimeFormat(locale, { weekday: "short" }), [locale]);
+  const fullDateFormat = useMemo(() => new Intl.DateTimeFormat(locale, { weekday: "short", month: "short", day: "numeric", year: "numeric" }), [locale]);
+  const suggestionDateFormat = useMemo(() => new Intl.DateTimeFormat(locale, { month: "short", day: "2-digit", year: "numeric" }), [locale]);
+  const relativeTimeFormat = useMemo(() => new Intl.RelativeTimeFormat(locale, { numeric: "auto", style: "narrow" }), [locale]);
   const upcomingRef = useRef(null);
   const [now, setNow] = useState(Date.now());
   useEffect(() => {
@@ -349,7 +340,7 @@ export default function HomePage({
     {
       icon: "fa-ticket",
       value: yearConcerts.length,
-      label: "Concerts",
+      label: t("Concerts"),
       detail: (
         <>
           <em className="text-emerald-400">{yearUpcoming}</em> upcoming&nbsp; ·
@@ -361,7 +352,7 @@ export default function HomePage({
     {
       icon: "fa-microphone-lines",
       value: artists.size,
-      label: "Artists",
+      label: t("Artists"),
       detail: (
         <>
           New:{" "}
@@ -374,7 +365,7 @@ export default function HomePage({
     {
       icon: "fa-location-dot",
       value: cities.size,
-      label: "Cities",
+      label: t("Cities"),
       detail: (
         <>
           <em className="text-blue-400">
@@ -387,7 +378,7 @@ export default function HomePage({
     {
       icon: "fa-globe",
       value: countries.size,
-      label: "Countries",
+      label: t("Countries"),
       detail: (
         <>
           <em className="text-blue-400">
@@ -403,6 +394,7 @@ export default function HomePage({
       <EmptyArchiveOnboarding
         firstName={firstName}
         spotifyConnected={spotifyConnected}
+        discoveryCountryCount={profile?.discoveryCountries?.length || 0}
         friendCount={friendCount}
         onAdd={onAdd}
         onNavigate={onNavigate}
@@ -413,10 +405,10 @@ export default function HomePage({
       <header className="flex flex-col gap-5 pb-2 pt-14 sm:flex-row sm:items-start sm:justify-between lg:h-[71px] lg:pt-2">
         <div>
           <h1 className="text-3xl font-black uppercase leading-none tracking-[0.025em] text-zinc-50 lg:text-[1.75rem]">
-            {greeting()}, {firstName}
+            {greeting(t)}, {firstName}
           </h1>
           <p className="mt-2.5 text-sm text-zinc-500">
-            Here&apos;s what&apos;s happening in your concert world.
+            {t("Here’s what’s happening in your concert world.")}
           </p>
         </div>
         <button
@@ -425,7 +417,7 @@ export default function HomePage({
           className="adn-button-primary h-12 px-7 text-sm"
         >
           <i className="fa-solid fa-plus" aria-hidden="true" />
-          Add concert
+          {t("Add concert")}
         </button>
       </header>
 
@@ -449,7 +441,7 @@ export default function HomePage({
             >
               <div className="flex items-start justify-between gap-4">
                 <span className="text-[11px] font-black uppercase tracking-wide text-zinc-200">
-                  Next concert
+                  {t("Next concert")}
                 </span>
                 <Status bought={next.bought} />
               </div>
@@ -462,7 +454,7 @@ export default function HomePage({
                 </p>
                 <p className="mt-1 text-[11px] font-bold uppercase text-zinc-400">
                   {next.city ? `${next.city}, ` : ""}
-                  {concertCountry(next)}
+                  {concertCountry(next, locale)}
                 </p>
                 <p className="mt-3 flex items-center gap-2 text-xs text-zinc-300">
                   <i
@@ -477,10 +469,10 @@ export default function HomePage({
                   {nextIsToday ? (
                     <span>
                       <strong className="block text-2xl font-black uppercase text-blue-400">
-                        Today
+                        {t("Today")}
                       </strong>
                       <span className="text-[9px] font-black uppercase tracking-widest text-zinc-400">
-                        Concert day
+                        {t("Concert day")}
                       </span>
                     </span>
                   ) : (
@@ -490,14 +482,14 @@ export default function HomePage({
                           {String(value).padStart(2, "0")}
                         </strong>
                         <span className="text-[9px] font-black uppercase tracking-widest text-zinc-400">
-                          {["Days", "Hrs", "Mins", "Secs"][index]}
+                          {t(["Days", "Hrs", "Mins", "Secs"][index])}
                         </span>
                       </span>
                     ))
                   )}
                 </div>
                 <span className="inline-flex items-center gap-1.5 rounded-md border border-white/15 bg-black/45 px-4 py-2 text-[10px] font-bold text-zinc-200">
-                  View details{" "}
+                  {t("View details")}{" "}
                   <i className="fa-solid fa-arrow-right" aria-hidden="true" />
                 </span>
               </div>
@@ -505,7 +497,7 @@ export default function HomePage({
           ) : (
             <div className="relative flex min-h-[18rem] flex-col justify-between p-6">
               <span className="text-[11px] font-black uppercase tracking-wide">
-                Next concert
+                {t("Next concert")}
               </span>
               <div>
                 <h2 className="text-4xl font-black uppercase">
@@ -595,8 +587,8 @@ export default function HomePage({
       {upcoming.length > 0 && (
         <section className="relative rounded-md border border-[#30343a] bg-[#15191e] p-3">
           <SectionTitle
-            title="Upcoming"
-            action="View calendar"
+            title={t("Upcoming")}
+            action={t("View calendar")}
             onAction={() => onNavigate("next")}
           />
           <div
@@ -642,7 +634,7 @@ export default function HomePage({
                     </p>
                     <p className="mt-1 truncate text-[9px] uppercase text-zinc-500">
                       {concert.city ? `${concert.city}, ` : ""}
-                      {concertCountry(concert)}
+                      {concertCountry(concert, locale)}
                     </p>
                     <div className="mt-1.5">
                       <Status bought={concert.bought} />
@@ -662,7 +654,7 @@ export default function HomePage({
                 })
               }
               className="absolute -right-3 top-[58%] z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-[#30343a] bg-[#171b20] text-zinc-100 shadow-xl transition hover:border-zinc-500 hover:bg-zinc-800"
-              aria-label="Show more upcoming concerts"
+              aria-label={t("Show more upcoming concerts")}
             >
               <i className="fa-solid fa-arrow-right" aria-hidden="true" />
             </button>
@@ -673,8 +665,8 @@ export default function HomePage({
       <div className="grid gap-4 lg:grid-cols-[608fr_649fr]">
         <section className="min-h-[328px] rounded-md border border-[#30343a] bg-[#15191e] p-3">
           <SectionTitle
-            title="Recent activity"
-            action="View all"
+            title={t("Recent activity")}
+            action={t("View all")}
             onAction={() => onNavigate("activity")}
             showArrow={false}
           />
@@ -745,7 +737,7 @@ export default function HomePage({
                       dateTime={item.createdAt}
                       className="shrink-0 pt-0.5 text-[10px] text-zinc-500 sm:pt-0"
                     >
-                      {timeAgo(item.createdAt, now)}
+                      {timeAgo(item.createdAt, now, relativeTimeFormat)}
                     </time>
                   </button>
                 );
@@ -753,14 +745,14 @@ export default function HomePage({
             </div>
           ) : (
             <p className="py-5 text-sm text-zinc-500">
-              Nothing new. Your invitations and friend updates will appear here.
+              {t("Nothing new. Your invitations and friend updates will appear here.")}
             </p>
           )}
         </section>
         <section className="flex min-h-[328px] flex-col rounded-md border border-[#30343a] bg-[#15191e] p-3">
           <SectionTitle
-            title="New suggestions"
-            action="View all"
+            title={t("New suggestions")}
+            action={t("View all")}
             onAction={() => onNavigate("suggestions")}
             showArrow={false}
           />
@@ -792,7 +784,7 @@ export default function HomePage({
                       {suggestionDateFormat.format(dateOf(suggestion))}{" "}
                       <span className="px-1 text-zinc-700">·</span>{" "}
                       {suggestion.city ? `${suggestion.city}, ` : ""}
-                      {concertCountry(suggestion)}
+                      {concertCountry(suggestion, locale)}
                     </span>
                   </span>
                   <SuggestionDecisionButtons
@@ -805,7 +797,7 @@ export default function HomePage({
               ))}
             </div>
           ) : (
-            <p className="py-5 text-sm text-zinc-500">You&apos;re caught up.</p>
+            <p className="py-5 text-sm text-zinc-500">{t("You’re caught up.")}</p>
           )}
           {suggestionError && (
             <p className="py-2 text-xs font-semibold text-red-300" role="alert">
@@ -818,7 +810,7 @@ export default function HomePage({
               onClick={() => onNavigate("suggestions")}
               className="relative mt-auto flex h-7 items-center gap-1.5 text-[10px] font-black uppercase tracking-wide text-blue-400 after:absolute after:-inset-y-2"
             >
-              More suggestions{" "}
+              {t("More suggestions")}{" "}
               <i className="fa-solid fa-arrow-right" aria-hidden="true" />
             </button>
           )}

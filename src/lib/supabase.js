@@ -32,6 +32,12 @@ async function rpc(name, args = {}) {
 export const upsertMyConcert = (payload) => rpc("upsert_my_concert", { payload });
 export const deleteMyConcert = (concertId) => rpc("delete_my_concert", { target_concert: concertId });
 export const searchConcertCatalog = (field, value) => rpc("search_concert_catalog", { search_field: field, search_value: value });
+const artistNameSearches = new Map();
+export function searchArtistNames(prefix) {
+  const key = prefix.trim().toLocaleLowerCase();
+  if (!artistNameSearches.has(key)) artistNameSearches.set(key, rpc("search_artist_names", { search_prefix: key }).catch((error) => { artistNameSearches.delete(key); throw error; }));
+  return artistNameSearches.get(key);
+}
 export const saveSetlistId = (concertId, setlistId) => rpc("save_setlist_id", { target_concert: concertId, new_setlist_id: setlistId });
 export const saveDismissedSuggestions = (keys) => rpc("save_dismissed_suggestions", { keys });
 export const searchProfiles = (query) => rpc("search_profiles", { search_query: query });
@@ -43,6 +49,10 @@ export const setConcertInvitationStatus = (concertId, status, bought = true) => 
 export const setStatsSharing = (userId, enabled) => rpc("set_stats_sharing", { friend_user: userId, enabled });
 export const getMyStatsShares = () => rpc("get_my_stats_shares");
 export const getSocialComparison = (userId) => rpc("get_social_comparison", { friend_user: userId });
+export const getFriendProfile = (userId) => rpc("get_friend_profile", { friend_user: userId });
+export const getMyBucketList = () => rpc("get_my_bucket_list");
+export const addBucketListArtist = (artist) => rpc("add_bucket_list_artist", { artist_name: artist });
+export const removeBucketListArtist = (id) => rpc("remove_bucket_list_artist", { bucket_artist_id: id });
 export const updateMyProfile = (payload) => rpc("update_my_profile", { payload });
 export async function uploadMyAvatar(file) {
   if (!file || !["image/jpeg", "image/png", "image/webp"].includes(file.type)) throw new Error("Choose a JPG, PNG or WebP image.");

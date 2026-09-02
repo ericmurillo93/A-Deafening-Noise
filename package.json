@@ -19,6 +19,8 @@
     "build": "vite build",
     "preview": "vite preview --host 0.0.0.0",
     "test:unit": "node --test tests/*.test.mjs",
+    "audit:security": "node scripts/audit-supabase-security.mjs",
+    "db:backup": "node scripts/backup-supabase.mjs",
     "test:e2e": "playwright test",
     "test:a11y": "playwright test --config=playwright.a11y.config.js",
     "test:visual": "playwright test --config=playwright.visual.config.js",
@@ -28,6 +30,7 @@
   },
   "dependencies": {
     "@fortawesome/fontawesome-free": "^7.3.1",
+    "@sentry/react": "^10.73.0",
     "@supabase/supabase-js": "^2.110.8",
     "@vitejs/plugin-react": "^6.0.1",
     "react": "^18.3.1",
@@ -42,11 +45,12 @@
     "autoprefixer": "10.4.20",
     "chrome-launcher": "^1.2.1",
     "lighthouse": "^13.4.1",
-    "postcss": "^8.5.14",
+    "postcss": "^8.5.23",
     "supabase": "^2.109.1",
     "tailwindcss": "3.4.17"
   },
   "overrides": {
-    "d3-color": "^3.1.0"
+    "d3-color": "^3.1.0",
+    "nanoid": "^3.3.18"
   }
 }

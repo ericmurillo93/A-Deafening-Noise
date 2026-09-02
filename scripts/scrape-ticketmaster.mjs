@@ -3,7 +3,7 @@ import { context, matchingArtists, suggestion, USER_AGENT, writeResult } from ".
 
 const API_URL = "https://app.ticketmaster.com/discovery/v2/events.json";
 const MUSIC_SEGMENT_ID = "KZFzniwnSyZfZ7v7nJ";
-const COUNTRIES = ["ES", "CH"];
+const COUNTRIES = [...new Set(String(process.env.DISCOVERY_COUNTRIES || "ES,CH").split(",").map((country) => country.trim().toUpperCase()).filter((country) => /^[A-Z]{2}$/.test(country)))];
 const PAGE_SIZE = 200;
 const MONTHS_AHEAD = 36;
 const EXCLUDED_STATUSES = new Set(["cancelled", "canceled", "postponed"]);

@@ -4,6 +4,7 @@ import { spawn } from "node:child_process";
 import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react";
 import { getAdminProviderStatus } from "./netlify/functions/admin-provider-status.js";
+import { searchExternalConcertCatalog } from "./netlify/functions/lib/concert-catalog-providers.js";
 
 const jsonResponse = (response, status, body) => {
   response.statusCode = status;
@@ -23,6 +24,15 @@ function localNetlifyFunctions(env) {
     name: "local-netlify-functions",
     apply: "serve",
     configureServer(server) {
+      server.middlewares.use("/.netlify/functions/search-concert-catalog", async (request, response) => {
+        if (request.method !== "POST") return jsonResponse(response, 405, "Method not allowed");
+        try {
+          return jsonResponse(response, 200, { concerts: await searchExternalConcertCatalog(await readJsonBody(request), env) });
+        } catch (error) {
+          return jsonResponse(response, 400, { error: error.message });
+        }
+      });
+
       server.middlewares.use("/.netlify/functions/refresh-suggestions", async (request, response) => {
         if (request.method !== "POST") return jsonResponse(response, 405, "Method not allowed");
         if (["queued", "in_progress"].includes(suggestionRefresh.status)) {
@@ -129,7 +139,14 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [react(), localNetlifyFunctions(env)],
     build: {
-      sourcemap: false
+      sourcemap: false,
+      rollupOptions: {
+        output: {
+          manualChunks(id) {
+            if (id.includes("node_modules/@supabase/")) return "supabase";
+          },
+        },
+      },
     }
   };
 });

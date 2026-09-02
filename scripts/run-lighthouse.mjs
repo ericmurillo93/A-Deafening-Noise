@@ -50,7 +50,7 @@ try {
   await mkdir(chromeProfile, { recursive: true });
   chrome = await launchChrome({
     chromePath: chromium.executablePath(),
-    chromeFlags: ["--headless", "--no-sandbox", "--disable-dev-shm-usage"],
+    chromeFlags: ["--headless", "--no-sandbox", "--disable-dev-shm-usage", `--user-data-dir=${chromeProfile}`],
     userDataDir: chromeProfile,
   });
 

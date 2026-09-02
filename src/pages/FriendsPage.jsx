@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { EmptyState, PanelHeading } from "../components/SharedUi";
+import { EmptyState, PanelHeading, UserAvatar } from "../components/SharedUi";
 import { getMyStatsShares, setStatsSharing } from "../lib/supabase";
+import { useI18n } from "../lib/i18n.jsx";
 
 export default function FriendsPage({
   friends,
@@ -11,7 +12,9 @@ export default function FriendsPage({
   onRespondRequest,
   onRequestRemoveFriend,
   onSetInvitationStatus,
+  onOpenProfile,
 }) {
+  const { t } = useI18n();
   const [search, setSearch] = useState("");
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -30,8 +33,8 @@ export default function FriendsPage({
     setError("");
     try {
       setResults(await onSearch(search.trim()));
-    } catch (searchError) {
-      setError(searchError.message || "Could not search users.");
+    } catch {
+      setError(t("We couldn’t search for people. Try again."));
     } finally {
       setLoading(false);
     }
@@ -42,8 +45,8 @@ export default function FriendsPage({
     try {
       await action();
       if (search.trim().length >= 2) setResults(await onSearch(search.trim()));
-    } catch (actionError) {
-      setError(actionError.message || "Could not update friends.");
+    } catch {
+      setError(t("We couldn’t update your friends. Try again."));
     }
   }
   async function toggleStats(friend) {
@@ -62,8 +65,8 @@ export default function FriendsPage({
         <section className="rounded-3xl border border-amber-900/60 bg-zinc-900 p-5 md:p-6">
           <PanelHeading
             icon="fa-ticket"
-            title="Concert invitations"
-            description="Choose your ticket status to add the concert to your archive."
+            title={t("Concert invitations")}
+            description={t("Choose whether you’re going and whether you already have a ticket.")}
             count={invitations.length}
           />
           <div className="space-y-3">
@@ -81,7 +84,7 @@ export default function FriendsPage({
                       className="fa-solid fa-location-dot mr-1.5 text-zinc-700"
                       aria-hidden="true"
                     />
-                    {invitation.venue || "Venue not specified"}
+                    {invitation.venue || "Venue to be confirmed"}
                   </p>
                   <p className="mt-1 text-xs text-zinc-600">
                     {invitation.date} · invited by{" "}
@@ -120,7 +123,7 @@ export default function FriendsPage({
                     }
                     className="adn-button-success"
                   >
-                    Going · bought
+                    Going · ticket bought
                   </button>
                   <button
                     onClick={() =>
@@ -134,7 +137,7 @@ export default function FriendsPage({
                     }
                     className="adn-button-warning"
                   >
-                    Going · not bought
+                    Going · no ticket yet
                   </button>
                   <button
                     onClick={() =>
@@ -160,8 +163,8 @@ export default function FriendsPage({
       <section className="rounded-3xl border border-zinc-800 bg-zinc-900 p-5 md:p-7">
         <PanelHeading
           icon="fa-user-plus"
-          title="Find people"
-          description="Search by display name or username."
+          title={t("Find people")}
+          description={t("Search by display name or username.")}
         />
         <form
           onSubmit={submitSearch}
@@ -175,7 +178,7 @@ export default function FriendsPage({
             <input
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              placeholder="Name or username"
+              placeholder={t("Name or username")}
               className="min-w-0 flex-1 bg-transparent text-zinc-100 outline-none placeholder:text-zinc-600"
             />
           </div>
@@ -183,7 +186,7 @@ export default function FriendsPage({
             disabled={loading || search.trim().length < 2}
             className="adn-button-primary"
           >
-            {loading ? "Searching…" : "Search"}
+            {loading ? t("Searching…") : t("Search")}
           </button>
         </form>
         {error && (
@@ -202,9 +205,7 @@ export default function FriendsPage({
                   {person.displayName.slice(0, 1).toUpperCase()}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate font-bold text-zinc-100">
-                    {person.displayName}
-                  </p>
+                  {person.relationship === "accepted" ? <button type="button" onClick={() => onOpenProfile(person)} className="block max-w-full truncate text-left font-bold text-zinc-100 hover:text-blue-400">{person.displayName}</button> : <p className="truncate font-bold text-zinc-100">{person.displayName}</p>}
                   <p className="truncate text-xs text-zinc-600">
                     @{person.username}
                   </p>
@@ -212,18 +213,18 @@ export default function FriendsPage({
                 {person.relationship === "accepted" ? (
                   <span className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-400">
                     <i className="fa-solid fa-check" aria-hidden="true" />
-                    Friends
+                    {t("Friends")}
                   </span>
                 ) : person.relationship === "pending" ? (
                   <span className="text-xs font-bold text-zinc-500">
-                    Pending
+                    {t("Pending")}
                   </span>
                 ) : (
                   <button
                     onClick={() => act(() => onSendRequest(person.id))}
                     className="adn-button-secondary px-4"
                   >
-                    Add
+                    {t("Add friend")}
                   </button>
                 )}
               </div>
@@ -237,8 +238,8 @@ export default function FriendsPage({
         <section className="rounded-3xl border border-zinc-800 bg-zinc-900 p-5 md:p-7">
           <PanelHeading
             icon="fa-user-clock"
-            title="Friend requests"
-            description="Requests waiting for your response."
+            title={t("Friend requests")}
+            description={t("Requests waiting for your response.")}
             count={
               requests.filter((request) => request.direction === "incoming")
                 .length
@@ -265,7 +266,7 @@ export default function FriendsPage({
                       }
                       className="adn-button-primary flex-1"
                     >
-                      Accept
+                      {t("Accept")}
                     </button>
                     <button
                       onClick={() =>
@@ -273,7 +274,7 @@ export default function FriendsPage({
                       }
                       className="adn-button-danger flex-1"
                     >
-                      Decline
+                      {t("Decline")}
                     </button>
                   </div>
                 </div>
@@ -285,8 +286,8 @@ export default function FriendsPage({
         <section className="rounded-3xl border border-zinc-800 bg-zinc-900 p-5 md:p-7">
           <PanelHeading
             icon="fa-paper-plane"
-            title="Sent requests"
-            description="Waiting for the other person to respond."
+            title={t("Sent requests")}
+            description={t("Waiting for the other person to respond.")}
           />
           <div className="flex flex-wrap gap-2">
             {requests
@@ -306,8 +307,8 @@ export default function FriendsPage({
       <section className="rounded-3xl border border-zinc-800 bg-zinc-900 p-5 md:p-7">
         <PanelHeading
           icon="fa-user-group"
-          title="Your friends"
-          description="Friends can be invited when adding or editing a concert."
+          title={t("Your friends")}
+          description={t("Friends can be invited when adding or editing a concert.")}
           count={friends.length}
         />
         {friends.length ? (
@@ -317,23 +318,21 @@ export default function FriendsPage({
                 key={friend.id}
                 className="flex items-center gap-3 rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-4"
               >
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-zinc-800 bg-zinc-900 text-sm font-black text-zinc-400">
-                  {friend.displayName.slice(0, 1).toUpperCase()}
-                </div>
+                <button type="button" onClick={() => onOpenProfile(friend)} className="shrink-0 rounded-full" aria-label={t("Open {name}'s profile", { name: friend.displayName })}><UserAvatar person={friend} /></button>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate font-bold">{friend.displayName}</p>
+                  <button type="button" onClick={() => onOpenProfile(friend)} className="block max-w-full truncate text-left font-bold text-zinc-100 hover:text-blue-400">{friend.displayName}</button>
                   <p className="truncate text-xs text-zinc-600">
                     @{friend.username}
                   </p>
                   <button type="button" onClick={() => toggleStats(friend)} className="mt-1 text-left text-[10px] font-bold text-blue-400 hover:text-blue-300">
-                    {statsShares.find((share) => share.userId === friend.id)?.sharedByMe ? "Archive stats shared · Revoke" : "Share archive stats"}
+                    {t(statsShares.find((share) => share.userId === friend.id)?.sharedByMe ? "Stop sharing my stats" : "Share my stats")}
                   </button>
-                  {statsShares.find((share) => share.userId === friend.id)?.sharedWithMe && <span className="ml-2 text-[10px] font-bold text-emerald-400">Shares with you</span>}
+                  {statsShares.find((share) => share.userId === friend.id)?.sharedWithMe && <span className="ml-2 text-[10px] font-bold text-emerald-400">{t("Shares stats with you")}</span>}
                 </div>
                 <button
                   onClick={() => onRequestRemoveFriend(friend)}
                   className="flex h-8 w-8 items-center justify-center rounded-full text-zinc-700 transition hover:bg-red-950/40 hover:text-red-300"
-                  aria-label={`Remove ${friend.displayName}`}
+                  aria-label={t("Remove {name}", { name: friend.displayName })}
                 >
                   <i
                     className="fa-solid fa-user-minus text-xs"
@@ -346,8 +345,8 @@ export default function FriendsPage({
         ) : (
           <EmptyState
             icon="fa-user-group"
-            title="No friends yet"
-            description="Use the search above to find people you know."
+            title={t("No friends yet")}
+            description={t("Use the search above to find people you know.")}
           />
         )}
       </section>

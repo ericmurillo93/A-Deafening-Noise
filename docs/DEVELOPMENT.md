@@ -57,6 +57,10 @@ user to reconnect.
 
 The publishable key is designed for browser use and is protected by Supabase Auth and RLS. Never put a Supabase secret or `service_role` key in a `VITE_` variable.
 
+`VITE_SENTRY_DSN` is optional. When configured in a hosted build, unexpected
+client errors are sent to Sentry without cookies or profile details. Leave it
+empty locally and in environments where error reporting is not required.
+
 Use a dedicated non-production Supabase project in `.env.local`. The checked-in
 example and CLI configuration deliberately contain no production project
 reference. Netlify keeps its own production URL and publishable key, so changing
@@ -117,6 +121,10 @@ npx supabase link --project-ref your_development_project_reference
 npx supabase db push
 ```
 
+Profile preferences, including appearance, language, notifications and
+discovery countries, live in Supabase so they follow the account across
+devices. English is the fallback language for new accounts.
+
 The link is stored under the ignored `supabase/.temp/` directory and therefore
 remains local to the checkout. Before every remote database command, verify the
 linked target:
@@ -150,6 +158,33 @@ reference before replacing data, verifies that every production user already
 has a matching staging Auth user, and checks row counts after the copy. Never
 commit `.env.staging-sync.local` or place these server-side keys in `VITE_`
 variables.
+
+### Security and recovery checks
+
+The migration audit verifies that every checked-in public table enables row
+level security and that security-definer functions pin an empty search path:
+
+```bash
+npm run audit:security
+```
+
+Create a verified schema-and-data backup before a migration or bulk repair. Use
+a percent-encoded direct Postgres connection string and keep the output outside
+version control:
+
+```bash
+SUPABASE_DB_URL='postgresql://...' npm run db:backup
+```
+
+The command writes `schema.sql`, `data.sql` and a SHA-256 manifest below
+`backups/`. Rehearse recovery only in an empty disposable project: apply the
+schema, then the data, and verify row counts and login flows. Supabase Auth
+identities and Vault secrets require the provider's project recovery process
+and are not part of this application-data dump.
+
+The privacy and terms drafts are served at `/privacy.html` and `/terms.html`.
+They describe the implemented data flows, but require legal review before the
+service is opened beyond the private test group.
 
 Changes made through the local UI become ordinary Git working-tree changes:
 
@@ -293,7 +328,7 @@ Sender email: auth@adeafeningnoise.com
 
 Use a dedicated authentication sender rather than `RESEND_FROM_EMAIL`, which remains the suggestion-digest sender. Configure staging first, test sign-up confirmation, password recovery, reauthentication and both security notifications, then repeat the same dashboard settings in production. Never store the SMTP password or Resend API key in the repository, Netlify browser variables, Supabase tables, or Notion.
 
-The application uses clean History API routes such as `/home`, `/history`, `/calendar`, `/timeline`, `/stats`, `/year-review`, `/artist/:name`, and `/venue/:name`. Authenticated sessions open on the personal `/home` dashboard. Netlify's checked-in SPA fallback serves `index.html` for direct route requests. Legacy hash URLs are converted to their clean equivalent on first load.
+The application uses clean History API routes such as `/home`, `/history`, `/calendar`, `/timeline`, `/stats`, `/year-review/:year`, `/concert/:id`, `/artist/:name`, `/venue/:name`, `/city/:country/:name`, and `/country/:code`. Authenticated sessions open on the personal `/home` dashboard. Netlify's checked-in SPA fallback serves `index.html` for direct route requests. Legacy hash URLs are converted to their clean equivalent on first load.
 
 The checked-in `netlify.toml` defines:
 
@@ -305,7 +340,7 @@ Functions directory: netlify/functions
 
 ## Concert suggestion automation
 
-The workflow `.github/workflows/concert-suggestions.yml` runs daily at 04:23 UTC and can also be started from GitHub's Actions UI. It first refreshes every active Spotify connection, rebuilds the privacy-reduced union artist catalog, and then refreshes Resurrection Fest Route, Live Nation Spain, Madness Live, Sala Razzmatazz, Sala Apolo, Sala Bikini, Paral·lel 62, Palau de la Música Catalana, Les Docks, Montreux Jazz Festival, DICE, Doctor Music, and Ticketmaster listings. Resurrection Route and Live Nation query all available Spanish cities. Ticketmaster uses its official Discovery API for country-wide Spain and Switzerland coverage. DICE queries its supported Spanish and Swiss city locations; venue, festival, and promoter adapters necessarily cover only their own programmes. The non-round cron minute reduces the chance of GitHub scheduling delays.
+The workflow `.github/workflows/concert-suggestions.yml` runs daily at 04:23 UTC and can also be started from GitHub's Actions UI. It first refreshes every active Spotify connection, rebuilds the privacy-reduced union artist catalog, and then refreshes Resurrection Fest Route, Live Nation Spain, Madness Live, Sala Razzmatazz, Sala Apolo, Sala Bikini, Paral·lel 62, Palau de la Música Catalana, Les Docks, Montreux Jazz Festival, DICE, Doctor Music, and Ticketmaster listings. Ticketmaster uses its official Discovery API for the union of countries selected by active profiles; each profile can choose up to five ISO country codes under **Profile → Concert discovery**. The other adapters retain the geographic reach of their own source. The non-round cron minute reduces the chance of GitHub scheduling delays.
 
 Configure these GitHub Actions repository secrets:
 
@@ -351,14 +386,14 @@ The importer writes `data/listened-artists.json`. It ignores plays shorter than 
 
 ### Spotify account connection
 
-Users connect Spotify from **Profile** using OAuth Authorization Code with PKCE and the single `user-top-read` scope. Configure these exact redirect URIs in the Spotify Developer Dashboard:
+Spotify is optional. Suggestion affinity also comes from each user's confirmed archive and bucket list, so accounts without Spotify still receive relevant discovery. Users who want current listening taste can connect Spotify from **Profile** using OAuth Authorization Code with PKCE and the single `user-top-read` scope. Configure these exact redirect URIs in the Spotify Developer Dashboard:
 
 ```text
 https://adeafeningnoise.com/spotify/callback
 http://127.0.0.1:5173/spotify/callback
 ```
 
-Set `VITE_SPOTIFY_CLIENT_ID` locally and in Netlify. The Client ID is public configuration; no Spotify Client Secret is used. The browser fetches up to 50 top artists for short-, medium-, and long-term affinity, sends artist IDs, names, Spotify-hosted image URLs, matching ranges, and the refresh token to an authenticated Supabase RPC, then discards the access token. Artists attached to future concerts but absent from Top Artists are looked up by exact normalized name and stored in a separate per-user artwork catalog, so artwork never expands suggestion affinity. The same image metadata is refreshed by the daily workflow and supplies dashboard, future-concert, and suggestion artwork, with the bundled stage image as fallback. Supabase Vault stores the refresh token encrypted and exposes it only to the service-role workflow. Tracks and raw listening history are never stored. Development Mode users must still be added once to Spotify's allowlist; Spotify does not provide an API for bypassing that platform restriction.
+Set `VITE_SPOTIFY_CLIENT_ID` locally and in Netlify. The Client ID is public configuration; no Spotify Client Secret is used. The browser fetches up to 50 top artists for short-, medium-, and long-term affinity, sends artist IDs, names, Spotify-hosted image URLs, matching ranges, and the refresh token to an authenticated Supabase RPC, then discards the access token. Artists attached to future concerts but absent from Top Artists are looked up by exact normalized name and stored in a separate per-user artwork catalog, so artwork never expands suggestion affinity. The same image metadata is refreshed by the daily workflow and supplies dashboard, future-concert, and suggestion artwork, with the bundled stage image as fallback. Supabase Vault stores the refresh token encrypted and exposes it only to the service-role workflow. Tracks and raw listening history are never stored. Spotify Development Mode currently allows only five explicitly allowlisted users and requires the app owner to have Premium; this is a Spotify platform limit, not an application limit. Do not make Spotify a registration dependency.
 
 Users control web and email delivery separately for social activity, concert changes, ticket changes, suggestions, and Spotify connection warnings. The daily workflow compares the previous Supabase catalog with the refreshed runtime snapshot, applies each recipient's Spotify artists, archive, and dismissals, and sends only genuinely new matches through Resend. Every recipient receives at most one responsive suggestion digest per day containing all of that day's matches; a per-user/day Resend idempotency key prevents retries or manual reruns from duplicating delivery. Other activity is queued in `notification_email_outbox`, delivered by the same daily workflow with per-notification idempotency, and rechecks the current preference and account status immediately before sending. The email links to the relevant page and exposes Profile preferences.
 
@@ -392,7 +427,7 @@ gh auth setup-git
 
 ## Data model
 
-Supabase is the production source of truth. The normalized model uses `profiles`, canonical `concerts`, per-user `concert_participants`, mutual `friendships`, durable `notifications`, per-user `user_dismissed_suggestions`, the atomic `concert_suggestion_catalog`, and encrypted Spotify connections. Each authenticated user manages their own archive, calendar, Spotify taste profile, and suggestions; Eric's `admin` role additionally grants user administration. Profiles include a display name, optional avatar URL and location, discoverability, email-notification and theme preferences, role, and account status. The theme is also cached locally so it can be applied before React renders. `data/concerts.json` remains Eric's compatible local fallback and GitHub backup:
+Supabase is the production source of truth. The normalized model uses `profiles`, canonical `concerts`, per-user `concert_participants`, mutual `friendships`, durable `notifications`, per-user `bucket_list_artists` and `user_dismissed_suggestions`, the atomic `concert_suggestion_catalog`, and encrypted Spotify connections. Each authenticated user manages their own archive, calendar, Spotify taste profile, suggestions, and bucket list; Eric's `admin` role additionally grants user administration. Profiles include a display name, optional avatar URL and location, discoverability, section-level friend-profile visibility, email-notification and theme preferences, role, and account status. The theme is also cached locally so it can be applied before React renders. `data/concerts.json` remains Eric's compatible local fallback and GitHub backup:
 
 ```json
 {
@@ -416,13 +451,17 @@ Classification rules:
 
 Concert identity is canonical: artist, venue, and date inputs search the complete event catalog and selecting a suggestion fills the other fields. The unique normalized artist/venue/date key and a transaction-scoped lock make concurrent additions reuse one event. A canonical event can also store typed start/end dates, doors/start times, address and coordinates, promoter, festival, tour, lineup, status, source observations, and metadata freshness. Source observations live in `concert_sources`; billed artists live in `concert_artists`. Ambiguous scraper data remains empty rather than inferred. Reusing an event never means its users attended together and never exposes unrelated attendees. Ticket state and guest attendees remain personal.
 
+Add Concert uses federated, on-demand catalog discovery. The user enters an artist, chooses a country from the local ISO autocomplete, and explicitly starts the search; typing never calls an external provider. The authenticated `search-concert-catalog` Netlify function then searches Supabase plus setlist.fm historical matches and Ticketmaster future matches while keeping provider keys server-only. Country-backed setlist.fm pagination runs sequentially and is bounded to ten pages (200 concerts), avoiding burst rejection and protecting the shared free quota. City and year are bidirectional local facets over that stable result set: either filter constrains the other's options without another provider call. Artist, venue and city are presented consistently in uppercase. External results are never bulk-copied: selecting and saving one result creates or reuses the canonical concert and records its source. Searching never writes repository data or creates GitHub commits. This keeps the shared catalog relevant, bounded and user-centred. setlist.fm-derived data must retain its attribution URL and remains subject to setlist.fm's non-commercial API terms.
+
 Selecting an accepted friend sends an invitation with invited, interested, confirmed, or declined states. Only confirmed attendance enters the friend's archive. Users can leave a shared concert without changing the creator's copy. Sharing full-archive comparison statistics is a separate, revocable consent in `stats_shares`; friendship alone is never sufficient.
+
+Accepted friends have direct `/people/:username` profiles. `get_friend_profile()` checks the friendship server-side and applies the owner's independent visibility choices for summary statistics, latest concert, next concert, and bucket list. Bucket-list completion is computed from confirmed, bought past attendance, including billed support artists, instead of storing a manually editable completion flag.
 
 Profile supports transactional JSON, CSV and ICS imports plus a bounded setlist.fm attended-history import. Every import is previewed and validated before one `import_my_concerts` RPC; it never loops partial browser writes or silently rewrites another creator's canonical fields. JSON remains the full personal-data export, while the calendar keeps its ICS exports. The setlist.fm API is free only for non-commercial use, so revisit its terms before commercialising the product.
 
 The activity view records friend requests and responses, concert invitations and responses, concert changes, ticket availability/link changes, and Spotify reconnection warnings. A `selling_fast` notification is supported only when a source explicitly publishes that state; the system never guesses scarcity. Admins can change roles and access `admin_data_quality()` for canonical duplicates, label variants, missing location/creator/setlist/artwork, suspicious dates, and links awaiting validation. Blocked accounts are rejected by both application bootstrap and database mutation guards.
 
-Global search runs over the already-authorised session snapshot and groups artists, venues, concerts, cities, friends, and years. It creates no public catalog endpoint and therefore preserves the same visibility boundary as the current page.
+Global search runs over the already-authorised session snapshot and groups artists, venues, concerts, cities, countries, friends, and years. Concert, friend, city, and country results open reload-safe direct pages. Entity histories share one contextual card: year retains artist, venue, city and country; country omits country; city omits city; venue and artist omit their own identity. It creates no public user or catalog endpoint and therefore preserves the same visibility boundary as the current page.
 
 The browser has no direct table access: authenticated operations use an explicit
 RPC allowlist, every exposed RPC checks the active account where applicable,

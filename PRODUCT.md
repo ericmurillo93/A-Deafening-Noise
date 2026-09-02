@@ -35,7 +35,7 @@ The product combines a private concert archive, a personal upcoming calendar, fr
 - Supabase Auth and row-level security protect per-user profiles, concerts, participants, friendships, notifications, and dismissals.
 - Artist and venue names are normalized to uppercase; dates use `DD/MM/YYYY` with existing date-range support.
 - Past concerts are always bought. Future concerts distinguish bought and unpurchased states.
-- Concert details support optional setlists, friend attendees, guest attendees, and ticket links.
+- Concert details support optional setlists, friend attendees, guest attendees, ticket links, and a reload-safe `/concert/:id` page for direct navigation.
 - Browser history and direct URLs must work for pages and modal dismissal.
 - The initial authenticated experience uses a per-user IndexedDB snapshot and silent revalidation; logout removes it completely.
 - The geographic map remains lazy-loaded and must not return to the initial bundle.

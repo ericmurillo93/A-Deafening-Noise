@@ -18,7 +18,7 @@ Keep the project's existing **A Deafening Noise** Notion page current when a cha
 - `netlify/functions/save-concerts.js` is retained as a protected legacy/backup writer.
 - `netlify/functions/get-setlist.js` proxies setlist.fm in production.
 - `vite.config.js` emulates those functions locally and writes concert edits directly to the working tree.
-- Clean History API routes provide direct URLs and browser history for archive, calendar, timeline, stats, year review, artist, venue, friends, activity, profile, and admin views; Netlify's SPA fallback serves direct requests.
+- Clean History API routes provide direct URLs and browser history for archive, calendar, timeline, stats, year review, artist, venue, friends, friend profiles, activity, profile, and admin views; Netlify's SPA fallback serves direct requests.
 
 ## Local versus production boundaries
 
@@ -39,14 +39,17 @@ Keep the project's existing **A Deafening Noise** Notion page current when a cha
 - Date format is `DD/MM/YYYY`; preserve existing date-range support.
 - Artist and venue labels are stored and displayed in uppercase; normalize them on every write regardless of user input.
 - Optional fields: `setlistId`, friend attendees, guest attendees, and `ticketUrl`.
-- Every user manages their own archive, calendar, Spotify taste profile, and suggestion decisions. Eric alone has the `admin` role and administration access.
+- Every user manages their own archive, calendar, optional Spotify taste profile, discovery countries, and suggestion decisions. Eric alone has the `admin` role and administration access.
 - A concert is a canonical catalog event that several users may independently reference; this never implies that they attended together. `bought`, guest attendees, and invitation status belong to each participant.
 - Canonical events may include typed start/end dates, doors/start times, address/coordinates, promoter, festival/tour, lineup, status, source observations, and metadata freshness. Preserve `concert_artists` and `concert_sources`; never invent ambiguous scraper metadata.
 - Friends are mutual after acceptance. Selecting a friend on a concert sends an invitation; only accepted attendance appears in that person's archive.
+- Accepted friends can open each other's `/people/:username` profiles. Profile owners independently control visibility of statistics, latest concert, next concert, and bucket list; enforce this boundary in security-definer RPCs, never only in React.
+- Bucket-list artists are private by default and may be shared through the profile setting. “Seen live” is derived from a confirmed, bought past concert and is never a manually editable claim.
 - Invitation states are invited (`pending` internally), interested, confirmed, and declined. Full-archive comparison requires separate, revocable `stats_shares` consent; friendship alone is insufficient.
 - A non-creator can leave a shared concert without deleting it for its creator. Concert details identify the creator and confirmed friends.
 - Profile/account controls include editable public metadata, password recovery, personal-data export, and confirmed account deletion. Eric's admin panel manages roles and blocked access.
-- Artist, venue, and date fields suggest canonical catalog events and fill the remaining fields when selected. Adding the same normalized artist, venue, and date reuses the event without exposing unrelated users to one another.
+- Artist autocomplete uses the authenticated, identity-free union of billed and listened artist names and remains stable for every typed prefix from the first character. City, venue, and date suggestions come from canonical or external concert results and fill related fields when selected. Adding the same normalized artist, venue, and date reuses the event without exposing unrelated users to one another.
+- Add Concert searches the local canonical catalog first, then authenticated server-side providers on demand: setlist.fm for historical events and Ticketmaster for future events. Never expose provider keys or bulk-copy provider catalogs; persist only a result the user selects and saves, together with its source identifier and attribution URL.
 - If attendees are empty, do not render the attendee section in concert details.
 - Setlist lookup prefers stored ID, falls back to artist/date, then persists a discovered ID.
 - JSON/CSV/ICS and bounded setlist.fm imports must be previewed and written through the single transactional import RPC, never a browser loop of partial saves.
@@ -66,8 +69,8 @@ Keep the project's existing **A Deafening Noise** Notion page current when a cha
 ## Suggestion pipeline
 
 - Scrapers: Resurrection Fest Route, Live Nation Spain, Madness Live, Sala Razzmatazz, Sala Apolo, Sala Bikini, Paral·lel 62, Palau de la Música Catalana, Les Docks, Montreux Jazz Festival, DICE, Doctor Music, and the official Ticketmaster Discovery API.
-- National aggregators query all available events in Spain and Switzerland where their APIs support country-wide discovery. Venue, festival, and promoter sources cover only their own published programmes. Ticketmaster web pages must never be scraped; use `TICKETMASTER_API_KEY` with the official API.
-- Match only billed artists in `data/listened-artists.json`. Historical imports ignore plays shorter than 30 seconds and require at least one accumulated listening hour per artist; connected Spotify Top Artists remain eligible directly.
+- Ticketmaster queries the union of active users' selected discovery countries; each profile can select up to five ISO country codes. Venue, festival, and promoter sources cover only their own published programmes. Ticketmaster web pages must never be scraped; use `TICKETMASTER_API_KEY` with the official API.
+- Match only billed artists in the user's affinity: confirmed archive artists, bucket-list artists, and optional Spotify/listening-history artists. Historical imports ignore plays shorter than 30 seconds and require at least one accumulated listening hour per artist; connected Spotify Top Artists remain eligible directly.
 - Exclude an artist/date already present in `data/concerts.json`.
 - Generate the listened catalog with `npm run import:spotify`; never commit raw Spotify exports.
 - Prefer missing a structurally ambiguous festival over inventing an artist-to-day mapping.

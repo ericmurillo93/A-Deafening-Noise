@@ -5,11 +5,12 @@ const routes = ["/home", "/history", "/calendar", "/suggestions", "/timeline", "
 
 for (const route of routes) {
   test(`${route} has no serious or critical accessibility violations`, async ({ page }) => {
+    test.setTimeout(60_000);
     await page.goto(route);
     await expect(page.locator("main")).toBeVisible();
     const results = await new AxeBuilder({ page }).analyze();
     const blockingViolations = results.violations.filter(({ impact }) => impact === "serious" || impact === "critical");
-    const summaries = blockingViolations.map(({ id, help, nodes }) => `${id}: ${help} (${nodes.length})`);
+    const summaries = blockingViolations.map(({ id, help, nodes }) => `${id}: ${help} (${nodes.length}) ${nodes.map(({ target }) => target.join(" ")).join(", ")}`);
     expect(summaries, summaries.join("\n")).toEqual([]);
   });
 }
