@@ -25,7 +25,7 @@ import {
 } from "./lib/supabase";
 import { clearAppCache, readAppCache, writeAppCache } from "./lib/app-cache";
 import { readRouteFromLocation, routeToPath } from "./lib/routes";
-import { getMostRecentShowDate, normalize, parseDate, parseShow, sameCity } from "./lib/concerts";
+import { getMostRecentShowDate, normalize, parseDate, parseShow, sameCity, uniqueSourceLinks } from "./lib/concerts";
 import { COUNTRIES, countryName } from "./lib/countries";
 import { useI18n } from "./lib/i18n.jsx";
 import { EmptyState, PanelHeading, UserAvatar } from "./components/SharedUi";
@@ -517,9 +517,10 @@ function ConcertFinder({ onSearch, onPick, onManual }) {
   </div>;
 }
 
-function EventMetadata({ concert }) {
+function EventMetadata({ concert, primaryTicketUrl = "" }) {
   const { t } = useI18n();
   const lineup = (concert.lineup || []).slice(1).map((item) => item.artist).filter(Boolean);
+  const sourceLinks = uniqueSourceLinks(concert.sources, primaryTicketUrl);
   const rows = [
     concert.doorsAt && [t("Doors"), new Date(concert.doorsAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })],
     concert.startsAt && ["Start", new Date(concert.startsAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })],
@@ -527,10 +528,10 @@ function EventMetadata({ concert }) {
     concert.festival && ["Festival", concert.festival], concert.tour && ["Tour", concert.tour],
     lineup.length && ["Also playing", lineup.join(" · ")],
   ].filter(Boolean);
-  if (!rows.length && !concert.sources?.length && (!concert.eventStatus || concert.eventStatus === "announced")) return null;
+  if (!rows.length && !sourceLinks.length && (!concert.eventStatus || concert.eventStatus === "announced")) return null;
   return <section className="mb-5 border-b border-zinc-900 pb-4">
     {concert.eventStatus && concert.eventStatus !== "announced" && <span className={`mb-3 inline-flex rounded-md border px-2 py-1 text-[10px] font-black uppercase tracking-wide ${concert.eventStatus === "cancelled" ? "border-red-900 bg-red-950/40 text-red-300" : concert.eventStatus === "sold_out" ? "border-amber-900 bg-amber-950/30 text-amber-300" : "border-blue-900 bg-blue-950/30 text-blue-300"}`}>{({ postponed: "Postponed", cancelled: "Cancelled", sold_out: "Sold out" })[concert.eventStatus]}</span>}
-    <dl className="grid gap-x-5 gap-y-2 sm:grid-cols-2">{rows.map(([label, value]) => <div key={label} className="min-w-0"><dt className="text-[9px] font-black uppercase tracking-widest text-zinc-600">{t(label)}</dt><dd className="mt-0.5 break-words text-sm font-semibold text-zinc-300">{value}</dd></div>)}{concert.sources?.some((source) => source.url) && <div className="min-w-0"><dt className="text-[9px] font-black uppercase tracking-widest text-zinc-600">{t("Tickets and event details")}</dt><dd className="mt-0.5 flex flex-wrap gap-x-3 gap-y-1 text-sm font-semibold">{concert.sources.filter((source) => source.url).map((source) => <a key={`${source.source}-${source.url}`} href={source.url} target="_blank" rel="noreferrer" className="text-blue-400 hover:text-blue-300">{t("Open ticket page")} ↗</a>)}</dd></div>}</dl>
+    <dl className="grid gap-x-5 gap-y-2 sm:grid-cols-2">{rows.map(([label, value]) => <div key={label} className="min-w-0"><dt className="text-[9px] font-black uppercase tracking-widest text-zinc-600">{t(label)}</dt><dd className="mt-0.5 break-words text-sm font-semibold text-zinc-300">{value}</dd></div>)}{sourceLinks.length > 0 && <div className="min-w-0"><dt className="text-[9px] font-black uppercase tracking-widest text-zinc-600">{t("Tickets and event details")}</dt><dd className="mt-0.5 flex flex-wrap gap-x-3 gap-y-1 text-sm font-semibold">{sourceLinks.map((source) => <a key={source.url} href={source.url} target="_blank" rel="noreferrer" className="text-blue-400 hover:text-blue-300">{t("Open ticket page")} ↗</a>)}</dd></div>}</dl>
   </section>;
 }
 
@@ -1269,7 +1270,7 @@ function CalendarConcertModal({ target, artistImages, onClose, onEdit }) {
             </div>
           )}
         </div>
-        <div className="mt-4"><EventMetadata concert={target} /></div>
+        <div className="mt-4"><EventMetadata concert={target} primaryTicketUrl={ticketUrl} /></div>
         {!isPast && target.attendeeUsers?.length > 0 && <section className="mt-4 rounded-2xl border border-zinc-800 bg-zinc-950/60 p-4"><p className="mb-3 text-[10px] font-bold uppercase tracking-widest text-zinc-500">{t("Friends attending")}</p><div className="space-y-2">{target.attendeeUsers.map((person) => { const status = person.status || "pending"; const positive = status === "confirmed"; const negative = status === "declined"; return <div key={person.id} className="flex items-center justify-between gap-3 text-sm"><span className="font-semibold text-zinc-200">{person.displayName}</span><span className={`rounded-full border px-2.5 py-1 text-[10px] font-bold ${positive ? "border-emerald-900 bg-emerald-950/40 text-emerald-300" : negative ? "border-red-900 bg-red-950/40 text-red-300" : "border-amber-900 bg-amber-950/40 text-amber-300"}`}>{t(status[0].toUpperCase() + status.slice(1))}</span></div>; })}</div></section>}
       </article>
     </div>

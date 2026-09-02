@@ -14,6 +14,20 @@ export function sameCity(left, right) {
   return leftCity === rightCity && (!leftCountry || !rightCountry || leftCountry === rightCountry);
 }
 
+export function uniqueSourceLinks(sources = [], excludedUrl = "") {
+  const canonical = (value) => {
+    try { return new URL(value).href; } catch { return ""; }
+  };
+  const excluded = canonical(excludedUrl);
+  const seen = new Set();
+  return sources.filter((source) => {
+    const url = canonical(source?.url);
+    if (!url || url === excluded || seen.has(url)) return false;
+    seen.add(url);
+    return true;
+  });
+}
+
 export function parseDate(date) {
   const match = String(date).match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
   if (!match) return 0;
