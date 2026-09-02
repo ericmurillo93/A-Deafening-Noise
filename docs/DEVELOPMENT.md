@@ -298,12 +298,33 @@ The Netlify site requires:
 ```text
 GITHUB_TOKEN
 SETLIST_API_KEY
+TICKETMASTER_API_KEY
 VITE_SUPABASE_URL
 VITE_SUPABASE_PUBLISHABLE_KEY
 VITE_SPOTIFY_CLIENT_ID
+RESEND_API_KEY                  # optional: admin email-delivery metrics
+VITE_SENTRY_DSN                 # optional: browser error reporting
 ```
 
-`GITHUB_TOKEN` needs **Contents: read and write** to update the JSON backup, plus **Actions: read and write** to start and monitor the suggestion workflow. The Supabase values are publishable browser configuration; authorization is enforced through user sessions and database policies. Keep GitHub and setlist.fm secrets in Netlify, never in the repository or browser code.
+`GITHUB_TOKEN` needs **Contents: read and write** to update the JSON backup, plus **Actions: read and write** to start and monitor the suggestion workflow. `SETLIST_API_KEY` and `TICKETMASTER_API_KEY` power the authenticated on-demand concert search; `RESEND_API_KEY` lets the admin panel read delivery totals but is not required for email sending, which runs in GitHub Actions. The Supabase values are publishable browser configuration; authorization is enforced through user sessions and database policies. Keep GitHub, setlist.fm, Ticketmaster and Resend secrets in Netlify, never in the repository or browser code.
+
+### Credential ownership
+
+Store values only in the provider named below. Identical variable names in different providers are separate credentials and should use the minimum access required for that workload.
+
+| Provider | Name or setting | Purpose | Secret? |
+| --- | --- | --- | --- |
+| Netlify | `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, `VITE_SPOTIFY_CLIENT_ID` | Public browser configuration injected at build time | No |
+| Netlify | `SETLIST_API_KEY`, `TICKETMASTER_API_KEY` | Server-side concert and setlist searches | Yes |
+| Netlify | `GITHUB_TOKEN` | Admin workflow status and protected legacy backup operations | Yes |
+| Netlify | `RESEND_API_KEY` | Admin delivery/bounce metrics; use a dedicated Full-access Resend key | Yes |
+| Netlify | `VITE_SENTRY_DSN` | Optional browser error reporting | No |
+| GitHub Actions | `SUPABASE_URL`, `SPOTIFY_CLIENT_ID`, `RESEND_FROM_EMAIL` | Workflow configuration and verified digest sender | No, although repository Secrets may still hold them |
+| GitHub Actions | `SUPABASE_SERVICE_ROLE_KEY`, `TICKETMASTER_API_KEY` | Daily catalog refresh and publication | Yes |
+| GitHub Actions | `RESEND_API_KEY` | Daily suggestion digest; use a dedicated Sending-access Resend key | Yes |
+| Supabase Auth | Custom SMTP password | Authentication and security emails; use a third dedicated Sending-access Resend key | Yes |
+
+The intended Resend isolation is therefore: **GitHub Actions** sends suggestion digests, **Netlify** reads delivery telemetry for the admin panel, and **Supabase Auth** sends account emails through SMTP. Rotating one key must not require changing either of the other two. `RESEND_FROM_EMAIL` is a verified sender identity, not an API key. The built-in workflow `GITHUB_TOKEN` is created automatically by GitHub and is unrelated to the custom Netlify `GITHUB_TOKEN`.
 
 ### Password recovery
 
