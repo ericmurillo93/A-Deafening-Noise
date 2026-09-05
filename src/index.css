@@ -329,6 +329,15 @@ button[aria-label="View activity"] { display: flex; }
     width: calc(100% - var(--adn-navigation-width));
     margin-left: var(--adn-navigation-width);
   }
+  html:not([data-theme="poster"]) .adn-desktop-navigation nav {
+    display: flex;
+    flex-direction: column;
+  }
+  html:not([data-theme="poster"]) .adn-desktop-navigation nav > button {
+    flex: 1 1 61px;
+    min-height: 44px;
+    max-height: 61px;
+  }
   [data-theme="poster"] .adn-desktop-navigation { display: none; }
   [data-theme="poster"] .adn-drawer-navigation { display: flex; }
   [data-theme="poster"] .adn-menu-overlay { display: block; }
