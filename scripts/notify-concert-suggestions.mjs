@@ -21,8 +21,12 @@ for (const recipient of recipients) {
   const artists = new Set(recipient.artists.map(normalize));
   const concerts = new Set(recipient.concerts.map((entry) => { const split = entry.lastIndexOf("|"); return `${normalize(entry.slice(0, split))}${entry.slice(split)}`; }));
   const eligible = current.filter((item) => artists.has(normalize(item.artist)) && recipient.countries.includes(item.country) && !isDismissedSuggestion(item, recipient.dismissed) && !concerts.has(legacySuggestionKey(item)));
-  const deliveries = await database(`suggestion_email_outbox?select=event_keys&user_id=eq.${encodeURIComponent(recipient.userId)}&status=neq.cancelled`);
-  const seen = new Set(deliveries.flatMap((item) => item.event_keys));
+  const seen = new Set();
+  for (let offset = 0; ; offset += 1000) {
+    const deliveries = await database(`suggestion_email_outbox?select=event_keys&user_id=eq.${encodeURIComponent(recipient.userId)}&status=neq.cancelled&order=id&limit=1000&offset=${offset}`);
+    for (const item of deliveries) for (const eventKey of item.event_keys) seen.add(eventKey);
+    if (deliveries.length < 1000) break;
+  }
   const matches = eligible.filter((item) => !seen.has(suggestionKey(item)));
   const rendered = renderSuggestionDigest(recipient.displayName, matches);
   const candidate = { from, to: [recipient.email], subject: rendered.subject, html: rendered.html, text: rendered.text, headers: { "List-Unsubscribe": "<https://adeafeningnoise.com/profile>" } };

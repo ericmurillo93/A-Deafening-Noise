@@ -24,6 +24,10 @@ function localNetlifyFunctions(env) {
     name: "local-netlify-functions",
     apply: "serve",
     configureServer(server) {
+      if (env.VITE_QUALITY_AUDIT === "true") {
+        server.middlewares.use("/.netlify/functions/", (_request, response) => jsonResponse(response, 503, { error: "Isolated quality tests must mock function requests" }));
+        return;
+      }
       server.middlewares.use("/.netlify/functions/search-concert-catalog", async (request, response) => {
         if (request.method !== "POST") return jsonResponse(response, 405, "Method not allowed");
         try {
@@ -146,6 +150,10 @@ export default defineConfig(({ mode, command }) => {
     resolveId(id) { if (id === "virtual:archive-fallback") return "\0archive-fallback"; },
     async load(id) {
       if (id !== "\0archive-fallback") return;
+      if (qualityAudit) {
+        const fixtures = await import("./tests/fixtures/archive.mjs");
+        return `export const concertsData=${JSON.stringify(fixtures.concertsData)}; export const suggestionsData=${JSON.stringify(fixtures.suggestionsData)};`;
+      }
       const concertsData = fallbackEnabled ? JSON.parse(await fs.readFile("data/concerts.json", "utf8")) : { concerts: [] };
       const suggestionsData = fallbackEnabled ? JSON.parse(await fs.readFile("data/suggestions.json", "utf8")) : { suggestions: [] };
       return `export const concertsData=${JSON.stringify(concertsData)}; export const suggestionsData=${JSON.stringify(suggestionsData)};`;

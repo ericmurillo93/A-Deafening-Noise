@@ -1,4 +1,22 @@
 import { expect, test } from "@playwright/test";
+test.beforeEach(async ({ page }) => {
+  await page.clock.install({ time: new Date("2026-08-17T12:00:00") });
+});
+
+test("Archive cache isolates accounts and cannot revive after logout", async ({ page }) => {
+  await page.goto("/home");
+  const results = await page.evaluate(async () => {
+    const cache = await import("/src/lib/app-cache.js");
+    await cache.writeAppCache("audit-a", { profile: { id: "audit-a" } });
+    const isolated = await cache.readAppCache("audit-b") === null;
+    const retained = (await cache.readAppCache("audit-a"))?.data.profile.id === "audit-a";
+    const pending = cache.writeAppCache("audit-a", { profile: { id: "audit-a" } });
+    await cache.clearAppCache();
+    await pending;
+    return { isolated, retained, cleared: await cache.readAppCache("audit-a") === null };
+  });
+  expect(results).toEqual({ isolated: true, retained: true, cleared: true });
+});
 
 async function openMenu(page) {
   const trigger = page.locator(".menu-button-desktop:visible, .menu-button-touch:visible");
@@ -253,7 +271,7 @@ test("Open dialogs lock the page behind them and preserve its scroll position", 
 });
 
 test("Calendar opens on the current month on every visit", async ({ page }) => {
-  const currentMonth = new Intl.DateTimeFormat("en", { month: "long", year: "numeric" }).format(new Date());
+  const currentMonth = "August 2026";
   await page.goto("/calendar");
   const monthButton = page.locator('button[aria-label^="Choose month"]');
   await expect(monthButton).toContainText(currentMonth);
@@ -325,7 +343,7 @@ test("Home dashboard opens its primary concert and add flows", async ({ page }) 
 });
 
 test("Home keeps today's concert until midnight, then advances", async ({ page }) => {
-  await page.clock.install({ time: new Date("2026-08-17T12:00:00") });
+  await page.clock.setSystemTime(new Date("2026-08-17T12:00:00"));
   await page.goto("/home");
   const nextConcert = page.getByRole("button", { name: /Next concert/i });
   await expect(nextConcert).toContainText("Mon, 17 Aug 2026");
@@ -337,7 +355,7 @@ test("Home keeps today's concert until midnight, then advances", async ({ page }
 
 test("Home countdown fits inside the next-concert card in phone landscape", async ({ page }) => {
   await page.setViewportSize({ width: 1017, height: 505 });
-  await page.clock.install({ time: new Date("2026-08-16T12:00:00") });
+  await page.clock.setSystemTime(new Date("2026-08-16T12:00:00"));
   await page.goto("/home");
   const card = page.getByRole("button", { name: /Next concert/i });
   const seconds = card.getByText("Secs", { exact: true });

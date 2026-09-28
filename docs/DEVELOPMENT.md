@@ -302,7 +302,25 @@ npm run preview
 
 Only use `dev:network` on a trusted network. The legacy JSON fallback save endpoint is localhost-only and intentionally has no password gate.
 
-The quality suites are intentionally local and manual: none run in GitHub Actions. Playwright and Axe start an isolated Vite server with Supabase disabled and use `data/concerts.json`; they never authenticate against or mutate production. Lighthouse creates an isolated production build with the same fallback boundary, audits archive and calendar, and fails below the checked-in category thresholds. Visual snapshots cover representative pages in desktop, phone portrait, and phone landscape and are stored in Git; use `test:visual:update` only after reviewing and intentionally accepting the new images.
+The quality suites are intentionally local and manual: none run in GitHub Actions. Playwright and Axe start an isolated Vite server with Supabase disabled and use synthetic `tests/fixtures/archive.mjs` data; they never authenticate against or mutate production. They refuse to reuse an existing development server. Local function calls are disabled in quality mode unless a test explicitly mocks them. Lighthouse creates an isolated production build with the same fallback boundary, audits archive and calendar, and fails below the checked-in category thresholds. Visual snapshots cover representative pages in desktop, phone portrait, and phone landscape, including Home in both themes, and are stored in Git; use `test:visual:update` only after reviewing and intentionally accepting the new images. After Lighthouse, run a normal `npm run build` before inspecting or deploying `dist`.
+
+Additional manually invoked checks:
+
+```bash
+npx playwright install --with-deps webkit # Linux libraries require sudo
+npm run test:webkit                      # WebKit, not a physical Safari device
+npm run test:unit
+npm run audit:security
+npm run test:db:staging                  # Supabase management token required
+```
+
+The staging database test uses disposable identities inside a rolled-back
+transaction and cannot accept a production target. It checks cross-user
+visibility, admin access, consent revocation, invitation acceptance and leaving,
+export/import rollback, API quotas and durable digest leases/retries. It sends
+no email. It is separate from the browser suite and is never automatic.
+Static `audit:security` complements these checks; it is not proof of every RLS
+policy or every runtime permission.
 
 Add functional tests selectively for high-risk interactions, reusable behavior, or bugs worth protecting against rather than for every feature. Axe provides broad standards-based coverage without feature-specific tests. Visual baselines should remain representative rather than exhaustive so ordinary concert-data changes do not create unnecessary snapshot churn.
 
@@ -322,6 +340,17 @@ local configuration. Before broad public promotion, configure a CAPTCHA provider
 and its public widget/secret together; do not enable CAPTCHA server-side without
 the matching UI, or registration will stop working. Provider account setup and
 production settings require explicit release approval.
+
+The 28 September staging hardening pass verified email confirmation enabled and
+set the staging Auth password minimum to 8 through the
+[Supabase Management API](https://supabase.com/docs/reference/api/v1-update-auth-service-config).
+No SMTP credentials or production Auth settings were changed. CAPTCHA remains
+an external setup/release prerequisite before unrestricted public registration.
+
+Removing fallback data from the hosted bundle does **not** remove personal JSON
+already committed to a public Git repository or its history. Repository privacy
+and any historical-data cleanup need an explicit owner decision before a wider
+launch; do not rewrite history as part of an ordinary deployment.
 
 Netlify builds production with `npm run build` and publishes `dist`.
 

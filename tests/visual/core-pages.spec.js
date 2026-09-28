@@ -16,3 +16,13 @@ for (const route of routes) {
     });
   });
 }
+
+for (const theme of ["archive", "poster"]) {
+  test(`Home preserves ${theme} appearance`, async ({ page }) => {
+    await page.clock.install({ time: new Date("2026-08-17T12:00:00+02:00") });
+    await page.addInitScript((value) => localStorage.setItem("adn-theme", value), theme);
+    await page.goto("/home");
+    await expect(page.getByRole("button", { name: /Next concert/i })).toBeVisible();
+    await expect(page).toHaveScreenshot(`home-${theme}.png`, { animations: "disabled", fullPage: true });
+  });
+}

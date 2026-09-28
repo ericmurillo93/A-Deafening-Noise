@@ -16,7 +16,15 @@ export const supabase = supabaseEnabled
     })
   : null;
 
-export const loadConcertData = ({ signal, ...options } = {}) => loadArchiveSnapshot((name) => rpc(name, {}, signal), options);
+export const loadConcertData = ({ signal, ...options } = {}) => loadArchiveSnapshot(async (name) => {
+  const request = new AbortController();
+  const abort = () => request.abort();
+  signal?.addEventListener("abort", abort, { once: true });
+  if (signal?.aborted) abort();
+  const timeout = setTimeout(abort, 15000);
+  try { return await rpc(name, {}, request.signal); }
+  finally { clearTimeout(timeout); signal?.removeEventListener("abort", abort); }
+}, options);
 
 async function rpc(name, args = {}, signal) {
   let request = supabase.rpc(name, args);

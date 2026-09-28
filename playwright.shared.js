@@ -8,9 +8,9 @@ export const sharedConfig = {
     trace: "retain-on-failure",
   },
   webServer: {
-    command: "env VITE_SUPABASE_URL= VITE_SUPABASE_PUBLISHABLE_KEY= npm run dev -- --port 4173",
+    command: "env VITE_SUPABASE_URL= VITE_SUPABASE_PUBLISHABLE_KEY= VITE_QUALITY_AUDIT=true npm run dev -- --port 4173 --strictPort",
     url: "http://127.0.0.1:4173/history",
-    reuseExistingServer: true,
+    reuseExistingServer: false,
   },
 };
 

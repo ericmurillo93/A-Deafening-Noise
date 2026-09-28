@@ -9,7 +9,7 @@ export default defineConfig({
   reporter: process.env.CI ? "github" : "list",
   webServer: {
     ...sharedConfig.webServer,
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: false,
   },
   projects: standardProjects,
 });
