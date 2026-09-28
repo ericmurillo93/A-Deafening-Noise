@@ -5,7 +5,8 @@ const normalize = (value) => String(value || "").toLowerCase().normalize("NFD").
 const key = ({ artist, date }) => `${normalize(artist)}|${date}`;
 
 const reportPath = process.argv.find((argument) => argument.startsWith("--report="))?.slice(9);
-const [currentPath] = process.argv.slice(2).filter((argument) => !argument.startsWith("--report="));
+const previousPath = process.argv.find((argument) => argument.startsWith("--previous="))?.slice(11);
+const [currentPath] = process.argv.slice(2).filter((argument) => !argument.startsWith("--"));
 async function writeReport(report) { if (reportPath) await fs.writeFile(reportPath, `${JSON.stringify(report, null, 2)}\n`, "utf8"); }
 if (!currentPath) throw new Error("Pass the current suggestion file");
 if (!process.env.RESEND_API_KEY || !process.env.RESEND_FROM_EMAIL) {
@@ -15,9 +16,14 @@ if (!process.env.RESEND_API_KEY || !process.env.RESEND_FROM_EMAIL) {
 const supabaseUrl = process.env.SUPABASE_URL;
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 if (!supabaseUrl || !serviceKey) throw new Error("Supabase service configuration is required");
-const catalogResponse = await fetch(`${supabaseUrl}/rest/v1/rpc/get_concert_suggestions`, { method: "POST", headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}`, "Content-Type": "application/json" }, body: "{}" });
-if (!catalogResponse.ok) throw new Error(`Could not load the existing suggestion catalog (${catalogResponse.status})`);
-const previous = new Set(((await catalogResponse.json()).suggestions || []).map(key));
+let previousCatalog;
+if (previousPath) previousCatalog = JSON.parse(await fs.readFile(previousPath, "utf8"));
+else {
+  const catalogResponse = await fetch(`${supabaseUrl}/rest/v1/rpc/get_concert_suggestions`, { method: "POST", headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}`, "Content-Type": "application/json" }, body: "{}" });
+  if (!catalogResponse.ok) throw new Error(`Could not load the existing suggestion catalog (${catalogResponse.status})`);
+  previousCatalog = await catalogResponse.json();
+}
+const previous = new Set((previousCatalog.suggestions || []).map(key));
 const current = JSON.parse(await fs.readFile(currentPath, "utf8")).suggestions || [];
 const added = current.filter((suggestion) => !previous.has(key(suggestion)));
 if (!added.length) {

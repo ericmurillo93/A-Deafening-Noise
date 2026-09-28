@@ -26,6 +26,8 @@
 
 html {
   background: var(--adn-stage);
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 body {
@@ -38,8 +40,10 @@ body {
 
 button,
 input,
-select {
+select,
+textarea {
   font: inherit;
+  color: inherit;
 }
 
 button {
@@ -110,7 +114,19 @@ input::placeholder {
 .adn-content .sticky :where(.rounded-full) { border-radius: var(--adn-radius-control); }
 .adn-content button.rounded-full { border-radius: var(--adn-radius-control); }
 .adn-content :where(input, select, textarea) { border-radius: 8px; }
-.adn-modal-panel { border-radius: var(--adn-radius-control); border-color: var(--adn-border-strong); background: var(--adn-panel); }
+.adn-modal-panel {
+  box-sizing: border-box;
+  border: 1px solid var(--adn-border-strong);
+  border-radius: var(--adn-radius-control);
+  background: var(--adn-panel);
+  -webkit-font-smoothing: antialiased;
+  -webkit-overflow-scrolling: touch;
+}
+
+.adn-modal-panel :where(input:not([type="checkbox"]):not([type="radio"]):not([type="file"]), textarea) {
+  -webkit-appearance: none;
+  appearance: none;
+}
 
 .adn-content > header h1 { letter-spacing: .025em; }
 .adn-content > header p { color: #a1a1aa; }
@@ -282,7 +298,7 @@ button[aria-label="View activity"] { display: flex; }
 }
 
 @keyframes adn-backdrop-in { from { opacity: 0; } to { opacity: 1; } }
-@keyframes adn-modal-in { from { opacity: 0; transform: translateY(.5rem) scale(.985); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@keyframes adn-modal-in { from { opacity: 0; transform: translateY(.5rem) scale(.985); } to { opacity: 1; transform: none; } }
 @keyframes adn-popover-in { from { opacity: 0; transform: translateY(-.35rem) scale(.975); } to { opacity: 1; transform: translateY(0) scale(1); } }
 @keyframes adn-toast-in { from { opacity: 0; transform: translateY(.75rem) scale(.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
 
@@ -363,6 +379,13 @@ button[aria-label="View activity"] { display: flex; }
   .touch-target {
     min-width: 44px;
     min-height: 44px;
+  }
+}
+
+/* iOS Safari zooms the visual viewport when a focused field is below 16px. */
+@media (max-width: 767px) and (pointer: coarse) {
+  .adn-modal-panel :where(input:not([type="checkbox"]):not([type="radio"]):not([type="file"]), select, textarea) {
+    font-size: 16px;
   }
 }
 

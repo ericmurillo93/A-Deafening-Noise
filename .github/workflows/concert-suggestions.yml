@@ -66,6 +66,9 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: node scripts/publish-concert-suggestions.mjs --download=data/suggestions.json
 
+      - name: Preserve previous suggestions
+        run: cp data/suggestions.json /tmp/previous-suggestions.json
+
       - name: Sync connected Spotify profiles
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
@@ -92,19 +95,19 @@ jobs:
           SPOTIFY_CLIENT_ID: ${{ secrets.SPOTIFY_CLIENT_ID }}
         run: node scripts/enrich-suggestion-images.mjs data/suggestions.json
 
+      - name: Publish suggestions
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: node scripts/publish-concert-suggestions.mjs data/suggestions.json
+
       - name: Notify users about new suggestions
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           RESEND_FROM_EMAIL: ${{ secrets.RESEND_FROM_EMAIL }}
-        run: node scripts/notify-concert-suggestions.mjs data/suggestions.json --report=/tmp/discovery-emails.json
-
-      - name: Publish suggestions
-        env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-        run: node scripts/publish-concert-suggestions.mjs data/suggestions.json
+        run: node scripts/notify-concert-suggestions.mjs data/suggestions.json --previous=/tmp/previous-suggestions.json --report=/tmp/discovery-emails.json
 
       - name: Deliver activity emails
         if: always()

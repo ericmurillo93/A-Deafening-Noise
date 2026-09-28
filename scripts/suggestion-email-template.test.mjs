@@ -13,4 +13,6 @@ test("renders every suggestion and escapes untrusted content", () => {
   assert.match(email.html, /SECOND/);
   assert.doesNotMatch(email.html, /javascript:/);
   assert.doesNotMatch(email.html, /You receive this daily digest/);
+  assert.match(email.html, /https:\/\/adeafeningnoise\.com\/suggestions/);
+  assert.match(email.text, /https:\/\/adeafeningnoise\.com\/suggestions/);
 });

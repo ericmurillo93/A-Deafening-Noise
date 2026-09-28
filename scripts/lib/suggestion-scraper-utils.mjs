@@ -1,8 +1,18 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
+import { execFile } from "node:child_process";
+import { promisify } from "node:util";
 
 export const USER_AGENT = "A-Deafening-Noise/1.0 (+personal concert calendar; contact via repository)";
+const execFileAsync = promisify(execFile);
+const curlHosts = new Set();
+
+async function fetchWithCurl(url) {
+  const { stdout } = await execFileAsync("curl", ["--fail", "--silent", "--show-error", "--location", "--max-time", "30", "--user-agent", USER_AGENT, String(url)], { maxBuffer: 10 * 1024 * 1024 });
+  if (!stdout.trim()) throw new Error("curl returned an empty response");
+  return stdout;
+}
 
 export function normalize(value) {
   return String(value || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, " ").trim();
@@ -15,10 +25,25 @@ export function decodeHtml(value) {
 
 export const textContent = (html) => decodeHtml(String(html).replace(/<br\s*\/?>/gi, " | "));
 
-export async function fetchText(url) {
+export async function fetchText(url, attempt = 0) {
+  const host = new URL(url).host;
+  if (curlHosts.has(host)) return fetchWithCurl(url);
   const response = await fetch(url, { headers: { "User-Agent": USER_AGENT, Accept: "text/html,application/json" } });
   if (!response.ok) throw new Error(`${url} returned HTTP ${response.status}`);
-  return response.text();
+  const body = await response.text();
+  if (body.trim()) return body;
+  if (attempt < 2) {
+    await new Promise((resolve) => setTimeout(resolve, 750 * (attempt + 1)));
+    return fetchText(url, attempt + 1);
+  }
+  try {
+    const body = await fetchWithCurl(url);
+    curlHosts.add(host);
+    return body;
+  } catch (error) {
+    throw new Error(`${url} returned an empty response (${error.message})`);
+  }
+  throw new Error(`${url} returned an empty response`);
 }
 
 export async function context() {

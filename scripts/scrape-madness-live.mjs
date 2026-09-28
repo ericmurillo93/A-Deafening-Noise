@@ -2,6 +2,7 @@ import { context, fetchText, normalize, textContent, writeResult } from "./lib/s
 
 const BASE_URL = "https://www.madnesslive.es";
 const LISTING_URL = `${BASE_URL}/es/`;
+const SITEMAP_URL = `${BASE_URL}/1_es_0_sitemap.xml`;
 const cityFilter = process.argv.find((argument) => argument.startsWith("--city="))?.slice("--city=".length);
 
 const MONTHS = new Map(Object.entries({
@@ -29,6 +30,15 @@ function eventLinks(listingHtml) {
     [...listingHtml.matchAll(/<a\s+href="(https:\/\/www\.madnesslive\.es\/es\/pagina\/[^"#]+)"[^>]*>\s*<img[^>]+src="[^"]*\/img\/cms\/shows\//gi)]
       .map((match) => match[1]),
   )];
+}
+
+function recentSitemapLinks(xml) {
+  // ponytail: recent announcement IDs bound fallback crawling; replace with a feed if Madness Live publishes one.
+  return [...xml.matchAll(/<loc><!\[CDATA\[(https:\/\/www\.madnesslive\.es\/es\/pagina\/(\d+)-[^\]]+)\]\]><\/loc>/gi)]
+    .map(([, url, id]) => ({ url, id: Number(id) }))
+    .sort((left, right) => right.id - left.id)
+    .slice(0, 60)
+    .map(({ url }) => url);
 }
 
 function pageTitle(detailHtml) {
@@ -86,8 +96,19 @@ function tourStops(detailHtml) {
 
 const { listened: listenedArtistsByKey, existing: existingArtistDates } = await context();
 
-const listingHtml = await fetchText(LISTING_URL);
-const links = eventLinks(listingHtml);
+let links = [];
+let listingFailure = "";
+try {
+  links = eventLinks(await fetchText(LISTING_URL));
+} catch (error) {
+  listingFailure = error.message;
+}
+let listingFallback = false;
+if (!links.length) {
+  links = recentSitemapLinks(await fetchText(SITEMAP_URL));
+  listingFallback = true;
+}
+if (!links.length) throw new Error("Madness Live returned no discoverable event pages");
 const suggestions = [];
 const alreadyTrackedMatches = [];
 const pagesWithoutStops = [];
@@ -128,6 +149,8 @@ for (const [index, sourceUrl] of links.entries()) {
 
 await writeResult({
   source: LISTING_URL,
+  listingFallback,
+  listingFailure: listingFallback ? listingFailure || "No event links found on the homepage" : null,
   city: cityFilter || null,
   pagesScanned: links.length,
   matchedPages,

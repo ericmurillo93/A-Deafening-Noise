@@ -1802,13 +1802,8 @@ export default function App() {
     return filterConcerts(visibleConcerts, query);
   }, [concertItems, query]);
 
-  const listenedArtistKeys = useMemo(() => new Set(listenedArtists.map(normalize)), [listenedArtists]);
-  const discoveryCountryKeys = useMemo(() => new Set((appProfile?.discoveryCountries || []).map((country) => String(country).toUpperCase())), [appProfile?.discoveryCountries]);
   const artistImages = useMemo(() => new Map(artistImageRows.map(({ artist, imageUrl }) => [normalize(artist), imageUrl])), [artistImageRows]);
-  const availableSuggestions = useMemo(() => suggestionCatalog.filter((suggestion) =>
-    (!supabaseEnabled || listenedArtistKeys.has(normalize(suggestion.artist)))
-    && (!supabaseEnabled || discoveryCountryKeys.has(String(suggestion.country || "").toUpperCase()))
-  ), [discoveryCountryKeys, listenedArtistKeys, suggestionCatalog]);
+  const availableSuggestions = suggestionCatalog;
   const suggestionReviews = useMemo(() => Object.fromEntries(availableSuggestions.flatMap((suggestion) => {
     const concert = concertItems.find((item) => normalize(item.artist) === normalize(suggestion.artist) && item.date === suggestion.date);
     if (concert) return [[suggestion.id, { decision: "interested", concert }]];

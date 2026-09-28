@@ -1684,11 +1684,92 @@
       "country": "ES"
     },
     {
-      "date": "25/09/2026 - 26/09/2026",
+      "date": "25/09/2026",
       "venue": "BE PROG! MY FRIEND",
-      "artist": "BE PROG! MY FRIEND",
+      "artist": "AFTER LAPSE",
       "bought": true,
-      "ticketUrl": "https://www.madnesslive.es/es/conciertos-en-barcelona/1918-comprar-entrada-abono-be-prog-my-friend-2026-barcelona.html",
+      "setlistId": "b4a4932",
+      "city": "Barcelona",
+      "country": "ES"
+    },
+    {
+      "date": "25/09/2026",
+      "venue": "BE PROG! MY FRIEND",
+      "artist": "AGENT FRESCO",
+      "bought": true,
+      "setlistId": "34a4933",
+      "city": "Barcelona",
+      "country": "ES"
+    },
+    {
+      "date": "25/09/2026",
+      "venue": "BE PROG! MY FRIEND",
+      "artist": "EINAR SOLBERG",
+      "bought": true,
+      "setlistId": "b4a493e",
+      "city": "Barcelona",
+      "country": "ES"
+    },
+    {
+      "date": "25/09/2026",
+      "venue": "BE PROG! MY FRIEND",
+      "artist": "THE DEAR HUNTER",
+      "bought": true,
+      "setlistId": "1b46f150",
+      "city": "Barcelona",
+      "country": "ES"
+    },
+    {
+      "date": "25/09/2026",
+      "venue": "BE PROG! MY FRIEND",
+      "artist": "THE OCEAN",
+      "bought": true,
+      "setlistId": "34a493f",
+      "city": "Barcelona",
+      "country": "ES"
+    },
+    {
+      "date": "26/09/2026",
+      "venue": "BE PROG! MY FRIEND",
+      "artist": "SERAPIS PROJECT",
+      "bought": true,
+      "setlistId": "134a4935",
+      "city": "Barcelona",
+      "country": "ES"
+    },
+    {
+      "date": "26/09/2026",
+      "venue": "BE PROG! MY FRIEND",
+      "artist": "IOTUNN",
+      "bought": true,
+      "setlistId": "b4a4936",
+      "city": "Barcelona",
+      "country": "ES"
+    },
+    {
+      "date": "26/09/2026",
+      "venue": "BE PROG! MY FRIEND",
+      "artist": "RENDEZVOUS POINT",
+      "bought": true,
+      "setlistId": "1b4a4930",
+      "city": "Barcelona",
+      "country": "ES"
+    },
+    {
+      "date": "26/09/2026",
+      "venue": "BE PROG! MY FRIEND",
+      "artist": "GREEN CARNATION",
+      "bought": true,
+      "setlistId": "134a4931",
+      "city": "Barcelona",
+      "country": "ES"
+    },
+    {
+      "date": "26/09/2026",
+      "venue": "BE PROG! MY FRIEND",
+      "artist": "SOEN",
+      "bought": true,
+      "setlistId": "134a4939",
       "city": "Barcelona",
       "country": "ES"
     },
