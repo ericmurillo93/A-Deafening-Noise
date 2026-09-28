@@ -8,12 +8,7 @@ alter table public.profiles add column if not exists discoverable boolean not nu
 alter table public.profiles add constraint profiles_role_check check (role in ('admin', 'user'));
 
 update public.profiles
-set username = case lower(email)
-  when 'eric.murillo93@gmail.com' then 'eric'
-  when 'rpsaray@gmail.com' then 'saray'
-  when 'murillodma@gmail.com' then 'papa'
-  else lower(regexp_replace(split_part(email, '@', 1), '[^a-z0-9]+', '-', 'g'))
-end
+set username = 'user-' || replace(id::text, '-', '')
 where username is null;
 
 update public.profiles set role = case when is_admin then 'admin' else 'user' end;

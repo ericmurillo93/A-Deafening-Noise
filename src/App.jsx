@@ -106,7 +106,7 @@ async function sessionHeaders() {
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
-// ─── GitHub save ──────────────────────────────────────────────────────────────
+// Local demo persistence only. Hosted application writes go through Supabase.
 
 async function saveConcertData(updatedData, commitMessage = "Update concerts via web") {
   if (supabaseEnabled) {

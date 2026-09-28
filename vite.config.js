@@ -73,7 +73,7 @@ function localNetlifyFunctions(env) {
             return jsonResponse(response, 400, "Missing or invalid `data`");
           }
 
-          const dataFile = path.resolve(server.config.root, "data/concerts.json");
+          const dataFile = path.resolve(server.config.root, "data/demo-concerts.json");
           await fs.writeFile(dataFile, `${JSON.stringify(body.data, null, 2)}\n`, "utf8");
           return jsonResponse(response, 200, { ok: true, local: true });
         } catch (error) {
@@ -150,12 +150,17 @@ export default defineConfig(({ mode, command }) => {
     resolveId(id) { if (id === "virtual:archive-fallback") return "\0archive-fallback"; },
     async load(id) {
       if (id !== "\0archive-fallback") return;
-      if (qualityAudit) {
+      if (fallbackEnabled) {
         const fixtures = await import("./tests/fixtures/archive.mjs");
-        return `export const concertsData=${JSON.stringify(fixtures.concertsData)}; export const suggestionsData=${JSON.stringify(fixtures.suggestionsData)};`;
+        let concertsData = fixtures.concertsData;
+        if (!qualityAudit) {
+          try { concertsData = JSON.parse(await fs.readFile("data/demo-concerts.json", "utf8")); }
+          catch (error) { if (error.code !== "ENOENT") throw error; }
+        }
+        return `export const concertsData=${JSON.stringify(concertsData)}; export const suggestionsData=${JSON.stringify(fixtures.suggestionsData)};`;
       }
-      const concertsData = fallbackEnabled ? JSON.parse(await fs.readFile("data/concerts.json", "utf8")) : { concerts: [] };
-      const suggestionsData = fallbackEnabled ? JSON.parse(await fs.readFile("data/suggestions.json", "utf8")) : { suggestions: [] };
+      const concertsData = { concerts: [] };
+      const suggestionsData = { suggestions: [] };
       return `export const concertsData=${JSON.stringify(concertsData)}; export const suggestionsData=${JSON.stringify(suggestionsData)};`;
     },
   };

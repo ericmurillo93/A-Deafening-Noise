@@ -1,7 +1,7 @@
 create table public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   email text not null unique,
-  display_name text not null check (display_name in ('Eric', 'Saray', 'Papa')),
+  display_name text not null check (length(trim(display_name)) > 0),
   is_admin boolean not null default false,
   created_at timestamptz not null default now()
 );
@@ -42,24 +42,8 @@ revoke all on public.concerts from anon, authenticated;
 revoke all on public.concert_participants from anon, authenticated;
 revoke all on public.dismissed_suggestions from anon, authenticated;
 
-insert into public.profiles (id, email, display_name, is_admin)
-select id, lower(email),
-  case lower(email)
-    when 'eric.murillo93@gmail.com' then 'Eric'
-    when 'rpsaray@gmail.com' then 'Saray'
-    when 'murillodma@gmail.com' then 'Papa'
-  end,
-  lower(email) = 'eric.murillo93@gmail.com'
-from auth.users
-where lower(email) in (
-  'eric.murillo93@gmail.com',
-  'rpsaray@gmail.com',
-  'murillodma@gmail.com'
-)
-on conflict (id) do update set
-  email = excluded.email,
-  display_name = excluded.display_name,
-  is_admin = excluded.is_admin;
+-- Personal bootstrap removed. Accounts are created through Auth; assign the
+-- initial administrator explicitly in a private environment setup operation.
 
 create or replace function public.current_profile()
 returns public.profiles

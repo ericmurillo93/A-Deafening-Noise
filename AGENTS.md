@@ -12,12 +12,12 @@ Keep the project's existing **A Deafening Noise** Notion page current when a cha
 
 - React/Vite single-page application; most UI and state live in `src/App.jsx`.
 - Supabase is the production source of truth for profiles, concerts, participants, friendships, notifications, and dismissed suggestions.
-- `data/concerts.json` is the local fallback and GitHub backup dataset.
-- `data/listened-artists.json` and `data/suggestions.json` are local workflow inputs/fallback snapshots; Supabase is canonical in production.
+- Git contains code, schema migrations and synthetic test fixtures, never personal datasets or backups. Supabase contains all real archive data.
+- `data/*.json` are ignored, disposable runtime inputs generated from Supabase. Demo UI uses `tests/fixtures/archive.mjs` and ignored `data/demo-concerts.json`.
 - Supabase Auth and security-definer RPCs provide per-user visibility and writes. Eric is the admin; only administration remains admin-only.
-- `netlify/functions/save-concerts.js` is retained as a protected legacy/backup writer.
+- The production GitHub data writer is removed. Never reintroduce automatic data commits.
 - `netlify/functions/get-setlist.js` proxies setlist.fm in production.
-- `vite.config.js` emulates those functions locally and writes concert edits directly to the working tree.
+- `vite.config.js` emulates functions locally; unauthenticated demo saves only touch ignored demo data.
 - Clean History API routes provide direct URLs and browser history for archive, calendar, timeline, stats, year review, artist, venue, friends, friend profiles, activity, profile, and admin views; Netlify's SPA fallback serves direct requests.
 
 ## Local versus production boundaries
@@ -72,7 +72,7 @@ Keep the project's existing **A Deafening Noise** Notion page current when a cha
 - Ticketmaster queries the union of active users' selected discovery countries; each profile can select up to five ISO country codes. Venue, festival, and promoter sources cover only their own published programmes. Ticketmaster web pages must never be scraped; use `TICKETMASTER_API_KEY` with the official API.
 - Match only billed artists in the user's affinity: confirmed archive artists, bucket-list artists, and optional Spotify/listening-history artists. Historical imports ignore plays shorter than 30 seconds and require at least one accumulated listening hour per artist; connected Spotify Top Artists remain eligible directly.
 - Shared scraping never excludes events based on one user's archive. Apply personal attendance and dismissals only when serving or notifying that user.
-- Generate the listened catalog with `npm run import:spotify`; never commit raw Spotify exports.
+- Daily affinity comes only from Supabase via `npm run spotify:sync`; never auto-seed from local files. Spotify ZIP imports are private one-off operations, never committed.
 - Prefer missing a structurally ambiguous festival over inventing an artist-to-day mapping.
 - Respect robots.txt and keep requests polite.
 - `scripts/combine-concert-suggestions.mjs` flattens/deduplicates results into `data/suggestions.json`.
@@ -81,6 +81,14 @@ Keep the project's existing **A Deafening Noise** Notion page current when a cha
 - Home shows only untreated suggestions. Interested adds the concert immediately as not bought and removes it from Home; Not Interested also removes it from Home. The Suggestions page keeps treated entries under the collapsed Past suggestions section, where decisions can still be changed.
 - Supabase stores suggestion decisions immediately. Preserve `dismissedSuggestions` on every archive replacement; the shared discovery catalog must not be filtered by one user's concerts or dismissals.
 - `.github/workflows/concert-suggestions.yml` runs daily or on demand, refreshes connected Spotify profiles, resolves suggestion artwork, publishes the catalog to Supabase, and emails opted-in users. It must not commit generated data or trigger a Netlify deploy.
+
+## Private backups
+
+- Personal exports: `npm run archive:export -- --project=staging|production --user=username`; read-only, versioned JSON and checksum manifest, default `~/adn-backups` outside the checkout.
+- Database dumps: `npm run db:backup` with private `SUPABASE_DB_URL`; not a complete Auth/Vault/Storage recovery package.
+- Never upload backups to Drive or elsewhere without explicit authorization. Eric can download/store them himself.
+- Historical Git commits stay unchanged by explicit owner decision; personal seed payloads are removed only from the current tree. Never replay edited historical migrations against existing databases.
+- CAPTCHA is deferred by Eric; do not enable it as an incidental change.
 
 ## Verification
 

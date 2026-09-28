@@ -1,5 +1,6 @@
 import fs from "node:fs/promises";
 import readline from "node:readline/promises";
+import { createBackupDirectory } from "./lib/backup-files.mjs";
 import { createHash } from "node:crypto";
 import { STAGING_REF, PRODUCTION_REF, SNAPSHOT_TABLES, remapSnapshot, restoreSql } from "./lib/staging-snapshot.mjs";
 
@@ -23,8 +24,8 @@ const columns = Object.fromEntries(SNAPSHOT_TABLES.map((table)=>[table,schema.fi
 for (const snapshot of [source[0].snapshot,before[0].snapshot]) for (const table of SNAPSHOT_TABLES) snapshot[table]=snapshot[table].map((row)=>Object.fromEntries(Object.entries(row).filter(([key])=>!generated.some((column)=>column.table_name===table && column.column_name===key))));
 const mapped = remapSnapshot(source[0].snapshot,before[0].snapshot.profiles);
 const sql = restoreSql(mapped,columns,{rollback:process.argv.includes("--rehearse")});
-await fs.mkdir("backups",{recursive:true,mode:0o700});
-const filename=`backups/staging-before-sync-${Date.now()}.json`;
+const directory=await createBackupDirectory("staging-before-sync");
+const filename=`${directory}/snapshot.json`;
 const backup=JSON.stringify(before[0].snapshot);
 await fs.writeFile(filename,backup,{mode:0o600});
 await fs.writeFile(`${filename}.sha256`,createHash("sha256").update(backup).digest("hex"),{mode:0o600});

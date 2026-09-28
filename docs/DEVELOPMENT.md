@@ -20,7 +20,7 @@ If `nvm` is not used, install Node.js 24 through the platform's normal package m
 
 - verifies the Node version and repository location;
 - installs locked dependencies with `npm ci`;
-- installs the Playwright Chromium build and, on Linux, its required system libraries;
+- installs the Playwright Chromium, Firefox and WebKit builds and, on Linux, its required system libraries;
 - creates `.env.local` from `.env.example` without overwriting an existing file;
 - authenticates GitHub CLI when it is installed and not already authenticated;
 - downloads the official Codex CLI through `npx` and starts login only when required.
@@ -31,7 +31,7 @@ Authentication requires confirmation in the user's browser. To prepare only the 
 npm run setup
 ```
 
-The Chromium installation is cached per operating-system user and can safely be run again. Linux system libraries are installed through the platform package manager and may cause `sudo` to request the computer password. They are persistent; no `/tmp` library workaround or `LD_LIBRARY_PATH` is required after setup.
+The browser installation is cached per operating-system user and can safely be run again. Linux system libraries are installed through the platform package manager and may cause `sudo` to request the computer password. They are persistent; no `/tmp` library workaround or `LD_LIBRARY_PATH` is required after setup.
 
 ## Environment variables
 
@@ -109,7 +109,7 @@ Local development intentionally differs from production:
 
 - With Supabase variables configured, local development uses the dedicated development/staging Supabase project.
 - Add, edit, delete, attendee, ticket-status, and discovered setlist-ID changes write to Supabase.
-- Local saves do not call GitHub and do not create commits automatically. Without Supabase configuration, the legacy Vite JSON fallback remains available for isolated development.
+- Local saves do not call GitHub and do not create commits automatically. Without Supabase configuration, Vite uses synthetic demo fixtures and saves only to ignored `data/demo-concerts.json`.
 - Setlist requests are handled by development-only middleware in `vite.config.js`.
 - The middleware is enabled only while Vite serves the app and is not included in the production runtime.
 
@@ -120,7 +120,7 @@ limit; the profile stores only the resulting public URL.
 
 ### Prepare the hosted development database
 
-Create the non-production project and its Auth users before applying the schema.
+Create the non-production project and apply the schema before registering test Auth users.
 Then authenticate the Supabase CLI, link this checkout to that project, and push
 the checked-in migrations:
 
@@ -165,7 +165,7 @@ npm run staging:sync
 The command hard-codes production as a read-only source and the development
 project as the only writable destination. It requires typing the staging project
 reference before replacing data, verifies every production user has a matching
-staging Auth user, creates a mode-0600 pre-change snapshot in ignored `backups/`,
+staging Auth user, creates a mode-0600 pre-change snapshot outside the checkout in `~/adn-backups`,
 and checks row counts inside one transaction. A rehearsal executes the same SQL
 but rolls back. Application triggers are temporarily disabled, foreign keys are
 not. Auth passwords, Spotify connections/Vault tokens, Storage binaries,
@@ -176,6 +176,29 @@ Never use this operation as an Auth/Storage backup. Never put Management API
 tokens in a `VITE_` variable.
 
 ### Security and recovery checks
+
+#### Personal archive for private storage
+
+Use Profile → Export personal data, or ask Codex to run:
+
+```bash
+npm run archive:export -- --project=staging --user=your-username
+# After the versioned-export migration is deployed:
+npm run archive:export -- --project=production --user=your-username
+```
+
+The CLI uses a private Supabase Management token, an explicitly read-only SQL
+transaction and the selected user's export RPC. It creates `archive.json` and
+`manifest.json` under `~/adn-backups`, with restrictive permissions. `BACKUP_DIR`
+may choose another location outside this checkout; symlinks into the repository
+are rejected. Transfer the whole folder to a private Drive folder yourself, or
+explicitly authorize an upload. No scheduled backup, commit or cloud upload is
+performed. Verify the JSON checksum against the manifest before a restore.
+
+This is a personal portable export, not a complete platform backup: concert
+imports do not recreate account credentials, friendships, consent, Spotify
+tokens or avatar files. The database dump below covers a different scope and
+still does not replace provider-level Auth/Vault/Storage recovery.
 
 The migration audit verifies that every checked-in public table enables row
 level security and that security-definer functions pin an empty search path:
@@ -193,7 +216,7 @@ SUPABASE_DB_URL='postgresql://...' npm run db:backup
 ```
 
 The command writes `schema.sql`, `data.sql` and a SHA-256 manifest below
-`backups/`. Rehearse recovery only in an empty disposable project: apply the
+`~/adn-backups/` (or `BACKUP_DIR` outside the repository), with private file permissions. Rehearse recovery only in an empty disposable project: apply the
 schema, then the data, and verify row counts and login flows. Supabase Auth
 identities and Vault secrets require the provider's project recovery process
 and are not part of this application-data dump.
@@ -211,12 +234,7 @@ ICS exported here contains `X-ADN-CITY` / `X-ADN-COUNTRY` for lossless location
 roundtrips; third-party ICS without structured location remains editable in the
 preview rather than guessing a city or country.
 
-Changes made through the local UI become ordinary Git working-tree changes:
-
-```bash
-git status --short
-git diff -- data/concerts.json
-```
+Real local UI changes go to the staging database, never Git. Without Supabase, demo edits go to ignored `data/demo-concerts.json`.
 
 ## Resume development safely
 
@@ -309,6 +327,7 @@ Additional manually invoked checks:
 ```bash
 npx playwright install --with-deps webkit # Linux libraries require sudo
 npm run test:webkit                      # WebKit, not a physical Safari device
+npm run test:firefox                     # Gecko engine
 npm run test:unit
 npm run audit:security
 npm run test:db:staging                  # Supabase management token required
@@ -344,13 +363,13 @@ production settings require explicit release approval.
 The 28 September staging hardening pass verified email confirmation enabled and
 set the staging Auth password minimum to 8 through the
 [Supabase Management API](https://supabase.com/docs/reference/api/v1-update-auth-service-config).
-No SMTP credentials or production Auth settings were changed. CAPTCHA remains
-an external setup/release prerequisite before unrestricted public registration.
+No SMTP credentials or production Auth settings were changed. CAPTCHA is deferred by Eric. Revisit coordinated provider/widget/CSP setup
+before unrestricted public registration.
 
 Removing fallback data from the hosted bundle does **not** remove personal JSON
-already committed to a public Git repository or its history. Repository privacy
-and any historical-data cleanup need an explicit owner decision before a wider
-launch; do not rewrite history as part of an ordinary deployment.
+already committed to a public Git repository or its history. Eric explicitly chose to retain old Git history. Personal seed payloads and
+real JSON are removed from the current tree, but old commits remain public.
+Do not rewrite that history or replay edited historical migrations.
 
 Netlify builds production with `npm run build` and publishes `dist`.
 
@@ -375,7 +394,7 @@ RESEND_API_KEY                  # optional: admin email-delivery metrics
 VITE_SENTRY_DSN                 # optional: browser error reporting
 ```
 
-`GITHUB_TOKEN` needs **Contents: read and write** to update the JSON backup, plus **Actions: read and write** to start and monitor the suggestion workflow. `SETLIST_API_KEY` and `TICKETMASTER_API_KEY` power the authenticated on-demand concert search; `RESEND_API_KEY` lets the admin panel read delivery totals but is not required for email sending, which runs in GitHub Actions. The Supabase values are publishable browser configuration; authorization is enforced through user sessions and database policies. Keep GitHub, setlist.fm, Ticketmaster and Resend secrets in Netlify, never in the repository or browser code.
+`GITHUB_TOKEN` no longer needs Contents write access for data backups. It needs **Actions: read and write** to start and monitor the suggestion workflow. `SETLIST_API_KEY` and `TICKETMASTER_API_KEY` power the authenticated on-demand concert search; `RESEND_API_KEY` lets the admin panel read delivery totals but is not required for email sending, which runs in GitHub Actions. The Supabase values are publishable browser configuration; authorization is enforced through user sessions and database policies. Keep GitHub, setlist.fm, Ticketmaster and Resend secrets in Netlify, never in the repository or browser code.
 
 ### Credential ownership
 
@@ -385,7 +404,7 @@ Store values only in the provider named below. Identical variable names in diffe
 | --- | --- | --- | --- |
 | Netlify | `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, `VITE_SPOTIFY_CLIENT_ID` | Public browser configuration injected at build time | No |
 | Netlify | `SETLIST_API_KEY`, `TICKETMASTER_API_KEY` | Server-side concert and setlist searches | Yes |
-| Netlify | `GITHUB_TOKEN` | Admin workflow status and protected legacy backup operations | Yes |
+| Netlify | `GITHUB_TOKEN` | Admin workflow status and dispatch (no archive writes) | Yes |
 | Netlify | `RESEND_API_KEY` | Admin delivery/bounce metrics; use a dedicated Full-access Resend key | Yes |
 | Netlify | `VITE_SENTRY_DSN` | Optional browser error reporting | No |
 | GitHub Actions | `SUPABASE_URL`, `SPOTIFY_CLIENT_ID`, `RESEND_FROM_EMAIL` | Workflow configuration and verified digest sender | No, although repository Secrets may still hold them |
@@ -458,7 +477,7 @@ To run the complete pipeline locally:
 npm run suggestions:refresh
 ```
 
-Scraped lineups are matched against the runtime `data/listened-artists.json`, which contains the deduplicated union of artists observed across connected accounts without identifying which user listens to whom. Eric's historical import ignores plays shorter than 30 seconds and requires at least one accumulated listening hour per artist; connected Spotify Top Artists remain eligible directly. Reseeding replaces the previous historical rows so artists below that threshold are removed. Run `node scripts/sync-spotify-accounts.mjs --seed-only` with the normal server-side Supabase variables to repair the historical seed without calling Spotify. Later top-artist refreshes accumulate instead of deleting older affinity. The workflow downloads and preserves the current catalog, combines and deduplicates scraper results, resolves exact Spotify artist artwork, atomically publishes the refreshed catalog to Supabase, and only then emails new matches. It creates no commit and no Netlify deployment. The checked-in JSON files remain local fallbacks only.
+Scraped lineups are matched against the runtime `data/listened-artists.json`, which contains the deduplicated union of artists observed across connected accounts without identifying which user listens to whom. Eric's historical import ignores plays shorter than 30 seconds and requires at least one accumulated listening hour per artist; connected Spotify Top Artists remain eligible directly. Daily sync never reseeds historical rows from local files; `--seed-only` is retired. Existing historical affinity stays in Supabase. Future ZIP imports are explicit private operations for the selected user. Later top-artist refreshes accumulate instead of deleting older affinity. The workflow downloads and preserves the current catalog, combines and deduplicates scraper results, resolves exact Spotify artist artwork, atomically publishes the refreshed catalog to Supabase, and only then emails new matches. It creates no commit and no Netlify deployment. Runtime JSON files are ignored and reconstructed from Supabase; no real data is checked in.
 
 The workflow also records 90 days of operational telemetry in Supabase. The admin-only `/admin` view shows the latest run, source-level scraper status, event and suggestion counts, Spotify reconnections, canonical duplicates, and approximate provider usage. A failed scraper is shown as `preserved` when its previous suggestions were safely retained. The final telemetry step uses `if: always()` and never makes discovery fail if monitoring itself is temporarily unavailable.
 
@@ -521,7 +540,7 @@ gh auth setup-git
 
 ## Data model
 
-Supabase is the production source of truth. The normalized model uses `profiles`, canonical `concerts`, per-user `concert_participants`, mutual `friendships`, durable `notifications`, per-user `bucket_list_artists` and `user_dismissed_suggestions`, the atomic `concert_suggestion_catalog`, and encrypted Spotify connections. Each authenticated user manages their own archive, calendar, Spotify taste profile, suggestions, and bucket list; Eric's `admin` role additionally grants user administration. Profiles include a display name, optional avatar URL and location, discoverability, section-level friend-profile visibility, email-notification and theme preferences, role, and account status. The theme is also cached locally so it can be applied before React renders. `data/concerts.json` remains Eric's compatible local fallback and GitHub backup:
+Supabase is the production source of truth. The normalized model uses `profiles`, canonical `concerts`, per-user `concert_participants`, mutual `friendships`, durable `notifications`, per-user `bucket_list_artists` and `user_dismissed_suggestions`, the atomic `concert_suggestion_catalog`, and encrypted Spotify connections. Each authenticated user manages their own archive, calendar, Spotify taste profile, suggestions, and bucket list; Eric's `admin` role additionally grants user administration. Profiles include a display name, optional avatar URL and location, discoverability, section-level friend-profile visibility, email-notification and theme preferences, role, and account status. The theme is also cached locally so it can be applied before React renders. No real dataset or backup is stored in Git. Portable concert records use this shape:
 
 ```json
 {
@@ -601,12 +620,9 @@ reduce file length.
 ├── AGENTS.md                         Durable guidance for coding agents
 ├── docs/DEVELOPMENT.md               Detailed contributor and operations guide
 ├── data/
-│   ├── concerts.json                 Canonical concert dataset
-│   ├── listened-artists.json          Local privacy-reduced artist fallback
-│   └── suggestions.json              Local suggestion fallback
+│   └── README.md                     Runtime JSON here is ignored, not backed up
 ├── netlify/functions/
-│   ├── get-setlist.js                Production setlist.fm proxy
-│   └── save-concerts.js              Production GitHub write proxy
+│   └── get-setlist.js                Production setlist.fm proxy
 ├── scripts/
 │   ├── combine-concert-suggestions.mjs
 │   ├── scrape-livenation-events.mjs
@@ -644,7 +660,7 @@ Run `npm run dev:network`, use the computer's LAN IP and port 5173, and check th
 
 ### Production concert writes fail
 
-Check Netlify function logs and verify `GITHUB_TOKEN`, `VITE_SUPABASE_URL`, and `VITE_SUPABASE_PUBLISHABLE_KEY`.
+Check the Supabase RPC response, applied migrations, session permissions, `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY`. Concert writes do not pass through GitHub or its token.
 
 ### A scraper stops matching events
 

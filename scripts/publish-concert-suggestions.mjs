@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import fs from "node:fs/promises";
+import path from "node:path";
 
 function validCatalog(value) {
   return value && typeof value.generatedAt === "string" && !Number.isNaN(Date.parse(value.generatedAt))
@@ -23,6 +24,7 @@ if (downloadPath) {
   if (!response.ok) throw new Error(`Could not download suggestions (${response.status})`);
   const catalog = await response.json();
   if (!validCatalog(catalog)) throw new Error("Invalid suggestion catalog in Supabase");
+  await fs.mkdir(path.dirname(downloadPath), { recursive: true });
   await fs.writeFile(downloadPath, `${JSON.stringify(catalog, null, 2)}\n`, "utf8");
   process.stdout.write(`Downloaded ${catalog.suggestions.length} suggestions from Supabase\n`);
   process.exit(0);

@@ -1,18 +1,18 @@
-import { mkdir, readFile, stat, writeFile } from "node:fs/promises";
+import { readFile, stat, writeFile } from "node:fs/promises";
 import { spawn } from "node:child_process";
 import { createHash } from "node:crypto";
 import path from "node:path";
+import { createBackupDirectory } from "./lib/backup-files.mjs";
 
 const databaseUrl = process.env.SUPABASE_DB_URL;
 if (!databaseUrl) throw new Error("Set SUPABASE_DB_URL to the staging or production Postgres connection string.");
-const stamp = new Date().toISOString().replaceAll(":", "-").replace(".000Z", "Z");
-const directory = path.resolve(process.env.BACKUP_DIR || "backups", `a-deafening-noise-${stamp}`);
-await mkdir(directory, { recursive: true });
+process.umask(0o077);
+const directory = await createBackupDirectory("database");
 
 async function dump(filename, flags = []) {
   const output = path.join(directory, filename);
   const child = spawn("npx", ["supabase", "db", "dump", "--db-url", databaseUrl, "--file", output, ...flags], { stdio: "inherit" });
-  const exitCode = await new Promise((resolve) => child.on("exit", resolve));
+  const exitCode = await new Promise((resolve, reject) => { child.on("error", reject); child.on("exit", resolve); });
   if (exitCode !== 0) process.exit(exitCode || 1);
   const info = await stat(output);
   const contents = await readFile(output);

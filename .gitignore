@@ -15,6 +15,9 @@ dist
 playwright-report/
 test-results/
 backups/
+data/*.json
+*.dump
+*.backup
 
 # Local Supabase CLI state
 supabase/.temp/

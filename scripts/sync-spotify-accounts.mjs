@@ -22,50 +22,18 @@ function spotifyArtists(ranges) {
   return [...artists.values()];
 }
 
-const qualifiesHistoricalArtist = ({ totalMsPlayed = 0 }) => totalMsPlayed >= 3_600_000;
-
 if (process.argv.includes("--check")) {
   assert.deepEqual(spotifyArtists([{ items: [{ id: "1", name: "Artist", images: [{ url: "https://image" }] }] }, { items: [{ id: "1", name: "Artist" }] }, { items: [] }]), [{ spotifyId: "1", name: "Artist", imageUrl: "https://image", ranges: ["short_term", "medium_term"] }]);
   assert.equal(exactArtist([{ name: "Perturbator Tribute", images: [{ url: "https://wrong" }] }, { name: "PERTURBATOR", images: [{ url: "https://right" }] }], "Perturbator").images[0].url, "https://right");
-  assert.equal(qualifiesHistoricalArtist({ totalMsPlayed: 3_599_999 }), false);
-  assert.equal(qualifiesHistoricalArtist({ totalMsPlayed: 3_600_000 }), true);
   process.stdout.write("Spotify sync self-check passed\n");
   process.exit(0);
 }
 
+if (process.argv.includes("--seed-only")) throw new Error("Automatic historical reseeding is retired. Import a user's history explicitly into Supabase; daily sync never replaces historical rows.");
 const supabaseUrl = required("SUPABASE_URL");
 const serviceKey = required("SUPABASE_SERVICE_ROLE_KEY");
-const seedOnly = process.argv.includes("--seed-only");
-const spotifyClientId = seedOnly ? "" : required("SPOTIFY_CLIENT_ID");
+const spotifyClientId = required("SPOTIFY_CLIENT_ID");
 const headers = { apikey: serviceKey, Authorization: `Bearer ${serviceKey}`, "Content-Type": "application/json" };
-
-async function seedHistoricalCatalog() {
-  let catalog;
-  try { catalog = JSON.parse(await fs.readFile(outputPath, "utf8")); } catch { return; }
-  if (catalog.source !== "Spotify Extended Streaming History" || !catalog.artists?.length) return;
-  const profileResponse = await fetch(`${supabaseUrl}/rest/v1/profiles?select=id&role=eq.admin&limit=1`, { headers });
-  if (!profileResponse.ok) throw new Error(`Could not find the admin profile (${profileResponse.status})`);
-  const [admin] = await profileResponse.json();
-  if (!admin) throw new Error("Could not seed Spotify history without an admin profile");
-  const artists = catalog.artists.filter(qualifiesHistoricalArtist);
-  const deleteResponse = await fetch(`${supabaseUrl}/rest/v1/user_listened_artists?${new URLSearchParams({ user_id: `eq.${admin.id}`, spotify_artist_id: "like.history:*" })}`, { method: "DELETE", headers });
-  if (!deleteResponse.ok) throw new Error(`Could not replace Spotify history (${deleteResponse.status})`);
-  for (let offset = 0; offset < artists.length; offset += 500) {
-    const rows = artists.slice(offset, offset + 500).map(({ artist }) => ({
-      user_id: admin.id,
-      spotify_artist_id: `history:${createHash("sha256").update(normalize(artist)).digest("hex")}`,
-      artist_name: artist,
-      time_ranges: [],
-    }));
-    const response = await fetch(`${supabaseUrl}/rest/v1/user_listened_artists?on_conflict=user_id,spotify_artist_id`, {
-      method: "POST",
-      headers: { ...headers, Prefer: "resolution=merge-duplicates" },
-      body: JSON.stringify(rows),
-    });
-    if (!response.ok) throw new Error(`Could not seed Spotify history (${response.status})`);
-  }
-  process.stdout.write(`Seeded ${artists.length} qualifying historical artists for the admin profile\n`);
-}
 
 function normalize(value) {
   return String(value || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, " ").trim();
@@ -88,8 +56,6 @@ async function spotify(pathname, accessToken) {
   return response.json();
 }
 
-await seedHistoricalCatalog();
-if (seedOnly) process.exit(0);
 const accounts = await rpc("get_spotify_sync_accounts");
 const [participantResponse, concertResponse] = await Promise.all([
   fetch(`${supabaseUrl}/rest/v1/concert_participants?select=user_id,concert_id&status=eq.confirmed`, { headers }),
@@ -144,5 +110,6 @@ try {
   const previous = JSON.parse(await fs.readFile(outputPath, "utf8"));
   if (JSON.stringify(previous.artists || []) === JSON.stringify(artists)) generatedAt = previous.generatedAt || generatedAt;
 } catch {}
+await fs.mkdir(path.dirname(outputPath), { recursive: true });
 await fs.writeFile(outputPath, `${JSON.stringify({ generatedAt, source: "Active users' discovery affinity", matchingRule: "Confirmed archive, bucket list and qualified listening artists", artists }, null, 2)}\n`, "utf8");
 process.stdout.write(`Synced ${synced}/${accounts.length} Spotify accounts and wrote ${artists.length} unique artists\n`);

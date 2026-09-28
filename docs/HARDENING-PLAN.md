@@ -96,16 +96,38 @@ Run `npm run dev` with the existing staging `.env.local` and open
 6. Manually verify signup/password recovery and Safari on an actual device.
    Automated quality tests intentionally do not send real auth/digest emails.
 
+## Follow-up: browser coverage and data ownership
+
+Eric approved keeping old Git history and deferring CAPTCHA. The current tree
+now excludes personal JSON and one-off personal seed payloads; historical
+migration versions remain as placeholders and must not be replayed on existing
+databases. No data has been deleted from Supabase.
+
+- Chromium: 88 passed, 2 layout-specific skips.
+- WebKit: 59 passed, 1 desktop-only skip.
+- Firefox: 29 passed, 1 desktop-only skip.
+- Four additional modal captures (WebKit/Firefox, 390/1280px) fit the viewport.
+- Thirteen unit-test files pass. Discovery reconstructs runtime files from a
+  mocked database in an empty directory, without a checked-in dataset.
+- The initial cross-browser failures were test synchronization issues: shortcut
+  dispatch before the page was ready and polling a not-yet-received OAuth URL.
+  Both now wait for their actual prerequisite rather than adding arbitrary sleeps.
+- A read-only personal staging export produced 184 concerts, all accepted by
+  import preview validation, with a verified checksum and mode-0600 file outside
+  Git. No Drive upload or production write was performed.
+- Production still holds 506 historical Spotify artist rows; staging currently
+  has none with the historical-import prefix. Existing staging and production
+  taste data therefore differ; removing local JSON did not cause that difference.
+
 ## Remaining release gates — not claimed complete
 
-- WebKit was downloaded, but system-library installation stopped because sudo
-  requires a terminal/password. Run `npx playwright install --with-deps webkit`
-  interactively, then `npm run test:webkit`; physical Safari still merits review.
-- Configure CAPTCHA provider + matching UI + CSP together before opening
-  unrestricted public signup. No provider keys were created or guessed, and
-  server CAPTCHA was deliberately not enabled without its widget.
-- Decide whether the public repository should retain personal fallback JSON.
-  Bundle isolation cannot retract existing public Git history.
+- WebKit and Firefox now pass. A physical Safari device still merits review;
+  Chromium testing is engine coverage for Chrome/Edge, not a run of each vendor
+  binary or every older browser version.
+- CAPTCHA is explicitly deferred by Eric. No provider keys were created and
+  server CAPTCHA was not enabled without a corresponding widget.
+- Personal JSON is removed from the current tree. Old public commits are kept
+  by explicit owner decision; no force push or history rewrite is planned.
 - Digest rows in `review` mean an ambiguous send passed the safe retry window
   or exhausted attempts: inspect Resend before retrying, never blindly reset.
   A first production run may email currently eligible suggestions once.
