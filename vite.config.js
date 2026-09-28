@@ -134,10 +134,25 @@ function localNetlifyFunctions(env) {
   };
 }
 
-export default defineConfig(({ mode }) => {
+export default defineConfig(({ mode, command }) => {
   const env = loadEnv(mode, process.cwd(), "");
+  const qualityAudit = env.VITE_QUALITY_AUDIT === "true";
+  const fallbackEnabled = qualityAudit || (command === "serve" && !env.VITE_SUPABASE_URL);
+  if (command === "build" && !qualityAudit && (!env.VITE_SUPABASE_URL || !env.VITE_SUPABASE_PUBLISHABLE_KEY)) {
+    throw new Error("Hosted builds require Supabase configuration. Use VITE_QUALITY_AUDIT=true only for isolated local tests.");
+  }
+  const fallbackPlugin = {
+    name: "isolated-archive-fallback",
+    resolveId(id) { if (id === "virtual:archive-fallback") return "\0archive-fallback"; },
+    async load(id) {
+      if (id !== "\0archive-fallback") return;
+      const concertsData = fallbackEnabled ? JSON.parse(await fs.readFile("data/concerts.json", "utf8")) : { concerts: [] };
+      const suggestionsData = fallbackEnabled ? JSON.parse(await fs.readFile("data/suggestions.json", "utf8")) : { suggestions: [] };
+      return `export const concertsData=${JSON.stringify(concertsData)}; export const suggestionsData=${JSON.stringify(suggestionsData)};`;
+    },
+  };
   return {
-    plugins: [react(), localNetlifyFunctions(env)],
+    plugins: [react(), fallbackPlugin, localNetlifyFunctions(env)],
     build: {
       sourcemap: false,
       rollupOptions: {

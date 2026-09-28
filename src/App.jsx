@@ -1,8 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import whatsappIcon from "@fortawesome/fontawesome-free/svgs/brands/whatsapp.svg";
-import concertsData from "../data/concerts.json";
-import suggestionsData from "../data/suggestions.json";
+import { concertsData, suggestionsData } from "virtual:archive-fallback";
 import {
   deleteMyAccount,
   deleteMyConcert,

@@ -283,6 +283,21 @@ Add functional tests selectively for high-risk interactions, reusable behavior, 
 
 ## Production behavior
 
+Hosted builds never include the private JSON fallback. After `npm run build`,
+run `node scripts/check-production-bundle.mjs`. Local quality builds must
+explicitly use `VITE_QUALITY_AUDIT=true` and must never be deployed.
+The Netlify CSP permits only same-origin scripts; the pre-render theme script
+is served as `/theme-init.js`. Provider proxies use shared database quotas
+(per authenticated user and action: 60 setlist / 30 catalog requests per minute,
+300 daily) rather than per-instance token counters. Apply the provider-quota
+migration before deploying these functions. No new server secret is required.
+
+Keep hosted Auth's minimum password length at least 8, matching the client and
+local configuration. Before broad public promotion, configure a CAPTCHA provider
+and its public widget/secret together; do not enable CAPTCHA server-side without
+the matching UI, or registration will stop working. Provider account setup and
+production settings require explicit release approval.
+
 Netlify builds production with `npm run build` and publishes `dist`.
 
 | Behavior | Local development | Netlify production |

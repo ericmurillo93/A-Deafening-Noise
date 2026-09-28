@@ -1,19 +1,9 @@
 import { requireArchiveUser } from "./lib/supabase-auth.js";
-import { createHash } from "node:crypto";
-
-const requestsByUser = new Map();
 
 export async function handler(event) {
   if (event.httpMethod && event.httpMethod !== "POST") return { statusCode: 405, headers: { Allow: "POST" }, body: "Method not allowed" };
-  const auth = await requireArchiveUser(event);
+  const auth = await requireArchiveUser(event, { quota: "setlist" });
   if (auth.error) return auth.error;
-
-  const now = Date.now();
-  const userKey = createHash("sha256").update(event.headers?.authorization || event.headers?.Authorization || "").digest("hex");
-  const previous = requestsByUser.get(userKey);
-  const usage = !previous || now - previous.startedAt >= 60_000 ? { startedAt: now, count: 1 } : { ...previous, count: previous.count + 1 };
-  requestsByUser.set(userKey, usage);
-  if (usage.count > 60) return { statusCode: 429, headers: { "Content-Type": "application/json" }, body: JSON.stringify({ error: "Too many setlist requests. Try again shortly." }) };
 
   let setlistId, artist, date, action, userId, pages;
   try {
@@ -35,6 +25,7 @@ export async function handler(event) {
     "x-api-key": apiKey,
     "Accept": "application/json",
   };
+  const request = (url) => fetch(url, { headers, signal: AbortSignal.timeout(12000) });
 
   const respond = (status, body) => ({
     statusCode: status,
@@ -47,7 +38,7 @@ export async function handler(event) {
     const pageLimit = Math.min(Math.max(Number(pages) || 5, 1), 10); const setlists = [];
     try {
       for (let page = 1; page <= pageLimit; page += 1) {
-        const res = await fetch(`https://api.setlist.fm/rest/1.0/user/${encodeURIComponent(userId)}/attended?p=${page}`, { headers });
+        const res = await request(`https://api.setlist.fm/rest/1.0/user/${encodeURIComponent(userId)}/attended?p=${page}`);
         if (!res.ok) return respond(res.status, await res.text());
         const body = await res.json(); setlists.push(...(body.setlist || []));
         if (setlists.length >= Number(body.total || 0)) break;
@@ -59,7 +50,7 @@ export async function handler(event) {
   // ── Path 1: direct lookup by setlistId ──────────────────────────────────────
   if (setlistId) {
     try {
-      const res = await fetch(`https://api.setlist.fm/rest/1.0/setlist/${setlistId}`, { headers });
+      const res = await request(`https://api.setlist.fm/rest/1.0/setlist/${encodeURIComponent(setlistId)}`);
       const text = await res.text();
       return respond(res.status, text);
     } catch (err) {
@@ -77,7 +68,7 @@ export async function handler(event) {
 
   try {
     const searchUrl = `https://api.setlist.fm/rest/1.0/search/setlists?artistName=${encodeURIComponent(artist)}&date=${fmDate}&p=1`;
-    const res = await fetch(searchUrl, { headers });
+    const res = await request(searchUrl);
 
     if (!res.ok) {
       const text = await res.text();

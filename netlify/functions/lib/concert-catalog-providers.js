@@ -48,7 +48,7 @@ function ticketmasterResult(item) {
   };
 }
 
-export async function searchExternalConcertCatalog(criteria, env, request = fetch) {
+export async function searchExternalConcertCatalog(criteria, env, request = (url, options = {}) => fetch(url, { ...options, signal: AbortSignal.timeout(12000) })) {
   const field = ["artist", "venue", "city", "date"].includes(criteria.field) ? criteria.field : "artist";
   const value = String(criteria.value || "").trim().slice(0, 100);
   if (value.length < 2) return [];
