@@ -18,6 +18,9 @@
   --adn-primary-text: #ffffff;
   --adn-panel: #15191e;
   --adn-card: #111418;
+  --adn-card-hover: #171b20;
+  --adn-navigation-surface: #0c1015;
+  --adn-navigation-border: #20242a;
   --adn-border-strong: #30343a;
   --adn-radius-panel: 6px;
   --adn-radius-control: 8px;
@@ -82,6 +85,10 @@ input::placeholder {
 .adn-search-field input:focus-visible {
   box-shadow: none;
   outline: none;
+}
+.adn-search-field:has(input:focus-visible) {
+  outline: 1px solid var(--adn-focus);
+  outline-offset: 2px;
 }
 
 .adn-shell { background: var(--adn-stage); }
@@ -169,12 +176,12 @@ input::placeholder {
 .adn-button-danger:hover { @apply border-red-600 bg-red-600 text-white; }
 .adn-button-success { @apply border border-emerald-700 bg-emerald-700 text-white; }
 .adn-button-success:hover { @apply border-emerald-600 bg-emerald-600; }
-.adn-button-warning { @apply border border-amber-600 bg-amber-600 text-white; }
+.adn-button-warning { @apply border border-amber-600 bg-amber-600 text-amber-950; }
 .adn-button-warning:hover { @apply border-amber-500 bg-amber-500; }
 .adn-icon-button { width: 44px; padding: 0; border: 1px solid var(--adn-border); background: var(--adn-surface); color: var(--adn-focus); }
 .adn-icon-button:hover { border-color: var(--adn-border-hover); background: var(--adn-surface-raised); color: white; }
 .adn-suggestion-choice {
-  @apply inline-flex min-h-11 min-w-28 items-center justify-center gap-2 rounded-md border border-zinc-700 bg-transparent px-3 text-[9px] font-black uppercase tracking-wide text-zinc-300 transition-colors hover:border-zinc-500 hover:text-white;
+  @apply inline-flex min-h-11 min-w-28 items-center justify-center gap-2 rounded-md border border-zinc-700 bg-transparent px-3 text-[11px] font-black uppercase tracking-wide text-zinc-300 transition-colors hover:border-zinc-500 hover:text-white;
 }
 .adn-suggestion-choice-active { @apply border-emerald-600 text-emerald-400; }
 .adn-suggestion-choice-rejected { @apply border-red-700 text-red-300; }
@@ -235,18 +242,15 @@ button[aria-label="View activity"] { display: flex; }
   --adn-primary-text: #09090b;
   --adn-panel: #18181b;
   --adn-card: #09090b;
+  --adn-card-hover: #27272a;
+  --adn-navigation-surface: #050506;
+  --adn-navigation-border: #27272a;
   --adn-border-strong: #27272a;
   --adn-radius-panel: 24px;
   --adn-radius-control: 16px;
 }
-[data-theme="poster"] .bg-\[\#0c1015\] { background-color: #050506; }
-[data-theme="poster"] .bg-\[\#111418\] { background-color: #09090b; }
-[data-theme="poster"] .bg-\[\#15191e\] { background-color: #18181b; }
-[data-theme="poster"] .bg-\[\#171b20\] { background-color: #27272a; }
-[data-theme="poster"] .border-\[\#20242a\],
 [data-theme="poster"] .border-\[\#2a2e34\],
-[data-theme="poster"] .border-\[\#292d32\],
-[data-theme="poster"] .border-\[\#30343a\] { border-color: #27272a; }
+[data-theme="poster"] .border-\[\#292d32\] { border-color: #27272a; }
 [data-theme="poster"] .adn-button-primary img { filter: brightness(0); }
 [data-theme="poster"] .adn-navigation nav button { border-radius: 12px; }
 [data-theme="poster"] .menu-button-touch { border-radius: 9999px; }

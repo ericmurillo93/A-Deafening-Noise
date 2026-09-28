@@ -9,6 +9,9 @@ const translations = {
     "nav.suggestions": "Concert Suggestions",
   },
   es: {
+    "Suggestions could not be refreshed. Your archive is still available.": "No se han podido actualizar las sugerencias. Tu archivo sigue disponible.",
+    "Only confirmed attendance can be imported": "Solo se puede importar asistencia confirmada",
+    "This export uses a newer format. Update the application before importing.": "Este archivo utiliza un formato más reciente. Actualiza la aplicación antes de importarlo.",
     "nav.archive": "Archivo",
     "nav.timeline": "Cronología",
     "nav.calendar": "Calendario",

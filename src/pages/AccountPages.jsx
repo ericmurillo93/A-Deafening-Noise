@@ -788,7 +788,7 @@ export function ProfilePage({
           description={t("Connect Spotify and choose where you want to discover concerts.")}
         />
         <div className="mb-5 flex items-center gap-3 border-t border-zinc-800 pt-5">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-[#30343a] bg-[#111418]">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-[var(--adn-border-strong)] bg-[var(--adn-card)]">
             <img
               src={spotifyIcon}
               alt=""

@@ -57,7 +57,7 @@ function Status({ bought }) {
   const { t } = useI18n();
   return (
     <span
-      className={`inline-flex items-center gap-1.5 whitespace-nowrap text-[10px] font-black uppercase tracking-wide ${bought ? "text-emerald-400" : "text-amber-400"}`}
+      className={`inline-flex max-w-full items-center gap-1.5 text-[11px] font-black uppercase leading-snug tracking-wide ${bought ? "text-emerald-400" : "text-amber-400"}`}
     >
       <i
         className={`fa-solid ${bought ? "fa-circle-check" : "fa-circle-exclamation"}`}
@@ -151,7 +151,7 @@ function EmptyArchiveOnboarding({
           {t("Your concert archive starts here.")}
         </p>
       </header>
-      <div className="grid overflow-hidden rounded-md border border-[#30343a] bg-[#15191e] lg:grid-cols-[1.2fr_0.8fr]">
+      <div className="grid overflow-hidden rounded-md border border-[var(--adn-border-strong)] bg-[var(--adn-panel)] lg:grid-cols-[1.2fr_0.8fr]">
         <section className="relative flex min-h-[360px] items-end overflow-hidden p-6 sm:p-8">
           <img
             src={stageImage}
@@ -193,7 +193,7 @@ function EmptyArchiveOnboarding({
             {steps.map((step) => (
               <li key={step.title} className="flex items-center gap-4 py-4">
                 <span
-                  className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-md border ${step.complete ? "border-emerald-800 bg-emerald-950/40 text-emerald-400" : "border-[#30343a] bg-[#111418] text-blue-400"}`}
+                  className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-md border ${step.complete ? "border-emerald-800 bg-emerald-950/40 text-emerald-400" : "border-[var(--adn-border-strong)] bg-[var(--adn-card)] text-blue-400"}`}
                 >
                   {step.iconSrc ? (
                     <img
@@ -265,6 +265,7 @@ export default function HomePage({
   const suggestionDateFormat = useMemo(() => new Intl.DateTimeFormat(locale, { month: "short", day: "2-digit", year: "numeric" }), [locale]);
   const relativeTimeFormat = useMemo(() => new Intl.RelativeTimeFormat(locale, { numeric: "auto", style: "narrow" }), [locale]);
   const upcomingRef = useRef(null);
+  const [canScrollUpcoming, setCanScrollUpcoming] = useState(false);
   const [now, setNow] = useState(Date.now());
   useEffect(() => {
     const timer = window.setInterval(() => setNow(Date.now()), 1000);
@@ -336,6 +337,14 @@ export default function HomePage({
   const newSuggestions = suggestions.filter(
     (suggestion) => !suggestionReviews[suggestion.id],
   );
+  useEffect(() => {
+    const track = upcomingRef.current;
+    if (!track) return;
+    const update = () => setCanScrollUpcoming(track.scrollWidth > track.clientWidth + 1);
+    const observer = new ResizeObserver(update);
+    observer.observe(track); update();
+    return () => observer.disconnect();
+  }, [upcoming.length]);
   const metrics = [
     {
       icon: "fa-ticket",
@@ -422,7 +431,7 @@ export default function HomePage({
       </header>
 
       <div className="grid gap-5 lg:grid-cols-[718fr_532fr]">
-        <section className="relative min-h-[360px] overflow-hidden rounded-md border border-[#30343a] bg-zinc-950 lg:h-[318px] lg:min-h-0">
+        <section className="relative min-h-[360px] overflow-hidden rounded-md border border-[var(--adn-border-strong)] bg-zinc-950 lg:h-[318px] lg:min-h-0">
           <img
             src={
               next?.imageUrl ||
@@ -516,7 +525,7 @@ export default function HomePage({
           )}
         </section>
 
-        <section className="relative z-10 h-[318px] overflow-visible rounded-md border border-[#30343a] bg-gradient-to-br from-[#171b20] to-[#11161b] px-[22px] shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
+        <section className="relative z-10 h-[318px] overflow-visible rounded-md border border-[var(--adn-border-strong)] bg-gradient-to-br from-[#171b20] to-[#11161b] px-[22px] shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
           <div className="flex h-11 items-center justify-between gap-3">
             <button
               type="button"
@@ -585,7 +594,7 @@ export default function HomePage({
       </div>
 
       {upcoming.length > 0 && (
-        <section className="relative rounded-md border border-[#30343a] bg-[#15191e] p-3">
+        <section className="relative rounded-md border border-[var(--adn-border-strong)] bg-[var(--adn-panel)] p-3">
           <SectionTitle
             title={t("Upcoming")}
             action={t("View calendar")}
@@ -602,19 +611,19 @@ export default function HomePage({
                   type="button"
                   key={concert.concertId || `${concert.artist}-${concert.date}`}
                   onClick={() => onOpenConcert(concert)}
-                  className="group flex min-w-[min(18rem,85vw)] shrink-0 snap-start items-center rounded-md border border-[#30343a] bg-[#111418] text-left transition-colors hover:border-zinc-500 sm:min-w-0 sm:basis-[calc((100%-0.75rem)/2)] xl:basis-[calc((100%-2.25rem)/4)]"
+                  className="group relative grid w-[min(21rem,85vw)] shrink-0 snap-start grid-cols-[2.5rem_3.5rem_minmax(0,1fr)] items-center gap-3 rounded-md border border-[var(--adn-border-strong)] bg-[var(--adn-card)] p-3 text-left transition-colors hover:border-zinc-500"
                 >
                   <div
-                    className={`h-full w-0.5 shrink-0 rounded-l-md ${concert.bought ? "bg-emerald-500" : "bg-amber-500"}`}
+                    className={`absolute inset-y-0 left-0 w-px rounded-l-md ${concert.bought ? "bg-emerald-500" : "bg-amber-500"}`}
                   />
-                  <div className="w-14 shrink-0 px-2 text-center">
+                  <div className="min-w-0 text-center">
                     <span className="block text-[10px] font-black uppercase text-zinc-400">
                       {monthFormat.format(date)}
                     </span>
                     <strong className="block text-2xl font-medium tabular-nums text-zinc-100">
                       {dayFormat.format(date)}
                     </strong>
-                    <span className="block text-[9px] font-bold uppercase text-zinc-400">
+                    <span className="block text-[11px] font-bold uppercase text-zinc-400">
                       {weekdayFormat.format(date)}
                     </span>
                   </div>
@@ -623,16 +632,17 @@ export default function HomePage({
                       artistImages.get(normalize(concert.artist)) || stageImage
                     }
                     alt=""
-                    className="h-20 w-[4.25rem] shrink-0 rounded object-cover opacity-80"
+                    loading="lazy"
+                    className="h-20 w-14 rounded object-cover opacity-80"
                   />
-                  <div className="min-w-0 flex-1 px-3 py-2">
+                  <div className="min-w-0">
                     <p className="truncate text-xs font-black uppercase text-zinc-100">
                       {concert.artist}
                     </p>
-                    <p className="mt-1 truncate text-[10px] font-medium uppercase text-zinc-400">
+                    <p className="mt-1 truncate text-xs font-medium uppercase text-zinc-400">
                       {concert.venue || "Venue TBC"}
                     </p>
-                    <p className="mt-1 truncate text-[9px] uppercase text-zinc-500">
+                    <p className="mt-1 truncate text-[11px] uppercase text-zinc-500">
                       {concert.city ? `${concert.city}, ` : ""}
                       {concertCountry(concert, locale)}
                     </p>
@@ -644,7 +654,7 @@ export default function HomePage({
               );
             })}
           </div>
-          {upcoming.length > 4 && (
+          {canScrollUpcoming && (
             <button
               type="button"
               onClick={() =>
@@ -653,7 +663,7 @@ export default function HomePage({
                   behavior: "smooth",
                 })
               }
-              className="absolute -right-3 top-[58%] z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-[#30343a] bg-[#171b20] text-zinc-100 shadow-xl transition hover:border-zinc-500 hover:bg-zinc-800"
+              className="absolute -right-3 top-[58%] z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-[var(--adn-border-strong)] bg-[var(--adn-card-hover)] text-zinc-100 shadow-xl transition hover:border-zinc-500 hover:bg-zinc-800"
               aria-label={t("Show more upcoming concerts")}
             >
               <i className="fa-solid fa-arrow-right" aria-hidden="true" />
@@ -663,7 +673,7 @@ export default function HomePage({
       )}
 
       <div className="grid gap-4 lg:grid-cols-[608fr_649fr]">
-        <section className="min-h-[328px] rounded-md border border-[#30343a] bg-[#15191e] p-3">
+        <section className="min-h-[328px] rounded-md border border-[var(--adn-border-strong)] bg-[var(--adn-panel)] p-3">
           <SectionTitle
             title={t("Recent activity")}
             action={t("View all")}
@@ -749,7 +759,7 @@ export default function HomePage({
             </p>
           )}
         </section>
-        <section className="flex min-h-[328px] flex-col rounded-md border border-[#30343a] bg-[#15191e] p-3">
+        <section className="flex min-h-[328px] flex-col rounded-md border border-[var(--adn-border-strong)] bg-[var(--adn-panel)] p-3">
           <SectionTitle
             title={t("New suggestions")}
             action={t("View all")}
@@ -777,10 +787,10 @@ export default function HomePage({
                     <span className="block truncate text-sm font-black uppercase tracking-wide text-zinc-100">
                       {suggestion.artist}
                     </span>
-                    <span className="mt-1 block truncate text-[10px] font-bold uppercase text-zinc-400">
+                    <span className="mt-1 block truncate text-xs font-bold uppercase text-zinc-400">
                       {suggestion.venue || "Venue TBC"}
                     </span>
-                    <span className="mt-1 block truncate text-[9px] font-medium uppercase text-zinc-500">
+                    <span className="mt-1 block truncate text-[11px] font-medium uppercase text-zinc-500">
                       {suggestionDateFormat.format(dateOf(suggestion))}{" "}
                       <span className="px-1 text-zinc-700">·</span>{" "}
                       {suggestion.city ? `${suggestion.city}, ` : ""}

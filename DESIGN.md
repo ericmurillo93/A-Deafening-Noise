@@ -25,6 +25,7 @@ typography:
     fontWeight: 400
     lineHeight: 1.5
 rounded:
+  pill: "9999px"
   compact: "8px"
   control: "12px"
   panel: "6px"
@@ -58,6 +59,13 @@ A Deafening Noise combines bold uppercase hierarchy with the restraint of a priv
 The design is dark because the product is commonly used around live music and personal browsing, not because dark dashboards are fashionable. Semantic color is rare and factual: blue means history, green means bought, amber means possible.
 
 ## Colors
+
+Panels, nested cards, navigation, hover surfaces and borders use the shared
+`--adn-*` tokens. Theme differences belong in the theme variable definitions,
+not selectors that depend on another component's literal utility color.
+Circular menu buttons and avatars intentionally use the pill radius; this is
+not a panel radius. Keyboard-only search focus uses a quiet one-pixel outline;
+pointer focus does not add a highlight.
 
 Near-black tonal layers establish hierarchy. Concert white carries primary information, while readable cool gray supports metadata. Colored surfaces must use foregrounds from the same hue family or near-white, never washed-out gray.
 
