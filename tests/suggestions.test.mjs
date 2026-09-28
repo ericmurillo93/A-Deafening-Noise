@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { suggestionKey, legacySuggestionKey, isCurrentSuggestion, isDismissedSuggestion } from "../src/lib/suggestions.js";
+import { suggestionKey, legacySuggestionKey, isCurrentSuggestion, isDismissedSuggestion, sortReviewedSuggestions } from "../src/lib/suggestions.js";
 const event = { artist: "SÓLSTAFIR", venue: "APOLO", city: "Barcelona", country: "ES", date: "14/02/2027" };
 assert.equal(suggestionKey(event), suggestionKey({ ...event, artist: "solstafir" }));
 assert.notEqual(suggestionKey(event), suggestionKey({ ...event, venue: "RAZZMATAZZ" }));
@@ -8,3 +8,7 @@ assert(isDismissedSuggestion(event, [suggestionKey(event)]));
 assert(isCurrentSuggestion(event, new Date(2027, 1, 14, 23)));
 assert(!isCurrentSuggestion(event, new Date(2027, 1, 15)));
 assert(!isCurrentSuggestion({ ...event, date: "31/02/2027" }, new Date(2027, 0, 1)));
+const items = [{ id: 'old', date: '01/01/2030' }, { id: 'new', date: '01/01/2027' }, { id: 'fresh' }];
+const reviews = { old: { decision: 'interested', reviewedAt: '2026-09-27T12:00:00Z' }, new: { decision: 'not-interested', reviewedAt: '2026-09-28T12:00:00Z' } };
+assert.deepEqual(sortReviewedSuggestions(items, reviews).map((item) => item.id), ['new', 'old']);
+assert.equal(items[0].id, 'old');

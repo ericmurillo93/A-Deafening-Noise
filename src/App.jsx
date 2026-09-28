@@ -1305,7 +1305,7 @@ function ConfirmActionModal({ confirmation, onClose, onConfirm, isSaving, error 
 // ─── LoginGate ────────────────────────────────────────────────────────────────
 
 function LoginGate({ onSignedIn }) {
-  const { t } = useI18n();
+  const { t, language } = useI18n();
   const [mode, setMode] = useState("sign-in");
   const [displayName, setDisplayName] = useState("");
   const [email, setEmail] = useState("");
@@ -1439,7 +1439,7 @@ function LoginGate({ onSignedIn }) {
           {mode === "sign-in" && <button type="button" onClick={requestPasswordReset} disabled={loading || resetLoading || emailCooldown.seconds > 0} className="w-full py-2 text-sm font-semibold text-zinc-500 transition hover:text-zinc-200 disabled:opacity-50">{resetLoading ? t("Sending recovery email…") : emailCooldown.seconds > 0 ? t("Try again in {seconds}s", { seconds: emailCooldown.seconds }) : t("Forgot password?")}</button>}
           <button type="button" onClick={() => changeMode(mode === "sign-in" ? "sign-up" : "sign-in")} disabled={loading || resetLoading} className="w-full py-2 text-sm font-semibold text-zinc-400 transition hover:text-zinc-100 disabled:opacity-50">{t(mode === "sign-in" ? "New here? Create an account" : "Already have an account? Sign in")}</button>
         </form>
-        <p className="mt-8 text-center text-xs text-zinc-600"><a href="/privacy.html" className="hover:text-zinc-300">{t("Privacy")}</a><span className="mx-2">·</span><a href="/terms.html" className="hover:text-zinc-300">{t("Terms")}</a></p>
+        <p className="mt-8 text-center text-xs text-zinc-600"><a href={`/privacy.html?lang=${language}`} className="hover:text-zinc-300">{t("Privacy")}</a><span className="mx-2">·</span><a href={`/terms.html?lang=${language}`} className="hover:text-zinc-300">{t("Terms")}</a></p>
       </div>
     </div>
   );
@@ -1637,6 +1637,7 @@ export default function App() {
   const [concertItems, setConcertItems] = useState(fallbackConcerts);
   const [suggestionCatalog, setSuggestionCatalog] = useState(suggestionsData.suggestions || []);
   const [dismissedSuggestions, setDismissedSuggestions] = useState(fallbackDismissedSuggestions);
+  const [suggestionReviewDates, setSuggestionReviewDates] = useState(concertsData.suggestionReviewDates || {});
   const [listenedArtists, setListenedArtists] = useState([]);
   const [artistImageRows, setArtistImageRows] = useState([]);
   const [spotifyStatus, setSpotifyStatus] = useState({ connected: !supabaseEnabled });
@@ -1795,10 +1796,10 @@ export default function App() {
   const availableSuggestions = suggestionCatalog.filter((item) => isCurrentSuggestion(item));
   const suggestionReviews = useMemo(() => Object.fromEntries(availableSuggestions.flatMap((suggestion) => {
     const concert = concertItems.find((item) => suggestionKey(item) === suggestionKey(suggestion));
-    if (concert) return [[suggestion.id, { decision: "interested", concert }]];
-    if (isDismissedSuggestion(suggestion, dismissedSuggestions)) return [[suggestion.id, { decision: "not-interested" }]];
+    if (concert) return [[suggestion.id, { decision: "interested", concert, reviewedAt: suggestionReviewDates.concerts?.[concert.concertId] || suggestionReviewDates.local?.[suggestionKey(suggestion)] }]];
+    if (isDismissedSuggestion(suggestion, dismissedSuggestions)) return [[suggestion.id, { decision: "not-interested", reviewedAt: suggestionReviewDates.dismissed?.[suggestionKey(suggestion)] || suggestionReviewDates.dismissed?.[legacySuggestionKey(suggestion)] || suggestionReviewDates.local?.[suggestionKey(suggestion)] }]];
     return [];
-  })), [availableSuggestions, concertItems, dismissedSuggestions]);
+  })), [availableSuggestions, concertItems, dismissedSuggestions, suggestionReviewDates]);
 
   const artistSuggestions = useMemo(() => {
     const set = new Set();
@@ -2047,14 +2048,15 @@ export default function App() {
     });
   }
 
-  function concertDataPayload(concerts, dismissed = dismissedSuggestions) {
-    return { concerts, dismissedSuggestions: [...new Set(dismissed)] };
+  function concertDataPayload(concerts, dismissed = dismissedSuggestions, reviewDates = suggestionReviewDates) {
+    return { concerts, dismissedSuggestions: [...new Set(dismissed)], suggestionReviewDates: reviewDates };
   }
 
   function applyAppData(archive) {
     setConcertItems(archive.concerts || []);
     setSuggestionCatalog(archive.suggestions || []);
     setDismissedSuggestions(archive.dismissedSuggestions || []);
+    setSuggestionReviewDates(archive.suggestionReviewDates || {});
     setListenedArtists(archive.listenedArtists || []);
     setArtistImageRows(archive.artistImages || []);
     setSpotifyStatus({ ...(archive.spotifyStatus || { connected: false }), unavailable: Boolean(archive.discoveryUnavailable) });
@@ -2122,7 +2124,9 @@ export default function App() {
         await reloadAppData();
       } else {
         const updatedConcerts = [...concertItems, newConcert];
-        await saveConcertData(concertDataPayload(updatedConcerts, updatedDismissed), `Add concert: ${data.artist}${data.venue ? " — " + data.venue : ""} (${data.date})`);
+        const dates = suggestion ? { ...suggestionReviewDates, local: { ...suggestionReviewDates.local, [suggestionKey(suggestion)]: new Date().toISOString() } } : suggestionReviewDates;
+        await saveConcertData(concertDataPayload(updatedConcerts, updatedDismissed, dates), `Add concert: ${data.artist}${data.venue ? " — " + data.venue : ""} (${data.date})`);
+        setSuggestionReviewDates(dates);
         setConcertItems(updatedConcerts);
         setDismissedSuggestions(updatedDismissed);
       }
@@ -2228,7 +2232,9 @@ export default function App() {
         await saveDismissedSuggestions(updatedDismissed);
         await reloadAppData();
       } else {
-        await saveConcertData(concertDataPayload(updatedConcerts, updatedDismissed), `Mark suggestion not interested: ${suggestion.artist} (${suggestion.date})`);
+        const dates = { ...suggestionReviewDates, local: { ...suggestionReviewDates.local, [suggestionKey(suggestion)]: new Date().toISOString() } };
+        await saveConcertData(concertDataPayload(updatedConcerts, updatedDismissed, dates), `Mark suggestion not interested: ${suggestion.artist} (${suggestion.date})`);
+        setSuggestionReviewDates(dates);
         setConcertItems(updatedConcerts);
         setDismissedSuggestions(updatedDismissed);
       }

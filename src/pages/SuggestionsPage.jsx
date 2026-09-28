@@ -1,6 +1,7 @@
 import React from "react";
 import stageImage from "../assets/dashboard-concert-stage.jpg";
 import { normalize } from "../lib/concerts";
+import { sortReviewedSuggestions } from "../lib/suggestions";
 import { useI18n } from "../lib/i18n.jsx";
 import { SuggestionDecisionButtons } from "../components/SharedUi";
 
@@ -31,7 +32,7 @@ function SuggestionList(props) {
 export default function SuggestionsPage({ suggestions, artistImages, reviews, onInterested, onNotInterested, onOpenProfile, spotifyConnected, discoveryUnavailable, onRetry, isSaving, saveError }) {
   const { t } = useI18n();
   const fresh = suggestions.filter((suggestion) => !reviews[suggestion.id]);
-  const past = suggestions.filter((suggestion) => reviews[suggestion.id]);
+  const past = sortReviewedSuggestions(suggestions, reviews);
   const listProps = { artistImages, reviews, isSaving, onInterested, onNotInterested };
   return <div className="space-y-4">
     {discoveryUnavailable && <p role="status" className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-[var(--adn-border-strong)] bg-[var(--adn-panel)] p-4 text-sm text-zinc-300">{t("Suggestions could not be refreshed. Your archive is still available.")}<button type="button" className="adn-button-secondary" onClick={onRetry}>{t("Retry")}</button></p>}

@@ -10,3 +10,8 @@ export function isCurrentSuggestion(item, now = new Date()) {
     && date >= new Date(now.getFullYear(), now.getMonth(), now.getDate());
 }
 export const isDismissedSuggestion = (item, keys) => keys.includes(suggestionKey(item)) || keys.includes(legacySuggestionKey(item));
+
+export function sortReviewedSuggestions(suggestions, reviews) {
+  const time = (item) => Date.parse(reviews[item.id]?.reviewedAt) || 0;
+  return suggestions.filter((item) => reviews[item.id]).sort((a, b) => time(b) - time(a));
+}

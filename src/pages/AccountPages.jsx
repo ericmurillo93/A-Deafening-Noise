@@ -921,7 +921,7 @@ export function ProfilePage({
             {t("Delete my account")}
           </button>
         </div>
-        <p className="mt-5 flex gap-4 text-xs font-semibold text-zinc-500"><a href="/privacy.html" className="hover:text-zinc-200">{t("Privacy")}</a><a href="/terms.html" className="hover:text-zinc-200">{t("Terms")}</a></p>
+        <p className="mt-5 flex gap-4 text-xs font-semibold text-zinc-500"><a href={`/privacy.html?lang=${language}`} className="hover:text-zinc-200">{t("Privacy")}</a><a href={`/terms.html?lang=${language}`} className="hover:text-zinc-200">{t("Terms")}</a></p>
       </section>
       {isAdmin && (
         <section className="order-8 rounded-3xl border border-zinc-800 bg-zinc-900 p-5 md:p-7">

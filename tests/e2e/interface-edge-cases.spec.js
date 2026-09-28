@@ -415,6 +415,7 @@ test("Home dashboard reviews concert suggestions without leaving the page", asyn
   const interested = page.getByRole("button", { name: "Interested", exact: true });
   const interestedRow = interested.first().locator("xpath=ancestor::*[@data-suggestion-id]");
   const interestedId = await interestedRow.getAttribute("data-suggestion-id");
+  await page.clock.fastForward(1000);
   await interestedRow.getByRole("button", { name: "Interested", exact: true }).click();
   await expect(page.getByText("Concert added to your calendar.", { exact: true })).toBeVisible();
   await expect(page.locator(`[data-suggestion-id="${interestedId}"]`)).toBeHidden();
@@ -425,6 +426,9 @@ test("Home dashboard reviews concert suggestions without leaving the page", asyn
 
   await page.getByRole("button", { name: "View all", exact: true }).last().click();
   await expect(page.getByText(/Reviewed suggestions/)).toBeVisible();
+  await page.locator('summary').filter({ hasText: 'Reviewed suggestions' }).click();
+  const reviewed = page.locator('details').filter({ has: page.locator('summary').filter({ hasText: 'Reviewed suggestions' }) });
+  await expect(reviewed.locator('article').first().getByRole('heading')).toHaveText(savedConcert.artist.toUpperCase());
 });
 
 test("Profile offers Spotify connection through the UI", async ({ page }) => {

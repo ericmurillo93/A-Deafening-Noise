@@ -675,3 +675,19 @@ The external site probably changed its markup or endpoint. Run the relevant scra
 - Options are derived from the authorised session snapshot and narrowed by the other categories. Cities include their country in the internal key. Active selections remain removable even when no results match.
 - Repeated `filter_*` URL parameters preserve selection through reload and browser Back; `with=any` selects the optional companion mode. UI changes replace the current URL rather than filling browser history. Account changes reset in-memory filters.
 - No database schema change or new provider call is required. Archive, Timeline, Calendar and Suggestions retain their existing controls.
+
+## Review ordering and legal language
+
+Reviewed suggestions sort newest decision first, not by concert date. Archive
+snapshots expose per-user dismissal dates and attendance creation dates;
+`save_dismissed_suggestions` preserves dates for unchanged decisions. Future
+attendance is removed on reversal, so selecting Interested again receives a new
+attendance date. Older dismissal dates overwritten by the previous implementation
+cannot be reconstructed; equal or unavailable dates retain catalog order.
+Migration `20260928170000_suggestion_review_order.sql` was verified in staging
+and applied to production on 28 September 2026. No new table or provider call is required.
+
+Terms and Privacy show the full English or Spanish text, never both at once.
+Profile/login links pass the current language; direct links fall back to the
+saved interface language and then the browser language. This does not change the
+substance of the existing legal text or introduce new legal claims.
