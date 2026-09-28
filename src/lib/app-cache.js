@@ -1,7 +1,9 @@
 const DATABASE_NAME = "a-deafening-noise";
 const DATABASE_VERSION = 1;
 const STORE_NAME = "user-data";
-const CACHE_SCHEMA_VERSION = 3;
+const CACHE_SCHEMA_VERSION = 4;
+let generation = 0;
+const cacheKey = (userId) => `${import.meta.env.VITE_SUPABASE_URL || "local"}:${userId}`;
 
 function openDatabase() {
   if (typeof indexedDB === "undefined") return Promise.resolve(null);
@@ -23,7 +25,7 @@ async function useStore(mode, operation) {
     return await new Promise((resolve, reject) => {
       const transaction = database.transaction(STORE_NAME, mode);
       const request = operation(transaction.objectStore(STORE_NAME));
-      request.onsuccess = () => resolve(request.result ?? null);
+      transaction.oncomplete = () => resolve(request.result ?? null);
       request.onerror = () => reject(request.error);
       transaction.onabort = () => reject(transaction.error);
     });
@@ -35,8 +37,8 @@ async function useStore(mode, operation) {
 export async function readAppCache(userId) {
   if (!userId) return null;
   try {
-    const cached = await useStore("readonly", (store) => store.get(userId));
-    if (!cached || cached.schemaVersion !== CACHE_SCHEMA_VERSION || !cached.data) return null;
+    const cached = await useStore("readonly", (store) => store.get(cacheKey(userId)));
+    if (!cached || cached.schemaVersion !== CACHE_SCHEMA_VERSION || !cached.data || Date.now()-cached.savedAt>7*86400000) return null;
     return cached;
   } catch {
     return null;
@@ -45,14 +47,16 @@ export async function readAppCache(userId) {
 
 export async function writeAppCache(userId, data) {
   if (!userId || !data) return;
+  const started = generation;
   try {
-    await useStore("readwrite", (store) => store.put({ schemaVersion: CACHE_SCHEMA_VERSION, savedAt: Date.now(), data }, userId));
+    await useStore("readwrite", (store) => started === generation ? store.put({ schemaVersion: CACHE_SCHEMA_VERSION, savedAt: Date.now(), data }, cacheKey(userId)) : store.get(cacheKey(userId)));
   } catch {
     // Cache failure must never prevent Supabase-backed operation.
   }
 }
 
 export async function clearAppCache() {
+  generation += 1;
   try { await useStore("readwrite", (store) => store.clear()); }
   catch { /* Best-effort cleanup on logout. */ }
 }

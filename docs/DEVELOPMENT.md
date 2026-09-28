@@ -96,6 +96,15 @@ Official references: [Codex CLI](https://developers.openai.com/codex/cli) and [A
 
 ## Local development behavior
 
+Archive synchronization is owned by `useArchiveSync`. The essential snapshot
+(profile, attendance, friends, activity and decisions) renders before optional
+discovery finishes. Background refresh runs only on a visible page, at most
+every five minutes; discovery refreshes every fifteen minutes. Explicit writes
+and Retry refresh immediately. Snapshots are keyed by Supabase URL and user ID,
+versioned, expire after seven days, and are cleared on logout. Superseded requests
+are aborted and cannot apply data after an account switch. A discovery outage
+does not block the archive or discard its last successful suggestions.
+
 Local development intentionally differs from production:
 
 - With Supabase variables configured, local development uses the dedicated development/staging Supabase project.

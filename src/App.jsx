@@ -8,7 +8,6 @@ import {
   deleteMyConcert,
   exportMyData,
   leaveSharedConcert,
-  loadConcertData,
   markNotificationsRead,
   removeFriend,
   setConcertInvitationStatus,
@@ -23,7 +22,8 @@ import {
   upsertMyConcert,
   updateMyProfile,
 } from "./lib/supabase";
-import { clearAppCache, readAppCache, writeAppCache } from "./lib/app-cache";
+import { clearAppCache } from "./lib/app-cache";
+import { useArchiveSync } from "./hooks/useArchiveSync";
 import { readRouteFromLocation, routeToPath } from "./lib/routes";
 import { getMostRecentShowDate, normalize, parseDate, parseShow, sameCity, uniqueSourceLinks } from "./lib/concerts";
 import { COUNTRIES, countryName } from "./lib/countries";
@@ -1624,11 +1624,6 @@ export default function App() {
   const [theme, setTheme] = useState(() => document.documentElement.dataset.theme === "poster" ? "poster" : "archive");
   const [session, setSession] = useState(null);
   const [authReady, setAuthReady] = useState(!supabaseEnabled);
-  const [dataReady, setDataReady] = useState(!supabaseEnabled);
-  const [dataOwnerId, setDataOwnerId] = useState("");
-  const [dataLoadError, setDataLoadError] = useState("");
-  const [syncError, setSyncError] = useState("");
-  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const [query, setQuery] = useState("");
   const [sortMode, setSortMode] = useState("artist");
@@ -1674,8 +1669,6 @@ export default function App() {
   const dialogScrollYRef = useRef(0);
   const scrollRestorationRef = useRef("auto");
   const passwordModalModeRef = useRef(null);
-  const lastRefreshRef = useRef(0);
-  const refreshFailuresRef = useRef(0);
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
     document.querySelector('meta[name="theme-color"]')?.setAttribute("content", theme === "poster" ? "#050506" : "#09090b");
@@ -1696,6 +1689,7 @@ export default function App() {
   pageOverlayWasOpenRef.current = anyPageOverlayOpen;
   const currentUserId = session?.user?.id || "";
   const currentEmail = session?.user?.email?.toLowerCase() || "";
+  const { dataReady, dataOwnerId, dataLoadError, syncError, isRefreshing, reloadAppData, retrySync } = useArchiveSync(currentUserId, applyAppData, setTheme);
   const currentUserName = appProfile?.displayName || "";
   const isAdmin = !supabaseEnabled || appProfile?.role === "admin";
   const canEdit = !supabaseEnabled || Boolean(appProfile);
@@ -1876,92 +1870,12 @@ export default function App() {
       setAuthReady(true);
       if (!nextSession) {
         void clearAppCache();
-        setDataReady(false);
-        setDataOwnerId("");
         if (!recoveryRequested || event === "SIGNED_OUT") showLoginRoute();
       }
     });
     return () => listener.subscription.unsubscribe();
   }, []);
 
-  useEffect(() => {
-    if (!supabaseEnabled || !currentUserId) return;
-    let cancelled = false;
-    setDataReady(false);
-    setDataOwnerId("");
-    setDataLoadError("");
-    setSyncError("");
-    (async () => {
-      let hasCachedData = false;
-      try {
-        const cached = await readAppCache(currentUserId);
-        if (cancelled) return;
-        if (cached?.data) {
-          hasCachedData = true;
-          applyAppData(cached.data);
-          setDataOwnerId(currentUserId);
-          setDataReady(true);
-        }
-        setIsRefreshing(true);
-        let archive;
-        try {
-          archive = await loadConcertData();
-        } catch (error) {
-          if (hasCachedData) throw error;
-          await new Promise((resolve) => setTimeout(resolve, 300));
-          if (cancelled) return;
-          archive = await loadConcertData();
-        }
-        if (!cancelled) {
-          applyAppData(archive);
-          if (archive.profile?.theme) setTheme(archive.profile.theme);
-          setDataOwnerId(currentUserId);
-          await writeAppCache(currentUserId, archive);
-          lastRefreshRef.current = Date.now();
-        }
-      } catch (error) {
-        if (!cancelled) {
-          const message = "We couldn’t refresh your concert archive. Try again.";
-          if (hasCachedData) setSyncError(navigator.onLine ? "" : "offline");
-          else setDataLoadError(message);
-        }
-      } finally {
-        if (!cancelled) { setDataReady(true); setIsRefreshing(false); }
-      }
-    })();
-    return () => { cancelled = true; };
-  }, [currentUserId, currentEmail]);
-
-  useEffect(() => {
-    if (!supabaseEnabled || !currentUserId || !dataReady) return undefined;
-    async function refreshWhenVisible(force = false) {
-      if (document.visibilityState !== "visible" || (!force && Date.now() - lastRefreshRef.current < 30_000)) return;
-      if (!navigator.onLine) { setSyncError("offline"); return; }
-      try {
-        await reloadAppData();
-        refreshFailuresRef.current = 0;
-        setSyncError("");
-      } catch {
-        refreshFailuresRef.current += 1;
-        if (refreshFailuresRef.current >= 3) setSyncError("refresh");
-      }
-    }
-    const timer = window.setInterval(refreshWhenVisible, 60_000);
-    const refreshOnFocus = () => refreshWhenVisible();
-    const refreshOnline = () => refreshWhenVisible(true);
-    const showOffline = () => setSyncError("offline");
-    window.addEventListener("focus", refreshOnFocus);
-    window.addEventListener("online", refreshOnline);
-    window.addEventListener("offline", showOffline);
-    document.addEventListener("visibilitychange", refreshOnFocus);
-    return () => {
-      window.clearInterval(timer);
-      window.removeEventListener("focus", refreshOnFocus);
-      window.removeEventListener("online", refreshOnline);
-      window.removeEventListener("offline", showOffline);
-      document.removeEventListener("visibilitychange", refreshOnFocus);
-    };
-  }, [currentUserId, dataReady]);
 
   useEffect(() => {
     if (supabaseEnabled && (!authReady || !currentUserId || !dataReady)) return;
@@ -2143,7 +2057,7 @@ export default function App() {
     setDismissedSuggestions(archive.dismissedSuggestions || []);
     setListenedArtists(archive.listenedArtists || []);
     setArtistImageRows(archive.artistImages || []);
-    setSpotifyStatus(archive.spotifyStatus || { connected: false });
+    setSpotifyStatus({ ...(archive.spotifyStatus || { connected: false }), unavailable: Boolean(archive.discoveryUnavailable) });
     setAppProfile(archive.profile || null);
     setFriends(archive.friends || []);
     setFriendRequests(archive.friendRequests || []);
@@ -2151,28 +2065,6 @@ export default function App() {
     setNotifications(archive.notifications || []);
   }
 
-  async function reloadAppData() {
-    if (!supabaseEnabled) return;
-    setIsRefreshing(true);
-    try {
-      const archive = await loadConcertData();
-      applyAppData(archive);
-      if (archive.profile?.theme) setTheme(archive.profile.theme);
-      await writeAppCache(currentUserId, archive);
-      lastRefreshRef.current = Date.now();
-      setSyncError("");
-    } finally { setIsRefreshing(false); }
-  }
-
-  async function retrySync() {
-    if (!navigator.onLine) { setSyncError("offline"); return; }
-    try {
-      await reloadAppData();
-      refreshFailuresRef.current = 0;
-    } catch {
-      setSyncError("refresh");
-    }
-  }
 
   async function changeTheme(nextTheme) {
     const previousTheme = theme;

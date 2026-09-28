@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import { loadArchiveSnapshot } from "./archive-loader";
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabasePublishableKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
@@ -15,16 +16,12 @@ export const supabase = supabaseEnabled
     })
   : null;
 
-export async function loadConcertData() {
-  const [data, suggestions, dismissedSuggestions, listenedArtists, artistImages, spotifyStatus, preferences] = await Promise.all([
-    rpc("get_app_data"), rpc("get_my_concert_suggestions"), rpc("get_my_dismissed_suggestions"), rpc("get_my_listened_artists"), rpc("get_my_artist_images"), rpc("get_my_spotify_status"), rpc("get_my_preferences"),
-  ]);
-  const archive = data || { profile: null, concerts: [], friends: [], friendRequests: [], concertInvitations: [], notifications: [] };
-  return { ...archive, profile: archive.profile ? { ...archive.profile, ...preferences } : null, suggestions: suggestions?.suggestions || [], dismissedSuggestions: dismissedSuggestions || [], listenedArtists: listenedArtists || [], artistImages: artistImages || [], spotifyStatus };
-}
+export const loadConcertData = ({ signal, ...options } = {}) => loadArchiveSnapshot((name) => rpc(name, {}, signal), options);
 
-async function rpc(name, args = {}) {
-  const { data, error } = await supabase.rpc(name, args);
+async function rpc(name, args = {}, signal) {
+  let request = supabase.rpc(name, args);
+  if (signal) request = request.abortSignal(signal);
+  const { data, error } = await request;
   if (error) throw error;
   return data;
 }
