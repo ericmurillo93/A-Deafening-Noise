@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import whatsappIcon from "@fortawesome/fontawesome-free/svgs/brands/whatsapp.svg";
 import { concertsData, suggestionsData } from "virtual:archive-fallback";
+import { suggestionKey, legacySuggestionKey, isDismissedSuggestion, isCurrentSuggestion } from "./lib/suggestions";
 import {
   deleteMyAccount,
   deleteMyConcert,
@@ -178,10 +179,6 @@ function concertLocation({ city, country } = {}) {
   return [city, countryLabel(country)].filter(Boolean).join(", ");
 }
 
-function suggestionDecisionKey({ artist, date }) {
-  const normalizedArtist = normalize(artist).replace(/[^a-z0-9]+/g, " ").trim();
-  return `${normalizedArtist}|${date}`;
-}
 function filterConcerts(items, query) {
   const q = normalize(query.trim());
   if (!q) return items;
@@ -1802,11 +1799,11 @@ export default function App() {
   }, [concertItems, query]);
 
   const artistImages = useMemo(() => new Map(artistImageRows.map(({ artist, imageUrl }) => [normalize(artist), imageUrl])), [artistImageRows]);
-  const availableSuggestions = suggestionCatalog;
+  const availableSuggestions = suggestionCatalog.filter((item) => isCurrentSuggestion(item));
   const suggestionReviews = useMemo(() => Object.fromEntries(availableSuggestions.flatMap((suggestion) => {
-    const concert = concertItems.find((item) => normalize(item.artist) === normalize(suggestion.artist) && item.date === suggestion.date);
+    const concert = concertItems.find((item) => suggestionKey(item) === suggestionKey(suggestion));
     if (concert) return [[suggestion.id, { decision: "interested", concert }]];
-    if (dismissedSuggestions.includes(suggestionDecisionKey(suggestion))) return [[suggestion.id, { decision: "not-interested" }]];
+    if (isDismissedSuggestion(suggestion, dismissedSuggestions)) return [[suggestion.id, { decision: "not-interested" }]];
     return [];
   })), [availableSuggestions, concertItems, dismissedSuggestions]);
 
@@ -2224,7 +2221,7 @@ export default function App() {
     };
     setIsSaving(true); setSaveError("");
     try {
-      const updatedDismissed = suggestion ? dismissedSuggestions.filter((key) => key !== suggestionDecisionKey(suggestion)) : dismissedSuggestions;
+      const updatedDismissed = suggestion ? dismissedSuggestions.filter((key) => ![suggestionKey(suggestion), legacySuggestionKey(suggestion)].includes(key)) : dismissedSuggestions;
       if (supabaseEnabled) {
         await upsertMyConcert(newConcert);
         if (suggestion) await saveDismissedSuggestions(updatedDismissed);
@@ -2320,7 +2317,7 @@ export default function App() {
   }
 
   function reviewSuggestionAsInterested(suggestion) {
-    if (isSaving || suggestionReviews[suggestion.id]?.decision === "interested") return;
+    if (isSaving || !isCurrentSuggestion(suggestion) || suggestionReviews[suggestion.id]?.decision === "interested") return;
     setSaveError("");
     void handleAddConcert({ artist: suggestion.artist, venue: suggestion.venue, city: suggestion.city || "", country: suggestion.country || "", date: suggestion.date, bought: false, ticketUrl: suggestion.sourceUrl || "", source: suggestion.source, sourceEventId: suggestion.id, sourceUrl: suggestion.sourceUrl, eventStatus: suggestion.eventStatus || "announced" }, suggestion);
   }
@@ -2330,7 +2327,7 @@ export default function App() {
     setSaveError("");
     const matchingConcert = suggestionReviews[suggestion.id]?.concert;
     const action = async () => {
-      const updatedDismissed = [...new Set([...dismissedSuggestions, suggestionDecisionKey(suggestion)])];
+      const updatedDismissed = [...new Set([...dismissedSuggestions, suggestionKey(suggestion)])];
       const updatedConcerts = matchingConcert ? concertItems.filter((concert) => !concertMatches(concert, matchingConcert)) : concertItems;
       if (supabaseEnabled) {
         if (matchingConcert?.concertId) await deleteMyConcert(matchingConcert.concertId);

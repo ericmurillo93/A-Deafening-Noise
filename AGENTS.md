@@ -71,13 +71,13 @@ Keep the project's existing **A Deafening Noise** Notion page current when a cha
 - Scrapers: Resurrection Fest Route, Live Nation Spain, Madness Live, Sala Razzmatazz, Sala Apolo, Sala Bikini, Paral·lel 62, Palau de la Música Catalana, Les Docks, Montreux Jazz Festival, DICE, Doctor Music, and the official Ticketmaster Discovery API.
 - Ticketmaster queries the union of active users' selected discovery countries; each profile can select up to five ISO country codes. Venue, festival, and promoter sources cover only their own published programmes. Ticketmaster web pages must never be scraped; use `TICKETMASTER_API_KEY` with the official API.
 - Match only billed artists in the user's affinity: confirmed archive artists, bucket-list artists, and optional Spotify/listening-history artists. Historical imports ignore plays shorter than 30 seconds and require at least one accumulated listening hour per artist; connected Spotify Top Artists remain eligible directly.
-- Exclude an artist/date already present in `data/concerts.json`.
+- Shared scraping never excludes events based on one user's archive. Apply personal attendance and dismissals only when serving or notifying that user.
 - Generate the listened catalog with `npm run import:spotify`; never commit raw Spotify exports.
 - Prefer missing a structurally ambiguous festival over inventing an artist-to-day mapping.
 - Respect robots.txt and keep requests polite.
 - `scripts/combine-concert-suggestions.mjs` flattens/deduplicates results into `data/suggestions.json`.
-- Suggestions stay below the calendar in the expandable review panel; never draw them as calendar events.
-- Interested opens the normal prefilled calendar Add modal; Not Interested persists an artist/date dismissal immediately.
+- Suggestions have their own page and a Home preview; never draw untreated suggestions as calendar events.
+- Interested immediately adds an unpurchased concert; Not Interested persists an event-specific dismissal immediately. Legacy artist/date dismissals remain readable.
 - Home shows only untreated suggestions. Interested adds the concert immediately as not bought and removes it from Home; Not Interested also removes it from Home. The Suggestions page keeps treated entries under the collapsed Past suggestions section, where decisions can still be changed.
 - Supabase stores suggestion decisions immediately. Preserve `dismissedSuggestions` on every archive replacement; the shared discovery catalog must not be filtered by one user's concerts or dismissals.
 - `.github/workflows/concert-suggestions.yml` runs daily or on demand, refreshes connected Spotify profiles, resolves suggestion artwork, publishes the catalog to Supabase, and emails opted-in users. It must not commit generated data or trigger a Netlify deploy.

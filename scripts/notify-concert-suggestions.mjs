@@ -1,57 +1,49 @@
 import fs from "node:fs/promises";
 import { renderSuggestionDigest } from "./suggestion-email-template.mjs";
+import { normalize } from "./lib/suggestion-scraper-utils.mjs";
+import { suggestionKey, legacySuggestionKey, isCurrentSuggestion, isDismissedSuggestion } from "../src/lib/suggestions.js";
 
-const normalize = (value) => String(value || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, " ").trim();
-const key = ({ artist, date }) => `${normalize(artist)}|${date}`;
-
-const reportPath = process.argv.find((argument) => argument.startsWith("--report="))?.slice(9);
-const previousPath = process.argv.find((argument) => argument.startsWith("--previous="))?.slice(11);
-const [currentPath] = process.argv.slice(2).filter((argument) => !argument.startsWith("--"));
-async function writeReport(report) { if (reportPath) await fs.writeFile(reportPath, `${JSON.stringify(report, null, 2)}\n`, "utf8"); }
-if (!currentPath) throw new Error("Pass the current suggestion file");
-if (!process.env.RESEND_API_KEY || !process.env.RESEND_FROM_EMAIL) {
-  process.stdout.write("Email notifications skipped: Resend is not configured\n");
-  process.exit(0);
+const reportPath = process.argv.find((arg) => arg.startsWith("--report="))?.slice(9);
+const currentPath = process.argv.slice(2).find((arg) => !arg.startsWith("--"));
+const { SUPABASE_URL: url, SUPABASE_SERVICE_ROLE_KEY: key, RESEND_API_KEY: resend, RESEND_FROM_EMAIL: from } = process.env;
+if (!url || !key || !currentPath) throw new Error("Supabase service configuration and a catalog file are required");
+if (!resend || !from) { console.log("Email delivery skipped: Resend is not configured"); process.exit(0); }
+const headers = { apikey: key, Authorization: `Bearer ${key}`, "Content-Type": "application/json" };
+async function database(path, body) {
+  const response = await fetch(`${url}/rest/v1/${path}`, { headers, signal: AbortSignal.timeout(15000), ...(body === undefined ? {} : { method: "POST", body: JSON.stringify(body) }) });
+  if (!response.ok) throw new Error(`Digest database operation failed (${response.status})`);
+  const text = await response.text(); return text ? JSON.parse(text) : null;
 }
-const supabaseUrl = process.env.SUPABASE_URL;
-const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-if (!supabaseUrl || !serviceKey) throw new Error("Supabase service configuration is required");
-let previousCatalog;
-if (previousPath) previousCatalog = JSON.parse(await fs.readFile(previousPath, "utf8"));
-else {
-  const catalogResponse = await fetch(`${supabaseUrl}/rest/v1/rpc/get_concert_suggestions`, { method: "POST", headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}`, "Content-Type": "application/json" }, body: "{}" });
-  if (!catalogResponse.ok) throw new Error(`Could not load the existing suggestion catalog (${catalogResponse.status})`);
-  previousCatalog = await catalogResponse.json();
-}
-const previous = new Set((previousCatalog.suggestions || []).map(key));
-const current = JSON.parse(await fs.readFile(currentPath, "utf8")).suggestions || [];
-const added = current.filter((suggestion) => !previous.has(key(suggestion)));
-if (!added.length) {
-  await writeReport({ newSuggestionCount: 0, emailsSent: 0, emailsFailed: 0 });
-  process.stdout.write("No new suggestions to notify\n");
-  process.exit(0);
-}
-const response = await fetch(`${supabaseUrl}/rest/v1/rpc/get_suggestion_notification_recipients`, { method: "POST", headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}`, "Content-Type": "application/json" }, body: "{}" });
-if (!response.ok) throw new Error(`Could not load notification recipients (${response.status})`);
-const recipients = await response.json();
-let sent = 0;
-let failed = 0;
-const deliveryDate = new Date().toLocaleDateString("sv-SE", { timeZone: "Europe/Berlin" });
+const current = (JSON.parse(await fs.readFile(currentPath, "utf8")).suggestions || []).filter((item) => isCurrentSuggestion(item));
+const recipients = await database("rpc/get_suggestion_notification_recipients", {});
+let sent = 0, failed = 0, newCount = 0;
 for (const recipient of recipients) {
   const artists = new Set(recipient.artists.map(normalize));
-  const countries = new Set((recipient.countries || []).map((country) => String(country).toUpperCase()));
-  const dismissed = new Set(recipient.dismissed);
-  const concerts = new Set(recipient.concerts.map((concertKey) => { const split = concertKey.lastIndexOf("|"); return `${normalize(concertKey.slice(0, split))}${concertKey.slice(split)}`; }));
-  const matches = added.filter((suggestion) => artists.has(normalize(suggestion.artist)) && countries.has(String(suggestion.country || "").toUpperCase()) && !dismissed.has(key(suggestion)) && !concerts.has(key(suggestion)));
-  if (!matches.length) continue;
-  const message = renderSuggestionDigest(recipient.displayName, matches);
-  const email = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, "Content-Type": "application/json", "Idempotency-Key": `suggestion-digest/${recipient.userId}/${deliveryDate}` },
-    body: JSON.stringify({ from: process.env.RESEND_FROM_EMAIL, to: [recipient.email], subject: message.subject, html: message.html, text: message.text, headers: { "List-Unsubscribe": "<https://adeafeningnoise.com/profile>" } }),
-  });
-  if (email.ok) sent += 1;
-  else { failed += 1; process.stderr.write(`Warning: email to ${recipient.email} failed (${email.status})\n`); }
+  const concerts = new Set(recipient.concerts.map((entry) => { const split = entry.lastIndexOf("|"); return `${normalize(entry.slice(0, split))}${entry.slice(split)}`; }));
+  const eligible = current.filter((item) => artists.has(normalize(item.artist)) && recipient.countries.includes(item.country) && !isDismissedSuggestion(item, recipient.dismissed) && !concerts.has(legacySuggestionKey(item)));
+  const deliveries = await database(`suggestion_email_outbox?select=event_keys&user_id=eq.${encodeURIComponent(recipient.userId)}&status=neq.cancelled`);
+  const seen = new Set(deliveries.flatMap((item) => item.event_keys));
+  const matches = eligible.filter((item) => !seen.has(suggestionKey(item)));
+  const rendered = renderSuggestionDigest(recipient.displayName, matches);
+  const candidate = { from, to: [recipient.email], subject: rendered.subject, html: rendered.html, text: rendered.text, headers: { "List-Unsubscribe": "<https://adeafeningnoise.com/profile>" } };
+  const delivery = await database("rpc/claim_suggestion_digest", { target_user: recipient.userId, candidate_keys: matches.map(suggestionKey), eligible_keys: eligible.map(suggestionKey), candidate_message: candidate });
+  if (!delivery) continue;
+  newCount += delivery.event_keys.length;
+  let succeeded = false, definiteFailure = false, error = null;
+  try {
+    const response = await fetch("https://api.resend.com/emails", {
+      method: "POST", signal: AbortSignal.timeout(15000),
+      headers: { Authorization: `Bearer ${resend}`, "Content-Type": "application/json", "Idempotency-Key": `suggestion-delivery/${delivery.id}` },
+      body: JSON.stringify(delivery.message),
+    });
+    succeeded = response.ok;
+    definiteFailure = response.status >= 400 && response.status < 500 && response.status !== 409;
+    error = succeeded ? null : `Resend ${response.status}`;
+  } catch { error = "Delivery request interrupted"; }
+  await database("rpc/complete_suggestion_digest", { delivery_id: delivery.id, claim_lease: delivery.lease, succeeded, definite_failure: definiteFailure, error_message: error });
+  if (succeeded) sent += 1; else failed += 1;
+  await new Promise((resolve) => setTimeout(resolve, 600));
 }
-await writeReport({ newSuggestionCount: added.length, emailsSent: sent, emailsFailed: failed });
-process.stdout.write(`Sent suggestion emails to ${sent} users\n`);
+if (reportPath) await fs.writeFile(reportPath, `${JSON.stringify({ newSuggestionCount: newCount, emailsSent: sent, emailsFailed: failed })}\n`);
+console.log(`Suggestion deliveries: ${sent} sent, ${failed} awaiting retry/review`);
+if (failed) process.exitCode = 1;

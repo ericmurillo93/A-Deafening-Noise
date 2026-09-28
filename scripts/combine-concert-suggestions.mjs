@@ -2,6 +2,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
 import { normalize } from "./lib/suggestion-scraper-utils.mjs";
+import { suggestionKey, isCurrentSuggestion } from "../src/lib/suggestions.js";
 
 function slug(value) {
   return normalize(value).replaceAll(" ", "-");
@@ -22,7 +23,8 @@ for (const inputPath of inputPaths) {
   for (const suggestion of result.suggestions || []) {
     const artists = suggestion.artists || (suggestion.artist ? [suggestion.artist] : []);
     for (const artist of artists) {
-      const key = `${normalize(artist)}|${suggestion.date}`;
+      if (!isCurrentSuggestion(suggestion) || !/^[A-Z]{2}$/.test(suggestion.country || "")) continue;
+      const key = suggestionKey({ ...suggestion, artist });
       if (seen.has(key)) continue;
       seen.add(key);
       combined.push({
@@ -30,12 +32,13 @@ for (const inputPath of inputPaths) {
         artist,
         venue: suggestion.venue || "",
         city: suggestion.city || "",
-        country: suggestion.country || "ES",
+        country: suggestion.country,
         date: suggestion.date,
         title: suggestion.title || artist,
         source: suggestion.source,
         sourceUrl: suggestion.sourceUrl,
         imageUrl: suggestion.imageUrl || "",
+        eventStatus: suggestion.eventStatus || "announced",
       });
     }
   }

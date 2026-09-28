@@ -136,20 +136,13 @@ for (const account of accounts) {
   }
 }
 
-const rows = [];
-for (let offset = 0; ; offset += 1000) {
-  const response = await fetch(`${supabaseUrl}/rest/v1/user_listened_artists?select=spotify_artist_id,artist_name&order=artist_name&offset=${offset}&limit=1000`, { headers });
-  if (!response.ok) throw new Error(`Could not read Spotify artist catalog (${response.status})`);
-  const page = await response.json();
-  rows.push(...page);
-  if (page.length < 1000) break;
-}
-const unique = new Map(rows.map((row) => [normalize(row.artist_name), row.artist_name]));
+const affinity = await rpc("get_discovery_artist_catalog");
+const unique = new Map(affinity.map((artist) => [normalize(artist), artist]));
 const artists = [...unique].map(([key, artist]) => ({ artist, spotifyId: `catalog:${createHash("sha256").update(key).digest("hex")}`, listenCount: 1, totalMsPlayed: 3_600_000 })).sort((a, b) => a.artist.localeCompare(b.artist));
 let generatedAt = new Date().toISOString();
 try {
   const previous = JSON.parse(await fs.readFile(outputPath, "utf8"));
   if (JSON.stringify(previous.artists || []) === JSON.stringify(artists)) generatedAt = previous.generatedAt || generatedAt;
 } catch {}
-await fs.writeFile(outputPath, `${JSON.stringify({ generatedAt, source: "Connected Spotify profiles", matchingRule: "Current top artists from connected users", artists }, null, 2)}\n`, "utf8");
+await fs.writeFile(outputPath, `${JSON.stringify({ generatedAt, source: "Active users' discovery affinity", matchingRule: "Confirmed archive, bucket list and qualified listening artists", artists }, null, 2)}\n`, "utf8");
 process.stdout.write(`Synced ${synced}/${accounts.length} Spotify accounts and wrote ${artists.length} unique artists\n`);
