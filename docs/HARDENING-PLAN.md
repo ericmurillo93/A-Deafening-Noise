@@ -135,7 +135,21 @@ databases. No data has been deleted from Supabase.
   disaster restore is claimed. Keeping five users free does not guarantee free
   operation at arbitrary scale.
 
-## Later production rollout (requires explicit approval)
+## Production rollout — explicitly approved 28 September 2026
+
+The six hardening migrations listed above were applied atomically to production
+after a verified private application snapshot and public function-definition
+backup in `~/adn-backups/production-before-hardening-*`. Application table row
+counts were unchanged. Historical personal-seed migrations were not replayed.
+Production Auth now requires a minimum password length of eight, matching
+staging; email confirmation remains enabled. CAPTCHA remains deferred.
+
+The final Stats changes apply only to Stats and Year in Review. Archive and
+Timeline retain their prior controls. Fourteen unit-test files, security audit,
+build and hosted-bundle privacy checks passed before release. `ref.png` remains
+an untracked local reference, excluded from publication.
+
+### Rollout procedure and remaining manual verification
 
 1. Review these commits and the manual results; make an application-data backup.
 2. Apply the six new migrations to production in order, reviewing the target
