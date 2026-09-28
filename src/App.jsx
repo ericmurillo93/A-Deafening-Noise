@@ -297,6 +297,8 @@ function buildConcertCalendar(items, calendarName) {
       `DTEND;VALUE=DATE:${formatIcsDate(exclusiveEnd)}`,
       `SUMMARY:${escapeIcsText(title)}`,
       concert.venue ? `LOCATION:${escapeIcsText(concert.venue)}` : null,
+      concert.city ? `X-ADN-CITY:${escapeIcsText(concert.city)}` : null,
+      concert.country ? `X-ADN-COUNTRY:${escapeIcsText(concert.country)}` : null,
       `DESCRIPTION:${escapeIcsText(concert.bought ? "Entrada comprada" : "Entrada no comprada")}`,
       "END:VEVENT",
     ].filter(Boolean);

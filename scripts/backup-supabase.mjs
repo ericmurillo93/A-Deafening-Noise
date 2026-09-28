@@ -25,4 +25,4 @@ const files = [
   await dump("data.sql", ["--data-only", "--use-copy"]),
 ];
 await writeFile(path.join(directory, "manifest.json"), `${JSON.stringify({ createdAt: new Date().toISOString(), files }, null, 2)}\n`);
-console.log(`Verified backup: ${directory}`);
+console.log(`Backup files and checksums verified: ${directory}. Recovery is NOT verified until a restore rehearsal passes.`);

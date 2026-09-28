@@ -1,0 +1,13 @@
+import assert from "node:assert/strict";
+import { SNAPSHOT_TABLES, remapSnapshot, restoreSql } from "../scripts/lib/staging-snapshot.mjs";
+const data = Object.fromEntries(SNAPSHOT_TABLES.map((table)=>[table,[]]));
+data.profiles=[{id:"source-user",email:"test@example.invalid"}];
+data.concerts=[{id:10,created_by:"source-user",city:"Barcelona",country:"ES"}];
+const mapped=remapSnapshot(data,[{id:"staging-user",email:"test@example.invalid"}]);
+assert.equal(mapped.concerts[0].created_by,"staging-user");
+assert.throws(()=>remapSnapshot(data,[]));
+const columns=Object.fromEntries(SNAPSHOT_TABLES.map((table)=>[table,table==="profiles"?["id","email"]:table==="concerts"?["id","created_by","city","country"]:["id"]]));
+const sql=restoreSql(mapped,columns,{rollback:true});
+assert(sql.startsWith("begin;"));assert(sql.endsWith("rollback;"));assert(!sql.includes("setval("));
+assert(sql.includes("disable trigger user"));assert(!sql.includes("disable trigger all"));
+assert.throws(()=>restoreSql(mapped,{...columns,concerts:["id"]}),/missing/);

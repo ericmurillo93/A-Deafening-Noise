@@ -144,20 +144,27 @@ data. Auth accounts and passwords remain independent; profiles are remapped by
 email so UUID-based concert, attendee and friendship relationships stay valid.
 Historical activity notifications are deliberately omitted.
 
-Copy the ignored credential template and add a secret/server key from each
-project (never a publishable key):
+Authenticate the Supabase CLI (`npx supabase login`) or provide a server-only
+`SUPABASE_ACCESS_TOKEN`. The command uses the Management API and no longer needs
+the legacy `.env.staging-sync.local` service keys:
 
 ```bash
-cp .env.staging-sync.example .env.staging-sync.local
+npm run staging:sync -- --rehearse
 npm run staging:sync
 ```
 
 The command hard-codes production as a read-only source and the development
 project as the only writable destination. It requires typing the staging project
-reference before replacing data, verifies that every production user already
-has a matching staging Auth user, and checks row counts after the copy. Never
-commit `.env.staging-sync.local` or place these server-side keys in `VITE_`
-variables.
+reference before replacing data, verifies every production user has a matching
+staging Auth user, creates a mode-0600 pre-change snapshot in ignored `backups/`,
+and checks row counts inside one transaction. A rehearsal executes the same SQL
+but rolls back. Application triggers are temporarily disabled, foreign keys are
+not. Auth passwords, Spotify connections/Vault tokens, Storage binaries,
+historical notifications and delivery receipts are intentionally not cloned.
+Metadata, locations, lineup, sources, preferences, consents, bucket lists,
+listening affinity, per-user dismissals and artwork are copied.
+Never use this operation as an Auth/Storage backup. Never put Management API
+tokens in a `VITE_` variable.
 
 ### Security and recovery checks
 
@@ -185,6 +192,15 @@ and are not part of this application-data dump.
 The privacy and terms drafts are served at `/privacy.html` and `/terms.html`.
 They describe the implemented data flows, but require legal review before the
 service is opened beyond the private test group.
+
+Personal JSON exports use `schemaVersion: 2`. `concerts` contains confirmed,
+visible personal attendance with locations, ticket/setlist links, guests and
+event metadata. Other attendance states, preferences, bucket list and consent
+are exported separately for portability, but concert import does not recreate
+friendships, invitations or consents. These require the other person's approval.
+ICS exported here contains `X-ADN-CITY` / `X-ADN-COUNTRY` for lossless location
+roundtrips; third-party ICS without structured location remains editable in the
+preview rather than guessing a city or country.
 
 Changes made through the local UI become ordinary Git working-tree changes:
 
