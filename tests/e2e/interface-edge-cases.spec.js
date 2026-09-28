@@ -171,6 +171,7 @@ test("Browser Back closes Add concert before leaving the page", async ({ page })
 
 test("Search my archive opens a reload-safe city profile", async ({ page }) => {
   await page.goto("/home");
+  await expect(page.getByRole("button", { name: "Add concert", exact: true })).toBeVisible();
   await page.keyboard.press("Control+k");
   const search = page.getByRole("dialog", { name: "Search my archive" });
   await search.getByRole("combobox", { name: "Search my archive" }).fill("Barcelona");
@@ -189,6 +190,7 @@ test("Search my archive opens a reload-safe city profile", async ({ page }) => {
 
 test("Search my archive supports keyboard navigation", async ({ page }) => {
   await page.goto("/home");
+  await expect(page.getByRole("button", { name: "Add concert", exact: true })).toBeVisible();
   await page.keyboard.press("Control+k");
   const search = page.getByRole("combobox", { name: "Search my archive" });
   await search.fill("Riverside");
@@ -200,6 +202,7 @@ test("Search my archive supports keyboard navigation", async ({ page }) => {
 
 test("Search my archive opens a reload-safe concert page", async ({ page }) => {
   await page.goto("/home");
+  await expect(page.getByRole("button", { name: "Add concert", exact: true })).toBeVisible();
   await page.keyboard.press("Control+k");
   const search = page.getByRole("dialog", { name: "Search my archive" });
   await search.getByRole("combobox", { name: "Search my archive" }).fill("Riverside");
@@ -431,7 +434,7 @@ test("Profile offers Spotify connection through the UI", async ({ page }) => {
   await expect(page.getByText("2 of 5 countries selected", { exact: true })).toBeVisible();
   await expect(page.getByRole("checkbox", { name: "Concert suggestions by email" })).toBeChecked();
   await connect.click();
-  await expect.poll(() => new URL(authorizationUrl).searchParams.get("show_dialog")).toBe("true");
+  await expect.poll(() => authorizationUrl ? new URL(authorizationUrl).searchParams.get("show_dialog") : null).toBe("true");
 });
 
 test("Profile chooses an avatar without exposing its local filename", async ({ page }) => {

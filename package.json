@@ -24,6 +24,7 @@
     "test:e2e": "playwright test",
     "test:a11y": "playwright test --config=playwright.a11y.config.js",
     "test:webkit": "playwright test --config=playwright.webkit.config.js",
+    "test:firefox": "playwright test --config=playwright.firefox.config.js",
     "test:db:staging": "node scripts/staging-db.mjs --test tests/database/security-and-recovery.sql",
     "test:visual": "playwright test --config=playwright.visual.config.js",
     "test:visual:update": "playwright test --config=playwright.visual.config.js --update-snapshots",

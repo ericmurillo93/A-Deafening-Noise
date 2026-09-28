@@ -34,10 +34,10 @@ if (!fs.existsSync(path.join(root, "package.json")) || !fs.existsSync(path.join(
 process.stdout.write("\nInstalling locked project dependencies...\n");
 run(npmCommand, ["ci"]);
 
-process.stdout.write("\nInstalling the Chromium browser used by the local UI tests...\n");
+process.stdout.write("\nInstalling Chromium, Firefox and WebKit browsers used by the local UI tests...\n");
 const playwrightArgs = ["playwright", "install"];
 if (process.platform === "linux") playwrightArgs.push("--with-deps");
-playwrightArgs.push("chromium");
+playwrightArgs.push("chromium", "firefox", "webkit");
 run(npxCommand, playwrightArgs);
 
 const envExample = path.join(root, ".env.example");
