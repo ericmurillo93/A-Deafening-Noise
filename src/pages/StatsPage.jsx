@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { normalize, parseDate, parseShow } from "../lib/concerts";
 import { getSocialComparison } from "../lib/supabase";
 import ConcertHistoryList from "../components/ConcertHistoryList";
+import { PanelHeading } from "../components/SharedUi";
 import { useI18n } from "../lib/i18n.jsx";
 
 const GeographicStatsMap = React.lazy(
@@ -73,6 +74,7 @@ function StatsPage({
   historyItems,
   historyConcerts = [],
   selectedFriends = [],
+  friendMode = "all",
   onOpenArtist,
   onOpenVenue,
   onOpenCountry,
@@ -182,7 +184,7 @@ function StatsPage({
             key={label}
             className="rounded-3xl border border-zinc-800 bg-zinc-900 p-5 text-center"
           >
-            <div className="text-3xl font-black text-zinc-100 md:text-4xl">
+            <div className="text-3xl font-black text-blue-400 md:text-4xl">
               {value}
             </div>
             <div className="mt-1 text-[11px] font-bold uppercase tracking-widest text-zinc-500">
@@ -201,7 +203,7 @@ function StatsPage({
               <h2 className="mt-1 text-xl font-black text-zinc-100">
                 {selectedFriends
                   .map((friend) => friend.displayName)
-                  .join(" + ")}
+                  .join(friendMode === "any" ? ` ${t("or")} ` : " + ")}
               </h2>
             </div>
           </div>
@@ -249,7 +251,7 @@ function StatsPage({
       <div className="grid gap-3 md:grid-cols-2">
         <div className="rounded-3xl border border-zinc-800 bg-zinc-900 p-6">
           <div className="text-[11px] font-bold uppercase tracking-widest text-zinc-500">
-            {t("Most-seen artist")}
+            <i className="fa-solid fa-microphone-lines mr-2 text-blue-400" aria-hidden="true" />{t("Most-seen artist")}
           </div>
           <button
             onClick={() =>
@@ -266,7 +268,7 @@ function StatsPage({
         </div>
         <div className="rounded-3xl border border-zinc-800 bg-zinc-900 p-6">
           <div className="text-[11px] font-bold uppercase tracking-widest text-zinc-500">
-            {t("Top venue")}
+            <i className="fa-solid fa-location-dot mr-2 text-blue-400" aria-hidden="true" />{t("Top venue")}
           </div>
           <button
             onClick={() =>
@@ -283,9 +285,7 @@ function StatsPage({
       </div>
       <GeographicStats shows={geographyShows} title={t("Lifetime geography")} onOpenCountry={onOpenCountry} />
       <div className="rounded-3xl border border-zinc-800 bg-zinc-900 p-6">
-        <h3 className="mb-5 text-lg font-black uppercase tracking-tight text-zinc-100">
-          {t("Top 10 artists")}
-        </h3>
+        <PanelHeading icon="fa-microphone-lines" title={t("Top 10 artists")} />
         <StatsBar
           data={stats.topArtists}
           max={stats.maxArtist}
@@ -294,9 +294,7 @@ function StatsPage({
         />
       </div>
       <div className="rounded-3xl border border-zinc-800 bg-zinc-900 p-6">
-        <h3 className="mb-5 text-lg font-black uppercase tracking-tight text-zinc-100">
-          {t("Top 10 venues")}
-        </h3>
+        <PanelHeading icon="fa-location-dot" title={t("Top 10 venues")} />
         <StatsBar
           data={stats.topVenues}
           max={stats.maxVenue}
@@ -305,9 +303,7 @@ function StatsPage({
         />
       </div>
       <div className="rounded-3xl border border-zinc-800 bg-zinc-900 p-6">
-        <h3 className="mb-5 text-lg font-black uppercase tracking-tight text-zinc-100">
-          {t("Concerts per year")}
-        </h3>
+        <PanelHeading icon="fa-calendar-days" title={t("Concerts per year")} />
         {stats.years.length === 0 ? (
           <p className="text-sm text-zinc-500">{t("No concert data for this selection.")}</p>
         ) : (
@@ -495,7 +491,7 @@ export function YearInReviewPage({
             key={label}
             className="rounded-3xl border border-zinc-800 bg-zinc-900 p-5 text-center"
           >
-            <div className="text-3xl font-black text-zinc-100 md:text-4xl">
+            <div className="text-3xl font-black text-blue-400 md:text-4xl">
               {value}
             </div>
             <div className="mt-1 text-[11px] font-bold uppercase tracking-widest text-zinc-500">
@@ -508,7 +504,7 @@ export function YearInReviewPage({
       <div className="mt-3 grid gap-3 md:grid-cols-3">
         <div className="rounded-3xl border border-zinc-800 bg-zinc-900 p-6">
           <div className="text-[11px] font-bold uppercase tracking-widest text-zinc-500">
-            {t("Top venue")}
+            <i className="fa-solid fa-location-dot mr-2 text-blue-400" aria-hidden="true" />{t("Top venue")}
           </div>
           <button
             onClick={() =>
@@ -525,7 +521,7 @@ export function YearInReviewPage({
         </div>
         <div className="rounded-3xl border border-zinc-800 bg-zinc-900 p-6">
           <div className="text-[11px] font-bold uppercase tracking-widest text-zinc-500">
-            {t("Busiest month")}
+            <i className="fa-solid fa-calendar-days mr-2 text-blue-400" aria-hidden="true" />{t("Busiest month")}
           </div>
           <div className="mt-2 text-xl font-black text-zinc-100">
             {review.busiestMonth}
@@ -537,7 +533,7 @@ export function YearInReviewPage({
         </div>
         <div className="rounded-3xl border border-zinc-800 bg-zinc-900 p-6">
           <div className="text-[11px] font-bold uppercase tracking-widest text-zinc-500">
-            {t("Year over year")}
+            <i className="fa-solid fa-chart-line mr-2 text-blue-400" aria-hidden="true" />{t("Year over year")}
           </div>
           <div
             className={`mt-2 text-xl font-black ${review.change > 0 ? "text-emerald-400" : review.change < 0 ? "text-amber-400" : "text-zinc-100"}`}
@@ -560,7 +556,7 @@ export function YearInReviewPage({
       <div className="mt-4 grid gap-3 md:grid-cols-2">
         <div className="rounded-3xl border border-zinc-800 bg-zinc-900 p-6">
           <div className="text-[11px] font-bold uppercase tracking-widest text-zinc-500">
-            {t("The year began with")}
+            <i className="fa-solid fa-play mr-2 text-blue-400" aria-hidden="true" />{t("The year began with")}
           </div>
           {review.firstShow && (
             <>
@@ -578,7 +574,7 @@ export function YearInReviewPage({
         </div>
         <div className="rounded-3xl border border-zinc-800 bg-zinc-900 p-6">
           <div className="text-[11px] font-bold uppercase tracking-widest text-zinc-500">
-            {t("The year ended with")}
+            <i className="fa-solid fa-flag-checkered mr-2 text-blue-400" aria-hidden="true" />{t("The year ended with")}
           </div>
           {review.lastShow && (
             <>

@@ -1,3 +1,5 @@
+import ArchiveFilters from "./components/ArchiveFilters";
+import { filterScope, matchesArchiveFilters, readArchiveFilters, withArchiveFilters } from "./lib/archive-filters";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import whatsappIcon from "@fortawesome/fontawesome-free/svgs/brands/whatsapp.svg";
@@ -1016,18 +1018,6 @@ function ConcertSortMenu({ value, onChange, compact = false, iconOnly = false })
   );
 }
 
-function FriendStatsMenu({ friends, selectedIds, onChange }) {
-  const { t } = useI18n();
-  const detailsRef = useRef(null);
-  useEffect(() => {
-    function close(event) { if (!detailsRef.current?.contains(event.target)) detailsRef.current?.removeAttribute("open"); }
-    document.addEventListener("pointerdown", close);
-    return () => document.removeEventListener("pointerdown", close);
-  }, []);
-  function toggle(id) { onChange(selectedIds.includes(id) ? selectedIds.filter((value) => value !== id) : [...selectedIds, id]); }
-  return <details ref={detailsRef} className="group relative min-w-0 w-full md:w-auto"><summary aria-label={t("Filter stats by friends")} className="relative ml-auto flex h-12 w-12 cursor-pointer list-none items-center justify-center rounded-md border border-[var(--adn-border-strong)] bg-[var(--adn-panel)] text-zinc-100 transition hover:border-zinc-500 [&::-webkit-details-marker]:hidden"><i className="fa-solid fa-user-group" aria-hidden="true" />{selectedIds.length > 0 && <span className="absolute -right-1 -top-1 min-w-5 rounded-full bg-blue-600 px-1 text-center text-[9px] font-black leading-5 text-white">{selectedIds.length}</span>}</summary><div className="adn-popover absolute right-0 top-full z-30 mt-2 max-h-72 w-64 max-w-[calc(100vw-2rem)] overflow-y-auto rounded-2xl border border-zinc-700 bg-zinc-950 p-2 shadow-2xl"><button type="button" onClick={() => onChange([])} className={`mb-1 flex min-h-11 w-full items-center rounded-xl px-3 text-left text-sm font-semibold hover:bg-zinc-800 ${selectedIds.length === 0 ? "text-blue-400" : "text-zinc-300"}`}>{t("All my concerts")}</button>{friends.map((friend) => <label key={friend.id} className="flex min-h-11 cursor-pointer items-center gap-3 rounded-xl px-3 text-sm font-semibold text-zinc-300 hover:bg-zinc-800"><input type="checkbox" checked={selectedIds.includes(friend.id)} onChange={() => toggle(friend.id)} className="h-4 w-4 accent-blue-600" /><span className="truncate">{t("With {name}", { name: friend.displayName })}</span></label>)}</div></details>;
-}
-
 function NextConcertCalendar({ items, onOpen, onContextMenu, onContextMenuAt }) {
   const { t, locale } = useI18n();
   const [monthPickerOpen, setMonthPickerOpen] = useState(false);
@@ -1655,7 +1645,9 @@ export default function App() {
   const [friendRequests, setFriendRequests] = useState([]);
   const [concertInvitations, setConcertInvitations] = useState([]);
   const [notifications, setNotifications] = useState([]);
-  const [statsFriendIds, setStatsFriendIds] = useState([]);
+  const [statsFilters, setStatsFilters] = useState(() => filterScope(initialRoute.page) === "stats" ? readArchiveFilters(window.location.search) : {});
+  const statsFriendIds = statsFilters.friends || [];
+
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
@@ -1688,6 +1680,11 @@ export default function App() {
   if (anyPageOverlayOpen && !pageOverlayWasOpenRef.current) overlayScrollYRef.current = window.scrollY;
   pageOverlayWasOpenRef.current = anyPageOverlayOpen;
   const currentUserId = session?.user?.id || "";
+  const filterOwnerRef = useRef(currentUserId);
+  useEffect(() => {
+    if (filterOwnerRef.current && filterOwnerRef.current !== currentUserId) { setStatsFilters({}); }
+    filterOwnerRef.current = currentUserId;
+  }, [currentUserId]);
   const currentEmail = session?.user?.email?.toLowerCase() || "";
   const { dataReady, dataOwnerId, dataLoadError, syncError, isRefreshing, reloadAppData, retrySync } = useArchiveSync(currentUserId, applyAppData, setTheme);
   const currentUserName = appProfile?.displayName || "";
@@ -1735,7 +1732,7 @@ export default function App() {
     [concertItems]
   );
   const historyItems = useMemo(() => groupHistoryFromJson(historyConcerts), [historyConcerts]);
-  const scopedHistoryConcerts = useMemo(() => statsFriendIds.length ? historyConcerts.filter((concert) => statsFriendIds.every((friendId) => concert.attendeeUsers?.some((person) => person.id === friendId && person.status === "confirmed"))) : historyConcerts, [historyConcerts, statsFriendIds]);
+  const scopedHistoryConcerts = useMemo(() => historyConcerts.filter((concert) => matchesArchiveFilters(concert, statsFilters)), [historyConcerts, statsFilters]);
   const scopedHistoryItems = useMemo(() => groupHistoryFromJson(scopedHistoryConcerts), [scopedHistoryConcerts]);
   const companionFriends = useMemo(() => friends.map((friend) => ({ ...friend, concertsTogether: historyConcerts.filter((concert) => concert.attendeeUsers?.some((person) => person.id === friend.id && person.status === "confirmed")).length })).sort((a,b)=>b.concertsTogether-a.concertsTogether||a.displayName.localeCompare(b.displayName)), [friends,historyConcerts]);
   const nextItems = useMemo(
@@ -1894,7 +1891,7 @@ export default function App() {
     const initial = readRouteFromLocation();
     const isPasswordRecovery = new URLSearchParams(window.location.search).get("password-recovery") === "1";
     const isLoggedOutRoot = window.location.pathname === "/" && !window.location.hash;
-    if (!isPasswordRecovery && !isLoggedOutRoot && window.location.pathname !== "/spotify/callback") window.history.replaceState({ adnRoute: true, canGoBack: false }, "", routeToPath(initial));
+    if (!isPasswordRecovery && !isLoggedOutRoot && window.location.pathname !== "/spotify/callback") window.history.replaceState({ adnRoute: true, canGoBack: false }, "", routeToPath(initial) + (filterScope(initial.page) ? window.location.search : ""));
 
     function restoreRoute() {
       if (dialogHistoryOpenRef.current || closingDialogWithBackRef.current) {
@@ -1918,6 +1915,7 @@ export default function App() {
         return;
       }
       const route = readRouteFromLocation();
+      if (filterScope(route.page) === "stats") setStatsFilters(readArchiveFilters(window.location.search));
       setActivePage(route.page);
       setSelectedArtist(route.artist);
       setSelectedVenue(route.venue);
@@ -1971,7 +1969,9 @@ export default function App() {
 
   function navigateTo(route, { replace = false } = {}) {
     const updateHistory = replace ? window.history.replaceState.bind(window.history) : window.history.pushState.bind(window.history);
-    updateHistory({ adnRoute: true, canGoBack: !replace }, "", routeToPath(route));
+    const scope = filterScope(route.page);
+    const path = scope ? withArchiveFilters(routeToPath(route), statsFilters) : routeToPath(route);
+    updateHistory({ adnRoute: true, canGoBack: !replace }, "", path);
     setActivePage(route.page);
     setSelectedArtist(route.artist || null);
     setSelectedVenue(route.venue || null);
@@ -2025,7 +2025,7 @@ export default function App() {
   }
   function changeReviewYear(year) {
     const route = { page: "year-review", artist: null, venue: null, year: String(year) };
-    window.history.pushState({ adnRoute: true, canGoBack: true }, "", routeToPath(route));
+    window.history.pushState({ adnRoute: true, canGoBack: true }, "", withArchiveFilters(routeToPath(route), statsFilters));
     setSelectedReviewYear(String(year));
   }
   function openConcertDetails(target) {
@@ -2247,7 +2247,11 @@ export default function App() {
     action().catch(() => setSaveError("We couldn’t save your choice. Try again.")).finally(() => setIsSaving(false));
   }
 
-  const statsScopeControl = (isStats || isYearReview) && friends.length > 0 ? <FriendStatsMenu friends={friends} selectedIds={statsFriendIds} onChange={setStatsFriendIds} /> : null;
+  function changeFilters(value) {
+    setStatsFilters(value);
+    window.history.replaceState(window.history.state, "", withArchiveFilters(window.location.pathname + window.location.search, value));
+  }
+  const statsScopeControl = <ArchiveFilters concerts={historyConcerts} friends={friends} value={statsFilters} onChange={changeFilters} stats />;
   const suggestionsPage = isSuggestions ? <DeferredPage><SuggestionsPage
     suggestions={availableSuggestions}
     artistImages={artistImages}
@@ -2378,7 +2382,7 @@ export default function App() {
             headerTarget={headerControlsNode}
           /></DeferredPage>
         ) : isYearReview ? (
-          <><DeferredPage><YearInReviewPage
+          <>{headerControlsNode && createPortal(statsScopeControl, headerControlsNode)}<DeferredPage><YearInReviewPage
             historyItems={scopedHistoryItems}
             historyConcerts={scopedHistoryConcerts}
             selectedYear={selectedReviewYear}
@@ -2397,7 +2401,7 @@ export default function App() {
         : isProfile ? <DeferredPage><ProfilePage profile={appProfile} futureArtists={[...new Set(concertItems.filter((concert) => !isPastConcert(concert)).map((concert) => concert.artist))]} theme={theme} language={language} isAdmin={isAdmin} onThemeChange={changeTheme} onLanguageChange={changeLanguage} onAdmin={() => changePage("admin")} onSignOut={() => supabase.auth.signOut()} onSave={async (payload) => { await updateMyProfile(payload); await reloadAppData(); }} onExport={handleProfileExport} onDelete={async () => { await deleteMyAccount(); await supabase.auth.signOut(); }} onPassword={() => setPasswordModalMode("change")} onConfirm={(confirmation) => { setSaveError(""); setConfirmAction(confirmation); }} onSpotifyChanged={reloadAppData} onImported={reloadAppData} /></DeferredPage>
         : isActivity ? <DeferredPage><ActivityPage notifications={notifications} onRead={async (ids) => { await markNotificationsRead(ids); await reloadAppData(); }} onOpenFriends={() => changePage("friends")} onNavigate={changePage} onOpenConcert={(item) => { const concert=concertItems.find((candidate)=>candidate.concertId===item.concertId); if(concert) setCalendarTarget({ ...concert, mode:isPastConcert(concert)?"history":"next" }); }} /></DeferredPage>
         : isFriendProfile ? <DeferredPage><FriendProfilePage friend={selectedFriend} /></DeferredPage>
-        : isFriends ? <DeferredPage><FriendsPage friends={friends} requests={friendRequests} invitations={concertInvitations} onSearch={searchProfiles} onSendRequest={(userId) => runSocialAction(() => sendFriendRequest(userId))} onRespondRequest={(requestId, accept) => runSocialAction(() => respondFriendRequest(requestId, accept))} onRequestRemoveFriend={(friend) => { setSaveError(""); setConfirmRemoveFriend(friend); }} onSetInvitationStatus={(concertId,status,bought) => runSocialAction(() => setConcertInvitationStatus(concertId,status,bought))} onOpenProfile={openFriendProfile} /></DeferredPage> : isStats ? <>{headerControlsNode && statsScopeControl && createPortal(statsScopeControl, headerControlsNode)}<DeferredPage><StatsPage historyItems={scopedHistoryItems} historyConcerts={scopedHistoryConcerts} selectedFriends={friends.filter((friend)=>statsFriendIds.includes(friend.id))} onOpenArtist={openArtistDetail} onOpenVenue={openVenueDetail} onOpenCountry={openCountryDetail} onOpenYearReview={openYearReview} /></DeferredPage></> : (
+        : isFriends ? <DeferredPage><FriendsPage friends={friends} requests={friendRequests} invitations={concertInvitations} onSearch={searchProfiles} onSendRequest={(userId) => runSocialAction(() => sendFriendRequest(userId))} onRespondRequest={(requestId, accept) => runSocialAction(() => respondFriendRequest(requestId, accept))} onRequestRemoveFriend={(friend) => { setSaveError(""); setConfirmRemoveFriend(friend); }} onSetInvitationStatus={(concertId,status,bought) => runSocialAction(() => setConcertInvitationStatus(concertId,status,bought))} onOpenProfile={openFriendProfile} /></DeferredPage> : isStats ? <>{headerControlsNode && statsScopeControl && createPortal(statsScopeControl, headerControlsNode)}<DeferredPage><StatsPage historyItems={scopedHistoryItems} historyConcerts={scopedHistoryConcerts} selectedFriends={friends.filter((friend)=>statsFriendIds.includes(friend.id))} friendMode={statsFilters.friendMode || "all"} onOpenArtist={openArtistDetail} onOpenVenue={openVenueDetail} onOpenCountry={openCountryDetail} onOpenYearReview={openYearReview} /></DeferredPage></> : (
           <>
             {headerControlsNode && createPortal(<div className="w-full space-y-2 md:space-y-0">
 

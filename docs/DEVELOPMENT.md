@@ -665,3 +665,13 @@ Check the Supabase RPC response, applied migrations, session permissions, `VITE_
 ### A scraper stops matching events
 
 The external site probably changed its markup or endpoint. Run the relevant scraper directly, inspect its diagnostics, and update only that adapter. Preserve robots.txt compliance and polite request behavior.
+
+## Stats filters
+
+`ArchiveFilters` and `src/lib/archive-filters.js` define the shared interaction:
+
+- Stats and Year in Review share country, city and companion filters. Archive and Timeline retain their original controls.
+- Values within a category use OR; categories use AND. Companions default to all selected friends, with an explicit any-friend mode. Only confirmed attendance in the user's own archive qualifies; this never grants access to someone else's archive.
+- Options are derived from the authorised session snapshot and narrowed by the other categories. Cities include their country in the internal key. Active selections remain removable even when no results match.
+- Repeated `filter_*` URL parameters preserve selection through reload and browser Back; `with=any` selects the optional companion mode. UI changes replace the current URL rather than filling browser history. Account changes reset in-memory filters.
+- No database schema change or new provider call is required. Archive, Timeline, Calendar and Suggestions retain their existing controls.

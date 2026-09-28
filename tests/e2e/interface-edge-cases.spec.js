@@ -228,6 +228,25 @@ test("Year bars open a reload-safe Year in Review route", async ({ page }) => {
   await expect(page).toHaveURL(selectedUrl);
 });
 
+test("Stats location filters narrow cities and remain usable in Year in Review", async ({ page }) => {
+  await page.goto('/stats');
+  const filters = page.locator('details[name="archive-filters"]');
+  await filters.locator('summary').click();
+  await filters.getByRole('checkbox', { name: 'Spain', exact: true }).check();
+  await expect(filters.getByRole('checkbox', { name: 'Lausanne', exact: true })).toHaveCount(0);
+  await page.keyboard.press('Escape');
+  await page.locator('button[aria-label^="Open "][aria-label*="year in review"]').first().click();
+  await expect(page).toHaveURL(/year-review\/\d{4}\?filter_country=ES/);
+  await filters.locator('summary').click();
+  const box = await filters.locator('.adn-popover').boundingBox();
+  expect(box.x).toBeGreaterThanOrEqual(0);
+  expect(box.x + box.width).toBeLessThanOrEqual(page.viewportSize().width);
+  await page.getByRole('heading', { name: 'Year in Review', exact: true }).click();
+  await expect(filters).not.toHaveAttribute('open');
+  await page.getByRole('button', { name: 'Clear filters', exact: true }).click();
+  await expect(page).not.toHaveURL(/filter_country/);
+});
+
 test("Archive concert entries communicate that they are interactive", async ({ page }) => {
   await page.goto("/history");
   const concert = page.locator('article button[aria-label^="Open "]').first();
