@@ -2,7 +2,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
 import { normalize } from "./lib/suggestion-scraper-utils.mjs";
-import { suggestionKey, isCurrentSuggestion } from "../src/lib/suggestions.js";
+import { suggestionKey, isCurrentSuggestion, dateSuggestions, canonicalVenue } from "../src/lib/suggestions.js";
 
 function slug(value) {
   return normalize(value).replaceAll(" ", "-");
@@ -30,7 +30,7 @@ for (const inputPath of inputPaths) {
       combined.push({
         id: result.preserved ? suggestion.id : `${suggestion.id}-${slug(artist)}`,
         artist,
-        venue: suggestion.venue || "",
+        venue: canonicalVenue(suggestion.venue || ""),
         city: suggestion.city || "",
         country: suggestion.country,
         date: suggestion.date,
@@ -52,14 +52,16 @@ combined.sort((left, right) => {
 });
 
 let generatedAt = new Date().toISOString();
+let previous = [];
 try {
   const current = JSON.parse(await fs.readFile(path.resolve(outputPath), "utf8"));
-  if (JSON.stringify(current.suggestions || []) === JSON.stringify(combined)) generatedAt = current.generatedAt || generatedAt;
+  previous = current.suggestions || [];
 } catch {
   // The first run creates the output file.
 }
 
-const output = `${JSON.stringify({ generatedAt, suggestions: combined }, null, 2)}\n`;
+const suggestions = dateSuggestions(combined, previous, generatedAt);
+const output = `${JSON.stringify({ generatedAt, suggestions }, null, 2)}\n`;
 await fs.mkdir(path.dirname(path.resolve(outputPath)), { recursive: true });
 await fs.writeFile(path.resolve(outputPath), output, "utf8");
 process.stdout.write(`Wrote ${combined.length} suggestions to ${outputPath}\n`);

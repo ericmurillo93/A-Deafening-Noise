@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { suggestionKey, legacySuggestionKey, isCurrentSuggestion, isDismissedSuggestion, sortReviewedSuggestions } from "../src/lib/suggestions.js";
+import { suggestionKey, legacySuggestionKey, isCurrentSuggestion, isDismissedSuggestion, sortReviewedSuggestions, dateSuggestions } from "../src/lib/suggestions.js";
 const event = { artist: "SÓLSTAFIR", venue: "APOLO", city: "Barcelona", country: "ES", date: "14/02/2027" };
 assert.equal(suggestionKey(event), suggestionKey({ ...event, artist: "solstafir" }));
 assert.notEqual(suggestionKey(event), suggestionKey({ ...event, venue: "RAZZMATAZZ" }));
@@ -12,3 +12,16 @@ const items = [{ id: 'old', date: '01/01/2030' }, { id: 'new', date: '01/01/2027
 const reviews = { old: { decision: 'interested', reviewedAt: '2026-09-27T12:00:00Z' }, new: { decision: 'not-interested', reviewedAt: '2026-09-28T12:00:00Z' } };
 assert.deepEqual(sortReviewedSuggestions(items, reviews).map((item) => item.id), ['new', 'old']);
 assert.equal(items[0].id, 'old');
+const first = dateSuggestions([{ ...event, id: 'source-one' }], [], '2026-10-03T12:00:00Z');
+const next = dateSuggestions([{ ...event, id: 'source-two', imageUrl: 'updated' }], first, '2026-10-04T12:00:00Z');
+assert.equal(next[0].firstSeenAt, first[0].firstSeenAt);
+assert.equal(next[0].firstSeenEstimated, false);
+const legacy = dateSuggestions([{ ...event, id: 'old' }], [{ ...event, id: 'old' }], '2026-10-03T12:00:00Z');
+assert.equal(legacy[0].firstSeenEstimated, true);
+assert.equal(dateSuggestions(legacy, legacy, '2026-10-04T12:00:00Z')[0].firstSeenAt, legacy[0].firstSeenAt);
+const razz = { ...event, venue: 'RAZZMATAZZ 1' };
+assert.equal(suggestionKey(razz), suggestionKey({ ...razz, venue: 'Sala Razzmatazz 1' }));
+assert.equal(suggestionKey(razz), suggestionKey({ ...razz, venue: 'Razzmatazz' }));
+assert.notEqual(suggestionKey(razz), suggestionKey({ ...razz, venue: 'Razzmatazz 2' }));
+assert(isDismissedSuggestion(razz, ['v2|solstafir|14 02 2027|razzmatazz|barcelona|es']));
+assert.equal(suggestionKey({ ...event, venue: 'APOLO' }), suggestionKey({ ...event, venue: 'SALA APOLO' }));

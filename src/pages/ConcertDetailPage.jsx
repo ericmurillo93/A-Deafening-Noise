@@ -1,4 +1,5 @@
 import React from "react";
+import ConcertJournal from "../components/ConcertJournal";
 import { countryName } from "../lib/countries";
 import { useI18n } from "../lib/i18n.jsx";
 
@@ -14,6 +15,7 @@ export default function ConcertDetailPage({ concert, onOpenArtist, onOpenVenue, 
     </section>
     {metadata.length > 0 && <section className="grid gap-3 rounded-3xl border border-zinc-800 bg-zinc-900 p-6 sm:grid-cols-2">{metadata.map(([label, value]) => <div key={label}><div className="text-[10px] font-black uppercase tracking-widest text-zinc-600">{label}</div><div className="mt-1 text-sm font-semibold text-zinc-300">{value}</div></div>)}</section>}
     {attendees.length > 0 && <section className="rounded-3xl border border-zinc-800 bg-zinc-900 p-6"><h2 className="text-xs font-black uppercase tracking-widest text-zinc-500">{t("Attended with")}</h2><p className="mt-3 text-base font-semibold text-zinc-200">{attendees.join(" · ")}</p></section>}
+    <ConcertJournal key={concert.concertId} concert={concert} />
     {(concert.ticketUrl || concert.sourceUrl) && <a href={concert.ticketUrl || concert.sourceUrl} target="_blank" rel="noreferrer" className="adn-button-secondary inline-flex">{t("Event and tickets")} <i className="fa-solid fa-arrow-up-right-from-square text-xs" aria-hidden="true" /></a>}
   </div>;
 }

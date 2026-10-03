@@ -14,6 +14,8 @@ function parseRouteParts(pagePart = "home", valueParts = []) {
   }
   if (pagePart === "country" && /^[A-Z]{2}$/i.test(value || "")) return { page: "country", artist: null, venue: null, country: value.toUpperCase() };
   if (pagePart === "concert" && value) return { page: "concert", artist: null, venue: null, concert: value };
+  if (pagePart === "festival" && value) return { page: "festivals", artist: null, venue: null, festival: value };
+  if (pagePart === "festivals") return { page: "festivals", artist: null, venue: null };
   if (pagePart === "people" && value) return { page: "friend-profile", artist: null, venue: null, person: value };
   if (pagePart === "year-review" && /^\d{4}$/.test(value || "")) return { page: "year-review", artist: null, venue: null, year: value };
   if (pagePart === "spotify" && value === "callback") return { page: "profile", artist: null, venue: null, year: null };
@@ -30,7 +32,8 @@ export function readRouteFromLocation() {
   return legacyParts.length ? parseRouteParts(legacyParts[0], legacyParts.slice(1)) : parseRouteParts();
 }
 
-export function routeToPath({ page, artist, venue, city, country, concert, year, person }) {
+export function routeToPath({ page, artist, venue, city, country, concert, year, person, festival }) {
+  if (page === "festivals" && festival) return `/festival/${encodeURIComponent(festival)}`;
   if (page === "artist" && artist) return `/artist/${encodeURIComponent(artist)}`;
   if (page === "venue" && venue) return `/venue/${encodeURIComponent(venue)}`;
   if (page === "city" && city) return `/city/${country ? `${encodeURIComponent(country)}/` : ""}${encodeURIComponent(city)}`;

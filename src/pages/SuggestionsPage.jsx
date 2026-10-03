@@ -4,11 +4,12 @@ import { normalize } from "../lib/concerts";
 import { sortReviewedSuggestions } from "../lib/suggestions";
 import { useI18n } from "../lib/i18n.jsx";
 import { SuggestionDecisionButtons } from "../components/SharedUi";
+import RecordInformation, { recordDate } from "../components/RecordInformation";
 
 const concertLabel = (value) => String(value || "").toLocaleUpperCase();
 
-function SuggestionCard({ suggestion, artistImages, decision, isSaving, onInterested, onNotInterested }) {
-  const { t } = useI18n();
+function SuggestionCard({ suggestion, artistImages, decision, reviewedAt, isSaving, onInterested, onNotInterested }) {
+  const { t, locale } = useI18n();
   return <article className="rounded-md border border-[var(--adn-border-strong)] bg-[var(--adn-card)] p-4">
     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <div className="flex min-w-0 items-center gap-4">
@@ -22,11 +23,15 @@ function SuggestionCard({ suggestion, artistImages, decision, isSaving, onIntere
       </div>
       <SuggestionDecisionButtons decision={decision} disabled={isSaving} onInterested={() => onInterested(suggestion)} onNotInterested={() => onNotInterested(suggestion)} />
     </div>
+    <RecordInformation><dl className="space-y-3">
+      <div><dt className="font-semibold text-zinc-300">{t(suggestion.firstSeenEstimated ? "Tracked since" : "Suggestion created")}</dt><dd>{recordDate(suggestion.firstSeenAt,locale) || t("Date unavailable")}</dd></div>
+      {decision && <div><dt className="font-semibold text-zinc-300">{t(decision === "interested" ? "Marked Interested" : "Marked Not Interested")}</dt><dd>{recordDate(reviewedAt,locale) || t("Date unavailable")}</dd></div>}
+    </dl></RecordInformation>
   </article>;
 }
 
 function SuggestionList(props) {
-  return <div className="space-y-2">{props.suggestions.map((suggestion) => <SuggestionCard key={suggestion.id} suggestion={suggestion} decision={props.reviews[suggestion.id]?.decision} {...props} />)}</div>;
+  return <div className="space-y-2">{props.suggestions.map((suggestion) => <SuggestionCard key={suggestion.id} suggestion={suggestion} decision={props.reviews[suggestion.id]?.decision} reviewedAt={props.reviews[suggestion.id]?.reviewedAt} {...props} />)}</div>;
 }
 
 export default function SuggestionsPage({ suggestions, artistImages, reviews, onInterested, onNotInterested, onOpenProfile, spotifyConnected, discoveryUnavailable, onRetry, isSaving, saveError }) {

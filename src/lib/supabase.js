@@ -1,5 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { loadArchiveSnapshot } from "./archive-loader";
+import { clearMemoryFiles } from "./memory-storage.js";
+import { prepareMemoryPhoto } from "./prepare-memory-photo.js";
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabasePublishableKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
@@ -78,11 +80,39 @@ export async function removeMyAvatar() {
 export const markNotificationsRead = (ids = null) => rpc("mark_notifications_read", { notification_ids: ids });
 export const leaveSharedConcert = (concertId) => rpc("leave_shared_concert", { target_concert: concertId });
 export const exportMyData = () => rpc("export_my_data");
-export const deleteMyAccount = () => rpc("delete_my_account");
+export async function deleteMyAccount() {
+  const { data: { user }, error } = await supabase.auth.getUser();
+  if (error || !user) throw error || new Error("Sign in again.");
+  await clearMemoryFiles(supabase.storage.from("concert-memories"),user.id);
+  return rpc("delete_my_account");
+}
 export const adminListUsers = () => rpc("admin_list_users");
 export const adminUpdateUser = (userId, role, status) => rpc("admin_update_user", { target_user: userId, new_role: role, new_status: status });
 export const adminGetOperations = () => rpc("get_admin_operations");
 export const adminGetDataQuality = () => rpc("admin_data_quality");
+export const getMyConcertJournal = (id) => rpc("get_my_concert_journal", { target_concert: id });
+export const saveMyConcertMemory = (id, payload) => rpc("save_my_concert_memory", { target_concert: id, payload });
+export const setMyConcertPhoto = (id, path, keep) => rpc("set_my_concert_photo", { target_concert: id, photo: path, keep_photo: keep });
+export async function removeConcertMemoryPhoto(path) {
+  const { error } = await supabase.storage.from("concert-memories").remove([path]);
+  if (error) throw error;
+}
+export const adminConcertDuplicates = () => rpc("admin_concert_duplicates");
+export const adminMergeConcerts = (keepId, removeId) => rpc("admin_merge_concerts", { keep_id: keepId, remove_id: removeId });
+export async function uploadConcertMemory(id, file) {
+  const image = await prepareMemoryPhoto(file);
+  const { data: { user }, error } = await supabase.auth.getUser();
+  if (error || !user) throw error || new Error("Sign in again.");
+  const path = `${user.id}/${id}/${crypto.randomUUID()}.jpg`;
+  const result = await supabase.storage.from("concert-memories").upload(path, image, { contentType: "image/jpeg" });
+  if (result.error) throw result.error;
+  return path;
+}
+export async function concertMemoryPhoto(path) {
+  const { data, error } = await supabase.storage.from("concert-memories").createSignedUrl(path, 3600);
+  if (error) throw error;
+  return data.signedUrl;
+}
 export const importMyConcerts = (payload) => rpc("import_my_concerts", { payload });
 export async function adminGetProviderStatus() {
   const { data: { session } } = await supabase.auth.getSession();

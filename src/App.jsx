@@ -1,10 +1,12 @@
 import ArchiveFilters from "./components/ArchiveFilters";
+import ConcertJournal from "./components/ConcertJournal";
+const FestivalsPage = React.lazy(() => import("./pages/FestivalsPage"));
 import { filterScope, matchesArchiveFilters, readArchiveFilters, withArchiveFilters } from "./lib/archive-filters";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import whatsappIcon from "@fortawesome/fontawesome-free/svgs/brands/whatsapp.svg";
 import { concertsData, suggestionsData } from "virtual:archive-fallback";
-import { suggestionKey, legacySuggestionKey, isDismissedSuggestion, isCurrentSuggestion } from "./lib/suggestions";
+import { suggestionKey, legacySuggestionKey, isDismissedSuggestion, isCurrentSuggestion, canonicalVenue } from "./lib/suggestions";
 import {
   deleteMyAccount,
   deleteMyConcert,
@@ -250,7 +252,7 @@ function updateConcert(items, target, data) {
     return {
       ...concert,
       artist: uppercaseConcertLabel(data.artist.trim()),
-      venue: uppercaseConcertLabel(data.venue?.trim()),
+      venue: uppercaseConcertLabel(canonicalVenue(data.venue?.trim())),
       date: data.date.trim(),
       bought: target.mode === "history" ? true : Boolean(data.bought),
       ...(data.setlistId?.trim() ? { setlistId: data.setlistId.trim() } : {}),
@@ -584,6 +586,7 @@ function SetlistModal({ target, onClose, onEdit, onLeave, onIdDiscovered }) {
 
         <div className="overflow-y-auto flex-1">
           <EventMetadata concert={target} />
+          <ConcertJournal key={target.concertId} concert={target} />
           {target.attendees?.length > 0 && (
             <section className="mb-5 flex items-center gap-3 border-b border-zinc-900 pb-4">
               <div className="flex shrink-0 -space-x-2" aria-hidden="true">
@@ -746,7 +749,7 @@ function EditConcertModal({ isOpen, mode, initial, onClose, onSave, isSaving, sa
     setValidationError("");
     onSave({
       artist: uppercaseConcertLabel(artist.trim()),
-      venue: uppercaseConcertLabel(venue.trim()),
+      venue: uppercaseConcertLabel(canonicalVenue(venue.trim())),
       city: city.trim(),
       country: country.trim().toUpperCase(),
       date: date.trim(),
@@ -1018,7 +1021,12 @@ function ConcertSortMenu({ value, onChange, compact = false, iconOnly = false })
   );
 }
 
-function NextConcertCalendar({ items, onOpen, onContextMenu, onContextMenuAt }) {
+function CalendarFilterMenu({ value, onChange, compact = false }) {
+  const { t } = useI18n();
+  return <DropdownMenu value={value} onChange={onChange} compact={compact} ariaLabel={t("Filter calendar")} iconOnly={compact} buttonLabel={compact ? <i className={`fa-solid fa-filter ${value !== "all" ? "text-blue-400" : ""}`} aria-hidden="true" /> : undefined} className={compact ? "[&_summary]:flex [&_summary]:h-12 [&_summary]:w-12 [&_summary]:items-center [&_summary]:justify-center [&_summary]:!p-0" : ""} options={[{value:"all",label:t("All concerts")},{value:"history",label:t("History")},{value:"bought",label:t("Tickets bought")},{value:"not-bought",label:t("Tickets to buy")}]} />;
+}
+
+function NextConcertCalendar({ items, visibleMonth, setVisibleMonth, onOpen, onContextMenu, onContextMenuAt }) {
   const { t, locale } = useI18n();
   const [monthPickerOpen, setMonthPickerOpen] = useState(false);
   const [highlightedDay, setHighlightedDay] = useState(null);
@@ -1036,10 +1044,6 @@ function NextConcertCalendar({ items, onOpen, onContextMenu, onContextMenuAt }) 
       .sort((a, b) => a.range.start - b.range.start),
     [items]
   );
-  const [visibleMonth, setVisibleMonth] = useState(() => {
-    const today = new Date();
-    return new Date(today.getFullYear(), today.getMonth(), 1);
-  });
   const year = visibleMonth.getFullYear();
   const month = visibleMonth.getMonth();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
@@ -1227,8 +1231,8 @@ function CalendarConcertModal({ target, artistImages, onClose, onEdit }) {
   const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(whatsappMessage)}`;
   return (
     <div className="adn-modal-backdrop fixed inset-0 z-[70] flex items-center justify-center bg-black/75 px-4" onClick={onClose}>
-      <article ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="calendar-concert-title" className="adn-modal-panel w-full max-w-md rounded-3xl border border-zinc-700 bg-zinc-900 p-5 shadow-2xl" onClick={(event) => event.stopPropagation()}>
-        <div className="flex items-start justify-between gap-4 border-b border-zinc-800 pb-4">
+      <article ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="calendar-concert-title" className="adn-modal-panel max-h-[90dvh] w-full max-w-md overflow-y-auto rounded-3xl border border-zinc-700 bg-zinc-900 p-5 shadow-2xl" onClick={(event) => event.stopPropagation()}>
+        <div className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-zinc-800 bg-[var(--adn-panel)] pb-4">
           <h2 id="calendar-concert-title" className="min-w-0 break-words text-2xl font-black uppercase leading-none tracking-tight text-zinc-100">{target.artist}</h2>
           <div className="flex shrink-0 items-center gap-2">
             {onEdit && <button type="button" onClick={() => onEdit(target)} className="touch-target flex h-8 w-8 items-center justify-center rounded-full border border-zinc-700 text-sm text-zinc-300 transition hover:border-zinc-500 hover:text-white" aria-label={t("Edit concert")} title={t("Edit concert")}><i className="fa-solid fa-pencil" aria-hidden="true" /></button>}
@@ -1259,6 +1263,7 @@ function CalendarConcertModal({ target, artistImages, onClose, onEdit }) {
           )}
         </div>
         <div className="mt-4"><EventMetadata concert={target} primaryTicketUrl={ticketUrl} /></div>
+        <ConcertJournal key={target.concertId} concert={target} />
         {!isPast && target.attendeeUsers?.length > 0 && <section className="mt-4 rounded-2xl border border-zinc-800 bg-zinc-950/60 p-4"><p className="mb-3 text-[10px] font-bold uppercase tracking-widest text-zinc-500">{t("Friends attending")}</p><div className="space-y-2">{target.attendeeUsers.map((person) => { const status = person.status || "pending"; const positive = status === "confirmed"; const negative = status === "declined"; return <div key={person.id} className="flex items-center justify-between gap-3 text-sm"><span className="font-semibold text-zinc-200">{person.displayName}</span><span className={`rounded-full border px-2.5 py-1 text-[10px] font-bold ${positive ? "border-emerald-900 bg-emerald-950/40 text-emerald-300" : negative ? "border-red-900 bg-red-950/40 text-red-300" : "border-amber-900 bg-amber-950/40 text-amber-300"}`}>{t(status[0].toUpperCase() + status.slice(1))}</span></div>; })}</div></section>}
       </article>
     </div>
@@ -1588,6 +1593,7 @@ function mainNavigationItems(activePage, attentionCount, hasConcerts, t = (value
     ["home", "fa-house", t("Home"), activePage === "home", 0],
     hasConcerts && ["history", "fa-box-archive", t("nav.archive"), archiveActive, 0],
     hasConcerts && ["timeline", "fa-clock-rotate-left", t("nav.timeline"), activePage === "timeline", 0],
+    hasConcerts && ["festivals", "fa-tent", t("Festivals"), activePage === "festivals", 0],
     ["next", "fa-calendar-days", t("nav.calendar"), activePage === "next", 0],
     ["suggestions", "fa-wand-magic-sparkles", t("nav.suggestions"), activePage === "suggestions", 0],
     ["stats", "fa-chart-column", t("Stats"), activePage === "stats" || activePage === "year-review", 0],
@@ -1623,6 +1629,8 @@ export default function App() {
   const [selectedCity, setSelectedCity] = useState(initialRoute.city);
   const [selectedCountry, setSelectedCountry] = useState(initialRoute.country);
   const [selectedConcertId, setSelectedConcertId] = useState(initialRoute.concert || "");
+  const [selectedFestival, setSelectedFestival] = useState(initialRoute.festival || "");
+  const [calendarFilter, setCalendarFilter] = useState("all");
   const [selectedReviewYear, setSelectedReviewYear] = useState(initialRoute.year || "");
   const [selectedPerson, setSelectedPerson] = useState(initialRoute.person || "");
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -1638,6 +1646,13 @@ export default function App() {
   const [suggestionCatalog, setSuggestionCatalog] = useState(suggestionsData.suggestions || []);
   const [dismissedSuggestions, setDismissedSuggestions] = useState(fallbackDismissedSuggestions);
   const [suggestionReviewDates, setSuggestionReviewDates] = useState(concertsData.suggestionReviewDates || {});
+  const [calendarPosition, setCalendarPosition] = useState(() => {
+    try {
+      const saved = JSON.parse(sessionStorage.getItem("adn-calendar-month"));
+      if (saved?.owner && Number.isFinite(new Date(saved.month).getTime())) return saved;
+    } catch { /* Calendar still works when browser storage is unavailable. */ }
+    return null;
+  });
   const [listenedArtists, setListenedArtists] = useState([]);
   const [artistImageRows, setArtistImageRows] = useState([]);
   const [spotifyStatus, setSpotifyStatus] = useState({ connected: !supabaseEnabled });
@@ -1681,9 +1696,23 @@ export default function App() {
   if (anyPageOverlayOpen && !pageOverlayWasOpenRef.current) overlayScrollYRef.current = window.scrollY;
   pageOverlayWasOpenRef.current = anyPageOverlayOpen;
   const currentUserId = session?.user?.id || "";
+  const calendarOwner = supabaseEnabled ? currentUserId : "demo";
+  const calendarToday = new Date();
+  const calendarMonth = calendarPosition?.owner === calendarOwner
+    ? new Date(calendarPosition.month)
+    : new Date(calendarToday.getFullYear(), calendarToday.getMonth(), 1);
+  function setCalendarMonth(next) {
+    setCalendarPosition((previous) => {
+      const current = previous?.owner === calendarOwner ? new Date(previous.month) : calendarMonth;
+      const month = typeof next === "function" ? next(current) : next;
+      const position = { owner: calendarOwner, month: month.toISOString() };
+      try { sessionStorage.setItem("adn-calendar-month", JSON.stringify(position)); } catch { /* Retain in memory. */ }
+      return position;
+    });
+  }
   const filterOwnerRef = useRef(currentUserId);
   useEffect(() => {
-    if (filterOwnerRef.current && filterOwnerRef.current !== currentUserId) { setStatsFilters({}); }
+    if (filterOwnerRef.current && filterOwnerRef.current !== currentUserId) { setStatsFilters({}); setCalendarFilter("all"); }
     filterOwnerRef.current = currentUserId;
   }, [currentUserId]);
   const currentEmail = session?.user?.email?.toLowerCase() || "";
@@ -1789,15 +1818,15 @@ export default function App() {
     const visibleConcerts = concertItems
       .filter((concert) => concert.bought || !isPastConcert(concert))
       .map((concert) => ({ ...concert, source: isPastConcert(concert) ? "history" : "next" }));
-    return filterConcerts(visibleConcerts, query);
-  }, [concertItems, query]);
+    return filterConcerts(visibleConcerts, query).filter((concert) => calendarFilter === "all" || (calendarFilter === "history" ? isPastConcert(concert) : !isPastConcert(concert) && concert.bought === (calendarFilter === "bought")));
+  }, [concertItems, query, calendarFilter]);
 
   const artistImages = useMemo(() => new Map(artistImageRows.map(({ artist, imageUrl }) => [normalize(artist), imageUrl])), [artistImageRows]);
   const availableSuggestions = suggestionCatalog.filter((item) => isCurrentSuggestion(item));
   const suggestionReviews = useMemo(() => Object.fromEntries(availableSuggestions.flatMap((suggestion) => {
     const concert = concertItems.find((item) => suggestionKey(item) === suggestionKey(suggestion));
     if (concert) return [[suggestion.id, { decision: "interested", concert, reviewedAt: suggestionReviewDates.concerts?.[concert.concertId] || suggestionReviewDates.local?.[suggestionKey(suggestion)] }]];
-    if (isDismissedSuggestion(suggestion, dismissedSuggestions)) return [[suggestion.id, { decision: "not-interested", reviewedAt: suggestionReviewDates.dismissed?.[suggestionKey(suggestion)] || suggestionReviewDates.dismissed?.[legacySuggestionKey(suggestion)] || suggestionReviewDates.local?.[suggestionKey(suggestion)] }]];
+    if (isDismissedSuggestion(suggestion, dismissedSuggestions)) return [[suggestion.id, { decision: "not-interested", reviewedAt: suggestionReviewDates.dismissed?.[dismissedSuggestions.find((key) => isDismissedSuggestion(suggestion, [key]))] || suggestionReviewDates.local?.[suggestionKey(suggestion)] }]];
     return [];
   })), [availableSuggestions, concertItems, dismissedSuggestions, suggestionReviewDates]);
 
@@ -1867,6 +1896,8 @@ export default function App() {
       }
       setAuthReady(true);
       if (!nextSession) {
+        setCalendarPosition(null);
+        try { sessionStorage.removeItem("adn-calendar-month"); } catch { /* In-memory state is already cleared. */ }
         void clearAppCache();
         if (!recoveryRequested || event === "SIGNED_OUT") showLoginRoute();
       }
@@ -1923,6 +1954,7 @@ export default function App() {
       setSelectedCity(route.city);
       setSelectedCountry(route.country);
       setSelectedConcertId(route.concert || "");
+      setSelectedFestival(route.festival || "");
       setSelectedReviewYear(route.year || "");
       setSelectedPerson(route.person || "");
       setQuery("");
@@ -1979,6 +2011,7 @@ export default function App() {
     setSelectedCity(route.city || null);
     setSelectedCountry(route.country || null);
     setSelectedConcertId(route.concert || "");
+    setSelectedFestival(route.festival || "");
     setSelectedReviewYear(route.year || "");
     setSelectedPerson(route.person || "");
     setQuery("");
@@ -2102,7 +2135,7 @@ export default function App() {
     const newConcert = {
       concertId: data.concertId || null,
       artist: uppercaseConcertLabel(data.artist.trim()),
-      venue: uppercaseConcertLabel(data.venue?.trim()),
+      venue: uppercaseConcertLabel(canonicalVenue(data.venue?.trim())),
       city: data.city?.trim() || "",
       country: String(data.country || "").trim().toUpperCase(),
       date: data.date.trim(),
@@ -2117,7 +2150,7 @@ export default function App() {
     };
     setIsSaving(true); setSaveError("");
     try {
-      const updatedDismissed = suggestion ? dismissedSuggestions.filter((key) => ![suggestionKey(suggestion), legacySuggestionKey(suggestion)].includes(key)) : dismissedSuggestions;
+      const updatedDismissed = suggestion ? dismissedSuggestions.filter((key) => !isDismissedSuggestion(suggestion, [key])) : dismissedSuggestions;
       if (supabaseEnabled) {
         await upsertMyConcert(newConcert);
         if (suggestion) await saveDismissedSuggestions(updatedDismissed);
@@ -2302,7 +2335,7 @@ export default function App() {
       <section className={`adn-content w-full overflow-x-hidden ${isHome ? "px-4 pb-8 pt-5 lg:pb-10 lg:pl-[51px] lg:pr-[56px] lg:pt-8" : "px-4 pb-8 pt-5 md:px-8 md:py-10 lg:px-[51px] lg:py-8 lg:pr-[56px]"}`}>
         {!isHome && <header className="mb-6 min-h-32 pt-14 text-left md:min-h-0 md:pt-0 lg:mb-6">
           <div className="flex flex-col items-start justify-between gap-5 lg:flex-row">
-            <div className="min-w-0"><h1 className="break-words text-3xl font-black uppercase leading-none tracking-[0.025em] text-zinc-50 lg:text-[1.75rem]">{title}</h1><p className="mt-2.5 max-w-2xl text-sm leading-relaxed text-zinc-400">{description}</p></div>
+            <div className="min-w-0"><h1 className="break-words text-3xl font-black uppercase leading-none tracking-[0.025em] text-zinc-50 lg:text-[1.75rem]">{activePage === "festivals" ? selectedFestival || t("Festivals") : title}</h1>{activePage !== "festivals" && <p className="mt-2.5 max-w-2xl text-sm leading-relaxed text-zinc-400">{description}</p>}</div>
             <div ref={setHeaderControlsNode} className={`flex w-full min-w-0 flex-wrap items-start justify-end gap-2 lg:max-w-[65%] lg:shrink-0 ${isArchive || isTimeline || isNext ? "lg:w-[42rem]" : "lg:w-auto"}`} />
           </div>
         </header>}
@@ -2324,7 +2357,7 @@ export default function App() {
           onNavigate={changePage}
           onOpenYearReview={openYearReview}
           DropdownMenu={DropdownMenu}
-        /></DeferredPage> : isConcertDetail ? (
+        /></DeferredPage> : activePage === "festivals" ? <DeferredPage><FestivalsPage concerts={concertItems} selected={selectedFestival} onSelect={(festival) => navigateTo({ page: "festivals", festival })} onOpenConcert={openConcertDetails} /></DeferredPage> : isConcertDetail ? (
           <DeferredPage><ConcertDetailPage concert={selectedConcert} onOpenArtist={openArtistDetail} onOpenVenue={openVenueDetail} onOpenCity={openCityDetail} onOpenCountry={openCountryDetail} onOpenSetlist={openConcertDetails} onEdit={(concert) => setEditTarget({ ...concert, mode: isPastConcert(concert) ? "history" : "next" })} Icon={Icon} /></DeferredPage>
         ) : isCountryDetail ? (
           <DeferredPage><CountryDetailPage
@@ -2417,15 +2450,17 @@ export default function App() {
                     <Icon type="search" />
                     <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t("Search…")} className="w-full min-w-0 bg-transparent text-sm text-zinc-100 outline-none placeholder:text-zinc-500" aria-label={t("Search concerts")} />
                   </div>
+                  {isNext && <CalendarFilterMenu value={calendarFilter} onChange={setCalendarFilter} compact />}
                   {isNext ? <CalendarExportMenu items={nextItems} compact iconOnly /> : <ConcertSortMenu value={sortMode} onChange={setSortMode} compact iconOnly />}
                 </div>
 
                 {/* Desktop layout */}
-                <div className="hidden gap-3 md:grid md:grid-cols-[minmax(18rem,1fr)_auto]">
+                <div className={`hidden gap-3 md:grid ${isNext ? "md:grid-cols-[minmax(12rem,1fr)_auto_auto]" : "md:grid-cols-[minmax(18rem,1fr)_auto]"}`}>
                   <div className="adn-search-field flex h-12 items-center gap-3 rounded-md border border-[var(--adn-border-strong)] bg-[var(--adn-panel)] px-5">
                     <Icon type="search" />
                     <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t("Search artist, venue, festival, city or date")} className="w-full bg-transparent text-base text-zinc-100 outline-none placeholder:text-zinc-500" aria-label={t("Search concerts")} />
                   </div>
+                  {isNext && <CalendarFilterMenu value={calendarFilter} onChange={setCalendarFilter} />}
                   {isNext ? <CalendarExportMenu items={nextItems} iconOnly /> : <ConcertSortMenu value={sortMode} onChange={setSortMode} iconOnly />}
                 </div>
             </div>, headerControlsNode)}
@@ -2434,6 +2469,8 @@ export default function App() {
               <>
                 <NextConcertCalendar
                   items={calendarItems}
+                  visibleMonth={calendarMonth}
+                  setVisibleMonth={setCalendarMonth}
                   onOpen={(concert) => setCalendarTarget({ ...concert, mode: concert.source === "history" ? "history" : "next" })}
                   onContextMenu={(event, concert) => openContextMenu(event, { ...concert, mode: concert.source === "history" ? "history" : "next" })}
                   onContextMenuAt={(x, y, concert) => openContextMenuAt(x, y, { ...concert, mode: concert.source === "history" ? "history" : "next" })}
@@ -2519,7 +2556,7 @@ export default function App() {
         if (!confirmAction) return;
         setIsSaving(true); setSaveError("");
         try { await confirmAction.action(); setConfirmAction(null); }
-        catch { setSaveError("We couldn’t complete this action. Try again."); }
+        catch (error) { setSaveError(confirmAction.errorMessage?.(error) || "We couldn’t complete this action. Try again."); }
         finally { setIsSaving(false); }
       }} />
 

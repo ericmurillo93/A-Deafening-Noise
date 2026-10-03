@@ -21,6 +21,7 @@ import { useI18n } from "../lib/i18n.jsx";
 import { connectSpotify, finishSpotifyConnection } from "../lib/spotify";
 import { EmptyState, PanelHeading, UserAvatar } from "../components/SharedUi";
 import { BucketListPanel } from "./FriendProfilePage";
+import AdminConcertMerge from "../components/AdminConcertMerge";
 
 function CountryMultiSelect({ value, onChange, limit = 5, className = "mt-4", showCount = true, ariaLabel, single = false }) {
   const { locale, t } = useI18n();
@@ -1204,6 +1205,7 @@ export function AdminPage({ currentUserId, onChanged, onConfirm }) {
     : operations?.usage?.githubMinutes30Days;
   return (
     <div className="space-y-4">
+      <AdminConcertMerge onConfirm={onConfirm} onChanged={onChanged} />
       <section className="rounded-3xl border border-zinc-800 bg-zinc-900 p-5 md:p-7">
         <PanelHeading
           icon="fa-gauge-high"

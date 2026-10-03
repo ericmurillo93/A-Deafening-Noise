@@ -603,6 +603,7 @@ Setlist lookup first uses a stored `setlistId`. If no ID exists, the proxy searc
 - Delete requires confirmation.
 - Edit modals do not duplicate Delete.
 - Calendar colors are blue for history, green for bought future concerts, and orange for unpurchased future concerts.
+- Calendar month selection survives navigation and reloads within the current browser-tab session, scoped to the signed-in user. Logout clears it; a new tab/session or Today returns to the current month. This is temporary navigation state, not a Supabase profile preference.
 
 ## Project structure
 
@@ -678,6 +679,23 @@ The external site probably changed its markup or endpoint. Run the relevant scra
 
 ## Review ordering and legal language
 
+Venue identity treats RAZZMATAZZ without a number as RAZZMATAZZ 1, preserves
+RAZZMATAZZ 2 and 3 as separate rooms, and maps SALA RAZZMATAZZ variants to the
+same numbered name. APOLO and SALA APOLO use SALA APOLO. Suggestion comparison,
+daily combination and UI writes reuse these aliases; old dismissal and email
+keys remain readable. Eric approved consolidation of five production calendar
+duplicates on 3 October 2026; bought state, guests, friends and source records
+were preserved after a private affected-row backup and rolled-back rehearsal.
+The matching code remains local pending publication.
+
+Discovery records `firstSeenAt` on each suggestion and preserves it across daily
+refreshes using its source ID or normalized event key. Suggestions display the
+localized detection date. Existing entries without an original timestamp are
+labelled “Tracked since”, never assigned an invented original discovery date.
+Dates are global catalog detection dates, not per-user email or review dates.
+If an event disappears entirely from the catalog and later returns, its date
+starts again; this is not a permanent historical discovery ledger.
+
 Reviewed suggestions sort newest decision first, not by concert date. Archive
 snapshots expose per-user dismissal dates and attendance creation dates;
 `save_dismissed_suggestions` preserves dates for unchanged decisions. Future
@@ -691,3 +709,58 @@ Terms and Privacy show the full English or Spanish text, never both at once.
 Profile/login links pass the current language; direct links fall back to the
 saved interface language and then the browser language. This does not change the
 substance of the existing legal text or introduce new legal claims.
+
+### Collection tools — local/staging review, 4 October 2026
+
+Calendar now has a shared filter for all concerts, history, bought future concerts
+and unpurchased future concerts. Export still exports the selected ICS category,
+not the visual filter. Filters do not change attendance data.
+
+Concert details in Archive, Calendar and full event pages expose My memories
+and a discreet Information icon. The shared inline disclosure hides tracking
+dates and change history until opened; suggestion cards use the same control
+for creation and the latest Interested/Not Interested decision timestamp.
+Missing legacy dates remain unavailable rather than invented. `concert_changes`
+records date, venue, city, country, status,
+ticket-link and festival updates starting when its trigger is installed: it does
+not reconstruct earlier changes. The history RPC requires the caller's visible,
+confirmed participation and exposes no other participant identities. Source
+observations and attendance creation provide the first-recorded/added dates.
+
+`concert_memories` stores each participant's private note (5,000 characters),
+optional 1–5 rating and an ordered array of private photo paths. The gallery
+accepts multiple JPG/PNG/WebP inputs without a browser byte-size cap and prepares
+them sequentially to avoid excessive phone memory usage. Images are resized to
+at most 2,400 pixels and JPEG-compressed before upload; originals are not retained.
+The private `concert-memories` Storage bucket retains its 2 MB per-object security
+limit, and provider storage quotas still apply. Owner-folder RLS and signed URLs
+protect photos. `set_my_concert_photo` atomically appends/removes one owner photo
+without overwriting notes, ratings or another tab's gallery. Existing single-photo
+paths are migrated and preserved. Photos save immediately; deletion requires
+inline confirmation. Database unlink precedes Storage removal; failed cleanup
+offers Retry, while failed additions retain previously saved photos.
+Account deletion removes this bucket's owner files through the Storage API
+before deleting the identity. Failed cleanup stops deletion for retry. Storage
+and database writes are not one transaction: an interrupted upload can leave an
+owner-private orphan until account cleanup. Archive JSON exports include notes,
+ratings and photo paths, not photo binaries; private backups need separate Storage
+recovery. Removing attendance does not automatically delete its private photo.
+
+Festival pages (`/festivals` and `/festival/:edition`) are lazy-loaded and group
+only the current user's concerts by explicit festival name and year. A small,
+anchored fallback recognises known festival venue labels in existing archives;
+it does not infer missing artist-to-day mappings. Add/Edit's existing Festival
+field controls grouping; the pages are not a downloaded public festival catalog.
+
+Administration provides candidate duplicate groups and manual confirmed merges.
+The server requires admin access, matching artist/date/city/country and ordered
+row locks. Attendance, guests, sources, lineup, history, notifications and private
+memories move to the retained event. Conflicting attendance or memories block
+the merge. The selected event wins conflicting metadata; missing optional fields
+are filled from the removed event. `concert_merge_audit` stores actor, IDs and
+time. A merge is not automatically reversible: review and back up first.
+
+The four `20261004` migrations are applied and verified **only in staging**.
+Production must receive them in chronological order before publishing this UI;
+no new Netlify/GitHub secrets or paid services are required. Regression tests use
+synthetic browser fixtures and rolled-back staging SQL (`tests/database/collection-tools.sql`).

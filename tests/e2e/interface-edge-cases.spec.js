@@ -292,7 +292,7 @@ test("Open dialogs lock the page behind them and preserve its scroll position", 
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(initialScrollY);
 });
 
-test("Calendar opens on the current month on every visit", async ({ page }) => {
+test("Calendar retains its month during a session and Today resets it", async ({ page }) => {
   const currentMonth = "August 2026";
   await page.goto("/calendar");
   const monthButton = page.locator('button[aria-label^="Choose month"]');
@@ -300,13 +300,48 @@ test("Calendar opens on the current month on every visit", async ({ page }) => {
   await expect(page.locator('[aria-current="date"]')).toBeVisible();
 
   await page.getByRole("button", { name: "Next month" }).click();
-  await expect(monthButton).not.toContainText(currentMonth);
+  await expect(monthButton).toContainText("September 2026");
   const openedDrawer = await openMenu(page);
   await page.getByRole("button", { name: "Concert archive", exact: true }).click();
   await openMenu(page);
   await page.getByRole("button", { name: "Concert calendar" }).click();
 
+  await expect(monthButton).toContainText("September 2026");
+  await page.reload();
+  await expect(monthButton).toContainText("September 2026");
+  await page.getByRole("button", { name: "Today", exact: true }).click();
   await expect(monthButton).toContainText(currentMonth);
+  await page.getByRole("button", { name: "Next month" }).click();
+  await page.evaluate(() => sessionStorage.removeItem("adn-calendar-month"));
+  await page.reload();
+  await expect(monthButton).toContainText(currentMonth);
+});
+
+test("Festival editions navigate and open the standard concert dialog", async ({ page }) => {
+  await page.goto("/festivals");
+  await page.getByRole("button",{name:/EXAMPLE FESTIVAL.*2001/}).click();
+  await expect(page).toHaveURL(/\/festival\//);
+  await page.reload();
+  await expect(page.getByRole("button",{name:/EXAMPLE ARTIST 02/})).toBeVisible();
+  await page.getByRole("button",{name:/EXAMPLE ARTIST 02/}).click();
+  await expect(page.getByRole("button",{name:"Close",exact:true})).toBeVisible();
+  await page.goBack();
+  await expect(page.getByRole("button",{name:"Close",exact:true})).toHaveCount(0);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth<=window.innerWidth)).toBe(true);
+});
+
+test("Calendar ticket filters apply on desktop and phone", async ({ page }) => {
+  await page.goto("/calendar");
+  const filter = page.locator('summary[aria-label="Filter calendar"]:visible');
+  await filter.click();
+  await page.getByRole("button",{name:"Tickets to buy",exact:true}).filter({visible:true}).click();
+  await expect(page.locator('button[aria-label*="UPCOMING EXAMPLE 2"]')).not.toHaveCount(0);
+  await expect(page.locator('button[aria-label*="UPCOMING EXAMPLE 1"]')).toHaveCount(0);
+  await filter.click();
+  await page.getByRole("button",{name:"Tickets bought",exact:true}).filter({visible:true}).click();
+  await expect(page.locator('button[aria-label*="UPCOMING EXAMPLE 1"]')).not.toHaveCount(0);
+  await expect(page.locator('button[aria-label*="UPCOMING EXAMPLE 2"]')).toHaveCount(0);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth<=window.innerWidth)).toBe(true);
 });
 
 test("Mobile calendar events highlight their matching monthly-list entry", async ({ page }, testInfo) => {

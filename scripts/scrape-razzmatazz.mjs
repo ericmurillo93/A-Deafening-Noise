@@ -1,4 +1,19 @@
+import assert from "node:assert/strict";
 import { context, decodeHtml, fetchText, matchingArtists, suggestion, writeResult } from "./lib/suggestion-scraper-utils.mjs";
+
+function eventVenue(event) {
+  const room = String(event.room?.title || "").match(/^(?:sala|razzmatazz)\s*([123])$/i)?.[1];
+  return room ? `Razzmatazz ${room}` : "Razzmatazz";
+}
+
+if (process.argv.includes("--check")) {
+  assert.equal(eventVenue({ room: { title: "Sala 2" } }), "Razzmatazz 2");
+  assert.equal(eventVenue({ room: { title: "Sala 3" } }), "Razzmatazz 3");
+  assert.equal(eventVenue({ room: { title: "Sala 1" } }), "Razzmatazz 1");
+  assert.equal(eventVenue({ room: null }), "Razzmatazz");
+  console.log("Razzmatazz room self-check passed");
+  process.exit(0);
+}
 
 const sourceUrl = "https://www.salarazzmatazz.com/agenda/";
 const { listened, existing } = await context();
@@ -39,7 +54,7 @@ for (const event of events) {
   seen.add(key);
   const artists = matchingArtists((event.artists || []).map(({ title }) => title), listened);
   if (!artists.length) continue;
-  const item = suggestion({ id: `razzmatazz-${day}${month}${year}-${slug}`, title: event.title || artists.join(" + "), artists, venue: "Razzmatazz", city: "Barcelona", country: "ES", date: `${day}/${month}/${year}`, source: "Sala Razzmatazz", sourceUrl: new URL(`/agenda/${slug}/`, sourceUrl).href }, existing);
+  const item = suggestion({ id: `razzmatazz-${day}${month}${year}-${slug}`, title: event.title || artists.join(" + "), artists, venue: eventVenue(event), city: "Barcelona", country: "ES", date: `${day}/${month}/${year}`, source: "Sala Razzmatazz", sourceUrl: new URL(`/agenda/${slug}/`, sourceUrl).href }, existing);
   if (item) suggestions.push(item);
 }
 

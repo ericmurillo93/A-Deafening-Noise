@@ -1,7 +1,7 @@
 import fs from "node:fs/promises";
 import { renderSuggestionDigest } from "./suggestion-email-template.mjs";
 import { normalize } from "./lib/suggestion-scraper-utils.mjs";
-import { suggestionKey, legacySuggestionKey, isCurrentSuggestion, isDismissedSuggestion } from "../src/lib/suggestions.js";
+import { suggestionKey, legacySuggestionKey, isCurrentSuggestion, isDismissedSuggestion, canonicalSuggestionKey } from "../src/lib/suggestions.js";
 
 const reportPath = process.argv.find((arg) => arg.startsWith("--report="))?.slice(9);
 const currentPath = process.argv.slice(2).find((arg) => !arg.startsWith("--"));
@@ -24,7 +24,7 @@ for (const recipient of recipients) {
   const seen = new Set();
   for (let offset = 0; ; offset += 1000) {
     const deliveries = await database(`suggestion_email_outbox?select=event_keys&user_id=eq.${encodeURIComponent(recipient.userId)}&status=neq.cancelled&order=id&limit=1000&offset=${offset}`);
-    for (const item of deliveries) for (const eventKey of item.event_keys) seen.add(eventKey);
+    for (const item of deliveries) for (const eventKey of item.event_keys) seen.add(canonicalSuggestionKey(eventKey));
     if (deliveries.length < 1000) break;
   }
   const matches = eligible.filter((item) => !seen.has(suggestionKey(item)));
