@@ -274,6 +274,8 @@ test("Archive concert entries communicate that they are interactive", async ({ p
     return Math.abs(icon.y + icon.height/2 - text.y - text.height/2) < 2;
   }));
   expect(aligned).toBe(true);
+  const rowHeights = await metadata.evaluate(element => [...element.children].map(row => row.getBoundingClientRect().height));
+  for (const height of rowHeights) expect(height).toBe(rowHeights[0]);
   await concert.focus();
   await expect(concert).toBeFocused();
 });

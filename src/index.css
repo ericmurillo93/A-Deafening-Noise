@@ -297,11 +297,7 @@ button[aria-label="View activity"] { display: flex; }
   position: absolute;
   inset: -.375rem -.25rem;
 }
-@media (pointer: coarse) {
-  .adn-concert-row button.pointer-events-auto { min-height: var(--adn-inline-target); }
-}
 .adn-concert-row {
-  --adn-inline-target: 2.75rem;
   transition: border-color 160ms var(--adn-ease-out), background-color 160ms var(--adn-ease-out), box-shadow 160ms var(--adn-ease-out);
 }
 

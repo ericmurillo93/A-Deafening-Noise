@@ -53,6 +53,7 @@ const translations = {
     "No changes recorded yet.": "Todavía no hay cambios registrados.",
     "Rate {value} out of 5": "Valorar con {value} de 5",
     "Festivals": "Festivales",
+    "Your festivals, concert by concert.": "Tus festivales, concierto a concierto.",
     "Filter calendar": "Filtrar calendario",
     "Tickets bought": "Entradas compradas",
     "Tickets to buy": "Entradas por comprar",
