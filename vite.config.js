@@ -5,6 +5,7 @@ import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react";
 import { getAdminProviderStatus } from "./netlify/functions/admin-provider-status.js";
 import { searchExternalConcertCatalog } from "./netlify/functions/lib/concert-catalog-providers.js";
+import { matchSetlist } from "./netlify/functions/lib/setlist-match.js";
 
 const jsonResponse = (response, status, body) => {
   response.statusCode = status;
@@ -31,7 +32,8 @@ function localNetlifyFunctions(env) {
       server.middlewares.use("/.netlify/functions/search-concert-catalog", async (request, response) => {
         if (request.method !== "POST") return jsonResponse(response, 405, "Method not allowed");
         try {
-          return jsonResponse(response, 200, { concerts: await searchExternalConcertCatalog(await readJsonBody(request), env) });
+          const concerts = await searchExternalConcertCatalog(await readJsonBody(request), env);
+          return jsonResponse(response, 200, { concerts, partial: Boolean(concerts.partial) });
         } catch (error) {
           return jsonResponse(response, 400, { error: error.message });
         }
@@ -90,7 +92,7 @@ function localNetlifyFunctions(env) {
         }
 
         try {
-          const { setlistId, artist, date, action, userId, pages } = await readJsonBody(request);
+          const { setlistId, artist, venue, date, action, userId, pages } = await readJsonBody(request);
           if (action === "attended") {
             if (!userId || !/^[\w.-]{1,100}$/.test(userId)) return jsonResponse(response, 400, { error: "Enter a valid setlist.fm username" });
             const setlists = []; const pageLimit = Math.min(Math.max(Number(pages) || 5, 1), 10);
@@ -124,7 +126,7 @@ function localNetlifyFunctions(env) {
           if (!apiResponse.ok) return jsonResponse(response, apiResponse.status, result);
 
           if (!setlistId) {
-            const match = result?.setlist?.[0];
+            const match = matchSetlist(result?.setlist, venue);
             if (!match) return jsonResponse(response, 404, { error: `No setlist found for ${artist} on ${date}` });
             return jsonResponse(response, 200, match);
           }

@@ -21,6 +21,7 @@ test.beforeEach(async ({page}) => {
     const React=(await import('/node_modules/.vite/deps/react.js')).default;
     const {createRoot}=(await import('/node_modules/.vite/deps/react-dom_client.js')).default;
     const {I18nProvider}=await import('/src/lib/i18n.jsx');
+    const {DialogGuardProvider,useDialogGuard}=await import("/src/components/DialogGuard.jsx");
     const Journal=(await import('/src/components/ConcertJournal.jsx')).default;
     const Suggestions=(await import('/src/pages/SuggestionsPage.jsx')).default;
     const Dialog=(await import('/src/components/ConcertDialog.jsx')).default;
@@ -28,10 +29,10 @@ test.beforeEach(async ({page}) => {
     const params=new URLSearchParams(location.search);
     if(params.get('theme'))document.documentElement.dataset.theme=params.get('theme');
     const concert={concertId:42,artist:'RIVERSIDE',venue:'SALA SALAMANDRA',date:'13/05/2017',creator:{displayName:'Eric'}};
-    function Modal(){const ref=useDialogFocus(true);usePageScrollLock(true);return React.createElement(Dialog,{concert,location:'L’Hospitalet de Llobregat, España',primaryLabel:'Setlist',journalEnabled:true,dialogRef:ref,onEdit:()=>{},onClose:()=>{}},tab=>React.createElement(React.Fragment,null,
+    function Modal(){ const guard=useDialogGuard();const ref=useDialogFocus(true);usePageScrollLock(true);return React.createElement(Dialog,{concert,location:'L’Hospitalet de Llobregat, España',primaryLabel:'Setlist',journalEnabled:true,dialogRef:ref,onEdit:()=>{},onClose:()=>guard.requestClose(()=>{document.getElementById("root").textContent="Concert closed";})},tab=>React.createElement(React.Fragment,null,
       React.createElement('div',{hidden:tab!=='details'},React.createElement('p',{className:'mb-4 text-sm text-zinc-400'},'Attended with · Papa'),React.createElement('ol',null,...Array.from({length:18},(_,index)=>React.createElement('li',{key:index,className:'border-b border-zinc-700 py-3 text-sm'},String(index+1).padStart(2,'0')+'   '+['Second Life Syndrome','Conceiving You','The Same River','Lost'][index%4])))),
       React.createElement('div',{hidden:tab==='details'},React.createElement(Journal,{concert,view:tab==='activity'?'activity':'memories'}))));}
-    createRoot(document.getElementById('root')).render(React.createElement(I18nProvider,null,params.has('dialog')?React.createElement(Modal):React.createElement(React.Fragment,null,
+    createRoot(document.getElementById('root')).render(React.createElement(I18nProvider,null,params.has('dialog')?React.createElement(DialogGuardProvider,null,React.createElement(Modal)):React.createElement(React.Fragment,null,
       React.createElement('div',{id:'journal'},React.createElement(Journal,{concert:{concertId:42}})),
       React.createElement('div',{id:'suggestions'},React.createElement(Suggestions,{
         suggestions:[{id:'quality',artist:'EXAMPLE',date:'01/01/2030',firstSeenAt:'2026-10-01T12:00:00Z'}],
@@ -40,6 +41,20 @@ test.beforeEach(async ({page}) => {
       })))));
   </script></body></html>`}));
   await page.goto("/__record-ui");
+});
+
+test("Unsaved concert memories require confirmation before closing", async ({ page }) => {
+  await page.goto("/__record-ui?dialog=1");
+  await page.getByRole("tab", { name: "My memories" }).click();
+  await page.getByRole("textbox").fill("Unsaved memory");
+  await page.getByRole("button", { name: "Close", exact: true }).click();
+  await expect(page.getByRole("alertdialog")).toBeVisible();
+  await page.getByRole("button", { name: "Keep editing" }).click();
+  await expect(page.getByRole("textbox")).toHaveValue("Unsaved memory");
+  await page.getByRole("button", { name: "Save changes" }).click();
+  await expect(page.getByText("Memories saved")).toBeVisible();
+  await page.getByRole("button", { name: "Close", exact: true }).click();
+  await expect(page.getByText("Concert closed")).toBeVisible();
 });
 
 test("Rating has distinct selected stars and persists after save and reload",async({page})=>{

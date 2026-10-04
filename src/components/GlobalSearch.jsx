@@ -193,9 +193,6 @@ export default function GlobalSearch({
   return (
     <div
       className="adn-modal-backdrop fixed inset-0 z-[70] flex items-start justify-center bg-black/70 px-4 pt-[10dvh]"
-      onMouseDown={(event) => {
-        if (event.target === event.currentTarget && window.matchMedia("(pointer: coarse)").matches) onClose();
-      }}
     >
       <section
         ref={dialogRef}

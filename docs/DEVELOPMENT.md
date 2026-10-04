@@ -765,7 +765,87 @@ the merge. The selected event wins conflicting metadata; missing optional fields
 are filled from the removed event. `concert_merge_audit` stores actor, IDs and
 time. A merge is not automatically reversible: review and back up first.
 
-The four `20261004` migrations are applied and verified **only in staging**.
+The eight `20261004` migrations are applied and verified **only in staging**.
 Production must receive them in chronological order before publishing this UI;
 no new Netlify/GitHub secrets or paid services are required. Regression tests use
 synthetic browser fixtures and rolled-back staging SQL (`tests/database/collection-tools.sql`).
+
+### Reliability and lightweight scaling — staging review, 4 October 2026
+
+Checkpoint `1203420` preserves the approved concert-modal work before this
+hardening pass. The subsequent work remains local for review; production is
+unchanged. Apply all pending migrations in chronological order before deploying
+the matching UI. No additional secrets, dependencies or paid services are needed.
+
+- `save_my_concert` writes and returns the authorised archive snapshot in one
+  request. Omitted optional event metadata is preserved; explicit empty values
+  clear it. Date ranges are validated and past attendance is always bought.
+- `review_my_suggestion` updates attendance and the user's dismissal in one
+  transaction. Reversals also clear matching legacy venue aliases, never another
+  user's choices. The browser accepts the returned snapshot and updates its
+  isolated cache without re-fetching discovery. Other successful writes use a
+  best-effort archive refresh; a later read failure is not reported as a failed save.
+- Complete event objects reach Archive details and Edit; catalog lookup returns
+  optional event metadata without attendance identities. Selected setlist IDs
+  survive Add. Fallback setlist lookup requires an unambiguous venue match.
+- Calendar and Add/Edit load on demand. Page error boundaries preserve the shell
+  and offer recovery; configured Sentry also receives caught rendering failures.
+  Request caches have size/TTL bounds and clear on account changes/logout.
+- Unsaved concert forms and memories require a shared discard confirmation on
+  Close or browser Back. Saving/uploading blocks dismissal. Outside clicks do not
+  dismiss these dialogs on desktop or phone. Photos save independently and
+  unsaved notes remain private to the current open dialog until saved.
+- Notifications are limited to the newest 50 rows before aggregation, backed by
+  a user/time index. Admin storage telemetry reports uploaded bytes and private
+  photos unreferenced for over 24 hours. These are review candidates, not proof
+  of safe deletion: inspect references before authorised Storage API cleanup;
+  never delete Storage metadata directly in SQL.
+- Worldwide map identifiers come from Unicode CLDR. Unknown locations are not
+  assigned to Spain. Non-European archives start with a world view. Search
+  responses disclose partial provider coverage: bounded setlist pagination keeps
+  API costs predictable, Ticketmaster returns up to 200 events in one request,
+  and city/year facets describe only the returned results. The whole setlist
+  query has a 35-second budget; browser searches time out after 45 seconds.
+- Default and Poster retain their visual language. Country fields share the
+  profile selector; Home uses semantic layout classes, more readable labels,
+  wrapped upcoming artist names and shorter empty mobile panels. Archive inline
+  links have larger touch targets without changing desktop typography.
+
+Run focused checks when requested; do not launch the complete quality suite for
+every edit:
+
+```bash
+node scripts/staging-db.mjs --test tests/database/transactional-archive.sql
+node scripts/benchmark-archive.mjs
+node scripts/verify-backup.mjs /absolute/path/to/private/database-backup
+```
+
+The synthetic benchmark measures local filtering, date parsing and serialization,
+not server concurrency or a guaranteed service capacity. At 10,000 concerts the
+measured medians on the development machine were approximately 6 ms for Stats
+filters, 3 ms for archive search, 21 ms for calendar date parsing and 5 ms for JSON
+serialization. Re-measure on representative phones before adding virtualisation.
+The initial app chunk is approximately 263 kB minified / 81 kB gzip; the map and
+editors remain separate. The existing 119 kB icon font is retained to avoid an
+unnecessary icon-system rewrite; subset it only if measured load budgets require it.
+
+#### Recovery rehearsal and free-tier boundaries
+
+1. Verify a private database backup's checksums with `verify-backup.mjs`.
+2. Restore schema and data only into a disposable project, never overwrite
+   production for a rehearsal. Reconcile migration records with the backed-up schema.
+3. Recreate Auth identities through supported Supabase recovery/export procedures,
+   restore private/public Storage binaries through Storage APIs, and reconfigure
+   provider secrets separately. Database dumps and personal exports are not full
+   Auth/Vault/Storage backups; do not promise recovery without these parts.
+4. Verify login, a private archive/export, friendship consent, photos and a
+   rollback-only import. `security-and-recovery.sql` rehearses synthetic export,
+   import and authorisation; it does not certify an actual platform restore.
+5. Record restore time and missing components before declaring a backup recoverable.
+
+Existing provider limits still apply. Spotify development access is controlled
+by Spotify and cannot be expanded by a UI change; archive and bucket-list
+affinity remain usable without a connection. Review actual Supabase database
+and Storage usage, Netlify function/deploy consumption, Actions minutes and
+Resend delivery limits before widening registration. Optimisation does not
+guarantee permanently free operation at arbitrary traffic levels.

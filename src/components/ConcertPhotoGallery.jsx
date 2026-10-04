@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { concertMemoryPhoto, uploadConcertMemory, setMyConcertPhoto, removeConcertMemoryPhoto } from "../lib/supabase";
 import { useI18n } from "../lib/i18n.jsx";
+import { usePendingDialogChanges } from "./DialogGuard";
 
 export default function ConcertPhotoGallery({ concertId, paths, onChanged }) {
   const { t } = useI18n();
@@ -9,6 +10,7 @@ export default function ConcertPhotoGallery({ concertId, paths, onChanged }) {
   const [confirmDelete,setConfirmDelete] = useState(null);
   const [cleanupPath,setCleanupPath] = useState(null);
   const [error,setError] = useState("");
+  usePendingDialogChanges(false, busy);
   const pathKey = JSON.stringify(paths);
   useEffect(()=>{
     let active=true;

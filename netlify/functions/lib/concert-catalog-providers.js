@@ -48,7 +48,7 @@ function ticketmasterResult(item) {
   };
 }
 
-export async function searchExternalConcertCatalog(criteria, env, request = (url, options = {}) => fetch(url, { ...options, signal: AbortSignal.timeout(12000) })) {
+export async function searchExternalConcertCatalog(criteria, env, request = (url, options = {}) => fetch(url, { signal: AbortSignal.timeout(12000), ...options })) {
   const field = ["artist", "venue", "city", "date"].includes(criteria.field) ? criteria.field : "artist";
   const value = String(criteria.value || "").trim().slice(0, 100);
   if (value.length < 2) return [];
@@ -59,6 +59,8 @@ export async function searchExternalConcertCatalog(criteria, env, request = (url
   const city = String(criteria.city || (field === "city" ? value : "")).trim().slice(0, 100);
   const country = /^[A-Z]{2}$/i.test(criteria.country || "") ? String(criteria.country).toUpperCase() : "";
   const searches = [];
+  let partial = false;
+  const deadline = Date.now() + 35000;
   if (date && !exactDate(date)) return [];
 
   if (env.SETLIST_API_KEY && (artist.length >= 2 || venue.length >= 2) && (!date || exactDate(date))) {
@@ -73,6 +75,7 @@ export async function searchExternalConcertCatalog(criteria, env, request = (url
       params.set("p", String(page));
       const response = await request(`https://api.setlist.fm/rest/1.0/search/setlists?${params}`, {
         headers: { "x-api-key": env.SETLIST_API_KEY, Accept: "application/json" },
+        signal: AbortSignal.timeout(Math.max(1, Math.min(12000, deadline - Date.now()))),
       });
       if (!response.ok) throw new Error(`setlist.fm search failed (${response.status})`);
       return response.json();
@@ -83,15 +86,20 @@ export async function searchExternalConcertCatalog(criteria, env, request = (url
         ? Math.min(10, Math.ceil(Number(first.total || 0) / Number(first.itemsPerPage || 20)))
         : 1;
       const pages = [first];
-      for (let page = 2; page <= pageCount; page += 1) pages.push(await fetchPage(page));
-      return pages.flatMap((result) => result.setlist?.map(setlistResult) || []).slice(0, 200);
+      for (let page = 2; page <= pageCount; page += 1) {
+        if (Date.now() >= deadline) { partial = true; break; }
+        try { pages.push(await fetchPage(page)); } catch { partial = true; break; }
+      }
+      const concerts = pages.flatMap((result) => result.setlist?.map(setlistResult) || []).slice(0, 200);
+      partial ||= Number(first.total || 0) > concerts.length;
+      return concerts;
     })());
   }
 
   const now = new Date();
   const past = exactDate(date) ? new Date(`${isoDate(date)}T23:59:59`) < now : year && Number(year) < now.getFullYear();
   if (env.TICKETMASTER_API_KEY && !past && (artist.length >= 2 || venue.length >= 2 || exactDate(date))) {
-    const params = new URLSearchParams({ apikey: env.TICKETMASTER_API_KEY, classificationName: "music", size: "12", sort: "date,asc" });
+    const params = new URLSearchParams({ apikey: env.TICKETMASTER_API_KEY, classificationName: "music", size: "200", sort: "date,asc" });
     if (artist || venue) params.set("keyword", artist || venue);
     if (country) params.set("countryCode", country);
     if (city) params.set("city", city);
@@ -107,14 +115,18 @@ export async function searchExternalConcertCatalog(criteria, env, request = (url
     searches.push(request(`https://app.ticketmaster.com/discovery/v2/events.json?${params}`)
       .then(async (response) => {
         if (!response.ok) throw new Error(`Ticketmaster search failed (${response.status})`);
-        return ((await response.json())._embedded?.events?.map(ticketmasterResult) || []).slice(0, 5);
+        const body = await response.json();
+        const concerts = body._embedded?.events?.map(ticketmasterResult) || [];
+        partial ||= Number(body.page?.totalElements || 0) > concerts.length;
+        return concerts;
       }));
   }
 
   const settled = await Promise.allSettled(searches);
   if (settled.length && settled.every(({ status }) => status === "rejected")) throw settled[0].reason;
+  partial ||= settled.some(({ status }) => status === "rejected");
   const results = settled.flatMap((result) => result.status === "fulfilled" ? result.value : []).filter((item) => item.artist && item.date);
   const filteredByVenue = venue ? results.filter((item) => item.venue.toLocaleLowerCase().includes(venue.toLocaleLowerCase()) || field !== "venue") : results;
   const filtered = city ? filteredByVenue.filter((item) => item.city.toLocaleLowerCase().startsWith(city.toLocaleLowerCase())) : filteredByVenue;
-  return [...new Map(filtered.map((item) => [`${item.source}|${item.sourceEventId || `${item.artist}|${item.venue}|${item.date}`}`, item])).values()];
+  return Object.assign([...new Map(filtered.map((item) => [`${item.source}|${item.sourceEventId || `${item.artist}|${item.venue}|${item.date}`}`, item])).values()], { partial });
 }

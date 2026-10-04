@@ -1,3 +1,42 @@
+import { countryName } from "./countries.js";
+
+export function parseConcertDateRange(value) {
+  if (!/^\d{1,2}\/\d{1,2}\/\d{4}(?: - \d{1,2}\/\d{1,2}\/\d{4})?$/.test(String(value).trim())) return null;
+  const matches = [...String(value).matchAll(/(\d{1,2})\/(\d{1,2})\/(\d{4})/g)];
+  if (!matches.length) return null;
+  const toDate = (match) => new Date(Number(match[3]), Number(match[2]) - 1, Number(match[1]));
+  if (matches.some(match => { const date = toDate(match); return date.getDate() !== Number(match[1]) || date.getMonth() + 1 !== Number(match[2]); })) return null;
+  const start = toDate(matches[0]), end = toDate(matches[matches.length - 1]);
+  return end >= start ? { start, end } : null;
+}
+
+export function isPastConcert(concert) {
+  const range = parseConcertDateRange(concert.date);
+  if (!range) return false;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return range.end < today;
+}
+
+export function uppercaseConcertLabel(value) {
+  return String(value || "").toLocaleUpperCase();
+}
+
+export function concertLocation({ city, country } = {}) {
+  return [city, countryName(country)].filter(Boolean).join(", ");
+}
+
+export function normalizeTicketUrl(value) {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+  try {
+    const url = new URL(/^https?:\/\//i.test(raw) ? raw : `https://${raw}`);
+    return ["http:", "https:"].includes(url.protocol) ? url.href : "";
+  } catch {
+    return "";
+  }
+}
+
 export function normalize(value) {
   return String(value).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 }

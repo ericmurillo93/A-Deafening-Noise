@@ -48,4 +48,5 @@ test("loads bounded setlist.fm pages for country-backed city and year facets", a
   const results = await searchExternalConcertCatalog({ field: "artist", value: "Shakira", artist: "Shakira", country: "ES" }, { SETLIST_API_KEY: "test" }, request);
   assert.deepEqual(pages.sort((a, b) => a - b), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
   assert.equal(results.length, 10);
+  assert.equal(results.partial, true);
 });

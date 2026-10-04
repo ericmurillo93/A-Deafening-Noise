@@ -26,7 +26,7 @@ export function useArchiveSync(userId, onData, onTheme) {
     };
     try {
       const data=await loadConcertData({signal:request.signal,previous:snapshot.current,
-        includeDiscovery:background!==true || Date.now()-(snapshot.current.discoveryUpdatedAt||0)>15*60000,onArchive:apply});
+        includeDiscovery:background!=="write" && (background!==true || Date.now()-(snapshot.current.discoveryUpdatedAt||0)>15*60000),onArchive:apply});
       if(!valid()) return;
       apply(data);
       await writeAppCache(userId,data);
@@ -74,5 +74,15 @@ export function useArchiveSync(userId, onData, onTheme) {
     return ()=>{clearInterval(timer);window.removeEventListener("focus",refresh);window.removeEventListener("online",online);window.removeEventListener("offline",offline);document.removeEventListener("visibilitychange",refresh);};
   },[userId,reloadAppData]);
   const retrySync=()=>reloadAppData().catch(()=>{});
-  return {...state,reloadAppData,retrySync};
+  const refreshAfterWrite=()=>reloadAppData("write").catch(()=>{patch({syncError:"refresh"});});
+  const acceptArchive=async data=>{
+    if(!userId || owner.current!==userId)return;
+    controller.current?.abort();
+    const merged={...snapshot.current,...data};snapshot.current=merged;
+    lastRefresh.current=Date.now();failures.current=0;
+    callbacks.current.onData(merged);
+    patch({dataOwnerId:userId,dataReady:true,dataLoadError:"",syncError:"",isRefreshing:false});
+    await writeAppCache(userId,merged);
+  };
+  return {...state,reloadAppData,refreshAfterWrite,acceptArchive,retrySync};
 }

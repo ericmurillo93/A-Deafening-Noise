@@ -2,6 +2,8 @@ import { createClient } from "@supabase/supabase-js";
 import { loadArchiveSnapshot } from "./archive-loader";
 import { clearMemoryFiles } from "./memory-storage.js";
 import { prepareMemoryPhoto } from "./prepare-memory-photo.js";
+import { createRequestCache } from "./request-cache.js";
+import { suggestionKey, legacySuggestionKey, canonicalVenue, isDismissedSuggestion } from "./suggestions.js";
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabasePublishableKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
@@ -36,14 +38,15 @@ async function rpc(name, args = {}, signal) {
   return data;
 }
 
-export const upsertMyConcert = (payload) => rpc("upsert_my_concert", { payload });
+export const upsertMyConcert = (payload) => rpc("save_my_concert", { payload });
+export const reviewMySuggestion = (suggestion, interested, previousKeys = []) => rpc("review_my_suggestion", { suggestion:{...suggestion,venue:canonicalVenue(suggestion.venue),reviewKey:suggestionKey(suggestion),legacyKey:legacySuggestionKey(suggestion),dismissalKeys:previousKeys.filter(key => isDismissedSuggestion(suggestion, [key]))}, interested });
 export const deleteMyConcert = (concertId) => rpc("delete_my_concert", { target_concert: concertId });
 export const searchConcertCatalog = (field, value) => rpc("search_concert_catalog", { search_field: field, search_value: value });
-const artistNameSearches = new Map();
+const artistNameSearches = createRequestCache();
+export function clearSearchCaches() { artistNameSearches.clear(); }
 export function searchArtistNames(prefix) {
   const key = prefix.trim().toLocaleLowerCase();
-  if (!artistNameSearches.has(key)) artistNameSearches.set(key, rpc("search_artist_names", { search_prefix: key }).catch((error) => { artistNameSearches.delete(key); throw error; }));
-  return artistNameSearches.get(key);
+  return artistNameSearches.get(key,()=>rpc("search_artist_names", { search_prefix: key }));
 }
 export const saveSetlistId = (concertId, setlistId) => rpc("save_setlist_id", { target_concert: concertId, new_setlist_id: setlistId });
 export const saveDismissedSuggestions = (keys) => rpc("save_dismissed_suggestions", { keys });

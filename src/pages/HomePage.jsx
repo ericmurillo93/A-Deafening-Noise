@@ -57,7 +57,7 @@ function Status({ bought }) {
   const { t } = useI18n();
   return (
     <span
-      className={`inline-flex max-w-full items-center gap-1.5 text-[11px] font-black uppercase leading-snug tracking-wide ${bought ? "text-emerald-400" : "text-amber-400"}`}
+      className={`inline-flex max-w-full items-center gap-1.5 text-xs font-black uppercase leading-snug tracking-wide ${bought ? "text-emerald-400" : "text-amber-400"}`}
     >
       <i
         className={`fa-solid ${bought ? "fa-circle-check" : "fa-circle-exclamation"}`}
@@ -78,7 +78,7 @@ function SectionTitle({ title, action, onAction, showArrow = true }) {
         <button
           type="button"
           onClick={onAction}
-          className="relative inline-flex h-7 items-center gap-1.5 whitespace-nowrap text-[10px] font-black uppercase tracking-wide text-blue-400 transition-colors after:absolute after:-inset-y-2 hover:text-blue-300"
+          className="relative inline-flex h-7 items-center gap-1.5 whitespace-nowrap text-xs font-black uppercase tracking-wide text-blue-400 transition-colors after:absolute after:-inset-y-2 hover:text-blue-300"
         >
           {action}
           {showArrow && (
@@ -152,7 +152,7 @@ function EmptyArchiveOnboarding({
         </p>
       </header>
       <div className="grid overflow-hidden rounded-md border border-[var(--adn-border-strong)] bg-[var(--adn-panel)] lg:grid-cols-[1.2fr_0.8fr]">
-        <section className="relative flex min-h-[360px] items-end overflow-hidden p-6 sm:p-8">
+        <section className="adn-home-featured relative flex min-h-[360px] items-end overflow-hidden p-6 sm:p-8">
           <img
             src={stageImage}
             alt=""
@@ -431,7 +431,7 @@ export default function HomePage({
       </header>
 
       <div className="grid gap-5 lg:grid-cols-[718fr_532fr]">
-        <section className="relative min-h-[360px] overflow-hidden rounded-md border border-[var(--adn-border-strong)] bg-zinc-950 lg:h-[318px] lg:min-h-0">
+        <section className="adn-home-featured relative min-h-[360px] overflow-hidden rounded-md border border-[var(--adn-border-strong)] bg-zinc-950 lg:h-[318px] lg:min-h-0">
           <img
             src={
               next?.imageUrl ||
@@ -449,7 +449,7 @@ export default function HomePage({
               className="relative flex min-h-[360px] w-full flex-col p-[22px] text-left lg:h-full lg:min-h-0"
             >
               <div className="flex items-start justify-between gap-4">
-                <span className="text-[11px] font-black uppercase tracking-wide text-zinc-200">
+                <span className="text-xs font-black uppercase tracking-wide text-zinc-200">
                   {t("Next concert")}
                 </span>
                 <Status bought={next.bought} />
@@ -461,7 +461,7 @@ export default function HomePage({
                 <p className="mt-3 text-base font-black uppercase text-zinc-100">
                   {next.venue || "Venue to be confirmed"}
                 </p>
-                <p className="mt-1 text-[11px] font-bold uppercase text-zinc-400">
+                <p className="mt-1 text-xs font-bold uppercase text-zinc-400">
                   {next.city ? `${next.city}, ` : ""}
                   {concertCountry(next, locale)}
                 </p>
@@ -497,7 +497,7 @@ export default function HomePage({
                     ))
                   )}
                 </div>
-                <span className="inline-flex items-center gap-1.5 rounded-md border border-white/15 bg-black/45 px-4 py-2 text-[10px] font-bold text-zinc-200">
+                <span className="inline-flex items-center gap-1.5 rounded-md border border-white/15 bg-black/45 px-4 py-2 text-xs font-bold text-zinc-200">
                   {t("View details")}{" "}
                   <i className="fa-solid fa-arrow-right" aria-hidden="true" />
                 </span>
@@ -505,7 +505,7 @@ export default function HomePage({
             </button>
           ) : (
             <div className="relative flex min-h-[18rem] flex-col justify-between p-6">
-              <span className="text-[11px] font-black uppercase tracking-wide">
+              <span className="text-xs font-black uppercase tracking-wide">
                 {t("Next concert")}
               </span>
               <div>
@@ -525,7 +525,7 @@ export default function HomePage({
           )}
         </section>
 
-        <section className="relative z-10 h-[318px] overflow-visible rounded-md border border-[var(--adn-border-strong)] bg-gradient-to-br from-[#171b20] to-[#11161b] px-[22px] shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
+        <section className="adn-home-year relative z-10 h-[318px] overflow-visible rounded-md border border-[var(--adn-border-strong)] bg-gradient-to-br from-[#171b20] to-[#11161b] px-[22px] shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
           <div className="flex h-11 items-center justify-between gap-3">
             <button
               type="button"
@@ -575,7 +575,7 @@ export default function HomePage({
                       {label}
                     </b>
                   </span>
-                  <span className="mt-2 block whitespace-nowrap text-[11px] font-medium text-zinc-500 [&_em]:not-italic">
+                  <span className="mt-2 block whitespace-nowrap text-xs font-medium text-zinc-500 [&_em]:not-italic">
                     {detail}
                   </span>
                 </span>
@@ -587,7 +587,7 @@ export default function HomePage({
             onClick={() => onNavigate("stats")}
             className="flex h-12 items-center gap-1.5 text-xs font-black uppercase tracking-wide text-blue-400 transition-colors hover:text-blue-300"
           >
-            View stats{" "}
+            {t("View stats")}{" "}
             <i className="fa-solid fa-arrow-right" aria-hidden="true" />
           </button>
         </section>
@@ -611,19 +611,19 @@ export default function HomePage({
                   type="button"
                   key={concert.concertId || `${concert.artist}-${concert.date}`}
                   onClick={() => onOpenConcert(concert)}
-                  className="group relative grid w-[min(21rem,85vw)] shrink-0 snap-start grid-cols-[2.5rem_3.5rem_minmax(0,1fr)] items-center gap-3 rounded-md border border-[var(--adn-border-strong)] bg-[var(--adn-card)] p-3 text-left transition-colors hover:border-zinc-500"
+                  className="group relative grid w-[min(24rem,85vw)] shrink-0 snap-start grid-cols-[2.5rem_3.5rem_minmax(0,1fr)] items-center gap-3 rounded-md border border-[var(--adn-border-strong)] bg-[var(--adn-card)] p-3 text-left transition-colors hover:border-zinc-500"
                 >
                   <div
                     className={`absolute inset-y-0 left-0 w-px rounded-l-md ${concert.bought ? "bg-emerald-500" : "bg-amber-500"}`}
                   />
                   <div className="min-w-0 text-center">
-                    <span className="block text-[10px] font-black uppercase text-zinc-400">
+                    <span className="block text-xs font-black uppercase text-zinc-400">
                       {monthFormat.format(date)}
                     </span>
                     <strong className="block text-2xl font-medium tabular-nums text-zinc-100">
                       {dayFormat.format(date)}
                     </strong>
-                    <span className="block text-[11px] font-bold uppercase text-zinc-400">
+                    <span className="block text-xs font-bold uppercase text-zinc-400">
                       {weekdayFormat.format(date)}
                     </span>
                   </div>
@@ -636,13 +636,13 @@ export default function HomePage({
                     className="h-20 w-14 rounded object-cover opacity-80"
                   />
                   <div className="min-w-0">
-                    <p className="truncate text-xs font-black uppercase text-zinc-100">
+                    <p className="line-clamp-2 text-sm font-black uppercase leading-snug text-zinc-100">
                       {concert.artist}
                     </p>
                     <p className="mt-1 truncate text-xs font-medium uppercase text-zinc-400">
-                      {concert.venue || "Venue TBC"}
+                      {concert.venue || t("Venue to be confirmed")}
                     </p>
-                    <p className="mt-1 truncate text-[11px] uppercase text-zinc-500">
+                    <p className="mt-1 truncate text-xs uppercase text-zinc-500">
                       {concert.city ? `${concert.city}, ` : ""}
                       {concertCountry(concert, locale)}
                     </p>
@@ -673,7 +673,7 @@ export default function HomePage({
       )}
 
       <div className="grid gap-4 lg:grid-cols-[608fr_649fr]">
-        <section className="min-h-[328px] rounded-md border border-[var(--adn-border-strong)] bg-[var(--adn-panel)] p-3">
+        <section className="adn-home-secondary md:min-h-[328px] rounded-md border border-[var(--adn-border-strong)] bg-[var(--adn-panel)] p-3">
           <SectionTitle
             title={t("Recent activity")}
             action={t("View all")}
@@ -745,7 +745,7 @@ export default function HomePage({
                     </span>
                     <time
                       dateTime={item.createdAt}
-                      className="shrink-0 pt-0.5 text-[10px] text-zinc-500 sm:pt-0"
+                      className="shrink-0 pt-0.5 text-xs text-zinc-500 sm:pt-0"
                     >
                       {timeAgo(item.createdAt, now, relativeTimeFormat)}
                     </time>
@@ -759,7 +759,7 @@ export default function HomePage({
             </p>
           )}
         </section>
-        <section className="flex min-h-[328px] flex-col rounded-md border border-[var(--adn-border-strong)] bg-[var(--adn-panel)] p-3">
+        <section className="adn-home-secondary flex md:min-h-[328px] flex-col rounded-md border border-[var(--adn-border-strong)] bg-[var(--adn-panel)] p-3">
           <SectionTitle
             title={t("New suggestions")}
             action={t("View all")}
@@ -772,7 +772,7 @@ export default function HomePage({
                 <div
                   key={suggestion.id}
                   data-suggestion-id={suggestion.id}
-                  className="flex min-h-20 flex-col gap-3 py-2 md:flex-row md:items-center"
+                  className="grid grid-cols-[4rem_minmax(0,1fr)] items-center gap-x-3 gap-y-2 py-3"
                 >
                   <img
                     src={
@@ -781,28 +781,28 @@ export default function HomePage({
                       stageImage
                     }
                     alt=""
-                    className="h-[3.75rem] w-24 shrink-0 rounded object-cover opacity-85"
+                    className="h-16 w-16 rounded object-cover opacity-85"
                   />
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-sm font-black uppercase tracking-wide text-zinc-100">
+                    <span className="line-clamp-2 block text-sm font-black uppercase leading-snug tracking-wide text-zinc-100">
                       {suggestion.artist}
                     </span>
                     <span className="mt-1 block truncate text-xs font-bold uppercase text-zinc-400">
-                      {suggestion.venue || "Venue TBC"}
+                      {suggestion.venue || t("Venue to be confirmed")}
                     </span>
-                    <span className="mt-1 block truncate text-[11px] font-medium uppercase text-zinc-500">
+                    <span className="mt-1 block truncate text-xs font-medium uppercase text-zinc-500">
                       {suggestionDateFormat.format(dateOf(suggestion))}{" "}
                       <span className="px-1 text-zinc-700">·</span>{" "}
                       {suggestion.city ? `${suggestion.city}, ` : ""}
                       {concertCountry(suggestion, locale)}
                     </span>
                   </span>
-                  <SuggestionDecisionButtons
+                  <div className="col-span-2 flex justify-end"><SuggestionDecisionButtons
                     onInterested={() => onSuggestionInterested(suggestion)}
                     onNotInterested={() =>
                       onSuggestionNotInterested(suggestion)
                     }
-                  />
+                  /></div>
                 </div>
               ))}
             </div>
@@ -818,7 +818,7 @@ export default function HomePage({
             <button
               type="button"
               onClick={() => onNavigate("suggestions")}
-              className="relative mt-auto flex h-7 items-center gap-1.5 text-[10px] font-black uppercase tracking-wide text-blue-400 after:absolute after:-inset-y-2"
+              className="relative mt-auto flex h-7 items-center gap-1.5 text-xs font-black uppercase tracking-wide text-blue-400 after:absolute after:-inset-y-2"
             >
               {t("More suggestions")}{" "}
               <i className="fa-solid fa-arrow-right" aria-hidden="true" />

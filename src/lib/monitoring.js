@@ -1,7 +1,11 @@
+let capture;
+export function reportRenderError(error) { capture?.(error); }
+
 export async function initMonitoring() {
   const dsn = import.meta.env.VITE_SENTRY_DSN;
   if (!dsn || import.meta.env.DEV) return;
   const Sentry = await import("@sentry/react");
+  capture = Sentry.captureException;
   Sentry.init({
     dsn,
     environment: import.meta.env.MODE,

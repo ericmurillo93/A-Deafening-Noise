@@ -4,6 +4,7 @@ import { useI18n } from "../lib/i18n.jsx";
 import { countryName } from "../lib/countries";
 import RecordInformation, { recordDate } from "./RecordInformation";
 import ConcertPhotoGallery from "./ConcertPhotoGallery";
+import { usePendingDialogChanges } from "./DialogGuard";
 
 const labels = { concert_date: "Date", venue: "Venue", city: "City", country: "Country", event_status: "Status", ticket_url: "Ticket link", festival: "Festival" };
 export default function ConcertJournal({ concert, view = "all" }) {
@@ -15,6 +16,7 @@ export default function ConcertJournal({ concert, view = "all" }) {
   const [error, setError] = useState("");
   const [saved, setSaved] = useState(false);
   const [reload, setReload] = useState(0);
+  usePendingDialogChanges(Boolean(journal && (note !== (journal.memory?.note || "") || Number(rating || 0) !== Number(journal.memory?.rating || 0))), busy);
   const displayValue = (field, value) => !value ? "—" : field === "country" ? countryName(value,locale) : field === "event_status" ? t(({announced:"Announced",postponed:"Postponed",cancelled:"Cancelled",sold_out:"Sold out"})[value] || value) : value;
   useEffect(() => {
     let active = true;

@@ -159,6 +159,21 @@ test("Add concert can search a provider artist absent from the local catalog", a
   await expect(dialog.getByRole("option", { name: "2019", exact: true })).toBeHidden();
 });
 
+test("Browser Back protects unsaved concert changes", async ({ page }) => {
+  await page.goto("/home");
+  await page.getByRole("button", { name: "Add concert", exact: true }).click();
+  await page.getByRole("button", { name: "Can’t find it? Add manually", exact: true }).click();
+  await page.getByPlaceholder("ARTIST NAME").fill("UNSAVED EXAMPLE");
+  await page.goBack();
+  await expect(page.getByRole("alertdialog")).toBeVisible();
+  await page.getByRole("button", { name: "Keep editing", exact: true }).click();
+  await expect(page.getByPlaceholder("ARTIST NAME")).toHaveValue("UNSAVED EXAMPLE");
+  await page.getByRole("button", { name: "Close", exact: true }).click();
+  await page.getByRole("button", { name: "Discard changes", exact: true }).click();
+  await expect(page.getByTestId("add-concert-modal")).toBeHidden();
+  await expect(page).toHaveURL(/\/home$/);
+});
+
 test("Browser Back closes Add concert before leaving the page", async ({ page }) => {
   await page.goto("/home");
   await page.getByRole("button", { name: "Add concert", exact: true }).click();

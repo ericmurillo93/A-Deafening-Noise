@@ -1,6 +1,9 @@
 import ArchiveFilters from "./components/ArchiveFilters";
 import ConcertJournal from "./components/ConcertJournal";
 import ConcertDialog from "./components/ConcertDialog";
+import { Icon, ModalCloseButton } from "./components/SharedUi";
+import PageErrorBoundary from "./components/PageErrorBoundary";
+import { useDialogGuard } from "./components/DialogGuard";
 const FestivalsPage = React.lazy(() => import("./pages/FestivalsPage"));
 import { filterScope, matchesArchiveFilters, readArchiveFilters, withArchiveFilters } from "./lib/archive-filters";
 import React, { useEffect, useMemo, useRef, useState } from "react";
@@ -17,7 +20,6 @@ import {
   removeFriend,
   setConcertInvitationStatus,
   respondFriendRequest,
-  saveDismissedSuggestions,
   saveSetlistId,
   searchConcertCatalog,
   searchProfiles,
@@ -25,12 +27,15 @@ import {
   supabase,
   supabaseEnabled,
   upsertMyConcert,
+  reviewMySuggestion,
+  clearSearchCaches,
   updateMyProfile,
 } from "./lib/supabase";
 import { clearAppCache } from "./lib/app-cache";
+import { createRequestCache } from "./lib/request-cache";
 import { useArchiveSync } from "./hooks/useArchiveSync";
 import { readRouteFromLocation, routeToPath } from "./lib/routes";
-import { getMostRecentShowDate, normalize, parseDate, parseShow, sameCity, uniqueSourceLinks } from "./lib/concerts";
+import { getMostRecentShowDate, normalize, parseDate, parseShow, sameCity, uniqueSourceLinks, parseConcertDateRange, isPastConcert, uppercaseConcertLabel, normalizeTicketUrl, concertLocation } from "./lib/concerts";
 import { COUNTRIES, countryName } from "./lib/countries";
 import { useI18n } from "./lib/i18n.jsx";
 import { EmptyState, PanelHeading, UserAvatar } from "./components/SharedUi";
@@ -41,6 +46,9 @@ const ProfilePage = React.lazy(() => import("./pages/AccountPages").then(({ Prof
 const ActivityPage = React.lazy(() => import("./pages/AccountPages").then(({ ActivityPage: Page }) => ({ default: Page })));
 const AdminPage = React.lazy(() => import("./pages/AccountPages").then(({ AdminPage: Page }) => ({ default: Page })));
 const HomePage = React.lazy(() => import("./pages/HomePage"));
+const AddConcertModal = React.lazy(() => import("./components/ConcertEditor").then(module => ({ default: module.AddConcertModal })));
+const EditConcertModal = React.lazy(() => import("./components/ConcertEditor").then(module => ({ default: module.EditConcertModal })));
+const NextConcertCalendar = React.lazy(() => import("./pages/CalendarPage"));
 const FriendsPage = React.lazy(() => import("./pages/FriendsPage"));
 const SuggestionsPage = React.lazy(() => import("./pages/SuggestionsPage"));
 const StatsPage = React.lazy(() => import("./pages/StatsPage"));
@@ -130,59 +138,56 @@ async function saveConcertData(updatedData, commitMessage = "Update concerts via
 
 // ─── Setlist.fm proxy ─────────────────────────────────────────────────────────
 
-async function fetchSetlist({ setlistId, artist, date }) {
+const setlistCache = createRequestCache({ max: 50, ttl: 15 * 60000 });
+async function fetchSetlist({ setlistId, artist, venue, date }) {
+  return setlistCache.get(JSON.stringify([setlistId,artist,venue,date]),async()=>{
   const res = await fetch("/.netlify/functions/get-setlist", {
     method: "POST",
+    signal: AbortSignal.timeout(15000),
     headers: { "Content-Type": "application/json", ...(await sessionHeaders()) },
-    body: JSON.stringify({ setlistId: setlistId || null, artist, date }),
+    body: JSON.stringify({ setlistId: setlistId || null, artist, venue, date }),
   });
   if (!res.ok) {
     const text = await res.text();
     throw new Error(text || `setlist.fm returned ${res.status}`);
   }
   return res.json();
+  });
 }
 
-const externalCatalogCache = new Map();
+const externalCatalogCache = createRequestCache({ max: 50 });
 async function searchAvailableConcertCatalog(field, value, context = {}) {
   const cacheKey = JSON.stringify([field, value.trim().toLocaleLowerCase(), context.artist, context.venue, context.date, context.year, context.city, context.country]);
-  let external = externalCatalogCache.get(cacheKey);
-  if (!external) {
-    external = fetch("/.netlify/functions/search-concert-catalog", {
+  const external = externalCatalogCache.get(cacheKey,async()=> fetch("/.netlify/functions/search-concert-catalog", {
       method: "POST",
+      signal: AbortSignal.timeout(45000),
       headers: { "Content-Type": "application/json", ...(await sessionHeaders()) },
       body: JSON.stringify({ field, value, ...context }),
     }).then(async (response) => {
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error("We couldn’t search for concerts. Check your connection and try again.");
-      return payload.concerts || [];
-    }).catch((error) => { externalCatalogCache.delete(cacheKey); throw error; });
-    externalCatalogCache.set(cacheKey, external);
-  }
+      return Object.assign(payload.concerts || [], { partial: Boolean(payload.partial) });
+    }));
   const [local, providerResults] = await Promise.all([
     // ponytail: keep discovery responsive if the local RPC stalls; the next search retries it.
     supabaseEnabled ? Promise.race([searchConcertCatalog(field, value).catch(() => []), new Promise((resolve) => window.setTimeout(() => resolve([]), 750))]) : [],
     external,
   ]);
-  return [...new Map([...local, ...providerResults].map((concert) => [
+  const concerts = [...new Map([...local, ...providerResults].map((concert) => [
     `${normalize(concert.artist)}|${normalize(concert.venue)}|${concert.date}`,
     concert,
-  ])).values()].slice(0, context.country ? 220 : 40);
+  ])).values()];
+  const limit = context.country ? 420 : 40;
+  return Object.assign(concerts.slice(0, limit), { partial: providerResults.partial || concerts.length > limit });
 }
 
 // ─── Pure helpers ─────────────────────────────────────────────────────────────
 
-function uppercaseConcertLabel(value) {
-  return String(value || "").toLocaleUpperCase();
-}
 
 function countryLabel(code) {
   return countryName(code);
 }
 
-function concertLocation({ city, country } = {}) {
-  return [city, countryLabel(country)].filter(Boolean).join(", ");
-}
 
 function filterConcerts(items, query) {
   const q = normalize(query.trim());
@@ -208,20 +213,6 @@ function sortConcerts(items, sortMode, mode) {
   return sorted.sort((a, b) => a.artist.localeCompare(b.artist));
 }
 
-function parseConcertDateRange(value) {
-  const matches = [...String(value).matchAll(/(\d{1,2})\/(\d{1,2})\/(\d{4})/g)];
-  if (!matches.length) return null;
-  const toDate = (match) => new Date(Number(match[3]), Number(match[2]) - 1, Number(match[1]));
-  return { start: toDate(matches[0]), end: toDate(matches[matches.length - 1]) };
-}
-
-function isPastConcert(concert) {
-  const range = parseConcertDateRange(concert.date);
-  if (!range) return false;
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  return range.end < today;
-}
 
 function concertMatches(concert, target) {
   if (concert.concertId && target.concertId) return concert.concertId === target.concertId;
@@ -234,16 +225,6 @@ function concertRouteKey(concert) {
   return String(concert?.concertId || `${normalize(concert?.artist)}|${normalize(concert?.venue)}|${concert?.date || ""}`);
 }
 
-function normalizeTicketUrl(value) {
-  const raw = String(value || "").trim();
-  if (!raw) return "";
-  try {
-    const url = new URL(/^https?:\/\//i.test(raw) ? raw : `https://${raw}`);
-    return ["http:", "https:"].includes(url.protocol) ? url.href : "";
-  } catch {
-    return "";
-  }
-}
 
 function updateConcert(items, target, data) {
   let updated = false;
@@ -335,190 +316,7 @@ function downloadConcertCalendar(items, filename, calendarName) {
 
 // ─── Icons ────────────────────────────────────────────────────────────────────
 
-function Icon({ type }) {
-  const icons = {
-    search: ["fa-magnifying-glass", "h-5 w-5 text-zinc-500"],
-    calendar: ["fa-calendar-days", "mt-0.5 h-4 w-4 text-zinc-600"],
-    music: ["fa-music", "h-4 w-4"],
-    map: ["fa-location-dot", "mt-0.5 h-4 w-4 text-zinc-500"],
-    arrow: ["fa-arrow-right", "h-4 w-4 text-zinc-600"],
-  };
-  const [icon, className] = icons[type] || icons.map;
-  return <i className={`fa-solid ${icon} shrink-0 text-center ${className}`} aria-hidden="true" />;
-}
 
-function ModalCloseButton({ onClick, disabled = false }) {
-  const { t } = useI18n();
-  async function close(event) {
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) { onClick(); return; }
-    const panel = event.currentTarget.closest('[role="dialog"], [role="alertdialog"]');
-    const backdrop = panel?.parentElement;
-    event.currentTarget.disabled = true;
-    await Promise.all([
-      panel?.animate([{ opacity: 1, transform: "translateY(0) scale(1)" }, { opacity: 0, transform: "translateY(8px) scale(.985)" }], { duration: 150, easing: "cubic-bezier(.4, 0, 1, 1)", fill: "forwards" }).finished,
-      backdrop?.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 150, easing: "ease-out", fill: "forwards" }).finished,
-    ].filter(Boolean)).catch(() => {});
-    onClick();
-  }
-  return <button type="button" onClick={close} disabled={disabled} className="touch-target flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-zinc-800 text-zinc-400 transition hover:border-zinc-600 hover:bg-zinc-900 hover:text-zinc-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-400 disabled:opacity-40" aria-label={t("Close")}><i className="fa-solid fa-xmark" aria-hidden="true" /></button>;
-}
-
-// ─── AutoSuggestField ─────────────────────────────────────────────────────────
-
-function AutoSuggestField({ value, onChange, suggestions, placeholder }) {
-  const [open, setOpen] = useState(false);
-  const [highlight, setHighlight] = useState(-1);
-  const listId = React.useId();
-  const matches = useMemo(() => {
-    const q = normalize(value || "").trim();
-    if (!q) return [];
-    return suggestions.filter((s) => normalize(s).includes(q) && normalize(s) !== q).slice(0, 6);
-  }, [value, suggestions]);
-  function pick(item) { onChange(item); setOpen(false); setHighlight(-1); }
-  function handleKey(e) {
-    if (!open || matches.length === 0) return;
-    if (e.key === "ArrowDown") { e.preventDefault(); setHighlight((h) => Math.min(h + 1, matches.length - 1)); }
-    else if (e.key === "ArrowUp") { e.preventDefault(); setHighlight((h) => Math.max(h - 1, 0)); }
-    else if (e.key === "Enter" && highlight >= 0) { e.preventDefault(); pick(matches[highlight]); }
-    else if (e.key === "Escape") { setOpen(false); setHighlight(-1); }
-  }
-  return (
-    <div className="relative">
-      <input role="combobox" aria-autocomplete="list" aria-expanded={open && matches.length > 0} aria-controls={listId} aria-activedescendant={highlight >= 0 ? `${listId}-${highlight}` : undefined} type="text" value={value} onChange={(e) => { onChange(e.target.value); setOpen(true); setHighlight(-1); }} onFocus={() => setOpen(true)} onBlur={() => setTimeout(() => setOpen(false), 150)} onKeyDown={handleKey} placeholder={placeholder} autoComplete="off" className="w-full rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-zinc-100 outline-none focus:border-zinc-400" />
-      {open && matches.length > 0 && (
-        <ul id={listId} role="listbox" className="absolute left-0 right-0 top-full z-20 mt-1 max-h-60 overflow-auto rounded-2xl border border-zinc-700 bg-zinc-950 shadow-2xl">
-          {matches.map((m, i) => (
-            <li id={`${listId}-${i}`} role="option" aria-selected={i === highlight} key={m} onMouseDown={(e) => { e.preventDefault(); pick(m); }} onMouseEnter={() => setHighlight(i)} className={`cursor-pointer px-4 py-2 text-sm ${i === highlight ? "bg-zinc-800 text-zinc-100" : "text-zinc-300 hover:bg-zinc-900"}`}>{m}</li>
-          ))}
-        </ul>
-      )}
-    </div>
-  );
-}
-
-function ConcertCatalogField({ field, value, context = {}, onChange, onPick, onSearch, placeholder, seedResults = [] }) {
-  const [open, setOpen] = useState(false);
-  const [results, setResults] = useState([]);
-  const [highlight, setHighlight] = useState(-1);
-  const blurTimer = useRef(null);
-  const listId = React.useId();
-
-  useEffect(() => {
-    const query = value.trim();
-    if (!open || !onSearch || query.length < 2) {
-      setResults([]);
-      return undefined;
-    }
-    let cancelled = false;
-    const timer = window.setTimeout(async () => {
-      try {
-        const found = await onSearch(field, query, context);
-        if (!cancelled) setResults(found || []);
-      } catch {
-        if (!cancelled) setResults([]);
-      }
-    }, 250);
-    return () => { cancelled = true; window.clearTimeout(timer); };
-  }, [field, value, context.artist, context.venue, context.date, context.year, context.city, context.country, open, onSearch]);
-  const query = normalize(value.trim());
-  const options = [...new Map([...seedResults, ...results].map((concert) => [normalize(concert[field]), concert])).values()]
-    .filter((concert) => concert[field] && (!query || normalize(concert[field]).includes(query)))
-    .sort((a, b) => String(a[field]).localeCompare(String(b[field])));
-  function pick(concert) { onPick(concert); setOpen(false); setHighlight(-1); }
-  function handleKey(event) {
-    if (event.key === "Escape") { setOpen(false); setHighlight(-1); return; }
-    if (!options.length || !["ArrowDown", "ArrowUp", "Enter"].includes(event.key)) return;
-    if (event.key === "Enter" && highlight < 0) return;
-    event.preventDefault();
-    if (event.key === "ArrowDown") { setOpen(true); setHighlight((current) => Math.min(current + 1, options.length - 1)); }
-    else if (event.key === "ArrowUp") { setOpen(true); setHighlight((current) => current < 0 ? options.length - 1 : Math.max(current - 1, 0)); }
-    else pick(options[highlight]);
-  }
-  useEffect(() => {
-    if (highlight >= 0) document.getElementById(`${listId}-${highlight}`)?.scrollIntoView({ block: "nearest" });
-  }, [highlight, listId]);
-  useEffect(() => () => window.clearTimeout(blurTimer.current), []);
-
-  return (
-    <div className="relative">
-      <input role="combobox" aria-autocomplete="list" aria-expanded={open && options.length > 0} aria-controls={listId} aria-activedescendant={highlight >= 0 ? `${listId}-${highlight}` : undefined} type="text" value={value} onChange={(event) => { window.clearTimeout(blurTimer.current); onChange(event.target.value); setOpen(true); setHighlight(-1); }} onFocus={() => { window.clearTimeout(blurTimer.current); setOpen(true); }} onBlur={() => { blurTimer.current = window.setTimeout(() => setOpen(false), 150); }} onKeyDown={handleKey} placeholder={placeholder} autoComplete="off" className="w-full rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3 uppercase text-zinc-100 outline-none focus:border-zinc-400" />
-      {open && options.length > 0 && <ul id={listId} role="listbox" className="absolute left-0 right-0 top-full z-30 mt-1 max-h-64 overflow-auto rounded-2xl border border-zinc-700 bg-zinc-950 p-1 shadow-2xl">{options.map((concert, index) => <li id={`${listId}-${index}`} role="option" aria-selected={index === highlight} key={`${field}-${concert[field]}`} onMouseDown={(event) => { event.preventDefault(); pick(concert); }} onMouseEnter={() => setHighlight(index)} className={`cursor-pointer rounded-xl px-3 py-2.5 text-left text-sm font-bold uppercase ${index === highlight ? "bg-zinc-800 text-zinc-100" : "text-zinc-200 hover:bg-zinc-900"}`}>{concert[field]}</li>)}</ul>}
-    </div>
-  );
-}
-
-function ConcertFinder({ onSearch, onPick, onManual }) {
-  const { locale, t } = useI18n();
-  const [artist, setArtist] = useState("");
-  const [country, setCountry] = useState("");
-  const [countryQuery, setCountryQuery] = useState("");
-  const [city, setCity] = useState("");
-  const [year, setYear] = useState("");
-  const [results, setResults] = useState([]);
-  const [searched, setSearched] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [searchError, setSearchError] = useState("");
-  const selectedYear = /^\d{4}$/.test(year) ? year : "";
-  const countryResults = COUNTRIES.map(({ code }) => ({ country: code, countryName: countryName(code, locale) }))
-    .sort((a, b) => a.countryName.localeCompare(b.countryName, locale));
-  const cityResults = results.filter((concert) => !selectedYear || concert.date.endsWith(selectedYear));
-  const yearResults = results.filter((concert) => !city || normalize(concert.city) === normalize(city))
-    .map((concert) => ({ ...concert, year: String(concert.date || "").slice(-4) }))
-    .filter((concert) => /^\d{4}$/.test(concert.year));
-  const visible = results.filter((concert) => (!city || normalize(concert.city) === normalize(city)) && (!selectedYear || concert.date.endsWith(selectedYear)))
-    .sort((a, b) => parseDate(b.date) - parseDate(a.date));
-  const hasSetlistResults = results.some((concert) => concert.source === "setlist.fm");
-
-  function resetSearch() { setResults([]); setSearched(false); setSearchError(""); setCity(""); setYear(""); }
-  async function submitSearch(event) {
-    event.preventDefault();
-    const query = artist.trim();
-    if (query.length < 2 || !country || !onSearch) return;
-    setLoading(true); setSearched(false); setSearchError(""); setCity(""); setYear("");
-    try {
-      const found = await onSearch("artist", query, { artist: query, country });
-      setResults((found || []).filter((concert) => normalize(concert.artist) === normalize(query) && String(concert.country || "").toUpperCase() === country));
-      setSearched(true);
-    } catch {
-      setResults([]); setSearched(true); setSearchError(t("We couldn’t search for concerts. Check your connection and try again."));
-    } finally { setLoading(false); }
-  }
-
-  return <div className="space-y-5">
-    <form onSubmit={submitSearch} className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-4">
-      <div className="grid gap-4 sm:grid-cols-2">
-        <label className="text-xs font-bold uppercase tracking-widest text-zinc-500">{t("Artist")}
-          <input value={artist} onChange={(event) => { setArtist(uppercaseConcertLabel(event.target.value)); resetSearch(); }} placeholder={t("Artist name").toUpperCase()} autoFocus autoComplete="off" className="mt-2 w-full rounded-2xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-zinc-100 outline-none focus:border-zinc-400" />
-        </label>
-        <label className="text-xs font-bold uppercase tracking-widest text-zinc-500">{t("Country")}
-          <div className="mt-2"><ConcertCatalogField field="countryName" value={countryQuery} seedResults={countryResults} onChange={(value) => { setCountryQuery(uppercaseConcertLabel(value)); setCountry(""); resetSearch(); }} onPick={(item) => { setCountryQuery(uppercaseConcertLabel(item.countryName)); setCountry(item.country); resetSearch(); }} placeholder={t("Choose a country")} /></div>
-        </label>
-      </div>
-      <button type="submit" disabled={loading || artist.trim().length < 2 || !country} className="adn-button-primary mt-4 w-full sm:w-auto sm:min-w-40">{loading ? <><i className="fa-solid fa-circle-notch fa-spin" aria-hidden="true" />{t("Searching…")}</> : <><i className="fa-solid fa-magnifying-glass" aria-hidden="true" />{t("Search concerts")}</>}</button>
-    </form>
-    {searched && results.length > 0 && <>
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div><strong className="block text-sm font-black uppercase text-zinc-100">{t("{count} concerts found", { count: results.length })}</strong><span className="text-xs text-zinc-500">{results.length >= 200 ? t("Showing the first 200 results. ") : ""}{t("Filter by city, year, or both.")}</span></div>
-        {(city || year) && <button type="button" onClick={() => { setCity(""); setYear(""); }} className="min-h-11 px-2 text-xs font-bold text-zinc-400 hover:text-zinc-100">{t("Clear filters")}</button>}
-      </div>
-      <div className="grid gap-3 sm:grid-cols-2">
-        <label className="text-xs font-bold uppercase tracking-widest text-zinc-500">City
-          <div className="mt-2"><ConcertCatalogField field="city" value={city} seedResults={cityResults} onChange={(value) => setCity(uppercaseConcertLabel(value))} onPick={(concert) => setCity(uppercaseConcertLabel(concert.city))} placeholder={t("All cities")} /></div>
-        </label>
-        <label className="text-xs font-bold uppercase tracking-widest text-zinc-500">Year
-          <div className="mt-2"><ConcertCatalogField field="year" value={year} seedResults={yearResults} onChange={(value) => setYear(value.replace(/\D/g, "").slice(0, 4))} onPick={(concert) => setYear(concert.year)} placeholder={t("All years")} /></div>
-        </label>
-      </div>
-      <div className="space-y-2">
-        {visible.length > 0 ? visible.map((concert) => <button key={concert.concertId || `${concert.source}-${concert.sourceEventId}`} type="button" onClick={() => onPick(concert)} className="group flex min-h-[72px] w-full items-center gap-4 rounded-2xl border border-zinc-800 bg-zinc-900 px-4 py-3 text-left transition-colors hover:border-zinc-600"><span className="min-w-0 flex-1"><strong className="block truncate text-sm font-black uppercase text-zinc-100">{concert.artist}</strong><span className="mt-1 block truncate text-xs uppercase text-zinc-500">{concert.venue || t("Venue to be confirmed")} · {concertLocation(concert)} · {concert.date}</span></span><span className="shrink-0 text-[10px] font-black uppercase tracking-wide text-blue-400 group-hover:text-blue-300">{t("Add")}</span></button>) : <p className="rounded-2xl border border-zinc-800 py-8 text-center text-sm text-zinc-500">{t("No concerts match these filters.")}</p>}
-        {hasSetlistResults && <p className="pt-2 text-center text-[10px] text-zinc-600">{t("Historical concert information provided by")} <a href="https://www.setlist.fm" target="_blank" rel="noreferrer" className="text-zinc-500 hover:text-zinc-300">setlist.fm</a>.</p>}
-      </div>
-    </>}
-    {searched && results.length === 0 && <div className="rounded-2xl border border-zinc-800 bg-zinc-900/40 px-5 py-8 text-center"><strong className="block text-sm font-black uppercase text-zinc-200">{t("No concerts found")}</strong><p className="mt-2 text-sm text-zinc-500">{t("Try another country or add the concert manually.")}</p></div>}
-    {searchError && <p role="alert" className="rounded-2xl border border-red-900 bg-red-950/30 px-4 py-3 text-sm text-red-200">{searchError}</p>}
-    <div className="border-t border-zinc-900 pt-4 text-center"><button type="button" onClick={onManual} className="min-h-11 px-3 text-xs font-bold text-zinc-400 hover:text-zinc-100">{t("Can’t find it? Add manually")}</button></div>
-  </div>;
-}
 
 function EventMetadata({ concert, primaryTicketUrl = "" }) {
   const { t, locale } = useI18n();
@@ -549,7 +347,7 @@ function SetlistModal({ target, onClose, onEdit, onLeave, onIdDiscovered }) {
     if (!target) return;
     let active = true;
     setState({ status: "loading", data: null, error: null });
-    fetchSetlist({ setlistId: target.setlistId, artist: target.artist, date: target.date })
+    fetchSetlist({ setlistId: target.setlistId, artist: target.artist, venue: target.venue, date: target.date })
       .then((data) => {
         if (!active) return;
         setState({ status: "ok", data, error: null });
@@ -560,7 +358,7 @@ function SetlistModal({ target, onClose, onEdit, onLeave, onIdDiscovered }) {
       })
       .catch((err) => {if(active)setState({ status: "error", data: null, error: err.message });});
     return () => {active=false;};
-  }, [target?.setlistId, target?.artist, target?.date]);
+  }, [target?.setlistId, target?.artist, target?.venue, target?.date]);
 
   if (!target) return null;
   const { status, data } = state;
@@ -659,278 +457,6 @@ function ContextMenu({ open, x, y, onEdit, onDelete, onClose }) {
 
 // ─── EditConcertModal ─────────────────────────────────────────────────────────
 
-function FriendAttendeePicker({ friends, selectedIds, lockedIds = [], onChange }) {
-  const { t } = useI18n();
-  const selected = new Set(selectedIds);
-  const locked = new Set(lockedIds);
-  function toggle(id) { if (!locked.has(id)) onChange(selected.has(id) ? selectedIds.filter((value) => value !== id) : [...selectedIds, id]); }
-  return (
-    <details className="group relative">
-      <summary className="flex cursor-pointer list-none items-center gap-3 rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-zinc-300 transition hover:border-zinc-600 [&::-webkit-details-marker]:hidden"><i className="fa-solid fa-user-group text-xs text-zinc-600" aria-hidden="true" /><span className="flex-1">{selectedIds.length ? t(selectedIds.length === 1 ? "{count} friend selected" : "{count} friends selected", { count: selectedIds.length }) : t("Select friends")}</span><i className="fa-solid fa-chevron-down text-[10px] text-zinc-600 transition-transform group-open:rotate-180" aria-hidden="true" /></summary>
-      <div className="mt-2 max-h-52 space-y-1 overflow-y-auto rounded-2xl border border-zinc-700 bg-zinc-950 p-2">
-        {friends.length ? friends.map((friend,index) => <label key={friend.id} className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-zinc-300 ${locked.has(friend.id) ? "cursor-default" : "cursor-pointer hover:bg-zinc-900"}`}><input type="checkbox" checked={selected.has(friend.id)} disabled={locked.has(friend.id)} onChange={() => toggle(friend.id)} className="accent-zinc-100" /><span>{friend.displayName}</span>{locked.has(friend.id) ? <span className="text-xs text-emerald-500">{t("Confirmed")}</span> : index<2&&friend.concertsTogether>0 ? <span className="text-[10px] font-bold text-blue-400">{t("Often together")}</span>:null}<span className="ml-auto text-xs text-zinc-600">@{friend.username}</span></label>) : <p className="px-3 py-2 text-sm text-zinc-600">{t("Add friends from the Friends page first.")}</p>}
-      </div>
-    </details>
-  );
-}
-
-const EMPTY_EVENT_DETAILS = { doorsAt: "", startsAt: "", address: "", latitude: "", longitude: "", promoter: "", festival: "", tour: "", eventStatus: "announced", lineup: "" };
-function EventDetailsFields({ value, onChange, disabled = false }) {
-  const { t } = useI18n();
-  const field = (key) => (event) => onChange({ ...value, [key]: event.target.value });
-  return <details className="group rounded-2xl border border-zinc-800 bg-zinc-900">
-    <summary className="flex min-h-12 cursor-pointer list-none items-center gap-3 px-4 text-sm font-bold text-zinc-300 [&::-webkit-details-marker]:hidden"><i className="fa-solid fa-circle-info text-xs text-blue-400" aria-hidden="true" /><span className="flex-1">{t("Event details")}</span><i className="fa-solid fa-chevron-down text-[10px] text-zinc-600 transition-transform group-open:rotate-180" aria-hidden="true" /></summary>
-    <div className="grid gap-4 border-t border-zinc-800 p-4 sm:grid-cols-2">
-      <label className="text-xs font-bold uppercase tracking-widest text-zinc-500">{t("Doors")}<input disabled={disabled} type="datetime-local" value={value.doorsAt} onChange={field("doorsAt")} className="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2.5 text-sm text-zinc-100" /></label>
-      <label className="text-xs font-bold uppercase tracking-widest text-zinc-500">{t("Start")}<input disabled={disabled} type="datetime-local" value={value.startsAt} onChange={field("startsAt")} className="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2.5 text-sm text-zinc-100" /></label>
-      <label className="sm:col-span-2 text-xs font-bold uppercase tracking-widest text-zinc-500">{t("Address")}<input disabled={disabled} value={value.address} onChange={field("address")} placeholder={t("Street and number")} className="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2.5 text-sm text-zinc-100" /></label>
-      <label className="text-xs font-bold uppercase tracking-widest text-zinc-500">{t("Latitude")}<input disabled={disabled} type="number" step="any" value={value.latitude} onChange={field("latitude")} placeholder="41.3851" className="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2.5 text-sm text-zinc-100" /></label>
-      <label className="text-xs font-bold uppercase tracking-widest text-zinc-500">{t("Longitude")}<input disabled={disabled} type="number" step="any" value={value.longitude} onChange={field("longitude")} placeholder="2.1734" className="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2.5 text-sm text-zinc-100" /></label>
-      <label className="text-xs font-bold uppercase tracking-widest text-zinc-500">{t("Promoter")}<input disabled={disabled} value={value.promoter} onChange={field("promoter")} className="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2.5 text-sm text-zinc-100" /></label>
-      <label className="text-xs font-bold uppercase tracking-widest text-zinc-500">{t("Status")}<select disabled={disabled} value={value.eventStatus} onChange={field("eventStatus")} className="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2.5 text-sm text-zinc-100"><option value="announced">{t("Announced")}</option><option value="postponed">{t("Postponed")}</option><option value="cancelled">{t("Cancelled")}</option><option value="sold_out">{t("Sold out")}</option></select></label>
-      <label className="text-xs font-bold uppercase tracking-widest text-zinc-500">{t("Festival")}<input disabled={disabled} value={value.festival} onChange={field("festival")} className="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2.5 text-sm text-zinc-100" /></label>
-      <label className="text-xs font-bold uppercase tracking-widest text-zinc-500">{t("Tour")}<input disabled={disabled} value={value.tour} onChange={field("tour")} className="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2.5 text-sm text-zinc-100" /></label>
-      <label className="sm:col-span-2 text-xs font-bold uppercase tracking-widest text-zinc-500">{t("Supporting artists")}<input disabled={disabled} value={value.lineup} onChange={field("lineup")} placeholder={t("Comma separated")} className="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2.5 text-sm text-zinc-100" /></label>
-    </div>
-  </details>;
-}
-
-function EditConcertModal({ isOpen, mode, initial, onClose, onSave, isSaving, saveError, artistSuggestions = [], venueSuggestions = [], friends = [] }) {
-  const { t } = useI18n();
-  const [artist, setArtist] = useState("");
-  const [venue, setVenue] = useState("");
-  const [city, setCity] = useState("");
-  const [country, setCountry] = useState("");
-  const [date, setDate] = useState("");
-  const [bought, setBought] = useState(false);
-  const [setlistId, setSetlistId] = useState("");
-  const [attendeeUserIds, setAttendeeUserIds] = useState([]);
-  const [guestAttendees, setGuestAttendees] = useState("");
-  const [ticketUrl, setTicketUrl] = useState("");
-  const [eventDetails, setEventDetails] = useState(EMPTY_EVENT_DETAILS);
-  const [validationError, setValidationError] = useState("");
-  const dialogRef = useDialogFocus(isOpen);
-
-  useEffect(() => {
-    if (isOpen && initial) {
-      setArtist(uppercaseConcertLabel(initial.artist));
-      setVenue(uppercaseConcertLabel(initial.venue));
-      setCity(initial.city || "");
-      setCountry(String(initial.country || "").toUpperCase());
-      setDate(initial.date || "");
-      setBought(!!initial.bought);
-      setSetlistId(initial.setlistId || "");
-      setAttendeeUserIds((initial.attendeeUsers || []).filter((person) => person.status === "confirmed" || person.status === "pending").map((person) => person.id));
-      setGuestAttendees((initial.guestAttendees || []).join(", "));
-      setTicketUrl(initial.ticketUrl || "");
-      setEventDetails({ ...EMPTY_EVENT_DETAILS, doorsAt: initial.doorsAt?.slice(0, 16) || "", startsAt: initial.startsAt?.slice(0, 16) || "", address: initial.address || "", latitude: initial.latitude || "", longitude: initial.longitude || "", promoter: initial.promoter || "", festival: initial.festival || "", tour: initial.tour || "", eventStatus: initial.eventStatus || "announced", lineup: (initial.lineup || []).slice(1).map((item) => item.artist).join(", ") });
-      setValidationError("");
-    }
-  }, [isOpen, initial]);
-
-  if (!isOpen || !initial) return null;
-  const isNextMode = mode === "next";
-  const canEditEvent = initial.canEditEvent !== false;
-
-  function submit() {
-    if (!artist.trim() || !date.trim() || !city.trim() || !/^[A-Z]{2}$/i.test(country.trim())) { setValidationError(t("Add the artist, date, city and country before saving.")); return; }
-    if (!isNextMode && !venue.trim()) { setValidationError(t("Add a venue for this past concert.")); return; }
-    setValidationError("");
-    onSave({
-      artist: uppercaseConcertLabel(artist.trim()),
-      venue: uppercaseConcertLabel(canonicalVenue(venue.trim())),
-      city: city.trim(),
-      country: country.trim().toUpperCase(),
-      date: date.trim(),
-      bought,
-      setlistId: setlistId.trim(),
-      attendeeUserIds,
-      guestAttendees: [...new Set(guestAttendees.split(",").map((name) => name.trim()).filter(Boolean))],
-      ticketUrl: normalizeTicketUrl(ticketUrl),
-      ...eventDetails,
-      lineup: [artist, ...eventDetails.lineup.split(",").map((name) => uppercaseConcertLabel(name.trim())).filter(Boolean)].map((name) => ({ artist: name })),
-    });
-  }
-
-  return (
-    <div className="adn-modal-backdrop fixed inset-0 z-[60] flex items-center justify-center bg-black/70 p-4">
-      <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="edit-concert-title" className="adn-modal-panel flex max-h-[calc(100dvh-2rem)] w-full max-w-lg flex-col overflow-hidden rounded-3xl border border-zinc-700 bg-zinc-950 shadow-2xl md:max-h-[90dvh]">
-        <div className="flex shrink-0 items-start justify-between gap-4 border-b border-zinc-900 px-6 py-5">
-          <div className="min-w-0">
-            <h2 id="edit-concert-title" className="text-2xl font-black uppercase tracking-tight">{t("Edit concert")}</h2>
-            <p className="mt-1 truncate text-sm text-zinc-500">{artist || "Concert"}{venue ? ` · ${venue}` : ""}{date ? ` · ${date}` : ""}</p>
-          </div>
-          <ModalCloseButton onClick={onClose} />
-        </div>
-        <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-6 py-5 overscroll-contain">
-          {!canEditEvent && <p className="rounded-2xl border border-blue-900 bg-blue-950/30 px-4 py-3 text-sm text-blue-200">{t("You can manage your ticket and guests. Only the person who added the concert can change its main details.")}</p>}
-          <label className="block">
-            <span className="mb-2 block text-xs font-bold uppercase tracking-widest text-zinc-500">{t("Artist")}</span>
-            {canEditEvent ? <AutoSuggestField value={artist} onChange={(value) => setArtist(uppercaseConcertLabel(value))} suggestions={artistSuggestions} placeholder={t("Artist name")} /> : <div className="rounded-2xl border border-zinc-800 bg-zinc-900 px-4 py-3 text-zinc-500">{artist}</div>}
-          </label>
-          <EventDetailsFields value={eventDetails} onChange={setEventDetails} disabled={!canEditEvent} />
-          <div className="grid grid-cols-[minmax(0,1fr)_7rem] gap-3">
-            <label className="block"><span className="mb-2 block text-xs font-bold uppercase tracking-widest text-zinc-500">{t("City")}</span><input value={city} onChange={(event) => setCity(event.target.value)} disabled={!canEditEvent} placeholder={t("City")} className="w-full rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-zinc-100 outline-none focus:border-zinc-400 disabled:border-zinc-800 disabled:text-zinc-500" /></label>
-            <label className="block"><span className="mb-2 block text-xs font-bold uppercase tracking-widest text-zinc-500">{t("Country code")}</span><input value={country} onChange={(event) => setCountry(event.target.value.toUpperCase().slice(0, 2))} disabled={!canEditEvent} placeholder="ES" maxLength="2" className="w-full rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3 uppercase text-zinc-100 outline-none focus:border-zinc-400 disabled:border-zinc-800 disabled:text-zinc-500" /><span className="mt-1 block text-xs text-zinc-600">{t("Use the two-letter code, for example ES.")}</span></label>
-          </div>
-          <label className="block">
-            <span className="mb-2 block text-xs font-bold uppercase tracking-widest text-zinc-500">{t("Venue")} {isNextMode && <span className="ml-1 normal-case tracking-normal text-zinc-600">({t("optional")})</span>}</span>
-            {canEditEvent ? <AutoSuggestField value={venue} onChange={(value) => setVenue(uppercaseConcertLabel(value))} suggestions={venueSuggestions} placeholder={t("Venue or festival")} /> : <div className="rounded-2xl border border-zinc-800 bg-zinc-900 px-4 py-3 text-zinc-500">{venue || "—"}</div>}
-          </label>
-          <label className="block">
-            <span className="mb-2 block text-xs font-bold uppercase tracking-widest text-zinc-500">{t("Date")}</span>
-            <input type="text" value={date} onChange={(e) => setDate(e.target.value)} disabled={!canEditEvent} placeholder="DD/MM/YYYY" className="w-full rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-zinc-100 outline-none focus:border-zinc-400 disabled:border-zinc-800 disabled:text-zinc-500" />
-          </label>
-          {isNextMode && (
-            <label className="block">
-              <span className="mb-2 block text-xs font-bold uppercase tracking-widest text-zinc-500">{t("Ticket / event link")} <span className="normal-case tracking-normal text-zinc-600">({t("optional")})</span></span>
-              <input type="url" value={ticketUrl} onChange={(e) => setTicketUrl(e.target.value)} disabled={!canEditEvent} placeholder="https://…" className="w-full rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-zinc-100 outline-none focus:border-zinc-400 disabled:border-zinc-800 disabled:text-zinc-500" />
-            </label>
-          )}
-          <label className="block">
-            <span className="mb-2 block text-xs font-bold uppercase tracking-widest text-zinc-500">{t("Attended with")} <span className="normal-case tracking-normal text-zinc-600">({t("optional")})</span></span>
-            <FriendAttendeePicker friends={friends} selectedIds={attendeeUserIds} lockedIds={(initial.attendeeUsers || []).filter((person) => person.status === "confirmed").map((person) => person.id)} onChange={setAttendeeUserIds} />
-            <input type="text" value={guestAttendees} onChange={(e) => setGuestAttendees(e.target.value)} placeholder={t("Other attendees (comma separated)")} className="mt-2 w-full rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-zinc-100 outline-none focus:border-zinc-400" />
-            <span className="mt-1 block text-xs text-zinc-600">{t("Separate multiple names with commas.")}</span>
-          </label>
-          {isNextMode && (
-            <label className="flex items-center gap-3 rounded-2xl border border-zinc-800 bg-zinc-900 px-4 py-3 text-sm text-zinc-300">
-              <input type="checkbox" checked={bought} onChange={(e) => setBought(e.target.checked)} />
-              <i className="fa-solid fa-ticket text-zinc-500" aria-hidden="true" /><span>{t("Ticket bought")}</span>
-            </label>
-          )}
-        </div>
-        <div className="shrink-0 border-t border-zinc-900 bg-zinc-950 px-6 py-4">
-          <button onClick={submit} disabled={isSaving} className="adn-button-primary adn-save-button w-full">{isSaving && <i className="fa-solid fa-circle-notch fa-spin" aria-hidden="true" />}{t(isSaving ? "Saving..." : "Save changes")}</button>
-          {validationError && <div className="mt-3 rounded-2xl border border-amber-900 bg-amber-950/30 px-4 py-3 text-sm font-semibold text-amber-200" role="alert">{validationError}</div>}
-          {saveError && <div className="mt-3 rounded-2xl border border-red-900 bg-red-950/40 px-4 py-3 text-sm text-red-200">{saveError}</div>}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ─── AddConcertModal ──────────────────────────────────────────────────────────
-
-function AddConcertModal({ isOpen, initial, onClose, onSave, isSaving, saveError, friends = [], onSearchCatalog }) {
-  const { t } = useI18n();
-  const [entryMode, setEntryMode] = useState("find");
-  const [artist, setArtist] = useState("");
-  const [venue, setVenue] = useState("");
-  const [city, setCity] = useState("");
-  const [country, setCountry] = useState("");
-  const [date, setDate] = useState("");
-  const [bought, setBought] = useState(false);
-  const [attendeeUserIds, setAttendeeUserIds] = useState([]);
-  const [guestAttendees, setGuestAttendees] = useState("");
-  const [ticketUrl, setTicketUrl] = useState("");
-  const [eventDetails, setEventDetails] = useState(EMPTY_EVENT_DETAILS);
-  const [catalogSelection, setCatalogSelection] = useState(null);
-  const [validationError, setValidationError] = useState("");
-  const dialogRef = useDialogFocus(isOpen);
-
-  useEffect(() => {
-    if (!isOpen) return;
-    setEntryMode(initial ? "manual" : "find");
-    setArtist(uppercaseConcertLabel(initial?.artist));
-    setVenue(uppercaseConcertLabel(initial?.venue));
-    setCity(initial?.city || "");
-    setCountry(String(initial?.country || "").toUpperCase());
-    setDate(initial?.date || "");
-    setBought(Boolean(initial?.bought));
-    setAttendeeUserIds((initial?.attendeeUsers || []).map((person) => person.id));
-    setGuestAttendees((initial?.guestAttendees || []).join(", "));
-    setTicketUrl(initial?.ticketUrl || "");
-    setEventDetails({ ...EMPTY_EVENT_DETAILS, doorsAt: initial?.doorsAt?.slice(0, 16) || "", startsAt: initial?.startsAt?.slice(0, 16) || "", address: initial?.address || "", latitude: initial?.latitude || "", longitude: initial?.longitude || "", promoter: initial?.promoter || "", festival: initial?.festival || "", tour: initial?.tour || "", eventStatus: initial?.eventStatus || "announced", lineup: (initial?.lineup || []).slice(1).map((item) => item.artist).join(", ") });
-    setCatalogSelection(null);
-    setValidationError("");
-  }, [isOpen, initial]);
-
-  if (!isOpen) return null;
-  const isPastDate = isPastConcert({ date });
-
-  function submit() {
-    if (!artist.trim() || !date.trim() || !city.trim() || !/^[A-Z]{2}$/i.test(country.trim())) { setValidationError(t("Add the artist, date, city and country before saving.")); return; }
-    if (isPastDate && !venue.trim()) { setValidationError(t("Add a venue for this past concert.")); return; }
-    setValidationError("");
-    onSave({ concertId: catalogSelection?.concertId || initial?.concertId || null, artist, venue, city: city.trim(), country: country.trim().toUpperCase(), date, bought: isPastDate ? true : bought, ticketUrl: isPastDate ? "" : normalizeTicketUrl(ticketUrl), attendeeUserIds, guestAttendees: [...new Set(guestAttendees.split(",").map((name) => name.trim()).filter(Boolean))], ...eventDetails, lineup: [artist, ...eventDetails.lineup.split(",").map((name) => uppercaseConcertLabel(name.trim())).filter(Boolean)].map((name) => ({ artist: name })), source: catalogSelection?.source || "", sourceEventId: catalogSelection?.sourceEventId || "", sourceUrl: catalogSelection?.sourceUrl || "" });
-  }
-
-  function pickCatalogConcert(concert) {
-    setArtist(uppercaseConcertLabel(concert.artist));
-    setVenue(uppercaseConcertLabel(concert.venue));
-    setCity(concert.city || "");
-    setCountry(String(concert.country || "").toUpperCase());
-    setDate(concert.date || "");
-    if (!ticketUrl && concert.ticketUrl) setTicketUrl(concert.ticketUrl);
-    setEventDetails({ ...EMPTY_EVENT_DETAILS, doorsAt: concert.doorsAt?.slice(0, 16) || "", startsAt: concert.startsAt?.slice(0, 16) || "", address: concert.address || "", latitude: concert.latitude || "", longitude: concert.longitude || "", promoter: concert.promoter || "", festival: concert.festival || "", tour: concert.tour || "", eventStatus: concert.eventStatus || "announced", lineup: (concert.lineup || []).slice(1).map((item) => item.artist).join(", ") });
-    setCatalogSelection(concert);
-    setEntryMode("manual");
-  }
-
-  const catalogContext = { artist, venue, city, country, date };
-
-  return (
-    <div className="adn-modal-backdrop fixed inset-0 z-[60] flex items-center justify-center bg-black/70 p-4">
-      <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="add-concert-title" data-testid="add-concert-modal" className="adn-modal-panel relative flex h-[calc(100dvh-2rem)] w-full max-w-2xl flex-col overflow-hidden rounded-3xl border border-zinc-700 bg-zinc-950 shadow-2xl md:h-[min(48rem,90dvh)]">
-        <div data-testid="add-concert-header" className="flex shrink-0 items-start justify-between gap-4 border-b border-zinc-900 px-6 py-5">
-          <div className="min-w-0">
-            <h2 id="add-concert-title" className="text-2xl font-black uppercase tracking-tight">{t("Add concert")}</h2>
-            <p className="mt-1 truncate text-sm text-zinc-500">{t(entryMode === "find" ? "Search by artist and country, then narrow the results by city or year." : catalogSelection ? "Review the concert details before adding it." : "Enter the concert details.")}</p>
-          </div>
-          <ModalCloseButton onClick={onClose} />
-        </div>
-        <div data-testid="add-concert-scroll" className="min-h-0 flex-1 overflow-y-auto px-6 py-5 overscroll-contain">
-        {entryMode === "find" ? <ConcertFinder onSearch={onSearchCatalog} onPick={pickCatalogConcert} onManual={() => { setCatalogSelection(null); setEntryMode("manual"); }} /> : <div className="space-y-4">
-          {!initial && <button type="button" onClick={() => setEntryMode("find")} className="min-h-11 text-xs font-bold text-zinc-400 hover:text-zinc-100"><i className="fa-solid fa-arrow-left mr-2" aria-hidden="true" />{t("Find a concert")}</button>}
-          <label className="block">
-            <span className="mb-2 block text-xs font-bold uppercase tracking-widest text-zinc-500">{t("Artist")}</span>
-            <ConcertCatalogField field="artist" value={artist} context={catalogContext} onChange={(value) => { setArtist(uppercaseConcertLabel(value)); setCatalogSelection(null); }} onPick={(concert) => { setArtist(uppercaseConcertLabel(concert.artist)); setCatalogSelection(null); }} onSearch={onSearchCatalog} placeholder={t("Artist name")} />
-          </label>
-          <div className="grid grid-cols-[minmax(0,1fr)_7rem] gap-3">
-            <label className="block"><span className="mb-2 block text-xs font-bold uppercase tracking-widest text-zinc-500">{t("City")}</span><ConcertCatalogField field="city" value={city} context={catalogContext} onChange={(value) => { setCity(value); setCountry(""); setCatalogSelection(null); }} onPick={(concert) => { setCity(concert.city); setCountry(String(concert.country || "").toUpperCase()); setCatalogSelection(null); }} onSearch={onSearchCatalog} placeholder={t("City")} /></label>
-            <label className="block"><span className="mb-2 block text-xs font-bold uppercase tracking-widest text-zinc-500">{t("Country code")}</span><input value={country} onChange={(event) => setCountry(event.target.value.toUpperCase().slice(0, 2))} placeholder="ES" maxLength="2" className="w-full rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3 uppercase text-zinc-100 outline-none focus:border-zinc-400" /><span className="mt-1 block text-xs text-zinc-600">{t("Use the two-letter code, for example ES.")}</span></label>
-          </div>
-          <label className="block">
-            <span className="mb-2 block text-xs font-bold uppercase tracking-widest text-zinc-500">{t("Venue")} {!isPastDate && <span className="ml-1 normal-case tracking-normal text-zinc-600">({t("optional")})</span>}</span>
-            <ConcertCatalogField field="venue" value={venue} context={catalogContext} onChange={(value) => { setVenue(uppercaseConcertLabel(value)); setCatalogSelection(null); }} onPick={(concert) => { setVenue(uppercaseConcertLabel(concert.venue)); setCatalogSelection(null); }} onSearch={onSearchCatalog} placeholder={t("Venue or festival")} />
-          </label>
-          <label className="block">
-            <span className="mb-2 block text-xs font-bold uppercase tracking-widest text-zinc-500">{t("Date")}</span>
-            <ConcertCatalogField field="date" value={date} context={catalogContext} onChange={(value) => { setDate(value); setCatalogSelection(null); }} onPick={(concert) => { setDate(concert.date); setCatalogSelection(null); }} onSearch={onSearchCatalog} placeholder="DD/MM/YYYY" />
-          </label>
-          {!isPastDate && (
-            <label className="block">
-              <span className="mb-2 block text-xs font-bold uppercase tracking-widest text-zinc-500">{t("Ticket / event link")} <span className="normal-case tracking-normal text-zinc-600">({t("optional")})</span></span>
-              <input type="url" value={ticketUrl} onChange={(e) => setTicketUrl(e.target.value)} placeholder="https://…" className="w-full rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-zinc-100 outline-none focus:border-zinc-400" />
-            </label>
-          )}
-          <EventDetailsFields value={eventDetails} onChange={setEventDetails} />
-          <label className="block">
-            <span className="mb-2 block text-xs font-bold uppercase tracking-widest text-zinc-500">{t("Attended with")} <span className="normal-case tracking-normal text-zinc-600">({t("optional")})</span></span>
-            <FriendAttendeePicker friends={friends} selectedIds={attendeeUserIds} onChange={setAttendeeUserIds} />
-            <input type="text" value={guestAttendees} onChange={(e) => setGuestAttendees(e.target.value)} placeholder={t("Other attendees (comma separated)")} className="mt-2 w-full rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-zinc-100 outline-none focus:border-zinc-400" />
-            <span className="mt-1 block text-xs text-zinc-600">{t("Separate multiple names with commas.")}</span>
-          </label>
-          {!isPastDate && (
-            <label className="flex items-center gap-3 rounded-2xl border border-zinc-800 bg-zinc-900 px-4 py-3 text-sm text-zinc-300">
-              <input type="checkbox" checked={bought} onChange={(e) => setBought(e.target.checked)} />
-              <i className="fa-solid fa-ticket text-zinc-500" aria-hidden="true" /><span>{t("Ticket bought")}</span>
-            </label>
-          )}
-        </div>}
-        </div>
-        {entryMode === "manual" && <div className="shrink-0 border-t border-zinc-900 bg-zinc-950 px-6 py-4">
-          <button onClick={submit} disabled={isSaving} className="adn-button-primary adn-save-button w-full">{isSaving && <i className="fa-solid fa-circle-notch fa-spin" aria-hidden="true" />}{t(isSaving ? "Saving..." : "Add concert")}</button>
-          {validationError && <div className="mt-3 rounded-2xl border border-amber-900 bg-amber-950/30 px-4 py-3 text-sm font-semibold text-amber-200" role="alert">{validationError}</div>}
-          {saveError && <div className="mt-3 rounded-2xl border border-red-900 bg-red-950/40 px-4 py-3 text-sm text-red-200">{saveError}</div>}
-        </div>}
-      </div>
-    </div>
-  );
-}
-
-// ─── Upcoming concert calendar ────────────────────────────────────────────────
 
 function CalendarExportMenu({ items, compact = false, iconOnly = false }) {
   const { t } = useI18n();
@@ -1015,192 +541,6 @@ function CalendarFilterMenu({ value, onChange, compact = false }) {
   return <DropdownMenu value={value} onChange={onChange} compact={compact} ariaLabel={t("Filter calendar")} iconOnly={compact} buttonLabel={compact ? <i className={`fa-solid fa-filter ${value !== "all" ? "text-blue-400" : ""}`} aria-hidden="true" /> : undefined} className={compact ? "[&_summary]:flex [&_summary]:h-12 [&_summary]:w-12 [&_summary]:items-center [&_summary]:justify-center [&_summary]:!p-0" : ""} options={[{value:"all",label:t("All concerts")},{value:"history",label:t("History")},{value:"bought",label:t("Tickets bought")},{value:"not-bought",label:t("Tickets to buy")}]} />;
 }
 
-function NextConcertCalendar({ items, visibleMonth, setVisibleMonth, onOpen, onContextMenu, onContextMenuAt }) {
-  const { t, locale } = useI18n();
-  const [monthPickerOpen, setMonthPickerOpen] = useState(false);
-  const [highlightedDay, setHighlightedDay] = useState(null);
-  const monthPickerRef = useRef(null);
-  const swipeStartRef = useRef(null);
-  const datedItems = useMemo(
-    () => items
-      .map((concert) => {
-        const range = parseConcertDateRange(concert.date);
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        return { ...concert, range, isPast: Boolean(range && range.end < today) };
-      })
-      .filter(({ range }) => range)
-      .sort((a, b) => a.range.start - b.range.start),
-    [items]
-  );
-  const year = visibleMonth.getFullYear();
-  const month = visibleMonth.getMonth();
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const leadingDays = (new Date(year, month, 1).getDay() + 6) % 7;
-  const monthLabel = new Intl.DateTimeFormat(locale, { month: "long", year: "numeric" }).format(visibleMonth);
-  const weekdays = Array.from({ length: 7 }, (_, index) => new Intl.DateTimeFormat(locale, { weekday: "short" }).format(new Date(2024, 0, index + 1)));
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  useEffect(() => {
-    if (!monthPickerOpen) return undefined;
-    function dismiss(event) {
-      if (!monthPickerRef.current?.contains(event.target)) setMonthPickerOpen(false);
-    }
-    document.addEventListener("pointerdown", dismiss);
-    return () => document.removeEventListener("pointerdown", dismiss);
-  }, [monthPickerOpen]);
-
-  function moveMonth(offset) {
-    setVisibleMonth((current) => new Date(current.getFullYear(), current.getMonth() + offset, 1));
-    setHighlightedDay(null);
-  }
-
-  function eventInteractionProps(concert) {
-    return {
-      onClick(event) {
-        if (!event.currentTarget._adnLongPressed && !event.currentTarget._adnTouchMoved) onOpen(concert);
-      },
-      onContextMenu(event) {
-        onContextMenu(event, concert);
-      },
-      onTouchStart(event) {
-        const touch = event.touches[0];
-        const button = event.currentTarget;
-        button._adnTouchMoved = false;
-        button._adnTouchTimer = setTimeout(() => {
-          if (!button._adnTouchMoved) {
-            button._adnLongPressed = true;
-            if (navigator.vibrate) navigator.vibrate(20);
-            onContextMenuAt(touch.clientX, touch.clientY, concert);
-          }
-        }, 500);
-      },
-      onTouchMove(event) {
-        event.currentTarget._adnTouchMoved = true;
-        clearTimeout(event.currentTarget._adnTouchTimer);
-      },
-      onTouchEnd(event) {
-        const button = event.currentTarget;
-        clearTimeout(button._adnTouchTimer);
-        setTimeout(() => { button._adnLongPressed = false; }, 400);
-      },
-      onTouchCancel(event) {
-        clearTimeout(event.currentTarget._adnTouchTimer);
-        event.currentTarget._adnLongPressed = false;
-      },
-    };
-  }
-
-  return (
-    <section className="rounded-3xl border border-zinc-800 bg-zinc-900 p-3 md:p-6">
-      <div ref={monthPickerRef} className="relative mb-5 flex flex-wrap items-center justify-start gap-2">
-        <button onClick={() => { setVisibleMonth(new Date(today.getFullYear(), today.getMonth(), 1)); setHighlightedDay(null); setMonthPickerOpen(false); }} className="rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-2.5 text-sm font-black text-zinc-100 transition hover:border-zinc-500">{t("Today")}</button>
-        <button onClick={() => moveMonth(-1)} className="rounded-xl px-3 py-2.5 text-sm text-zinc-400 transition hover:bg-zinc-800 hover:text-white" aria-label={t("Previous month")}><i className="fa-solid fa-chevron-up" aria-hidden="true" /></button>
-        <button onClick={() => moveMonth(1)} className="rounded-xl px-3 py-2.5 text-sm text-zinc-400 transition hover:bg-zinc-800 hover:text-white" aria-label={t("Next month")}><i className="fa-solid fa-chevron-down" aria-hidden="true" /></button>
-        <button onClick={() => setMonthPickerOpen((open) => !open)} className="rounded-xl px-4 py-2 text-xl font-black text-zinc-100 transition hover:bg-zinc-800 md:text-2xl" aria-label={t("Choose month, {month}", { month: monthLabel })} aria-expanded={monthPickerOpen}>
-          {monthLabel} <i className="fa-solid fa-chevron-down ml-2 text-xs text-zinc-500" aria-hidden="true" />
-        </button>
-        {monthPickerOpen && (
-          <div className="absolute right-0 top-full z-30 mt-2 w-full max-w-sm rounded-3xl border border-zinc-700 bg-zinc-950 p-5 shadow-2xl sm:right-auto">
-            <div className="mb-4 flex items-center justify-between">
-              <span className="text-xl font-black text-zinc-100">{year}</span>
-              <div className="flex gap-1">
-                <button onClick={() => { setVisibleMonth(new Date(year - 1, month, 1)); setHighlightedDay(null); }} className="rounded-xl px-3 py-2 text-sm text-zinc-400 hover:bg-zinc-800 hover:text-white" aria-label={t("Previous year")}><i className="fa-solid fa-chevron-up" aria-hidden="true" /></button>
-                <button onClick={() => { setVisibleMonth(new Date(year + 1, month, 1)); setHighlightedDay(null); }} className="rounded-xl px-3 py-2 text-sm text-zinc-400 hover:bg-zinc-800 hover:text-white" aria-label={t("Next year")}><i className="fa-solid fa-chevron-down" aria-hidden="true" /></button>
-              </div>
-            </div>
-            <div className="grid grid-cols-4 gap-2">
-              {Array.from({ length: 12 }, (_, monthIndex) => new Intl.DateTimeFormat(locale, { month: "short" }).format(new Date(2020, monthIndex, 1))).map((label, monthIndex) => (
-                <button key={label} onClick={() => { setVisibleMonth(new Date(year, monthIndex, 1)); setHighlightedDay(null); setMonthPickerOpen(false); }} className={`rounded-xl px-2 py-3 text-sm font-semibold transition ${monthIndex === month ? "bg-zinc-100 text-zinc-950" : "text-zinc-300 hover:bg-zinc-800 hover:text-white"}`}>
-                  {label}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-
-      <div
-        className="grid grid-cols-7 gap-1 md:gap-2"
-        style={{ touchAction: "pan-y" }}
-        onTouchStart={(event) => {
-          const touch = event.touches[0];
-          swipeStartRef.current = { x: touch.clientX, y: touch.clientY };
-        }}
-        onTouchEnd={(event) => {
-          const start = swipeStartRef.current;
-          swipeStartRef.current = null;
-          if (!start || !event.changedTouches[0]) return;
-          const touch = event.changedTouches[0];
-          const deltaX = touch.clientX - start.x;
-          const deltaY = touch.clientY - start.y;
-          if (Math.abs(deltaX) < 50 || Math.abs(deltaX) <= Math.abs(deltaY) * 1.25) return;
-          moveMonth(deltaX > 0 ? -1 : 1);
-          setMonthPickerOpen(false);
-        }}
-        onTouchCancel={() => { swipeStartRef.current = null; }}
-      >
-        {weekdays.map((day) => <div key={day} className="pb-2 text-center text-[10px] font-bold uppercase text-zinc-600 md:text-xs">{day}</div>)}
-        {Array.from({ length: leadingDays }).map((_, index) => <div key={`empty-${index}`} className="min-h-20 rounded-xl bg-zinc-950/30 md:min-h-32" />)}
-        {Array.from({ length: daysInMonth }, (_, index) => {
-          const day = index + 1;
-          const calendarDay = new Date(year, month, day);
-          const concerts = datedItems.filter(({ range }) => calendarDay >= range.start && calendarDay <= range.end);
-          const isToday = calendarDay.getTime() === today.getTime();
-          return (
-            <div key={day} className={`relative h-20 overflow-hidden rounded-xl border p-1.5 md:h-auto md:min-h-32 md:overflow-visible md:rounded-2xl md:p-2 ${concerts.length ? "border-zinc-700 bg-zinc-950" : "border-zinc-800/60 bg-zinc-950/40"}`}>
-              <div className="mb-1 flex justify-end text-[10px] font-bold md:text-xs"><span className={`inline-flex h-5 w-5 items-center justify-center rounded-full ${isToday ? "bg-blue-500/15 text-blue-300 ring-1 ring-inset ring-blue-500/30" : "text-zinc-600"}`} aria-current={isToday ? "date" : undefined}>{day}</span></div>
-              {concerts.length > 0 && (
-                <div className="md:hidden">
-                  <button type="button" aria-pressed={highlightedDay === calendarDay.getTime()} aria-label={concerts.length === 1 ? t("Highlight {artist} in the monthly list", { artist: concerts[0].artist }) : t("Highlight {count} concerts in the monthly list", { count: concerts.length })} onClick={() => setHighlightedDay(calendarDay.getTime())} className={`block w-full truncate rounded-md border px-1 py-1 text-center text-[8px] font-bold text-zinc-100 transition-[filter,box-shadow] ${concerts.some((concert) => concert.isPast) ? "border-blue-700 bg-blue-950" : concerts.some((concert) => concert.bought) ? "border-emerald-700 bg-emerald-900" : "border-amber-700 bg-amber-950"} ${highlightedDay === calendarDay.getTime() ? "brightness-110 ring-1 ring-inset ring-white/40" : ""}`}>
-                    {concerts.length === 1 ? concerts[0].artist : t("{count} shows", { count: concerts.length })}
-                  </button>
-                </div>
-              )}
-              <div className="hidden space-y-1 md:block">
-                {concerts.map((concert) => (
-                  <button
-                    key={`${concert.source}-${concert.artist}-${concert.date}-${concert.show || ""}`}
-                    {...eventInteractionProps(concert)}
-                    onClick={(event) => { event.stopPropagation(); eventInteractionProps(concert).onClick(event); }}
-                    className={`block w-full overflow-hidden rounded-md border px-1.5 py-1 text-left text-[8px] font-bold leading-tight text-zinc-100 transition hover:brightness-110 md:rounded-lg md:px-2 md:py-1.5 md:text-[11px] ${concert.isPast ? "border-blue-700 bg-blue-950" : concert.bought ? "border-emerald-700 bg-emerald-900" : "border-amber-700 bg-amber-950"}`}
-                    title={`${concert.artist} — ${concert.date}${concert.venue ? ` — ${concert.venue}` : ""}`}
-                  >
-                    <span className="block truncate">{concert.artist}</span>
-                    {concert.date.includes(" - ") && <span className="mt-0.5 hidden font-medium opacity-90 md:block">{concert.date}</span>}
-                  </button>
-                ))}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {datedItems.some(({ range }) => range.start <= new Date(year, month + 1, 0) && range.end >= new Date(year, month, 1)) && (
-        <section className="mt-4 md:hidden">
-          <h3 className="mb-2 text-[10px] font-black uppercase tracking-[0.14em] text-zinc-500">{t("This month")}</h3>
-          <div className="space-y-2">
-            {datedItems.filter(({ range }) => range.start <= new Date(year, month + 1, 0) && range.end >= new Date(year, month, 1)).map((concert) => {
-              const highlighted = highlightedDay !== null && highlightedDay >= concert.range.start.getTime() && highlightedDay <= concert.range.end.getTime();
-              return <button key={`month-${concert.source}-${concert.artist}-${concert.date}-${concert.venue || ""}`} data-calendar-highlighted={highlighted || undefined} {...eventInteractionProps(concert)} className={`flex min-h-12 w-full items-center gap-3 rounded-lg border px-3 py-2 text-left transition-[filter,box-shadow] ${concert.isPast ? "border-blue-700 bg-blue-950" : concert.bought ? "border-emerald-700 bg-emerald-900" : "border-amber-700 bg-amber-950"} ${highlighted ? "brightness-110 ring-1 ring-inset ring-white/40" : ""}`}>
-                <span className="w-12 shrink-0 text-xs font-black tabular-nums text-zinc-100">{concert.date.slice(0, 5)}</span>
-                <span className="min-w-0"><span className="block truncate text-xs font-black uppercase text-zinc-100">{concert.artist}</span>{concert.venue && <span className="mt-0.5 block truncate text-[10px] text-zinc-300">{concert.venue}</span>}</span>
-              </button>;
-            })}
-          </div>
-        </section>
-      )}
-
-      <div className="mt-5 flex flex-wrap items-center justify-center gap-4 text-xs text-zinc-500">
-        <span className="flex items-center gap-2"><span className="h-3 w-3 rounded-sm border border-blue-700 bg-blue-950" /> {t("History")}</span>
-        <span className="flex items-center gap-2"><span className="h-3 w-3 rounded-sm border border-emerald-700 bg-emerald-900" /> {t("Ticket bought")}</span>
-        <span className="flex items-center gap-2"><span className="h-3 w-3 rounded-sm border border-amber-700 bg-amber-950" /> {t("Ticket not bought")}</span>
-      </div>
-
-    </section>
-  );
-}
 
 function CalendarConcertModal({ target, artistImages, onClose, onEdit }) {
   const { t } = useI18n();
@@ -1252,7 +592,7 @@ function ConfirmActionModal({ confirmation, onClose, onConfirm, isSaving, error 
   const confirmed = !confirmation.confirmationText || typedConfirmation === confirmation.confirmationText;
   const streamlined = confirmation.hideIcon === true;
   return (
-    <div className="adn-modal-backdrop fixed inset-0 z-[60] flex items-center justify-center bg-black/70 px-4" onMouseDown={(event) => { if (event.target === event.currentTarget && !isSaving) onClose(); }}>
+    <div className="adn-modal-backdrop fixed inset-0 z-[60] flex items-center justify-center bg-black/70 px-4">
       <div ref={dialogRef} role="alertdialog" aria-modal="true" aria-labelledby="confirm-action-title" aria-describedby="confirm-action-description" className={`adn-modal-panel w-full max-w-sm rounded-3xl border bg-zinc-950 p-6 shadow-2xl ${streamlined ? "border-zinc-700" : "border-red-950"}`}>
         {streamlined ? <div className="mb-3 flex items-start justify-between gap-4"><h2 id="confirm-action-title" className="pt-1 text-xl font-black uppercase tracking-tight">{t(confirmation.title)}</h2><ModalCloseButton onClick={onClose} disabled={isSaving} /></div> : <><div className="mb-5 flex h-11 w-11 items-center justify-center rounded-2xl border border-red-900/60 bg-red-950/30 text-red-300"><i className={`fa-solid ${confirmation.icon || "fa-triangle-exclamation"}`} aria-hidden="true" /></div><h2 id="confirm-action-title" className="mb-2 text-xl font-black uppercase tracking-tight">{t(confirmation.title)}</h2></>}
         <p id="confirm-action-description" className={`${confirmation.confirmationText ? "mb-4" : "mb-6"} text-sm leading-relaxed text-zinc-400`}>{t(confirmation.description)}</p>
@@ -1424,7 +764,7 @@ function AppBootstrapShell() {
 
 function DeferredPage({ children }) {
   const { t } = useI18n();
-  return <React.Suspense fallback={<div className="h-64 animate-pulse rounded-3xl border border-zinc-800 bg-zinc-900" role="status" aria-label={t("Opening page")} />}>{children}</React.Suspense>;
+  return <PageErrorBoundary resetKey={window.location.pathname}><React.Suspense fallback={<div className="h-64 animate-pulse rounded-3xl border border-zinc-800 bg-zinc-900" role="status" aria-label={t("Opening page")} />}>{children}</React.Suspense></PageErrorBoundary>;
 }
 
 function ChangePasswordModal({ mode, email, onClose }) {
@@ -1582,6 +922,8 @@ function DesktopNavigation({ activePage, profile, attentionCount, hasConcerts, o
 }
 
 export default function App() {
+  const dialogGuard = useDialogGuard();
+  const guardedClose = action => dialogGuard ? dialogGuard.requestClose(action) : action();
   const { language, setLanguage, t } = useI18n();
   const initialRoute = useMemo(() => readRouteFromLocation(), []);
   const [theme, setTheme] = useState(() => document.documentElement.dataset.theme === "poster" ? "poster" : "archive");
@@ -1679,11 +1021,11 @@ export default function App() {
   }
   const filterOwnerRef = useRef(currentUserId);
   useEffect(() => {
-    if (filterOwnerRef.current && filterOwnerRef.current !== currentUserId) { setStatsFilters({}); setCalendarFilter("all"); }
+    if (filterOwnerRef.current && filterOwnerRef.current !== currentUserId) { setStatsFilters({}); setCalendarFilter("all"); clearSearchCaches(); externalCatalogCache.clear(); setlistCache.clear(); dialogGuard?.reset(); }
     filterOwnerRef.current = currentUserId;
   }, [currentUserId]);
   const currentEmail = session?.user?.email?.toLowerCase() || "";
-  const { dataReady, dataOwnerId, dataLoadError, syncError, isRefreshing, reloadAppData, retrySync } = useArchiveSync(currentUserId, applyAppData, setTheme);
+  const { dataReady, dataOwnerId, dataLoadError, syncError, isRefreshing, reloadAppData, refreshAfterWrite, acceptArchive, retrySync } = useArchiveSync(currentUserId, applyAppData, setTheme);
   const currentUserName = appProfile?.displayName || "";
   const isAdmin = !supabaseEnabled || appProfile?.role === "admin";
   const canEdit = !supabaseEnabled || Boolean(appProfile);
@@ -1863,6 +1205,7 @@ export default function App() {
       }
       setAuthReady(true);
       if (!nextSession) {
+        clearSearchCaches(); externalCatalogCache.clear(); setlistCache.clear();
         setCalendarPosition(null);
         try { sessionStorage.removeItem("adn-calendar-month"); } catch { /* In-memory state is already cleared. */ }
         void clearAppCache();
@@ -1893,6 +1236,11 @@ export default function App() {
     if (!isPasswordRecovery && !isLoggedOutRoot && window.location.pathname !== "/spotify/callback") window.history.replaceState({ adnRoute: true, canGoBack: false }, "", routeToPath(initial) + (filterScope(initial.page) ? window.location.search : ""));
 
     function restoreRoute() {
+      if (dialogHistoryOpenRef.current && dialogGuard && !dialogGuard.canClose()) {
+        window.history.pushState({ ...window.history.state, adnModal: true }, "", window.location.href);
+        dialogGuard.requestClose(() => window.history.back());
+        return;
+      }
       if (dialogHistoryOpenRef.current || closingDialogWithBackRef.current) {
         const scrollY = dialogScrollYRef.current;
         dialogHistoryOpenRef.current = false;
@@ -2033,6 +1381,7 @@ export default function App() {
     const storedConcert = concertItems.find((concert) => concertMatches(concert, target));
     setSetlistTarget({
       ...target,
+      ...storedConcert,
       concertId: storedConcert?.concertId || target.concertId,
       canEditEvent: storedConcert?.canEditEvent ?? target.canEditEvent,
       mode: isPastConcert(storedConcert || target) ? "history" : "next",
@@ -2112,6 +1461,7 @@ export default function App() {
       doorsAt: data.doorsAt || "", startsAt: data.startsAt || "", address: data.address || "", latitude: data.latitude || "", longitude: data.longitude || "", promoter: data.promoter || "",
       festival: data.festival || "", tour: data.tour || "", eventStatus: data.eventStatus || "announced", lineup: data.lineup || [{ artist: uppercaseConcertLabel(data.artist.trim()) }],
       source: data.source || "", sourceEventId: data.sourceEventId || "", sourceUrl: data.sourceUrl || "",
+      ...(data.setlistId ? {setlistId:data.setlistId} : {}),
       ...(data.guestAttendees?.length ? { attendees: data.guestAttendees } : {}),
       ...(!pastConcert && normalizeTicketUrl(data.ticketUrl) ? { ticketUrl: normalizeTicketUrl(data.ticketUrl) } : {}),
     };
@@ -2119,9 +1469,7 @@ export default function App() {
     try {
       const updatedDismissed = suggestion ? dismissedSuggestions.filter((key) => !isDismissedSuggestion(suggestion, [key])) : dismissedSuggestions;
       if (supabaseEnabled) {
-        await upsertMyConcert(newConcert);
-        if (suggestion) await saveDismissedSuggestions(updatedDismissed);
-        await reloadAppData();
+        await acceptArchive(suggestion ? await reviewMySuggestion(suggestion,true,dismissedSuggestions) : await upsertMyConcert(newConcert));
       } else {
         const updatedConcerts = [...concertItems, newConcert];
         const dates = suggestion ? { ...suggestionReviewDates, local: { ...suggestionReviewDates.local, [suggestionKey(suggestion)]: new Date().toISOString() } } : suggestionReviewDates;
@@ -2142,8 +1490,7 @@ export default function App() {
     setIsSaving(true); setSaveError("");
     try {
       if (supabaseEnabled) {
-        await upsertMyConcert({ ...data, concertId: editTarget.concertId, bought: editTarget.mode === "history" ? true : Boolean(data.bought) });
-        await reloadAppData();
+        await acceptArchive(await upsertMyConcert({ ...data, concertId: editTarget.concertId, bought: isPastConcert(data) ? true : Boolean(data.bought) }));
       } else {
         const updatedConcerts = updateConcert(concertItems, editTarget, data);
         await saveConcertData(concertDataPayload(updatedConcerts), `Edit concert: ${data.artist}${data.venue ? " — " + data.venue : ""} (${data.date})`);
@@ -2160,8 +1507,8 @@ export default function App() {
 
   function startEditFromContext() {
     const t = contextMenu.target; closeContextMenu(); if (!t) return;
-    if (t.mode === "next") setEditTarget({ ...t, mode: "next" });
-    else setEditTarget({ ...t, mode: "history" });
+    const stored = concertItems.find(concert => concertMatches(concert, t));
+    setEditTarget({ ...t, ...stored, mode: isPastConcert(stored || t) ? "history" : "next" });
   }
 
   function deleteFromContext() {
@@ -2175,7 +1522,7 @@ export default function App() {
       action: async () => {
         if (supabaseEnabled && target.concertId) {
           await deleteMyConcert(target.concertId);
-          await reloadAppData();
+          await refreshAfterWrite();
         } else {
           const updatedConcerts = removeConcert(concertItems, target);
           await saveConcertData(concertDataPayload(updatedConcerts), `Delete concert: ${target.artist}${target.venue ? " — " + target.venue : ""} (${target.date})`);
@@ -2205,7 +1552,7 @@ export default function App() {
 
   async function runSocialAction(action) {
     await action();
-    await reloadAppData();
+    await refreshAfterWrite();
   }
 
   async function handleProfileExport() {
@@ -2227,10 +1574,8 @@ export default function App() {
     const action = async () => {
       const updatedDismissed = [...new Set([...dismissedSuggestions, suggestionKey(suggestion)])];
       const updatedConcerts = matchingConcert ? concertItems.filter((concert) => !concertMatches(concert, matchingConcert)) : concertItems;
-      if (supabaseEnabled) {
-        if (matchingConcert?.concertId) await deleteMyConcert(matchingConcert.concertId);
-        await saveDismissedSuggestions(updatedDismissed);
-        await reloadAppData();
+    if (supabaseEnabled) {
+        await acceptArchive(await reviewMySuggestion(suggestion,false));
       } else {
         const dates = { ...suggestionReviewDates, local: { ...suggestionReviewDates.local, [suggestionKey(suggestion)]: new Date().toISOString() } };
         await saveConcertData(concertDataPayload(updatedConcerts, updatedDismissed, dates), `Mark suggestion not interested: ${suggestion.artist} (${suggestion.date})`);
@@ -2403,9 +1748,9 @@ export default function App() {
             headerTarget={headerControlsNode}
           /></DeferredPage></>
         ) : isSuggestions ? suggestionsPage
-        : isAdminPage ? <DeferredPage><AdminPage currentUserId={currentUserId} onChanged={reloadAppData} onConfirm={(confirmation) => { setSaveError(""); setConfirmAction(confirmation); }} /></DeferredPage>
-        : isProfile ? <DeferredPage><ProfilePage profile={appProfile} futureArtists={[...new Set(concertItems.filter((concert) => !isPastConcert(concert)).map((concert) => concert.artist))]} theme={theme} language={language} isAdmin={isAdmin} onThemeChange={changeTheme} onLanguageChange={changeLanguage} onAdmin={() => changePage("admin")} onSignOut={() => supabase.auth.signOut()} onSave={async (payload) => { await updateMyProfile(payload); await reloadAppData(); }} onExport={handleProfileExport} onDelete={async () => { await deleteMyAccount(); await supabase.auth.signOut(); }} onPassword={() => setPasswordModalMode("change")} onConfirm={(confirmation) => { setSaveError(""); setConfirmAction(confirmation); }} onSpotifyChanged={reloadAppData} onImported={reloadAppData} /></DeferredPage>
-        : isActivity ? <DeferredPage><ActivityPage notifications={notifications} onRead={async (ids) => { await markNotificationsRead(ids); await reloadAppData(); }} onOpenFriends={() => changePage("friends")} onNavigate={changePage} onOpenConcert={(item) => { const concert=concertItems.find((candidate)=>candidate.concertId===item.concertId); if(concert) setCalendarTarget({ ...concert, mode:isPastConcert(concert)?"history":"next" }); }} /></DeferredPage>
+        : isAdminPage ? <DeferredPage><AdminPage currentUserId={currentUserId} onChanged={refreshAfterWrite} onConfirm={(confirmation) => { setSaveError(""); setConfirmAction(confirmation); }} /></DeferredPage>
+        : isProfile ? <DeferredPage><ProfilePage profile={appProfile} futureArtists={[...new Set(concertItems.filter((concert) => !isPastConcert(concert)).map((concert) => concert.artist))]} theme={theme} language={language} isAdmin={isAdmin} onThemeChange={changeTheme} onLanguageChange={changeLanguage} onAdmin={() => changePage("admin")} onSignOut={() => supabase.auth.signOut()} onSave={async (payload) => { await updateMyProfile(payload); await refreshAfterWrite(); }} onExport={handleProfileExport} onDelete={async () => { await deleteMyAccount(); await supabase.auth.signOut(); }} onPassword={() => setPasswordModalMode("change")} onConfirm={(confirmation) => { setSaveError(""); setConfirmAction(confirmation); }} onSpotifyChanged={reloadAppData} onImported={refreshAfterWrite} /></DeferredPage>
+        : isActivity ? <DeferredPage><ActivityPage notifications={notifications} onRead={async (ids) => { await markNotificationsRead(ids); await refreshAfterWrite(); }} onOpenFriends={() => changePage("friends")} onNavigate={changePage} onOpenConcert={(item) => { const concert=concertItems.find((candidate)=>candidate.concertId===item.concertId); if(concert) setCalendarTarget({ ...concert, mode:isPastConcert(concert)?"history":"next" }); }} /></DeferredPage>
         : isFriendProfile ? <DeferredPage><FriendProfilePage friend={selectedFriend} /></DeferredPage>
         : isFriends ? <DeferredPage><FriendsPage friends={friends} requests={friendRequests} invitations={concertInvitations} onSearch={searchProfiles} onSendRequest={(userId) => runSocialAction(() => sendFriendRequest(userId))} onRespondRequest={(requestId, accept) => runSocialAction(() => respondFriendRequest(requestId, accept))} onRequestRemoveFriend={(friend) => { setSaveError(""); setConfirmRemoveFriend(friend); }} onSetInvitationStatus={(concertId,status,bought) => runSocialAction(() => setConcertInvitationStatus(concertId,status,bought))} onOpenProfile={openFriendProfile} /></DeferredPage> : isStats ? <>{headerControlsNode && statsScopeControl && createPortal(statsScopeControl, headerControlsNode)}<DeferredPage><StatsPage historyItems={scopedHistoryItems} historyConcerts={scopedHistoryConcerts} selectedFriends={friends.filter((friend)=>statsFriendIds.includes(friend.id))} friendMode={statsFilters.friendMode || "all"} onOpenArtist={openArtistDetail} onOpenVenue={openVenueDetail} onOpenCountry={openCountryDetail} onOpenYearReview={openYearReview} /></DeferredPage></> : (
           <>
@@ -2434,14 +1779,14 @@ export default function App() {
 
             {isNext ? (
               <>
-                <NextConcertCalendar
+                <DeferredPage><NextConcertCalendar
                   items={calendarItems}
                   visibleMonth={calendarMonth}
                   setVisibleMonth={setCalendarMonth}
                   onOpen={(concert) => setCalendarTarget({ ...concert, mode: concert.source === "history" ? "history" : "next" })}
                   onContextMenu={(event, concert) => openContextMenu(event, { ...concert, mode: concert.source === "history" ? "history" : "next" })}
                   onContextMenuAt={(x, y, concert) => openContextMenuAt(x, y, { ...concert, mode: concert.source === "history" ? "history" : "next" })}
-                />
+                /></DeferredPage>
               </>
             ) : (
             <><section className="grid w-full gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -2468,7 +1813,7 @@ export default function App() {
                         ? { mode: "next", artist: item.artist, date: item.date, bought: item.bought, venue: item.venue || "" }
                         : { mode: "history", artist: item.artist, show, venue, date, setlistId };
                       const storedConcert = concertItems.find((concert) => concertMatches(concert, target));
-                      const concertTarget = { ...target, concertId: storedConcert?.concertId, city: storedConcert?.city || "", country: storedConcert?.country || "", canEditEvent: storedConcert?.canEditEvent, attendees: storedConcert?.attendees || [], attendeeUsers: storedConcert?.attendeeUsers || [], guestAttendees: storedConcert?.guestAttendees || [], setlistId: storedConcert?.setlistId || setlistId, ticketUrl: storedConcert?.ticketUrl || "" };
+                      const concertTarget = { ...target, ...storedConcert, setlistId: storedConcert?.setlistId || setlistId };
                       let touchTimer = null, touchMoved = false, longPressed = false;
                       return (
                         <div
@@ -2527,21 +1872,21 @@ export default function App() {
         finally { setIsSaving(false); }
       }} />
 
-      {canEdit && <AddConcertModal isOpen={modalOpen} initial={addInitial} onClose={() => { setModalOpen(false); setAddInitial(null); }} onSave={handleAddConcert} isSaving={isSaving} saveError={saveError} friends={companionFriends} onSearchCatalog={searchAvailableConcertCatalog} />}
-      {canEdit && <EditConcertModal isOpen={!!editTarget} mode={editTarget?.mode || mode} initial={editTarget} onClose={() => setEditTarget(null)} onSave={handleEditConcert} isSaving={isSaving} saveError={saveError} artistSuggestions={artistSuggestions} venueSuggestions={venueSuggestions} friends={companionFriends} />}
+      {canEdit && modalOpen && <React.Suspense fallback={null}><AddConcertModal isOpen={modalOpen} initial={addInitial} onClose={() => guardedClose(() => { setModalOpen(false); setAddInitial(null); })} onSave={handleAddConcert} isSaving={isSaving} saveError={saveError} friends={companionFriends} onSearchCatalog={searchAvailableConcertCatalog} /></React.Suspense>}
+      {canEdit && editTarget && <React.Suspense fallback={null}><EditConcertModal isOpen={!!editTarget} mode={editTarget?.mode || mode} initial={editTarget} onClose={() => guardedClose(() => setEditTarget(null))} onSave={handleEditConcert} isSaving={isSaving} saveError={saveError} artistSuggestions={artistSuggestions} venueSuggestions={venueSuggestions} friends={companionFriends} /></React.Suspense>}
       {canEdit && <ContextMenu open={contextMenu.open} x={contextMenu.x} y={contextMenu.y} onEdit={startEditFromContext} onDelete={deleteFromContext} onClose={closeContextMenu} />}
       <SetlistModal
         target={setlistTarget}
-        onClose={() => setSetlistTarget(null)}
-        onEdit={canEdit ? (target) => { setSetlistTarget(null); setEditTarget(target); } : null}
-        onLeave={supabaseEnabled ? async (target) => { setSaveError(""); setSetlistTarget(null); setConfirmAction({ title: t("Remove concert?"), description: t("This concert will be removed from your archive. It will remain visible to everyone else attending."), confirmLabel: t("Remove"), hideIcon: true, action: async () => { await leaveSharedConcert(target.concertId); await reloadAppData(); } }); } : null}
+        onClose={() => guardedClose(() => setSetlistTarget(null))}
+        onEdit={canEdit ? (target) => guardedClose(() => { setSetlistTarget(null); setEditTarget(target); }) : null}
+        onLeave={supabaseEnabled ? async (target) => { setSaveError(""); setSetlistTarget(null); setConfirmAction({ title: t("Remove concert?"), description: t("This concert will be removed from your archive. It will remain visible to everyone else attending."), confirmLabel: t("Remove"), hideIcon: true, action: async () => { await leaveSharedConcert(target.concertId); await refreshAfterWrite(); } }); } : null}
         onIdDiscovered={canEdit ? handleSetlistIdDiscovered : null}
       />
       <CalendarConcertModal
         target={calendarTarget}
         artistImages={artistImages}
-        onClose={() => setCalendarTarget(null)}
-        onEdit={canEdit ? (target) => { setCalendarTarget(null); setEditTarget(target); } : null}
+        onClose={() => guardedClose(() => setCalendarTarget(null))}
+        onEdit={canEdit ? (target) => guardedClose(() => { setCalendarTarget(null); setEditTarget(target); }) : null}
       />
     </main>
     </>

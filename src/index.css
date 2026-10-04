@@ -287,7 +287,17 @@ button[aria-label="View activity"] { display: flex; }
   transition: border-color 180ms var(--adn-ease-out), background-color 180ms var(--adn-ease-out);
 }
 
+.adn-concert-row button.pointer-events-auto { position: relative; }
+.adn-concert-row button.pointer-events-auto::after {
+  content: "";
+  position: absolute;
+  inset: -.375rem -.25rem;
+}
+@media (pointer: coarse) {
+  .adn-concert-row button.pointer-events-auto { min-height: var(--adn-inline-target); }
+}
 .adn-concert-row {
+  --adn-inline-target: 2.75rem;
   transition: border-color 160ms var(--adn-ease-out), background-color 160ms var(--adn-ease-out), box-shadow 160ms var(--adn-ease-out);
 }
 
@@ -404,19 +414,19 @@ button[aria-label="View activity"] { display: flex; }
   .adn-home .h-\[328px\],
   .adn-home .h-\[111px\],
   .adn-home .h-\[72px\] { height: auto; }
-  .adn-home > .grid:first-of-type > section:first-child { min-height: 360px; }
-  .adn-home > .grid:last-of-type > section { min-height: 200px; overflow: visible; }
+  .adn-home-featured { min-height: 360px; }
+  .adn-home-secondary { min-height: 200px; overflow: visible; }
 }
 
 @media (max-width: 639px) {
-  .adn-home > .grid:first-of-type > section:first-child h2 { max-width: 88%; font-size: 2rem; }
-  .adn-home > .grid:first-of-type > section:first-child > button > div:last-child > div { gap: .75rem; }
-  .adn-home > .grid:first-of-type > section:first-child > button > div:last-child > span { display: none; }
-  .adn-home > .grid:first-of-type > section:nth-child(2) { padding-inline: 1rem; }
-  .adn-home > .grid:first-of-type > section:nth-child(2) .grid > div { gap: .5rem; }
-  .adn-home > .grid:first-of-type > section:nth-child(2) .grid > div > span:first-child { width: 3rem; height: 3rem; }
-  .adn-home > .grid:first-of-type > section:nth-child(2) .grid strong { font-size: 1.5rem; }
-  .adn-home > .grid:first-of-type > section:nth-child(2) .grid b { font-size: .625rem; }
+  .adn-home-featured h2 { max-width: 88%; font-size: 2rem; }
+  .adn-home-featured > button > div:last-child > div { gap: .75rem; }
+  .adn-home-featured > button > div:last-child > span { display: none; }
+  .adn-home-year { padding-inline: 1rem; }
+  .adn-home-year .grid > div { gap: .5rem; }
+  .adn-home-year .grid > div > span:first-child { width: 3rem; height: 3rem; }
+  .adn-home-year .grid strong { font-size: 1.5rem; }
+  .adn-home-year .grid b { font-size: .625rem; }
 }
 
 @media (prefers-reduced-motion: reduce) {

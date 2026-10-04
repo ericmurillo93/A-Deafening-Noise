@@ -1,13 +1,14 @@
 import { requireArchiveUser } from "./lib/supabase-auth.js";
+import { matchSetlist } from "./lib/setlist-match.js";
 
 export async function handler(event) {
   if (event.httpMethod && event.httpMethod !== "POST") return { statusCode: 405, headers: { Allow: "POST" }, body: "Method not allowed" };
   const auth = await requireArchiveUser(event, { quota: "setlist" });
   if (auth.error) return auth.error;
 
-  let setlistId, artist, date, action, userId, pages;
+  let setlistId, artist, venue, date, action, userId, pages;
   try {
-    ({ setlistId, artist, date, action, userId, pages } = JSON.parse(event.body));
+    ({ setlistId, artist, venue, date, action, userId, pages } = JSON.parse(event.body));
   } catch {
     return { statusCode: 400, body: "Invalid JSON body" };
   }
@@ -59,7 +60,7 @@ export async function handler(event) {
   }
 
   // ── Path 2: search by artist name + date ────────────────────────────────────
-  if (!artist || !date) {
+  if (typeof artist !== "string" || typeof date !== "string" || !/^\d{2}\/\d{2}\/\d{4}$/.test(date)) {
     return respond(400, { error: "Provide either setlistId or both artist and date" });
   }
 
@@ -82,8 +83,8 @@ export async function handler(event) {
       return respond(404, { error: `No setlist found for ${artist} on ${date}` });
     }
 
-    // Return the first (best) match — it includes the id field at the top level
-    return respond(200, JSON.stringify(setlists[0]));
+    const match = matchSetlist(setlists, venue);
+    return match ? respond(200, match) : respond(404, { error: "No unambiguous setlist found for this venue." });
   } catch (err) {
     return respond(500, { error: err.message });
   }
