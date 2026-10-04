@@ -765,17 +765,28 @@ the merge. The selected event wins conflicting metadata; missing optional fields
 are filled from the removed event. `concert_merge_audit` stores actor, IDs and
 time. A merge is not automatically reversible: review and back up first.
 
-The eight `20261004` migrations are applied and verified **only in staging**.
-Production must receive them in chronological order before publishing this UI;
+The eight `20261004` migrations are applied and verified in **staging and production**.
+Production received them atomically on 4 October 2026 before publishing this UI;
 no new Netlify/GitHub secrets or paid services are required. Regression tests use
 synthetic browser fixtures and rolled-back staging SQL (`tests/database/collection-tools.sql`).
 
 ### Reliability and lightweight scaling — staging review, 4 October 2026
 
 Checkpoint `1203420` preserves the approved concert-modal work before this
-hardening pass. The subsequent work remains local for review; production is
-unchanged. Apply all pending migrations in chronological order before deploying
-the matching UI. No additional secrets, dependencies or paid services are needed.
+hardening pass; `df94c17` contains the reliability changes and `774940d` the
+viewport dropdown correction and reviewed visual baselines. Production schema
+was upgraded on 4 October 2026 after the complete local test pass. No additional
+secrets, dependencies or paid services are needed.
+
+The release used the existing Supabase Management API access, not a new database
+password. A private pre-release snapshot under `~/adn-backups/production-before-20261004-*`
+contains all public application tables, function definitions and schema introspection,
+with verified SHA-256 checksums and restrictive permissions. It is **not** a
+standalone `pg_dump` or complete Auth/Vault/Storage recovery package. All eight
+migrations and their version records were committed in a single transaction;
+post-release checks confirmed unchanged row counts for every pre-existing public
+table. A direct Postgres URL is still required for `npm run db:backup`, but not
+for authorised Management API migration operations.
 
 - `save_my_concert` writes and returns the authorised archive snapshot in one
   request. Omitted optional event metadata is preserved; explicit empty values
