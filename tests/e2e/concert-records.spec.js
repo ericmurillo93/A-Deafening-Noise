@@ -2,6 +2,7 @@ import { test, expect } from "@playwright/test";
 
 // Isolated component harness: no Supabase credentials, accounts or writes.
 test.beforeEach(async ({page}) => {
+  await page.emulateMedia({reducedMotion:"reduce"});
   await page.route("**/src/lib/supabase.js",route=>route.fulfill({contentType:"text/javascript",body:`
     export const supabaseEnabled=true;
     export async function getMyConcertJournal(){return {addedAt:'2026-10-01T12:00:00Z',changes:[],memory:JSON.parse(localStorage.getItem('quality-memory')||'null')};}
@@ -11,23 +12,32 @@ test.beforeEach(async ({page}) => {
     export async function removeConcertMemoryPhoto(){}
     export async function setMyConcertPhoto(id,path,keep){const memory=JSON.parse(localStorage.getItem('quality-memory')||'{}');memory.photoPaths=keep?[...(memory.photoPaths||[]),path]:(memory.photoPaths||[]).filter(item=>item!==path);localStorage.setItem('quality-memory',JSON.stringify(memory));}
   `}));
-  await page.route("**/__record-ui",route=>route.fulfill({contentType:"text/html",body:`<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"></head><body><div id="root"></div><script type="module">
+  await page.route("**/__record-ui*",route=>route.fulfill({contentType:"text/html; charset=utf-8",body:`<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body><div id="root"></div><script type="module">
     import RefreshRuntime from '/@react-refresh';
     RefreshRuntime.injectIntoGlobalHook(window);
     window.$RefreshReg$=()=>{};window.$RefreshSig$=()=>type=>type;window.__vite_plugin_react_preamble_installed__=true;
     await import('/src/index.css');
+    await import('/node_modules/@fortawesome/fontawesome-free/css/all.min.css');
     const React=(await import('/node_modules/.vite/deps/react.js')).default;
     const {createRoot}=(await import('/node_modules/.vite/deps/react-dom_client.js')).default;
     const {I18nProvider}=await import('/src/lib/i18n.jsx');
     const Journal=(await import('/src/components/ConcertJournal.jsx')).default;
     const Suggestions=(await import('/src/pages/SuggestionsPage.jsx')).default;
-    createRoot(document.getElementById('root')).render(React.createElement(I18nProvider,null,
+    const Dialog=(await import('/src/components/ConcertDialog.jsx')).default;
+    const {useDialogFocus,usePageScrollLock}=await import('/src/hooks/useUi.js');
+    const params=new URLSearchParams(location.search);
+    if(params.get('theme'))document.documentElement.dataset.theme=params.get('theme');
+    const concert={concertId:42,artist:'RIVERSIDE',venue:'SALA SALAMANDRA',date:'13/05/2017',creator:{displayName:'Eric'}};
+    function Modal(){const ref=useDialogFocus(true);usePageScrollLock(true);return React.createElement(Dialog,{concert,location:'L’Hospitalet de Llobregat, España',primaryLabel:'Setlist',journalEnabled:true,dialogRef:ref,onEdit:()=>{},onClose:()=>{}},tab=>React.createElement(React.Fragment,null,
+      React.createElement('div',{hidden:tab!=='details'},React.createElement('p',{className:'mb-4 text-sm text-zinc-400'},'Attended with · Papa'),React.createElement('ol',null,...Array.from({length:18},(_,index)=>React.createElement('li',{key:index,className:'border-b border-zinc-700 py-3 text-sm'},String(index+1).padStart(2,'0')+'   '+['Second Life Syndrome','Conceiving You','The Same River','Lost'][index%4])))),
+      React.createElement('div',{hidden:tab==='details'},React.createElement(Journal,{concert,view:tab==='activity'?'activity':'memories'}))));}
+    createRoot(document.getElementById('root')).render(React.createElement(I18nProvider,null,params.has('dialog')?React.createElement(Modal):React.createElement(React.Fragment,null,
       React.createElement('div',{id:'journal'},React.createElement(Journal,{concert:{concertId:42}})),
       React.createElement('div',{id:'suggestions'},React.createElement(Suggestions,{
         suggestions:[{id:'quality',artist:'EXAMPLE',date:'01/01/2030',firstSeenAt:'2026-10-01T12:00:00Z'}],
         artistImages:new Map(),reviews:{quality:{decision:'interested',reviewedAt:'2026-10-03T12:00:00Z'}},
         onInterested:()=>{},onNotInterested:()=>{},spotifyConnected:true
-      }))));
+      })))));
   </script></body></html>`}));
   await page.goto("/__record-ui");
 });
@@ -52,11 +62,11 @@ test("Rating has distinct selected stars and persists after save and reload",asy
 test("Concert and reviewed suggestion dates appear only after opening Information",async({page})=>{
   await expect(page.getByText("Event history",{exact:true})).toHaveCount(0);
   await expect(page.getByText("Added to your archive",{exact:true})).not.toBeVisible();
-  await page.locator('#journal summary[aria-label="Information"]').click();
+  await page.locator('#journal summary[aria-label="Activity"]').click();
   await expect(page.getByText("Added to your archive",{exact:true})).toBeVisible();
   await page.getByText("Reviewed suggestions",{exact:false}).click();
   await expect(page.getByText("Suggestion created",{exact:true})).not.toBeVisible();
-  await page.locator('#suggestions summary[aria-label="Information"]').click();
+  await page.locator('#suggestions summary[aria-label="Activity"]').click();
   await expect(page.getByText("Suggestion created",{exact:true})).toBeVisible();
   await expect(page.getByText("Marked Interested",{exact:true})).toBeVisible();
 });
@@ -98,4 +108,31 @@ test("Large input photos are optimised locally rather than rejected by byte size
   expect(result.output).toBeLessThan(2*1024*1024);
   expect(result.type).toBe('image/jpeg');
   expect(result.width).toBeLessThanOrEqual(2400);
+});
+
+for (const theme of ["default","poster"]) test(`Concert modal preserves drafts, fixed header and keyboard tabs in ${theme}`,async({page},testInfo)=>{
+  await page.goto(`/__record-ui?dialog=1&theme=${theme}`);
+  const dialog=page.getByRole("dialog");
+  await expect(dialog).toBeVisible();
+  const before=await dialog.boundingBox();
+  await page.getByRole("tab",{name:"Setlist",exact:true}).focus();
+  await page.keyboard.press("ArrowRight");
+  await expect(page.getByRole("tab",{name:"My memories"})).toHaveAttribute("aria-selected","true");
+  await page.getByRole("textbox").fill("Keep my draft");
+  await page.getByRole("tab",{name:"Activity",exact:true}).click();
+  await expect(page.getByText("Added to your archive",{exact:true})).toBeVisible();
+  await page.getByRole("tab",{name:"My memories"}).click();
+  await expect(page.getByRole("textbox")).toHaveValue("Keep my draft");
+  const after=await dialog.boundingBox();
+  expect(Math.abs(before.height-after.height)).toBeLessThan(2);
+  await page.getByRole("tab",{name:"Setlist",exact:true}).click();
+  const header=dialog.locator("header");
+  const headerBefore=await header.boundingBox();
+  await page.getByRole("tabpanel").evaluate(element=>{element.scrollTop=element.scrollHeight;});
+  expect(Math.abs((await header.boundingBox()).y-headerBefore.y)).toBeLessThan(2);
+  expect(await dialog.evaluate(element=>element.scrollWidth<=element.clientWidth)).toBe(true);
+  await page.getByRole("tabpanel").evaluate(element=>{element.scrollTop=0;});
+  await page.screenshot({path:testInfo.outputPath(`modal-${theme}.png`),animations:"disabled",scale:"css"});
+  await page.getByRole("tab",{name:"My memories"}).click();
+  await page.screenshot({path:testInfo.outputPath(`memories-${theme}.png`),animations:"disabled",scale:"css"});
 });

@@ -41,7 +41,7 @@ export function useDialogFocus(open) {
     focusable?.focus();
     function keepFocusInside(event) {
       if (event.key !== "Tab" || !dialog) return;
-      const items = [...dialog.querySelectorAll("button:not(:disabled), [href], input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex='-1'])")];
+      const items = [...dialog.querySelectorAll("button:not(:disabled), [href], input:not(:disabled), select:not(:disabled), textarea:not(:disabled), summary, [tabindex]:not([tabindex='-1'])")].filter(element=>element.tabIndex!==-1&&element.getClientRects().length>0);
       if (!items.length) return;
       const first = items[0];
       const last = items.at(-1);

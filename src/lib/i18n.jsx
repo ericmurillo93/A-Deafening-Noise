@@ -9,6 +9,10 @@ const translations = {
     "nav.suggestions": "Concert Suggestions",
   },
   es: {
+    "Photos": "Fotos",
+    "Details": "Detalles",
+    "Concert details": "Detalles del concierto",
+    "Loading…": "Cargando…",
     "Add photos": "Añadir fotos",
     "Updating photos…": "Actualizando fotos…",
     "Photos are optimised and saved automatically.": "Las fotos se optimizan y guardan automáticamente.",

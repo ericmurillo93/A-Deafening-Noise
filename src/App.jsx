@@ -1,5 +1,6 @@
 import ArchiveFilters from "./components/ArchiveFilters";
 import ConcertJournal from "./components/ConcertJournal";
+import ConcertDialog from "./components/ConcertDialog";
 const FestivalsPage = React.lazy(() => import("./pages/FestivalsPage"));
 import { filterScope, matchesArchiveFilters, readArchiveFilters, withArchiveFilters } from "./lib/archive-filters";
 import React, { useEffect, useMemo, useRef, useState } from "react";
@@ -520,19 +521,19 @@ function ConcertFinder({ onSearch, onPick, onManual }) {
 }
 
 function EventMetadata({ concert, primaryTicketUrl = "" }) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const lineup = (concert.lineup || []).slice(1).map((item) => item.artist).filter(Boolean);
   const sourceLinks = uniqueSourceLinks(concert.sources, primaryTicketUrl);
   const rows = [
-    concert.doorsAt && [t("Doors"), new Date(concert.doorsAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })],
-    concert.startsAt && ["Start", new Date(concert.startsAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })],
+    concert.doorsAt && ["Doors", new Date(concert.doorsAt).toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" })],
+    concert.startsAt && ["Start", new Date(concert.startsAt).toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" })],
     concert.address && ["Address", concert.address], concert.promoter && ["Promoter", concert.promoter],
     concert.festival && ["Festival", concert.festival], concert.tour && ["Tour", concert.tour],
     lineup.length && ["Also playing", lineup.join(" · ")],
   ].filter(Boolean);
   if (!rows.length && !sourceLinks.length && (!concert.eventStatus || concert.eventStatus === "announced")) return null;
   return <section className="mb-5 border-b border-zinc-900 pb-4">
-    {concert.eventStatus && concert.eventStatus !== "announced" && <span className={`mb-3 inline-flex rounded-md border px-2 py-1 text-[10px] font-black uppercase tracking-wide ${concert.eventStatus === "cancelled" ? "border-red-900 bg-red-950/40 text-red-300" : concert.eventStatus === "sold_out" ? "border-amber-900 bg-amber-950/30 text-amber-300" : "border-blue-900 bg-blue-950/30 text-blue-300"}`}>{({ postponed: "Postponed", cancelled: "Cancelled", sold_out: "Sold out" })[concert.eventStatus]}</span>}
+    {concert.eventStatus && concert.eventStatus !== "announced" && <span className={`mb-3 inline-flex rounded-md border px-2 py-1 text-xs font-semibold ${concert.eventStatus === "cancelled" ? "border-red-900 bg-red-950/40 text-red-300" : concert.eventStatus === "sold_out" ? "border-amber-900 bg-amber-950/30 text-amber-300" : "border-blue-900 bg-blue-950/30 text-blue-300"}`}>{t(({ postponed: "Postponed", cancelled: "Cancelled", sold_out: "Sold out" })[concert.eventStatus])}</span>}
     <dl className="grid gap-x-5 gap-y-2 sm:grid-cols-2">{rows.map(([label, value]) => <div key={label} className="min-w-0"><dt className="text-[9px] font-black uppercase tracking-widest text-zinc-600">{t(label)}</dt><dd className="mt-0.5 break-words text-sm font-semibold text-zinc-300">{value}</dd></div>)}{sourceLinks.length > 0 && <div className="min-w-0"><dt className="text-[9px] font-black uppercase tracking-widest text-zinc-600">{t("Tickets and event details")}</dt><dd className="mt-0.5 flex flex-wrap gap-x-3 gap-y-1 text-sm font-semibold">{sourceLinks.map((source) => <a key={source.url} href={source.url} target="_blank" rel="noreferrer" className="text-blue-400 hover:text-blue-300">{t("Open ticket page")} ↗</a>)}</dd></div>}</dl>
   </section>;
 }
@@ -546,21 +547,23 @@ function SetlistModal({ target, onClose, onEdit, onLeave, onIdDiscovered }) {
 
   useEffect(() => {
     if (!target) return;
+    let active = true;
     setState({ status: "loading", data: null, error: null });
     fetchSetlist({ setlistId: target.setlistId, artist: target.artist, date: target.date })
       .then((data) => {
+        if (!active) return;
         setState({ status: "ok", data, error: null });
         // If we found the setlist via search and the ID wasn't stored yet, save it back
         if (!target.setlistId && data.id && onIdDiscovered) {
           onIdDiscovered(target, data.id);
         }
       })
-      .catch((err) => setState({ status: "error", data: null, error: err.message }));
+      .catch((err) => {if(active)setState({ status: "error", data: null, error: err.message });});
+    return () => {active=false;};
   }, [target?.setlistId, target?.artist, target?.date]);
 
   if (!target) return null;
-  const { artist, venue, date } = target;
-  const { status, data, error } = state;
+  const { status, data } = state;
 
   let songs = [];
   if (data?.sets?.set) {
@@ -568,25 +571,10 @@ function SetlistModal({ target, onClose, onEdit, onLeave, onIdDiscovered }) {
   }
 
   return (
-    <div data-testid="concert-details-modal" className="adn-modal-backdrop fixed inset-0 z-[60] flex items-center justify-center bg-black/70 px-4">
-      <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="concert-details-title" className="adn-modal-panel w-full max-w-lg rounded-3xl border border-zinc-700 bg-zinc-950 p-6 shadow-2xl max-h-[90vh] flex flex-col">
-        <div className="mb-5 flex items-start justify-between gap-4 shrink-0">
-          <div>
-            <h2 id="concert-details-title" className="text-2xl font-black uppercase tracking-tight">{artist}</h2>
-            <p className="mt-1 text-sm text-zinc-400">{venue || t("Venue to be confirmed")}{concertLocation(target) ? ` · ${concertLocation(target)}` : ""} · {date}</p>
-          </div>
-          <div className="shrink-0 text-right">
-            <div className="flex items-center justify-end gap-2">
-              {onEdit && <button type="button" onClick={() => onEdit(target)} className="touch-target flex h-8 w-8 items-center justify-center rounded-full border border-zinc-700 text-sm text-zinc-300 hover:border-zinc-500 hover:text-white" aria-label={t("Edit concert")} title={t("Edit concert")}><i className="fa-solid fa-pencil" aria-hidden="true" /></button>}
-              <ModalCloseButton onClick={onClose} />
-            </div>
-            {target.creator?.displayName && <p className="mt-1.5 max-w-28 truncate text-[9px] font-semibold text-zinc-600" title={t("Created by {name}", { name: target.creator.displayName })}>{t("Created by {name}", { name: target.creator.displayName })}</p>}
-          </div>
-        </div>
-
-        <div className="overflow-y-auto flex-1">
+    <ConcertDialog concert={target} location={concertLocation(target)} primaryLabel={t("Setlist")} journalEnabled={Boolean(supabaseEnabled&&target.concertId)} dialogRef={dialogRef} onClose={onClose} onEdit={onEdit} testId="concert-details-modal">
+      {(tab,id)=><>
+        <div hidden={tab!=="details"}>
           <EventMetadata concert={target} />
-          <ConcertJournal key={target.concertId} concert={target} />
           {target.attendees?.length > 0 && (
             <section className="mb-5 flex items-center gap-3 border-b border-zinc-900 pb-4">
               <div className="flex shrink-0 -space-x-2" aria-hidden="true">
@@ -607,9 +595,9 @@ function SetlistModal({ target, onClose, onEdit, onLeave, onIdDiscovered }) {
             </div>
           )}
           {status === "error" && (
-            <div className="rounded-2xl border border-red-900 bg-red-950/40 px-5 py-4 text-sm text-red-200" role="alert">
+            <div className="py-5 text-sm text-zinc-300" role="status">
               <p className="font-bold mb-1">{t("Setlist unavailable")}</p>
-              <p className="text-red-300/80">{t("This setlist may not have been published yet. Try again later.")}</p>
+              <p className="text-zinc-400">{t("This setlist may not have been published yet. Try again later.")}</p>
             </div>
           )}
           {status === "ok" && songs.length === 0 && (
@@ -624,8 +612,8 @@ function SetlistModal({ target, onClose, onEdit, onLeave, onIdDiscovered }) {
               </div>
               <ol className="space-y-px">
                 {songs.map((song, i) => (
-                  <li key={i} className={`flex items-center gap-4 px-3 py-2.5 rounded-xl transition-colors hover:bg-zinc-900 ${i % 2 === 0 ? "" : "bg-zinc-900/40"}`}>
-                    <span className={`w-6 shrink-0 text-right text-xs font-bold tabular-nums ${song.tape ? "text-zinc-600" : "text-zinc-700"}`}>{i + 1}</span>
+                  <li key={i} className="flex items-center gap-4 border-b border-[var(--adn-border-strong)] py-3 last:border-0">
+                    <span className="w-6 shrink-0 text-right text-xs font-semibold tabular-nums text-zinc-400">{i + 1}</span>
                     <div className="flex-1 min-w-0 flex items-center gap-2 flex-wrap">
                       <span className={`text-sm font-semibold leading-snug ${song.tape ? "text-zinc-500" : "text-zinc-100"}`}>{song.name}</span>
                       {song.tape && <span className="text-[9px] font-bold uppercase tracking-widest border border-zinc-700 text-zinc-600 px-1.5 py-0.5 rounded-md">{t("tape")}</span>}
@@ -639,8 +627,9 @@ function SetlistModal({ target, onClose, onEdit, onLeave, onIdDiscovered }) {
           )}
           {onLeave && target.createdBy && target.createdBy !== target.currentUserId && <button type="button" onClick={() => onLeave(target)} className="adn-button-danger mt-6 w-full">{t("Remove from my archive")}</button>}
         </div>
-      </div>
-    </div>
+        <div hidden={tab==="details"}><ConcertJournal key={target.concertId} concert={target} view={tab==="activity"?"activity":"memories"} /></div>
+      </>}
+    </ConcertDialog>
   );
 }
 
@@ -1230,43 +1219,21 @@ function CalendarConcertModal({ target, artistImages, onClose, onEdit }) {
   ].filter((line, index) => line || index === 4).join("\n");
   const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(whatsappMessage)}`;
   return (
-    <div className="adn-modal-backdrop fixed inset-0 z-[70] flex items-center justify-center bg-black/75 px-4" onClick={onClose}>
-      <article ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="calendar-concert-title" className="adn-modal-panel max-h-[90dvh] w-full max-w-md overflow-y-auto rounded-3xl border border-zinc-700 bg-zinc-900 p-5 shadow-2xl" onClick={(event) => event.stopPropagation()}>
-        <div className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-zinc-800 bg-[var(--adn-panel)] pb-4">
-          <h2 id="calendar-concert-title" className="min-w-0 break-words text-2xl font-black uppercase leading-none tracking-tight text-zinc-100">{target.artist}</h2>
-          <div className="flex shrink-0 items-center gap-2">
-            {onEdit && <button type="button" onClick={() => onEdit(target)} className="touch-target flex h-8 w-8 items-center justify-center rounded-full border border-zinc-700 text-sm text-zinc-300 transition hover:border-zinc-500 hover:text-white" aria-label={t("Edit concert")} title={t("Edit concert")}><i className="fa-solid fa-pencil" aria-hidden="true" /></button>}
-            <ModalCloseButton onClick={onClose} />
-          </div>
+    <ConcertDialog concert={target} location={concertLocation(target)} primaryLabel={t("Details")} journalEnabled={Boolean(supabaseEnabled&&target.concertId)} dialogRef={dialogRef} onClose={onClose} onEdit={onEdit}>
+      {(tab,id)=><>
+        <div hidden={tab!=="details"} className="space-y-5">
+          {!isPast && artistImage && <img src={artistImage} alt="" className="aspect-[21/9] w-full rounded-md object-cover object-center" />}
+          <p className="flex items-center gap-2 text-sm font-semibold text-zinc-200"><span aria-hidden="true" className={`h-2 w-2 shrink-0 rounded-full ${isPast?"bg-blue-400":target.bought?"bg-emerald-400":"bg-amber-400"}`} />{t(isPast ? "History" : target.bought ? "Ticket bought" : "Ticket not bought")}</p>
+          {!isPast && <div className="flex flex-wrap gap-3">
+            {ticketUrl && <a href={ticketUrl} target="_blank" rel="noreferrer" className="adn-button-primary"><i className="fa-solid fa-ticket" aria-hidden="true" />{t("Tickets")}<i className="fa-solid fa-arrow-up-right-from-square text-[10px]" aria-hidden="true" /></a>}
+            <a href={whatsappUrl} target="_blank" rel="noreferrer" className="adn-button-secondary" aria-label={t("Share {artist} concert on WhatsApp",{artist:target.artist})}><img src={whatsappIcon} alt="" className="h-4 w-4 brightness-0 invert" />{t("Share")}</a>
+          </div>}
+          <EventMetadata concert={target} primaryTicketUrl={ticketUrl} />
+          {!isPast && target.attendeeUsers?.length>0 && <section className="border-t border-[var(--adn-border-strong)] pt-4"><h3 className="mb-3 text-sm font-semibold text-zinc-300">{t("Friends attending")}</h3><div className="space-y-3">{target.attendeeUsers.map(person=><div key={person.id} className="flex flex-wrap items-center justify-between gap-2 text-sm"><span className="text-zinc-200">{person.displayName}</span><span className="text-zinc-400">{t((person.status||"pending")[0].toUpperCase()+(person.status||"pending").slice(1))}</span></div>)}</div></section>}
         </div>
-        <div className="mt-4 overflow-hidden rounded-2xl bg-zinc-950">
-          {!isPast && artistImage && <img src={artistImage} alt="" className="h-44 w-full object-cover object-center" />}
-          <div className="p-4">
-            <div className="flex items-start justify-between gap-4">
-              {target.venue || concertLocation(target) ? <div className="flex min-w-0 gap-2 text-sm font-semibold text-zinc-100"><Icon type="map" /><span className="break-words">{[target.venue, concertLocation(target)].filter(Boolean).join(" · ")}</span></div> : <span />}
-              <span className={`shrink-0 rounded-full border px-3 py-1 text-xs font-bold text-zinc-100 ${isPast ? "border-blue-800 bg-blue-950" : target.bought ? "border-emerald-800 bg-emerald-950" : "border-amber-800 bg-amber-950"}`}>
-                {t(isPast ? "History" : target.bought ? "Ticket bought" : "Ticket not bought")}
-              </span>
-            </div>
-            <div className={`${target.venue ? "mt-2 " : ""}flex gap-2 text-sm text-zinc-400`}><Icon type="calendar" /><span>{target.date}</span></div>
-          </div>
-          {!isPast && (
-            <div className="flex items-center justify-between gap-3 border-t border-zinc-800 px-4 py-3">
-              {ticketUrl ? (
-                <a href={ticketUrl} target="_blank" rel="noreferrer" className="inline-flex min-w-0 items-center gap-2 text-xs font-bold text-zinc-400 transition hover:text-white"><i className="fa-solid fa-ticket" aria-hidden="true" /><span className="truncate">{t("Tickets")}</span><span aria-hidden="true">↗</span></a>
-              ) : <span />}
-              <a href={whatsappUrl} target="_blank" rel="noreferrer" className="inline-flex shrink-0 items-center gap-2 rounded-full border border-[#25D366]/40 bg-[#128C7E]/20 px-3 py-1.5 text-xs font-bold text-[#7ce6a3] transition hover:border-[#25D366] hover:bg-[#128C7E]/35 hover:text-white" aria-label={t("Share {artist} concert on WhatsApp", { artist: target.artist })}>
-                <img src={whatsappIcon} alt="" className="h-4 w-4 brightness-0 invert opacity-80" />
-                {t("Share")}
-              </a>
-            </div>
-          )}
-        </div>
-        <div className="mt-4"><EventMetadata concert={target} primaryTicketUrl={ticketUrl} /></div>
-        <ConcertJournal key={target.concertId} concert={target} />
-        {!isPast && target.attendeeUsers?.length > 0 && <section className="mt-4 rounded-2xl border border-zinc-800 bg-zinc-950/60 p-4"><p className="mb-3 text-[10px] font-bold uppercase tracking-widest text-zinc-500">{t("Friends attending")}</p><div className="space-y-2">{target.attendeeUsers.map((person) => { const status = person.status || "pending"; const positive = status === "confirmed"; const negative = status === "declined"; return <div key={person.id} className="flex items-center justify-between gap-3 text-sm"><span className="font-semibold text-zinc-200">{person.displayName}</span><span className={`rounded-full border px-2.5 py-1 text-[10px] font-bold ${positive ? "border-emerald-900 bg-emerald-950/40 text-emerald-300" : negative ? "border-red-900 bg-red-950/40 text-red-300" : "border-amber-900 bg-amber-950/40 text-amber-300"}`}>{t(status[0].toUpperCase() + status.slice(1))}</span></div>; })}</div></section>}
-      </article>
-    </div>
+        <div hidden={tab==="details"}><ConcertJournal key={target.concertId} concert={target} view={tab==="activity"?"activity":"memories"} /></div>
+      </>}
+    </ConcertDialog>
   );
 }
 

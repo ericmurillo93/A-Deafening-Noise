@@ -716,8 +716,13 @@ Calendar now has a shared filter for all concerts, history, bought future concer
 and unpurchased future concerts. Export still exports the selected ICS category,
 not the visual filter. Filters do not change attendance data.
 
-Concert details in Archive, Calendar and full event pages expose My memories
-and a discreet Information icon. The shared inline disclosure hides tracking
+Concert dialogs share `ConcertDialog`: a fixed header, keyboard-accessible tabs
+and a separately scrolling body. Archive opens Setlist; Calendar opens Details.
+My memories and Activity are separate tabs when an authenticated concert is
+available. Notes and ongoing photo uploads survive tab changes. Outside clicks
+do not dismiss the concert; Close, Escape and browser Back do. Full event pages
+and suggestion cards expose a quiet, labelled Activity disclosure rather than
+an isolated information icon. The disclosure hides tracking
 dates and change history until opened; suggestion cards use the same control
 for creation and the latest Interested/Not Interested decision timestamp.
 Missing legacy dates remain unavailable rather than invented. `concert_changes`
