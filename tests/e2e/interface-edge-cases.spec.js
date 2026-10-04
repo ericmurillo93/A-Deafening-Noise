@@ -267,6 +267,13 @@ test("Archive concert entries communicate that they are interactive", async ({ p
   const concert = page.locator('article button[aria-label^="Open "]').first();
   await expect(concert).toBeVisible();
   await expect(concert).toHaveCSS("cursor", "pointer");
+  const metadata = page.locator(".adn-concert-metadata").first();
+  const aligned = await metadata.evaluate(element => [...element.children].every(row => {
+    const icon = row.querySelector("i").getBoundingClientRect();
+    const text = row.lastElementChild.getBoundingClientRect();
+    return Math.abs(icon.y + icon.height/2 - text.y - text.height/2) < 2;
+  }));
+  expect(aligned).toBe(true);
   await concert.focus();
   await expect(concert).toBeFocused();
 });
@@ -334,6 +341,14 @@ test("Calendar retains its month during a session and Today resets it", async ({
 
 test("Festival editions navigate and open the standard concert dialog", async ({ page }) => {
   await page.goto("/festivals");
+  await page.locator('summary[aria-label="All years"]').click();
+  await page.getByRole("button", {name:"2001",exact:true}).click();
+  await expect(page.getByRole("button",{name:/EXAMPLE FESTIVAL.*2000/})).toHaveCount(0);
+  await page.locator('summary[aria-label="All festivals"]').click();
+  await page.getByRole("button",{name:"EXAMPLE FESTIVAL",exact:true}).click();
+  await page.locator('summary[aria-label="All years"]').click();
+  await page.getByRole("button",{name:"All years",exact:true}).click();
+  await expect(page.getByRole("button",{name:/EXAMPLE FESTIVAL.*2000/})).toBeVisible();
   await page.getByRole("button",{name:/EXAMPLE FESTIVAL.*2001/}).click();
   await expect(page).toHaveURL(/\/festival\//);
   await page.reload();

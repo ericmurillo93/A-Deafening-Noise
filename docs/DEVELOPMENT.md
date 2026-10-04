@@ -756,6 +756,10 @@ only the current user's concerts by explicit festival name and year. A small,
 anchored fallback recognises known festival venue labels in existing archives;
 it does not infer missing artist-to-day mappings. Add/Edit's existing Festival
 field controls grouping; the pages are not a downloaded public festival catalog.
+The festival index has single-select festival and year filters in the shared
+page-header controls. Each list reflects the other selected filter; years run
+newest first. Filtering uses only the authorised in-memory archive, with no
+provider calls or database writes, and behaves identically in both themes.
 
 Administration provides candidate duplicate groups and manual confirmed merges.
 The server requires admin access, matching artist/date/city/country and ordered

@@ -288,6 +288,10 @@ button[aria-label="View activity"] { display: flex; }
 }
 
 .adn-concert-row button.pointer-events-auto { position: relative; }
+.adn-concert-metadata > div { align-items: center; min-width: 0; }
+.adn-concert-metadata > div > i { margin-top: 0; }
+.adn-concert-metadata > div > button,
+.adn-concert-metadata > div > span { min-width: 0; }
 .adn-concert-row button.pointer-events-auto::after {
   content: "";
   position: absolute;

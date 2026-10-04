@@ -1684,7 +1684,7 @@ export default function App() {
           onNavigate={changePage}
           onOpenYearReview={openYearReview}
           DropdownMenu={DropdownMenu}
-        /></DeferredPage> : activePage === "festivals" ? <DeferredPage><FestivalsPage concerts={concertItems} selected={selectedFestival} onSelect={(festival) => navigateTo({ page: "festivals", festival })} onOpenConcert={openConcertDetails} /></DeferredPage> : isConcertDetail ? (
+        /></DeferredPage> : activePage === "festivals" ? <DeferredPage><FestivalsPage concerts={concertItems} selected={selectedFestival} onSelect={(festival) => navigateTo({ page: "festivals", festival })} onOpenConcert={openConcertDetails} DropdownMenu={DropdownMenu} headerTarget={headerControlsNode} /></DeferredPage> : isConcertDetail ? (
           <DeferredPage><ConcertDetailPage concert={selectedConcert} onOpenArtist={openArtistDetail} onOpenVenue={openVenueDetail} onOpenCity={openCityDetail} onOpenCountry={openCountryDetail} onOpenSetlist={openConcertDetails} onEdit={(concert) => setEditTarget({ ...concert, mode: isPastConcert(concert) ? "history" : "next" })} Icon={Icon} /></DeferredPage>
         ) : isCountryDetail ? (
           <DeferredPage><CountryDetailPage
@@ -1842,7 +1842,7 @@ export default function App() {
                           style={{ WebkitTouchCallout: "none" }}
                         >
                           <button type="button" aria-label={t("Open {artist} at {venue} on {date}", { artist: item.artist, venue: venue || t("venue not specified"), date })} onClick={() => { if (!longPressed) openConcertDetails(concertTarget); }} className="absolute inset-0 rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-zinc-400" />
-                          <div className="pointer-events-none relative space-y-2">
+                          <div className="adn-concert-metadata pointer-events-none relative space-y-2">
                             {!isNext && <div className="flex gap-2 text-sm font-semibold text-zinc-100"><Icon type="map" /><button onClick={() => openVenueDetail(venue)} className="pointer-events-auto truncate text-left hover:underline hover:decoration-zinc-600 hover:underline-offset-4">{venue}</button></div>}
                             {!isNext && concertLocation(concertTarget) && <div className="flex gap-2 text-sm text-zinc-400"><i className="fa-solid fa-city mt-0.5 h-4 w-4 shrink-0 text-center text-zinc-500" aria-hidden="true" /><span className="truncate">{concertTarget.city && <button type="button" onClick={() => openCityDetail(concertTarget)} className="pointer-events-auto hover:underline">{concertTarget.city}</button>}{concertTarget.city && concertTarget.country && ", "}{concertTarget.country && <button type="button" onClick={() => openCountryDetail(concertTarget.country)} className="pointer-events-auto hover:underline">{countryName(concertTarget.country)}</button>}</span></div>}
                             {isNext && item.venue && <div className="flex gap-2 text-sm font-semibold text-zinc-100"><Icon type="map" /><span className="truncate">{item.venue}</span></div>}

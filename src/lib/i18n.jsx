@@ -212,6 +212,7 @@ const translations = {
     "Filter by city, year, or both.": "Filtra por ciudad, año o ambos.",
     "All cities": "Todas las ciudades",
     "All years": "Todos los años",
+    "All festivals": "Todos los festivales",
     Add: "Añadir",
     "Historical concert information provided by": "Información histórica de conciertos proporcionada por",
     "Open ticket page": "Abrir página de entradas",
