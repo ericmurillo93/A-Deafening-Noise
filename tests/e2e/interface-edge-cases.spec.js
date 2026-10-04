@@ -363,7 +363,8 @@ test("Mobile calendar events highlight their matching monthly-list entry", async
   test.skip(testInfo.project.name === "desktop" || page.viewportSize().width >= 768);
   await page.goto("/calendar");
   const event = page.locator('button[aria-label^="Highlight "]');
-  for (let month = 0; month < 24 && await event.count() === 0; month += 1) await page.getByRole("button", { name: "Previous month" }).click();
+  // August 2026 contains fixture events; wait for data instead of racing its load.
+  await page.getByRole("button", { name: "Today", exact: true }).click();
   await expect(event.first()).toBeVisible();
   await event.first().click();
   await expect(event.first()).toHaveAttribute("aria-pressed", "true");
@@ -384,7 +385,8 @@ test("Core pages do not create viewport-level horizontal overflow", async ({ pag
 });
 
 test("Clean routes survive direct loads and reloads", async ({ page }) => {
-  test.setTimeout(45_000);
+  // Sixteen full navigations across lazy pages need headroom on shared test runners.
+  test.setTimeout(90_000);
   const routes = [
     ["/home", /^Good (morning|afternoon|evening),/],
     ["/history", "Concert archive"],

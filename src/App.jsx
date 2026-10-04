@@ -481,12 +481,27 @@ function DropdownMenu({ value, onChange, options, compact = false, ariaLabel, cl
   const normalizedOptions = options.map((option) => typeof option === "string" ? { value: option, label: option } : option);
   const activeLabel = buttonLabel || normalizedOptions.find((option) => option.value === value)?.label || normalizedOptions[0]?.label || "";
 
+  function positionMenu() {
+    const details = detailsRef.current;
+    if (!details?.open) return;
+    const menu = details.querySelector(".adn-popover");
+    const bounds = details.getBoundingClientRect();
+    const desired = menuAlign === "left" ? bounds.left : bounds.right - menu.offsetWidth;
+    const left = Math.max(8, Math.min(desired, window.innerWidth - menu.offsetWidth - 8));
+    menu.style.left = `${left - bounds.left}px`;
+    menu.style.right = "auto";
+  }
+
   useEffect(() => {
     function dismiss(event) {
       if (detailsRef.current?.open && !detailsRef.current.contains(event.target)) detailsRef.current.removeAttribute("open");
     }
     document.addEventListener("pointerdown", dismiss);
-    return () => document.removeEventListener("pointerdown", dismiss);
+    window.addEventListener("resize", positionMenu);
+    return () => {
+      document.removeEventListener("pointerdown", dismiss);
+      window.removeEventListener("resize", positionMenu);
+    };
   }, []);
 
   function selectOption(event, option) {
@@ -496,7 +511,7 @@ function DropdownMenu({ value, onChange, options, compact = false, ariaLabel, cl
   }
 
   return (
-    <details ref={detailsRef} name={groupName} className={`group relative min-w-0 ${className}`}>
+    <details ref={detailsRef} onToggle={positionMenu} name={groupName} className={`group relative min-w-0 ${className}`}>
       <summary aria-label={ariaLabel} className={`cursor-pointer list-none truncate text-sm font-semibold text-zinc-100 transition [&::-webkit-details-marker]:hidden ${bare ? "px-2 py-2 text-zinc-400 hover:text-zinc-100" : "rounded-md border border-[var(--adn-border-strong)] bg-[var(--adn-panel)] hover:border-zinc-500"} ${centered ? "text-center" : "text-left"} ${compact && !bare ? "px-4 py-2.5" : !bare ? "px-5 py-3" : ""}`}>
         {activeLabel}{!iconOnly && <span className="ml-1 text-zinc-500">▾</span>}
       </summary>
