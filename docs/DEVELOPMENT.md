@@ -447,6 +447,33 @@ Publish directory: dist
 Functions directory: netlify/functions
 ```
 
+## MURILAB OAuth information pages
+
+`public/murilab/` contains static, unauthenticated information for the separate
+private **MURILAB n8n** document automation. Vite copies these files to `dist`;
+Netlify serves them before the SPA fallback. They do not load the concert app,
+Supabase, analytics or Google account credentials. They must never contain
+mail contents, document samples, private server addresses or OAuth secrets.
+
+Production URLs for Google Auth Platform Branding:
+
+- Homepage: `https://adeafeningnoise.com/murilab/`
+- Privacy: `https://adeafeningnoise.com/murilab/privacidad.html`
+- Terms: `https://adeafeningnoise.com/murilab/condiciones.html`
+- Authorized domain: `adeafeningnoise.com`
+
+The OAuth app name is `MURILAB n8n`. The public support contact is approved by
+the owner and appears in each page footer. The concert site's privacy/terms
+and authentication remain separate. The n8n callback remains the existing
+localhost callback used through the SSH tunnel; these pages do not expose n8n.
+
+After deployment, verify the three URLs without login. Complete domain ownership
+verification in Google Search Console using the Google account that manages the
+OAuth project if required, then complete Branding and change Audience to Production.
+Reconnect both Google credentials in n8n afterwards. Publishing these pages alone
+does not change Google's OAuth status or guarantee approval. Keep their data-use
+and retention descriptions aligned with the deployed workflow.
+
 ## Concert suggestion automation
 
 The workflow `.github/workflows/concert-suggestions.yml` runs daily at 04:23 UTC and can also be started from GitHub's Actions UI. It first refreshes every active Spotify connection, rebuilds the privacy-reduced union artist catalog, and then refreshes Resurrection Fest Route, Live Nation Spain, Madness Live, Sala Razzmatazz, Sala Apolo, Sala Bikini, Paral·lel 62, Palau de la Música Catalana, Les Docks, Montreux Jazz Festival, DICE, Doctor Music, and Ticketmaster listings. Ticketmaster uses its official Discovery API for the union of countries selected by active profiles; each profile can choose up to five ISO country codes under **Profile → Concert discovery**. The other adapters retain the geographic reach of their own source. The non-round cron minute reduces the chance of GitHub scheduling delays.
