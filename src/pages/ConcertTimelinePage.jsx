@@ -4,7 +4,7 @@ import { normalize, parseDate, parseShow } from "../lib/concerts";
 import { countryName } from "../lib/countries";
 import { useI18n } from "../lib/i18n.jsx";
 
-export function ConcertTimelinePage({ historyItems, historyConcerts = [], onOpenArtist, onOpenSetlist, onOpenVenue, onOpenCity, onOpenCountry, DropdownMenu, Icon, headerTarget }) {
+export function ConcertTimelinePage({ historyItems, historyConcerts = [], artistImages, onOpenArtist, onOpenSetlist, onOpenVenue, onOpenCity, onOpenCountry, DropdownMenu, Icon, headerTarget }) {
   const { locale, t } = useI18n();
   const [artistFilter, setArtistFilter] = useState("all");
   const [venueFilter, setVenueFilter] = useState("all");
@@ -107,13 +107,16 @@ export function ConcertTimelinePage({ historyItems, historyConcerts = [], onOpen
                     <span className="relative z-[1] mt-7 h-[15px] w-[15px] shrink-0 rounded-full border-4 border-zinc-950 bg-zinc-500" />
                     <div className="min-w-0 flex-1 rounded-3xl border border-zinc-800 bg-zinc-900 p-5 transition hover:border-zinc-600">
                       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
-                        <div className="min-w-0">
+                        <div className="flex min-w-0 gap-3">
+                          {artistImages?.get(normalize(artist)) && <img src={artistImages.get(normalize(artist))} alt="" loading="lazy" className="h-14 w-14 shrink-0 rounded-md object-cover" />}
+                          <div className="min-w-0">
                           <button onClick={() => onOpenArtist(artist)} className="break-words text-left text-xl font-black uppercase leading-tight text-zinc-100 transition hover:text-white hover:underline hover:decoration-zinc-600 hover:underline-offset-4 md:text-2xl">
                             {artist}
                           </button>
                           <div className="mt-3 flex gap-2 text-sm font-semibold text-zinc-300"><Icon type="map" /><button onClick={() => onOpenVenue(venue)} className="break-words text-left hover:underline hover:decoration-zinc-600 hover:underline-offset-4">{venue}</button></div>
                           {(city || country) && <div className="mt-2 flex gap-2 text-sm text-zinc-400"><i className="fa-solid fa-city mt-0.5 h-4 w-4 shrink-0 text-center text-zinc-500" aria-hidden="true" /><span>{city && <button type="button" onClick={() => onOpenCity({ city, country })} className="hover:underline">{city}</button>}{city && country && ", "}{country && <button type="button" onClick={() => onOpenCountry(country)} className="hover:underline">{countryName(country, locale)}</button>}</span></div>}
                           <div className="mt-2 flex gap-2 text-sm text-zinc-400"><Icon type="calendar" /><span>{date}</span></div>
+                          </div>
                         </div>
                         <button
                           onClick={() => onOpenSetlist({ artist, venue, city, country, date, setlistId, show })}

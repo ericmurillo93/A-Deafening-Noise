@@ -1,7 +1,7 @@
 export const STAGING_REF = "olqtafovoprkesxdbndp";
 export const PRODUCTION_REF = "zhlcnidaymhaaskedbdx";
 // Dependency order; account credentials, Vault, deliveries and historical activity are not cloned.
-export const SNAPSHOT_TABLES = ["profiles", "concerts", "concert_artists", "concert_sources", "concert_participants", "friendships", "stats_shares", "bucket_list_artists", "user_listened_artists", "user_dismissed_suggestions", "concert_suggestion_catalog", "artist_images"];
+export const SNAPSHOT_TABLES = ["profiles", "concerts", "concert_artists", "concert_sources", "concert_participants", "friendships", "stats_shares", "bucket_list_artists", "user_listened_artists", "user_dismissed_suggestions", "concert_suggestion_catalog", "artist_images", "spotify_artist_artwork"];
 export const sqlString = (value) => `'${String(value).replaceAll("'", "''")}'`;
 export function remapSnapshot(source, stagingProfiles) {
   const byEmail = new Map(stagingProfiles.map((profile) => [profile.email.toLowerCase(), profile.id]));
@@ -22,7 +22,7 @@ export function restoreSql(snapshot, columns, { rollback = false } = {}) {
   const statements = ["begin;", "set local lock_timeout='10s';", "set local statement_timeout='90s';"];
   // Disable application triggers only, never foreign-key constraints. Restored atomically on rollback/error.
   for (const table of SNAPSHOT_TABLES) statements.push(`alter table public.${table} disable trigger user;`);
-  statements.push("delete from public.notifications;", "delete from public.suggestion_email_outbox;");
+  statements.push("delete from public.notifications;", "delete from public.suggestion_email_outbox;", "delete from public.weekly_ticket_reminders;");
   for (const table of [...SNAPSHOT_TABLES].reverse().filter((table)=>table!=="profiles")) statements.push(`delete from public.${table};`);
   for (const table of SNAPSHOT_TABLES) {
     const names = columns[table].map((name) => `"${name}"`);

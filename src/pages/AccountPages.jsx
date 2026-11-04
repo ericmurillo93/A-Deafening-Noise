@@ -263,6 +263,7 @@ export function ProfilePage({
     social: { web: true, email: true },
     concertUpdates: { web: true, email: true },
     ticketUpdates: { web: true, email: true },
+    ticketReminders: { web: false, email: false },
     suggestions: { web: true, email: true },
     spotify: { web: true, email: true },
   };
@@ -307,7 +308,7 @@ export function ProfilePage({
         suggestionEmailEnabled: profile?.suggestionEmailEnabled !== false,
         discoveryCountries: profile?.discoveryCountries || [],
         notificationPreferences:
-          profile?.notificationPreferences || defaultNotifications,
+          { ...defaultNotifications, ...profile?.notificationPreferences },
         profileVisibility: profile?.profileVisibility || { stats: true, lastConcert: true, nextConcert: true, bucketList: true },
       }),
     [profile?.id],
@@ -596,6 +597,7 @@ export function ProfilePage({
             ["social", "Friends and invitations"],
             ["concertUpdates", "Concert changes"],
             ["ticketUpdates", "Tickets and availability"],
+            ["ticketReminders", "Weekly ticket reminder"],
             ["suggestions", "Concert suggestions"],
             ["spotify", "Spotify connection"],
           ].map(([key, label]) => (
@@ -605,11 +607,14 @@ export function ProfilePage({
             >
               <span className="text-sm font-semibold text-zinc-300">
                 {t(label)}
+                {key === "ticketReminders" && <span className="my-1 block text-xs font-normal leading-relaxed text-zinc-400">{t("Weekly ticket reminders on Mondays at 08:00 (Spain mainland time).")}</span>}
               </span>
-              {["web", "email"].map((channel) => (
+              {["web", "email"].map((channel) => key === "ticketReminders" && channel === "web" ? (
+                <span key={channel} className="text-center text-sm text-zinc-400" aria-label={t("Email only")}>—</span>
+              ) : (
                 <label key={channel} className="flex justify-center">
                   <span className="sr-only">
-                    {label} by {channel}
+                    {key === "ticketReminders" ? t("Weekly ticket reminder") : label} by {channel}
                   </span>
                   <input
                     type="checkbox"

@@ -280,6 +280,22 @@ test("Archive concert entries communicate that they are interactive", async ({ p
   await expect(concert).toBeFocused();
 });
 
+test("Timeline uses retained artist artwork independently of suggestion decisions", async ({ page }) => {
+  await page.goto("/timeline");
+  await page.evaluate(async () => {
+    const { default: React } = await import("/node_modules/.vite/deps/react.js");
+    const { default: ReactDOM } = await import("/node_modules/.vite/deps/react-dom_client.js");
+    const { ConcertTimelinePage } = await import("/src/pages/ConcertTimelinePage.jsx");
+    const host = document.createElement("div"); host.id = "artwork-audit"; document.body.append(host);
+    ReactDOM.createRoot(host).render(React.createElement(ConcertTimelinePage, {
+      historyItems: [], historyConcerts: [{ artist: "ARTWORK BAND", venue: "VENUE", city: "Barcelona", country: "ES", date: "01/01/2020" }],
+      artistImages: new Map([["artwork band", "https://i.scdn.co/image/retained-artwork"]]),
+      Icon: () => null,
+    }));
+  });
+  await expect(page.locator('#artwork-audit article img')).toHaveAttribute("src", "https://i.scdn.co/image/retained-artwork");
+});
+
 test("Menu closes with Escape and restores page scrolling", async ({ page }) => {
   await page.goto("/history");
   const openedDrawer = await openMenu(page);
@@ -525,6 +541,14 @@ test("Profile offers Spotify connection through the UI", async ({ page }) => {
   await page.getByRole("option", { name: "Switzerland CH" }).click();
   await expect(page.getByText("2 of 5 countries selected", { exact: true })).toBeVisible();
   await expect(page.getByRole("checkbox", { name: "Concert suggestions by email" })).toBeChecked();
+  const reminder = page.getByRole("checkbox", { name: "Weekly ticket reminder by email", exact: true });
+  const availability = page.getByRole("checkbox", { name: "Tickets and availability by email", exact: true });
+  await expect(reminder).not.toBeChecked();
+  await reminder.check();
+  await expect(reminder).toBeChecked();
+  await expect(availability).toBeChecked();
+  await reminder.uncheck();
+  await expect(availability).toBeChecked();
   await connect.click();
   await expect.poll(() => authorizationUrl ? new URL(authorizationUrl).searchParams.get("show_dialog") : null).toBe("true");
 });

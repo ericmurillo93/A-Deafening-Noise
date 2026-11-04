@@ -338,7 +338,7 @@ function EventMetadata({ concert, primaryTicketUrl = "" }) {
 
 // ─── SetlistModal ─────────────────────────────────────────────────────────────
 
-function SetlistModal({ target, onClose, onEdit, onLeave, onIdDiscovered }) {
+function SetlistModal({ target, artistImages, onClose, onEdit, onLeave, onIdDiscovered }) {
   const { t } = useI18n();
   const [state, setState] = useState({ status: "idle", data: null, error: null });
   const dialogRef = useDialogFocus(Boolean(target));
@@ -372,6 +372,7 @@ function SetlistModal({ target, onClose, onEdit, onLeave, onIdDiscovered }) {
     <ConcertDialog concert={target} location={concertLocation(target)} primaryLabel={t("Setlist")} journalEnabled={Boolean(supabaseEnabled&&target.concertId)} dialogRef={dialogRef} onClose={onClose} onEdit={onEdit} testId="concert-details-modal">
       {(tab,id)=><>
         <div hidden={tab!=="details"}>
+          {artistImages.get(normalize(target.artist)) && <img src={artistImages.get(normalize(target.artist))} alt="" className="mb-5 aspect-[21/9] w-full rounded-md object-cover object-center" />}
           <EventMetadata concert={target} />
           {target.attendees?.length > 0 && (
             <section className="mb-5 flex items-center gap-3 border-b border-zinc-900 pb-4">
@@ -577,7 +578,7 @@ function CalendarConcertModal({ target, artistImages, onClose, onEdit }) {
     <ConcertDialog concert={target} location={concertLocation(target)} primaryLabel={t("Details")} journalEnabled={Boolean(supabaseEnabled&&target.concertId)} dialogRef={dialogRef} onClose={onClose} onEdit={onEdit}>
       {(tab,id)=><>
         <div hidden={tab!=="details"} className="space-y-5">
-          {!isPast && artistImage && <img src={artistImage} alt="" className="aspect-[21/9] w-full rounded-md object-cover object-center" />}
+          {artistImage && <img src={artistImage} alt="" className="aspect-[21/9] w-full rounded-md object-cover object-center" />}
           <p className="flex items-center gap-2 text-sm font-semibold text-zinc-200"><span aria-hidden="true" className={`h-2 w-2 shrink-0 rounded-full ${isPast?"bg-blue-400":target.bought?"bg-emerald-400":"bg-amber-400"}`} />{t(isPast ? "History" : target.bought ? "Ticket bought" : "Ticket not bought")}</p>
           {!isPast && <div className="flex flex-wrap gap-3">
             {ticketUrl && <a href={ticketUrl} target="_blank" rel="noreferrer" className="adn-button-primary"><i className="fa-solid fa-ticket" aria-hidden="true" />{t("Tickets")}<i className="fa-solid fa-arrow-up-right-from-square text-[10px]" aria-hidden="true" /></a>}
@@ -1736,6 +1737,7 @@ export default function App() {
           /></DeferredPage>
         ) : isTimeline ? (
           <DeferredPage><ConcertTimelinePage
+            artistImages={artistImages}
             historyItems={historyItems}
             historyConcerts={historyConcerts}
             onOpenArtist={openArtistDetail}
@@ -1891,6 +1893,7 @@ export default function App() {
       {canEdit && editTarget && <React.Suspense fallback={null}><EditConcertModal isOpen={!!editTarget} mode={editTarget?.mode || mode} initial={editTarget} onClose={() => guardedClose(() => setEditTarget(null))} onSave={handleEditConcert} isSaving={isSaving} saveError={saveError} artistSuggestions={artistSuggestions} venueSuggestions={venueSuggestions} friends={companionFriends} /></React.Suspense>}
       {canEdit && <ContextMenu open={contextMenu.open} x={contextMenu.x} y={contextMenu.y} onEdit={startEditFromContext} onDelete={deleteFromContext} onClose={closeContextMenu} />}
       <SetlistModal
+        artistImages={artistImages}
         target={setlistTarget}
         onClose={() => guardedClose(() => setSetlistTarget(null))}
         onEdit={canEdit ? (target) => guardedClose(() => { setSetlistTarget(null); setEditTarget(target); }) : null}

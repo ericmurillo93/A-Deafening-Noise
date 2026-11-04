@@ -1,11 +1,15 @@
 import assert from "node:assert/strict";
 import fs from "node:fs/promises";
+import { loadSpotifyArtwork } from "./lib/spotify-artwork.mjs";
 
 const normalize = (value) => String(value || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, " ").trim();
 const exactArtist = (items, name) => items.find((artist) => normalize(artist.name) === normalize(name) && artist.images?.[0]?.url);
+const spotifyImage = (url) => /^https:\/\/(i\.scdn\.co\/image\/|image-cdn-ak\.spotifycdn\.com\/)/.test(url || "");
 
 if (process.argv.includes("--check")) {
   assert.equal(exactArtist([{ name: "Wrong Tribute", images: [{ url: "wrong" }] }, { name: "Sigur Rós", images: [{ url: "right" }] }], "SIGUR ROS").images[0].url, "right");
+  assert.equal(spotifyImage("https://jazz.barcelona/poster.webp"), false);
+  assert.equal(spotifyImage("https://i.scdn.co/image/example"), true);
   process.stdout.write("Suggestion artwork self-check passed\n");
   process.exit(0);
 }
@@ -16,10 +20,20 @@ const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const clientId = process.env.SPOTIFY_CLIENT_ID;
 if (!url || !key || !clientId) throw new Error("Supabase and Spotify service configuration is required");
 const headers = { apikey: key, Authorization: `Bearer ${key}`, "Content-Type": "application/json" };
+const catalog = JSON.parse(await fs.readFile(path, "utf8"));
+const images = new Map((await loadSpotifyArtwork(url, headers)).map(({ artist_name, image_url }) => [normalize(artist_name), image_url]));
+for (const item of catalog.suggestions) if (spotifyImage(item.imageUrl) && !images.has(normalize(item.artist))) images.set(normalize(item.artist), item.imageUrl);
+const save = async () => {
+  catalog.suggestions = catalog.suggestions.map((item) => ({ ...item, imageUrl: images.get(normalize(item.artist)) || "" }));
+  await fs.writeFile(path, `${JSON.stringify(catalog, null, 2)}\n`, "utf8");
+};
+const missing = [...new Set(catalog.suggestions.map(({ artist }) => artist))].filter((artist) => !images.has(normalize(artist)));
+if (!missing.length) { await save(); process.stdout.write("Reused persistent Spotify artwork\n"); process.exit(0); }
 const accountsResponse = await fetch(`${url}/rest/v1/rpc/get_spotify_sync_accounts`, { method: "POST", headers, body: "{}" });
 if (!accountsResponse.ok) throw new Error(`Could not load a Spotify connection (${accountsResponse.status})`);
 const [account] = await accountsResponse.json();
 if (!account) {
+  await save();
   process.stdout.write("Suggestion artwork skipped: no Spotify account is connected\n");
   process.exit(0);
 }
@@ -30,14 +44,11 @@ if (token.refresh_token) {
   const rotateResponse = await fetch(`${url}/rest/v1/rpc/rotate_spotify_refresh_token`, { method: "POST", headers, body: JSON.stringify({ target_user: account.userId, rotated_refresh_token: token.refresh_token }) });
   if (!rotateResponse.ok) throw new Error(`Could not preserve the rotated Spotify token (${rotateResponse.status})`);
 }
-const catalog = JSON.parse(await fs.readFile(path, "utf8"));
-const images = new Map(catalog.suggestions.filter(({ imageUrl }) => imageUrl).map(({ artist, imageUrl }) => [normalize(artist), imageUrl]));
-for (const artist of new Set(catalog.suggestions.filter(({ imageUrl }) => !imageUrl).map(({ artist }) => artist))) {
+for (const artist of missing) {
   const response = await fetch(`https://api.spotify.com/v1/search?type=artist&limit=5&q=${encodeURIComponent(artist)}`, { headers: { Authorization: `Bearer ${token.access_token}` } });
   if (!response.ok) throw new Error(`Spotify artist search failed (${response.status})`);
   const match = exactArtist((await response.json()).artists?.items || [], artist);
   if (match) images.set(normalize(artist), match.images[0].url);
 }
-catalog.suggestions = catalog.suggestions.map((suggestion) => ({ ...suggestion, imageUrl: images.get(normalize(suggestion.artist)) || "" }));
-await fs.writeFile(path, `${JSON.stringify(catalog, null, 2)}\n`, "utf8");
+await save();
 process.stdout.write(`Resolved artwork for ${images.size} suggestion artists\n`);
