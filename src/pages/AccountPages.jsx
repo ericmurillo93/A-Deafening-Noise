@@ -607,7 +607,6 @@ export function ProfilePage({
             >
               <span className="text-sm font-semibold text-zinc-300">
                 {t(label)}
-                {key === "ticketReminders" && <span className="my-1 block text-xs font-normal leading-relaxed text-zinc-400">{t("Weekly ticket reminders on Mondays at 08:00 (Spain mainland time).")}</span>}
               </span>
               {["web", "email"].map((channel) => key === "ticketReminders" && channel === "web" ? (
                 <span key={channel} className="text-center text-sm text-zinc-400" aria-label={t("Email only")}>—</span>

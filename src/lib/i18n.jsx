@@ -54,7 +54,6 @@ const translations = {
     "Rate {value} out of 5": "Valorar con {value} de 5",
     "Festivals": "Festivales",
     "Your festivals, concert by concert.": "Tus festivales, concierto a concierto.",
-    "Weekly ticket reminders on Mondays at 08:00 (Spain mainland time).": "Recordatorio semanal de entradas pendientes los lunes a las 08:00 (hora peninsular).",
     "Weekly ticket reminder": "Recordatorio semanal de entradas",
     "Email only": "Solo por email",
     "Filter calendar": "Filtrar calendario",
