@@ -1,0 +1,54 @@
+name: Test email
+on:
+  workflow_dispatch:
+    inputs:
+      email_type:
+        description: Send one test to Eric only (auth emails are non-functional previews)
+        required: true
+        type: choice
+        default: weekly_ticket_reminder
+        options:
+          - weekly_ticket_reminder
+          - suggestions
+          - friend_request
+          - friend_request_accepted
+          - friend_request_declined
+          - concert_invitation
+          - invitation_accepted
+          - invitation_declined
+          - concert_changed
+          - ticket_available
+          - ticket_link_changed
+          - selling_fast
+          - spotify_reconnect
+          - auth_confirmation
+          - auth_recovery
+          - auth_invite
+          - auth_magic_link
+          - auth_email_change
+          - auth_reauthentication
+          - auth_password_changed
+          - auth_email_changed
+permissions:
+  contents: read
+concurrency:
+  group: test-email
+  cancel-in-progress: false
+jobs:
+  send-test:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Send the selected test email to Eric
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          RESEND_FROM_EMAIL: ${{ secrets.RESEND_FROM_EMAIL }}
+          EMAIL_TEST_TYPE: ${{ inputs.email_type }}
+        run: node scripts/send-test-email.mjs

@@ -13,6 +13,7 @@ const COPY = {
   selling_fast: (item) => [`${item.artist} is selling fast`, item.date],
   spotify_reconnect: () => ["Reconnect Spotify", "Your listening profile needs attention to keep discovery current."],
 };
+export const notificationEmailTypes = Object.keys(COPY);
 
 export function renderNotificationEmail(item) {
   const [title, detail] = (COPY[item.kind] || (() => ["New activity", "Open A Deafening Noise to review it."]))(item);
