@@ -478,6 +478,8 @@ and retention descriptions aligned with the deployed workflow.
 
 The workflow `.github/workflows/concert-suggestions.yml` runs daily at 04:23 UTC and can also be started from GitHub's Actions UI. It first refreshes every active Spotify connection, rebuilds the privacy-reduced union artist catalog, and then refreshes Resurrection Fest Route, Live Nation Spain, Madness Live, Sala Razzmatazz, Sala Apolo, Sala Bikini, Paral·lel 62, Palau de la Música Catalana, Les Docks, Montreux Jazz Festival, DICE, Doctor Music, and Ticketmaster listings. Ticketmaster uses its official Discovery API for the union of countries selected by active profiles; each profile can choose up to five ISO country codes under **Profile → Concert discovery**. The other adapters retain the geographic reach of their own source. The non-round cron minute reduces the chance of GitHub scheduling delays.
 
+Festival de Jazz de Barcelona is also covered directly by `scripts/scrape-jazz-barcelona.mjs`. It reads the public programme and the structured `MusicEvent` sessions of matching artists, with a one-second pause between detail requests. Each separately ticketed session gets its own ID/date; sold-out shows remain eligible, cancelled/postponed shows are excluded. It never crawls Onebox checkout pages. This closes gaps when a festival has announced a show that is not yet in the venue feed or Ticketmaster. The shared refresh runner includes this source automatically, with the same failure-preservation and per-user filtering as other sources; no new key or workflow configuration is required.
+
 Configure these GitHub Actions repository secrets:
 
 ```text

@@ -19,6 +19,7 @@ const scrapers = [
   ["bikini", "scrape-bikini-barcelona.mjs", "Sala Bikini"],
   ["dice", "scrape-dice.mjs", "DICE"],
   ["doctor-music", "scrape-doctor-music.mjs", "Doctor Music"],
+  ["jazz-barcelona", "scrape-jazz-barcelona.mjs", "Festival de Jazz de Barcelona"],
   ["ticketmaster", "scrape-ticketmaster.mjs", "Ticketmaster"],
 ];
 
