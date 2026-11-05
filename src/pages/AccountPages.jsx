@@ -242,7 +242,6 @@ function ImportConcertsModal({ open, onClose, onImported }) {
 
 export function ProfilePage({
   profile,
-  futureArtists,
   theme,
   language,
   isAdmin,
@@ -389,7 +388,7 @@ export function ProfilePage({
     onConfirm({
       title: t("Delete account?"),
       description:
-        t("This permanently deletes your profile and personal data. This action cannot be undone."),
+        t("You will be signed out now. Your account and photos will be permanently deleted in the background. This action cannot be undone."),
       confirmLabel: t("Delete account"),
       confirmationText: "DELETE",
       hideIcon: true,
@@ -429,7 +428,7 @@ export function ProfilePage({
         const status =
           window.location.pathname === "/spotify/callback"
             ? await syncMySpotifyArtists(
-                await finishSpotifyConnection(futureArtists),
+                await finishSpotifyConnection(),
               )
             : await getMySpotifyStatus();
         if (window.location.pathname === "/spotify/callback")
@@ -1381,7 +1380,7 @@ export function AdminPage({ currentUserId, onChanged, onConfirm }) {
                 {t("GitHub Actions")}
               </dt>
               <dd className="text-sm font-black text-zinc-100">
-                {githubUsage == null ? t("Not configured") : `${githubUsage} min`}
+                {providers?.github?.error ? t("Unavailable") : githubUsage == null ? t("Not configured") : <span className="block text-right">{githubUsage} min<span className="block text-xs font-medium text-zinc-500">{t("Estimated")}{providers?.github?.partial ? ` · ${t("Partial totals")}` : ""}</span></span>}
               </dd>
             </div>
             <div className="flex items-center justify-between gap-3 py-3">
@@ -1405,6 +1404,7 @@ export function AdminPage({ currentUserId, onChanged, onConfirm }) {
                       {providers.resend.bounced30Days} {t("bounced")}
                     </span>{" "}
                     · {providers.resend.failed30Days} {t("failed")}
+                    {providers.resend.partial && <span className="block">{t("Partial totals")}</span>}
                   </>
                 ) : (
                   t("Not configured")

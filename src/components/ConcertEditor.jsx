@@ -23,7 +23,7 @@ function AutoSuggestField({ value, onChange, suggestions, placeholder }) {
     if (e.key === "ArrowDown") { e.preventDefault(); setHighlight((h) => Math.min(h + 1, matches.length - 1)); }
     else if (e.key === "ArrowUp") { e.preventDefault(); setHighlight((h) => Math.max(h - 1, 0)); }
     else if (e.key === "Enter" && highlight >= 0) { e.preventDefault(); pick(matches[highlight]); }
-    else if (e.key === "Escape") { setOpen(false); setHighlight(-1); }
+    else if (e.key === "Escape") { e.stopPropagation(); setOpen(false); setHighlight(-1); }
   }
   return (
     <div className="relative">
@@ -69,7 +69,7 @@ function ConcertCatalogField({ field, value, context = {}, onChange, onPick, onS
     .sort((a, b) => String(a[field]).localeCompare(String(b[field])));
   function pick(concert) { onPick(concert); setOpen(false); setHighlight(-1); }
   function handleKey(event) {
-    if (event.key === "Escape") { setOpen(false); setHighlight(-1); return; }
+    if (event.key === "Escape") { if (open && options.length) event.stopPropagation(); setOpen(false); setHighlight(-1); return; }
     if (!options.length || !["ArrowDown", "ArrowUp", "Enter"].includes(event.key)) return;
     if (event.key === "Enter" && highlight < 0) return;
     event.preventDefault();
@@ -217,7 +217,7 @@ export function EditConcertModal({ isOpen, mode, initial, onClose, onSave, isSav
   const [ticketUrl, setTicketUrl] = useState("");
   const [eventDetails, setEventDetails] = useState(EMPTY_EVENT_DETAILS);
   const [validationError, setValidationError] = useState("");
-  const dialogRef = useDialogFocus(isOpen);
+  const dialogRef = useDialogFocus(isOpen, isSaving ? undefined : onClose);
 
   useEffect(() => {
     if (isOpen && initial) {
@@ -339,7 +339,7 @@ export function AddConcertModal({ isOpen, initial, onClose, onSave, isSaving, sa
   const [eventDetails, setEventDetails] = useState(EMPTY_EVENT_DETAILS);
   const [catalogSelection, setCatalogSelection] = useState(null);
   const [validationError, setValidationError] = useState("");
-  const dialogRef = useDialogFocus(isOpen);
+  const dialogRef = useDialogFocus(isOpen, isSaving ? undefined : onClose);
 
   useEffect(() => {
     if (!isOpen) return;

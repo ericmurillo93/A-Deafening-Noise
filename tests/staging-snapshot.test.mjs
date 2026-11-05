@@ -10,4 +10,5 @@ const columns=Object.fromEntries(SNAPSHOT_TABLES.map((table)=>[table,table==="pr
 const sql=restoreSql(mapped,columns,{rollback:true});
 assert(sql.startsWith("begin;"));assert(sql.endsWith("rollback;"));assert(!sql.includes("setval("));
 assert(sql.includes("disable trigger user"));assert(!sql.includes("disable trigger all"));
+assert(sql.includes("delete from public.account_deletion_requests;"));
 assert.throws(()=>restoreSql(mapped,{...columns,concerts:["id"]}),/missing/);

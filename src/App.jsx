@@ -40,7 +40,7 @@ import { COUNTRIES, countryName } from "./lib/countries";
 import { useI18n } from "./lib/i18n.jsx";
 import { EmptyState, PanelHeading, UserAvatar } from "./components/SharedUi";
 import GlobalSearch from "./components/GlobalSearch";
-import { restorePageScroll, useDialogFocus, usePageScrollLock } from "./hooks/useUi";
+import { restorePageScroll, useDialogFocus, useLocalDay, usePageScrollLock } from "./hooks/useUi";
 
 const ProfilePage = React.lazy(() => import("./pages/AccountPages").then(({ ProfilePage: Page }) => ({ default: Page })));
 const ActivityPage = React.lazy(() => import("./pages/AccountPages").then(({ ActivityPage: Page }) => ({ default: Page })));
@@ -938,6 +938,7 @@ function DesktopNavigation({ activePage, profile, attentionCount, hasConcerts, o
 }
 
 export default function App() {
+  const localDay = useLocalDay();
   const dialogGuard = useDialogGuard();
   const guardedClose = action => dialogGuard ? dialogGuard.requestClose(action) : action();
   const { language, setLanguage, t } = useI18n();
@@ -1084,7 +1085,7 @@ export default function App() {
 
   const historyConcerts = useMemo(
     () => concertItems.filter((concert) => concert.bought && isPastConcert(concert)),
-    [concertItems]
+    [concertItems, localDay]
   );
   const historyItems = useMemo(() => groupHistoryFromJson(historyConcerts), [historyConcerts]);
   const scopedHistoryConcerts = useMemo(() => historyConcerts.filter((concert) => matchesArchiveFilters(concert, statsFilters)), [historyConcerts, statsFilters]);
@@ -1092,7 +1093,7 @@ export default function App() {
   const companionFriends = useMemo(() => friends.map((friend) => ({ ...friend, concertsTogether: historyConcerts.filter((concert) => concert.attendeeUsers?.some((person) => person.id === friend.id && person.status === "confirmed")).length })).sort((a,b)=>b.concertsTogether-a.concertsTogether||a.displayName.localeCompare(b.displayName)), [friends,historyConcerts]);
   const nextItems = useMemo(
     () => concertItems.filter((concert) => !isPastConcert(concert)),
-    [concertItems]
+    [concertItems, localDay]
   );
   const venueShows = selectedVenue
     ? historyItems.flatMap(({ shows }) => shows.map((show) => parseShow(show, "history"))).filter(({ venue }) => normalize(venue) === normalize(selectedVenue))
@@ -1144,7 +1145,7 @@ export default function App() {
       .filter((concert) => concert.bought || !isPastConcert(concert))
       .map((concert) => ({ ...concert, source: isPastConcert(concert) ? "history" : "next" }));
     return filterConcerts(visibleConcerts, query).filter((concert) => calendarFilter === "all" || (calendarFilter === "history" ? isPastConcert(concert) : !isPastConcert(concert) && concert.bought === (calendarFilter === "bought")));
-  }, [concertItems, query, calendarFilter]);
+  }, [concertItems, query, calendarFilter, localDay]);
 
   const artistImages = useMemo(() => new Map(artistImageRows.map(({ artist, imageUrl }) => [normalize(artist), imageUrl])), [artistImageRows]);
   const availableSuggestions = suggestionCatalog.filter((item) => isCurrentSuggestion(item));
@@ -1766,7 +1767,7 @@ export default function App() {
           /></DeferredPage></>
         ) : isSuggestions ? suggestionsPage
         : isAdminPage ? <DeferredPage><AdminPage currentUserId={currentUserId} onChanged={refreshAfterWrite} onConfirm={(confirmation) => { setSaveError(""); setConfirmAction(confirmation); }} /></DeferredPage>
-        : isProfile ? <DeferredPage><ProfilePage profile={appProfile} futureArtists={[...new Set(concertItems.filter((concert) => !isPastConcert(concert)).map((concert) => concert.artist))]} theme={theme} language={language} isAdmin={isAdmin} onThemeChange={changeTheme} onLanguageChange={changeLanguage} onAdmin={() => changePage("admin")} onSignOut={() => supabase.auth.signOut()} onSave={async (payload) => { await updateMyProfile(payload); await refreshAfterWrite(); }} onExport={handleProfileExport} onDelete={async () => { await deleteMyAccount(); await supabase.auth.signOut(); }} onPassword={() => setPasswordModalMode("change")} onConfirm={(confirmation) => { setSaveError(""); setConfirmAction(confirmation); }} onSpotifyChanged={reloadAppData} onImported={refreshAfterWrite} /></DeferredPage>
+        : isProfile ? <DeferredPage><ProfilePage profile={appProfile} theme={theme} language={language} isAdmin={isAdmin} onThemeChange={changeTheme} onLanguageChange={changeLanguage} onAdmin={() => changePage("admin")} onSignOut={() => supabase.auth.signOut()} onSave={async (payload) => { await updateMyProfile(payload); await refreshAfterWrite(); }} onExport={handleProfileExport} onDelete={async () => { await deleteMyAccount(); await supabase.auth.signOut(); }} onPassword={() => setPasswordModalMode("change")} onConfirm={(confirmation) => { setSaveError(""); setConfirmAction(confirmation); }} onSpotifyChanged={reloadAppData} onImported={refreshAfterWrite} /></DeferredPage>
         : isActivity ? <DeferredPage><ActivityPage notifications={notifications} onRead={async (ids) => { await markNotificationsRead(ids); await refreshAfterWrite(); }} onOpenFriends={() => changePage("friends")} onNavigate={changePage} onOpenConcert={(item) => { const concert=concertItems.find((candidate)=>candidate.concertId===item.concertId); if(concert) setCalendarTarget({ ...concert, mode:isPastConcert(concert)?"history":"next" }); }} /></DeferredPage>
         : isFriendProfile ? <DeferredPage><FriendProfilePage friend={selectedFriend} /></DeferredPage>
         : isFriends ? <DeferredPage><FriendsPage friends={friends} requests={friendRequests} invitations={concertInvitations} onSearch={searchProfiles} onSendRequest={(userId) => runSocialAction(() => sendFriendRequest(userId))} onRespondRequest={(requestId, accept) => runSocialAction(() => respondFriendRequest(requestId, accept))} onRequestRemoveFriend={(friend) => { setSaveError(""); setConfirmRemoveFriend(friend); }} onSetInvitationStatus={(concertId,status,bought) => runSocialAction(() => setConcertInvitationStatus(concertId,status,bought))} onOpenProfile={openFriendProfile} /></DeferredPage> : isStats ? <>{headerControlsNode && statsScopeControl && createPortal(statsScopeControl, headerControlsNode)}<DeferredPage><StatsPage historyItems={scopedHistoryItems} historyConcerts={scopedHistoryConcerts} selectedFriends={friends.filter((friend)=>statsFriendIds.includes(friend.id))} friendMode={statsFilters.friendMode || "all"} onOpenArtist={openArtistDetail} onOpenVenue={openVenueDetail} onOpenCountry={openCountryDetail} onOpenYearReview={openYearReview} /></DeferredPage></> : (
@@ -1797,6 +1798,7 @@ export default function App() {
             {isNext ? (
               <>
                 <DeferredPage><NextConcertCalendar
+                  localDay={localDay}
                   items={calendarItems}
                   visibleMonth={calendarMonth}
                   setVisibleMonth={setCalendarMonth}

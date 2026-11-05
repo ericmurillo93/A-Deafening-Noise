@@ -1,6 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
 import { loadArchiveSnapshot } from "./archive-loader";
-import { clearMemoryFiles } from "./memory-storage.js";
 import { prepareMemoryPhoto } from "./prepare-memory-photo.js";
 import { createRequestCache } from "./request-cache.js";
 import { suggestionKey, legacySuggestionKey, canonicalVenue, isDismissedSuggestion } from "./suggestions.js";
@@ -83,12 +82,7 @@ export async function removeMyAvatar() {
 export const markNotificationsRead = (ids = null) => rpc("mark_notifications_read", { notification_ids: ids });
 export const leaveSharedConcert = (concertId) => rpc("leave_shared_concert", { target_concert: concertId });
 export const exportMyData = () => rpc("export_my_data");
-export async function deleteMyAccount() {
-  const { data: { user }, error } = await supabase.auth.getUser();
-  if (error || !user) throw error || new Error("Sign in again.");
-  await clearMemoryFiles(supabase.storage.from("concert-memories"),user.id);
-  return rpc("delete_my_account");
-}
+export const deleteMyAccount = () => rpc("delete_my_account");
 export const adminListUsers = () => rpc("admin_list_users");
 export const adminUpdateUser = (userId, role, status) => rpc("admin_update_user", { target_user: userId, new_role: role, new_status: status });
 export const adminGetOperations = () => rpc("get_admin_operations");

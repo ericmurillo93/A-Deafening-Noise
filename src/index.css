@@ -303,6 +303,7 @@ button[aria-label="View activity"] { display: flex; }
 
 .adn-modal-backdrop { animation: adn-backdrop-in 180ms ease-out both; }
 .adn-modal-panel { animation: adn-modal-in 360ms var(--adn-ease-expo) both; }
+.adn-global-search, .adn-global-search .adn-modal-panel { animation: none; }
 .adn-popover,
 .adn-context-menu { transform-origin: top right; animation: adn-popover-in 180ms var(--adn-ease-expo) both; }
 
@@ -403,7 +404,8 @@ button[aria-label="View activity"] { display: flex; }
 }
 
 /* iOS Safari zooms the visual viewport when a focused field is below 16px. */
-@media (max-width: 767px) and (pointer: coarse) {
+@media (pointer: coarse) {
+  .adn-shell :where(input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="range"]), select, textarea),
   .adn-modal-panel :where(input:not([type="checkbox"]):not([type="radio"]):not([type="file"]), select, textarea) {
     font-size: 16px;
   }

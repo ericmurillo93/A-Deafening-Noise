@@ -28,7 +28,7 @@ for (const recipient of recipients) {
     if (deliveries.length < 1000) break;
   }
   const matches = eligible.filter((item) => !seen.has(suggestionKey(item)));
-  const rendered = renderSuggestionDigest(recipient.displayName, matches);
+  const rendered = renderSuggestionDigest(recipient.displayName, matches, recipient.language);
   const candidate = { from, to: [recipient.email], subject: rendered.subject, html: rendered.html, text: rendered.text, headers: { "List-Unsubscribe": "<https://adeafeningnoise.com/profile>" } };
   const delivery = await database("rpc/claim_suggestion_digest", { target_user: recipient.userId, candidate_keys: matches.map(suggestionKey), eligible_keys: eligible.map(suggestionKey), candidate_message: candidate });
   if (!delivery) continue;

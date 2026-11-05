@@ -22,7 +22,7 @@ export function restoreSql(snapshot, columns, { rollback = false } = {}) {
   const statements = ["begin;", "set local lock_timeout='10s';", "set local statement_timeout='90s';"];
   // Disable application triggers only, never foreign-key constraints. Restored atomically on rollback/error.
   for (const table of SNAPSHOT_TABLES) statements.push(`alter table public.${table} disable trigger user;`);
-  statements.push("delete from public.notifications;", "delete from public.suggestion_email_outbox;", "delete from public.weekly_ticket_reminders;");
+  statements.push("delete from public.account_deletion_requests;", "delete from public.notifications;", "delete from public.suggestion_email_outbox;", "delete from public.weekly_ticket_reminders;");
   for (const table of [...SNAPSHOT_TABLES].reverse().filter((table)=>table!=="profiles")) statements.push(`delete from public.${table};`);
   for (const table of SNAPSHOT_TABLES) {
     const names = columns[table].map((name) => `"${name}"`);

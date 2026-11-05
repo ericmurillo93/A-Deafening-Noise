@@ -20,7 +20,7 @@ export async function renderTestEmail(type, profile, concerts = []) {
     message = renderWeeklyTicketReminder(profile.display_name, concerts.length ? concerts : exampleConcerts, profile.language);
     if (!concerts.length) label = "[TEST SAMPLE]";
   } else if (type === "suggestions") {
-    message = renderSuggestionDigest(profile.display_name, exampleConcerts);
+    message = renderSuggestionDigest(profile.display_name, exampleConcerts, profile.language);
     label = "[TEST SAMPLE]";
   } else if (type.startsWith("auth_")) {
     const name = type.slice(5);
@@ -35,7 +35,7 @@ export async function renderTestEmail(type, profile, concerts = []) {
     message = { subject: `Authentication template: ${name}`, html, text: `${notice}\n\nAuthentication template: ${name}\nhttps://adeafeningnoise.com/profile` };
     label = "[TEST PREVIEW]";
   } else {
-    message = renderNotificationEmail({ kind: type, actorName: "Example friend", artist: "EXAMPLE ARTIST", venue: "EXAMPLE VENUE", date: "01/01/2030" });
+    message = renderNotificationEmail({ kind: type, language: profile.language, actorName: "Example friend", artist: "EXAMPLE ARTIST", venue: "EXAMPLE VENUE", date: "01/01/2030" });
   }
   return { ...message, subject: `${label} ${message.subject}` };
 }

@@ -1,4 +1,26 @@
-import { useEffect, useLayoutEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+
+export function useLocalDay() {
+  const [day, setDay] = useState(() => new Date().toDateString());
+  useEffect(() => {
+    let timer;
+    function refresh() {
+      clearTimeout(timer);
+      const now = new Date();
+      setDay(now.toDateString());
+      timer = setTimeout(refresh, new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1).getTime() - now.getTime() + 10);
+    }
+    refresh();
+    window.addEventListener("focus", refresh);
+    document.addEventListener("visibilitychange", refresh);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener("focus", refresh);
+      document.removeEventListener("visibilitychange", refresh);
+    };
+  }, []);
+  return day;
+}
 
 export function usePageScrollLock(locked) {
   useLayoutEffect(() => {
@@ -29,9 +51,16 @@ export function usePageScrollLock(locked) {
   }, [locked]);
 }
 
-export function useDialogFocus(open) {
+export function useDialogFocus(open, onEscape) {
   const dialogRef = useRef(null);
   const returnFocusRef = useRef(null);
+
+  useEffect(() => {
+    if (!open || !onEscape) return undefined;
+    const close = event => { if (event.key === "Escape" && !event.defaultPrevented) onEscape(); };
+    window.addEventListener("keydown", close);
+    return () => window.removeEventListener("keydown", close);
+  }, [open, onEscape]);
 
   useEffect(() => {
     if (!open) return undefined;

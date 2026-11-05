@@ -2,11 +2,12 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useI18n } from "../lib/i18n.jsx";
 import { parseConcertDateRange } from "../lib/concerts.js";
 
-export default function NextConcertCalendar({ items, visibleMonth, setVisibleMonth, onOpen, onContextMenu, onContextMenuAt }) {
+export default function NextConcertCalendar({ items, localDay, visibleMonth, setVisibleMonth, onOpen, onContextMenu, onContextMenuAt }) {
   const { t, locale } = useI18n();
   const [monthPickerOpen, setMonthPickerOpen] = useState(false);
   const [highlightedDay, setHighlightedDay] = useState(null);
   const monthPickerRef = useRef(null);
+  const monthTriggerRef = useRef(null);
   const swipeStartRef = useRef(null);
   const datedItems = useMemo(
     () => items
@@ -18,7 +19,7 @@ export default function NextConcertCalendar({ items, visibleMonth, setVisibleMon
       })
       .filter(({ range }) => range)
       .sort((a, b) => a.range.start - b.range.start),
-    [items]
+    [items, localDay]
   );
   const year = visibleMonth.getFullYear();
   const month = visibleMonth.getMonth();
@@ -35,7 +36,16 @@ export default function NextConcertCalendar({ items, visibleMonth, setVisibleMon
       if (!monthPickerRef.current?.contains(event.target)) setMonthPickerOpen(false);
     }
     document.addEventListener("pointerdown", dismiss);
-    return () => document.removeEventListener("pointerdown", dismiss);
+    function escape(event) {
+      if (event.key !== "Escape") return;
+      setMonthPickerOpen(false);
+      monthTriggerRef.current?.focus();
+    }
+    document.addEventListener("keydown", escape);
+    return () => {
+      document.removeEventListener("pointerdown", dismiss);
+      document.removeEventListener("keydown", escape);
+    };
   }, [monthPickerOpen]);
 
   function moveMonth(offset) {
@@ -85,7 +95,7 @@ export default function NextConcertCalendar({ items, visibleMonth, setVisibleMon
         <button onClick={() => { setVisibleMonth(new Date(today.getFullYear(), today.getMonth(), 1)); setHighlightedDay(null); setMonthPickerOpen(false); }} className="rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-2.5 text-sm font-black text-zinc-100 transition hover:border-zinc-500">{t("Today")}</button>
         <button onClick={() => moveMonth(-1)} className="rounded-xl px-3 py-2.5 text-sm text-zinc-400 transition hover:bg-zinc-800 hover:text-white" aria-label={t("Previous month")}><i className="fa-solid fa-chevron-up" aria-hidden="true" /></button>
         <button onClick={() => moveMonth(1)} className="rounded-xl px-3 py-2.5 text-sm text-zinc-400 transition hover:bg-zinc-800 hover:text-white" aria-label={t("Next month")}><i className="fa-solid fa-chevron-down" aria-hidden="true" /></button>
-        <button onClick={() => setMonthPickerOpen((open) => !open)} className="rounded-xl px-4 py-2 text-xl font-black text-zinc-100 transition hover:bg-zinc-800 md:text-2xl" aria-label={t("Choose month, {month}", { month: monthLabel })} aria-expanded={monthPickerOpen}>
+        <button ref={monthTriggerRef} onClick={() => setMonthPickerOpen((open) => !open)} className="rounded-xl px-4 py-2 text-xl font-black text-zinc-100 transition hover:bg-zinc-800 md:text-2xl" aria-label={t("Choose month, {month}", { month: monthLabel })} aria-expanded={monthPickerOpen}>
           {monthLabel} <i className="fa-solid fa-chevron-down ml-2 text-xs text-zinc-500" aria-hidden="true" />
         </button>
         {monthPickerOpen && (
@@ -140,8 +150,10 @@ export default function NextConcertCalendar({ items, visibleMonth, setVisibleMon
               <div className="mb-1 flex justify-end text-[10px] font-bold md:text-xs"><span className={`inline-flex h-5 w-5 items-center justify-center rounded-full ${isToday ? "bg-blue-500/15 text-blue-300 ring-1 ring-inset ring-blue-500/30" : "text-zinc-600"}`} aria-current={isToday ? "date" : undefined}>{day}</span></div>
               {concerts.length > 0 && (
                 <div className="md:hidden">
-                  <button type="button" aria-pressed={highlightedDay === calendarDay.getTime()} aria-label={concerts.length === 1 ? t("Highlight {artist} in the monthly list", { artist: concerts[0].artist }) : t("Highlight {count} concerts in the monthly list", { count: concerts.length })} onClick={() => setHighlightedDay(calendarDay.getTime())} className={`block w-full truncate rounded-md border px-1 py-1 text-center text-[8px] font-bold text-zinc-100 transition-[filter,box-shadow] ${concerts.some((concert) => concert.isPast) ? "border-blue-700 bg-blue-950" : concerts.some((concert) => concert.bought) ? "border-emerald-700 bg-emerald-900" : "border-amber-700 bg-amber-950"} ${highlightedDay === calendarDay.getTime() ? "brightness-110 ring-1 ring-inset ring-white/40" : ""}`}>
+                  <button type="button" aria-pressed={highlightedDay === calendarDay.getTime()} aria-label={concerts.length === 1 ? t("Highlight {artist} in the monthly list", { artist: concerts[0].artist }) : t("Highlight {count} concerts in the monthly list", { count: concerts.length })} onClick={() => setHighlightedDay(calendarDay.getTime())} className="absolute inset-0 flex items-start px-1.5 pt-8">
+                    <span className={`block w-full truncate rounded-md border px-1 py-1 text-center text-[8px] font-bold text-zinc-100 transition-[filter,box-shadow] ${concerts.some((concert) => concert.isPast) ? "border-blue-700 bg-blue-950" : concerts.some((concert) => concert.bought) ? "border-emerald-700 bg-emerald-900" : "border-amber-700 bg-amber-950"} ${highlightedDay === calendarDay.getTime() ? "brightness-110 ring-1 ring-inset ring-white/40" : ""}`}>
                     {concerts.length === 1 ? concerts[0].artist : t("{count} shows", { count: concerts.length })}
+                    </span>
                   </button>
                 </div>
               )}

@@ -404,6 +404,47 @@ test("Mobile calendar events highlight their matching monthly-list entry", async
   await expect(page.locator('[data-calendar-highlighted="true"]').first()).toBeVisible();
 });
 
+for (const theme of ["archive", "poster"]) {
+  test(`Calendar refreshes at midnight and month Escape restores focus (${theme})`, async ({ page }, testInfo) => {
+    await page.addInitScript((value) => localStorage.setItem("adn-theme", value), theme);
+    await page.clock.pauseAt(new Date("2026-08-17T23:59:00"));
+    await page.goto("/calendar");
+    const month = page.getByRole("button", { name: /Choose month/ });
+    await month.click();
+    await expect(month).toHaveAttribute("aria-expanded", "true");
+    await page.keyboard.press("Escape");
+    await expect(month).toHaveAttribute("aria-expanded", "false");
+    await expect(month).toBeFocused();
+    const compact = page.viewportSize().width < 768;
+    const event = !compact
+      ? page.getByRole("button", { name: "UPCOMING EXAMPLE 1", exact: true })
+      : page.getByRole("button", { name: /17\/08 UPCOMING EXAMPLE 1/ });
+    await expect(event).toHaveClass(/bg-emerald-900/);
+    await page.clock.runFor(61000);
+    await expect(event).toHaveClass(/bg-blue-950/);
+    if (compact) {
+      const target = page.getByRole("button", { name: "Highlight UPCOMING EXAMPLE 1 in the monthly list", exact: true });
+      const box = await target.boundingBox();
+      expect(box.height).toBeGreaterThanOrEqual(44);
+      expect(box.width).toBeGreaterThanOrEqual(24);
+      await target.click({ position: { x: 5, y: 5 } });
+      await expect(target).toHaveAttribute("aria-pressed", "true");
+    }
+  });
+  test(`Archive search opens without animation (${theme})`, async ({ page }) => {
+    await page.addInitScript((value) => localStorage.setItem("adn-theme", value), theme);
+    await page.goto("/home");
+    await expect(page.getByRole("button", { name: "Add concert", exact: true })).toBeVisible();
+    await page.keyboard.press("Control+k");
+    const dialog = page.getByRole("dialog", { name: "Search my archive" });
+    await expect(dialog).toBeVisible();
+    expect(await dialog.evaluate(element => getComputedStyle(element).animationName)).toBe("none");
+    expect(await dialog.evaluate(element => getComputedStyle(element.parentElement).animationName)).toBe("none");
+    await page.keyboard.press("Escape");
+    await expect(dialog).not.toBeVisible();
+  });
+}
+
 test("Core pages do not create viewport-level horizontal overflow", async ({ page }) => {
   test.setTimeout(45_000);
   for (const route of ["/home", "/history", "/calendar", "/timeline", "/stats", "/year-review", "/friends"]) {

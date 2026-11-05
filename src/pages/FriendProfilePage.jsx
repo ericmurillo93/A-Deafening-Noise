@@ -17,7 +17,7 @@ function ConcertSummary({ title, icon, concert, tone }) {
       <p className="mt-4 truncate text-sm font-bold uppercase text-zinc-300">{concert.venue || t("Venue to be confirmed")}</p>
       <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-zinc-500">
         {(concert.city || concert.country) && <span><i className="fa-solid fa-location-dot mr-2 text-zinc-600" aria-hidden="true" />{[concert.city, countryName(concert.country, locale)].filter(Boolean).join(", ")}</span>}
-        <time className="font-bold tabular-nums text-zinc-300"><i className="fa-regular fa-calendar mr-2 text-zinc-600" aria-hidden="true" />{concert.date}</time>
+        <time className="font-bold tabular-nums text-zinc-300"><i className="fa-solid fa-calendar mr-2 text-zinc-600" aria-hidden="true" />{concert.date}</time>
       </div>
     </div> : <div className="mt-6 flex min-h-20 items-center gap-3 text-sm text-zinc-500"><i className="fa-solid fa-minus text-zinc-700" aria-hidden="true" />{t("No concert to show yet.")}</div>}
   </section>;

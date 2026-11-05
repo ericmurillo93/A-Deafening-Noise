@@ -9,6 +9,9 @@ const translations = {
     "nav.suggestions": "Concert Suggestions",
   },
   es: {
+    "Estimated": "Estimado",
+    "Partial totals": "Totales parciales",
+    "You will be signed out now. Your account and photos will be permanently deleted in the background. This action cannot be undone.": "Se cerrará tu sesión. Tu cuenta y tus fotos se eliminarán permanentemente en segundo plano. Esta acción no se puede deshacer.",
     "Enter a valid date in DD/MM/YYYY format.": "Introduce una fecha válida con el formato DD/MM/AAAA.",
     "{count} concerts have no country recorded.": "Hay {count} conciertos sin país registrado.",
     "Map of concert countries": "Mapa de los países de tus conciertos",

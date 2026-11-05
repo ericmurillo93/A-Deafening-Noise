@@ -65,6 +65,7 @@ Keep the project's existing **A Deafening Noise** Notion page current when a cha
 - Artist and venue detail navigation must preserve meaningful Back behavior across archive, timeline, stats, and nested detail pages.
 - Calendar colors are blue history, green bought future, orange unpurchased future.
 - Keep phone layouts usable in portrait and landscape; do not overlap the top Menu button with sticky controls.
+- Chrome, Firefox, Edge and Safari (including iOS Safari) are supported UI targets in both Default and Poster. Consider all engines when changing layout, typography, controls, scrolling or modals; never assume Chromium behavior is universal. Preserve mobile zoom accessibility and prevent unintended input-focus zoom.
 
 ## Suggestion pipeline
 
@@ -100,6 +101,8 @@ git diff --check
 ```
 
 Run `npm run test:quality` only when Eric explicitly requests the complete local quality suite. It combines functional Playwright checks, Axe accessibility rules, visual baselines in desktop/phone layouts, and Lighthouse thresholds. The suites use isolated fallback data and must never authenticate against or write to production Supabase. Individual commands are documented in `docs/DEVELOPMENT.md`. Do not add a test for every feature: extend functional coverage only for important, reusable, difficult-to-verify, or previously regressed behavior; extend visual baselines only for representative layouts.
+
+Use `npm run test:browsers` when browser compatibility validation is requested. It checks Chromium, Firefox and WebKit in desktop, portrait and landscape layouts with synthetic data; it does not run automatically on every feature or in GitHub Actions. Real Chrome/Edge channels are optional when installed. WebKit on Linux is not actual Safari on macOS/iOS: report exactly what was tested and retain a real-device release smoke check.
 
 For scraper changes, also run:
 

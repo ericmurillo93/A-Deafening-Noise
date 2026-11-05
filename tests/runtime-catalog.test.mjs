@@ -9,7 +9,7 @@ Object.assign(process.env, { SUPABASE_URL: "https://audit.invalid", SUPABASE_SER
 globalThis.fetch = async (url, options) => {
   if (url.endsWith("get_spotify_sync_accounts")) return Response.json([]);
   if (url.endsWith("get_discovery_artist_catalog")) return Response.json(["EXAMPLE ARCHIVE ARTIST", "EXAMPLE BUCKET ARTIST"]);
-  if (url.includes("concert_participants?") || url.includes("concerts?")) return Response.json([]);
+  if (url.includes("concert_participants?") || url.includes("concerts?") || url.includes("spotify_artist_artwork?")) return Response.json([]);
   if (url.endsWith("get_concert_suggestions")) return Response.json({ generatedAt: "2026-09-28T00:00:00Z", suggestions: [] });
   throw new Error(`Unexpected request: ${options?.method || "GET"} ${url}`);
 };

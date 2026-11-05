@@ -192,7 +192,7 @@ export default function GlobalSearch({
   if (!open) return null;
   return (
     <div
-      className="adn-modal-backdrop fixed inset-0 z-[70] flex items-start justify-center bg-black/70 px-4 pt-[10dvh]"
+      className="adn-global-search adn-modal-backdrop fixed inset-0 z-[70] flex items-start justify-center bg-black/70 px-4 pt-[10dvh]"
     >
       <section
         ref={dialogRef}

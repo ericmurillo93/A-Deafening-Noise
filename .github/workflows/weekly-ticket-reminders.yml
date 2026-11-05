@@ -1,8 +1,8 @@
 name: Weekly ticket reminders
 on:
   schedule:
-    # Madrid 08:00 in summer/winter; the sender guards local time and deduplicates the week.
-    - cron: "0 6,7 * * 1"
+    # Start at Madrid 08:00; retry hourly on Monday. The sender guards local time and deduplicates the week.
+    - cron: "0 6-18 * * 1"
   workflow_dispatch:
     inputs:
       dry_run:

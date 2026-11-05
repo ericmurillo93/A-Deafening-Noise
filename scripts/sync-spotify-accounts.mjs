@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import fs from "node:fs/promises";
 import path from "node:path";
-import { loadSpotifyArtwork } from "./lib/spotify-artwork.mjs";
+import { loadAllRows, loadSpotifyArtwork } from "./lib/spotify-artwork.mjs";
 
 const outputPath = path.resolve("data/listened-artists.json");
 
@@ -45,27 +45,29 @@ function exactArtist(items, name) {
 }
 
 async function rpc(name, body = {}) {
-  const response = await fetch(`${supabaseUrl}/rest/v1/rpc/${name}`, { method: "POST", headers, body: JSON.stringify(body) });
+  const response = await fetch(`${supabaseUrl}/rest/v1/rpc/${name}`, { method: "POST", headers, body: JSON.stringify(body), signal: AbortSignal.timeout(15000) });
   if (!response.ok) throw new Error(`${name} failed (${response.status}): ${(await response.text()).slice(0, 300)}`);
   const text = await response.text();
   return text ? JSON.parse(text) : null;
 }
 
 async function spotify(pathname, accessToken) {
-  const response = await fetch(`https://api.spotify.com/v1${pathname}`, { headers: { Authorization: `Bearer ${accessToken}` } });
+  const response = await fetch(`https://api.spotify.com/v1${pathname}`, { headers: { Authorization: `Bearer ${accessToken}` }, signal: AbortSignal.timeout(15000) });
   if (!response.ok) throw new Error(`Spotify ${pathname} failed (${response.status})`);
   return response.json();
 }
 
 const accounts = await rpc("get_spotify_sync_accounts");
-const [participantResponse, concertResponse] = await Promise.all([
-  fetch(`${supabaseUrl}/rest/v1/concert_participants?select=user_id,concert_id&status=eq.confirmed`, { headers }),
-  fetch(`${supabaseUrl}/rest/v1/concerts?select=id,artist,concert_date`, { headers }),
-]);
-if (!participantResponse.ok || !concertResponse.ok) throw new Error("Could not read concert artists");
-const participants = await participantResponse.json();
-const concertsById = new Map((await concertResponse.json()).map((concert) => [concert.id, concert]));
-const cachedArtists = new Set((await loadSpotifyArtwork(supabaseUrl, headers)).map(({ normalized_artist }) => normalized_artist));
+const [participants, concerts, artworkRows] = await Promise.all([
+  loadAllRows(supabaseUrl, headers, "concert_participants?select=user_id,concert_id&status=eq.confirmed&order=user_id,concert_id"),
+  loadAllRows(supabaseUrl, headers, "concerts?select=id,artist,concert_date&order=id"),
+  loadSpotifyArtwork(supabaseUrl, headers),
+]).catch(() => {
+  process.stderr.write("Warning: archive artwork context unavailable; listening sync continues.\n");
+  return [[], [], []];
+});
+const concertsById = new Map(concerts.map((concert) => [concert.id, concert]));
+const cachedArtists = new Set(artworkRows.map(({ normalized_artist }) => normalized_artist));
 const archiveByUser = new Map();
 for (const { user_id: userId, concert_id: concertId } of participants) {
   const concert = concertsById.get(concertId);
@@ -80,27 +82,33 @@ for (const account of accounts) {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: new URLSearchParams({ grant_type: "refresh_token", refresh_token: account.refreshToken, client_id: spotifyClientId }),
+      signal: AbortSignal.timeout(15000),
     });
     const token = await tokenResponse.json();
     if (!tokenResponse.ok) {
       if (token.error === "invalid_grant") await rpc("mark_spotify_reauthorization_required", { target_user: account.userId });
       throw new Error(`Spotify token refresh failed: ${token.error || tokenResponse.status}`);
     }
+    if (token.refresh_token) await rpc("rotate_spotify_refresh_token", { target_user: account.userId, rotated_refresh_token: token.refresh_token });
     const ranges = await Promise.all(["short_term", "medium_term", "long_term"].map((range) => spotify(`/me/top/artists?limit=50&time_range=${range}`, token.access_token)));
     const topArtists = spotifyArtists(ranges);
+    await rpc("complete_spotify_background_sync", { target_user: account.userId, payload: topArtists, rotated_refresh_token: null });
+    synced += 1;
     const known = new Set([...cachedArtists, ...topArtists.filter(({ imageUrl }) => imageUrl).map(({ name }) => normalize(name))]);
     const artwork = [];
-    // shortcut: backfill at most 50 missing archive artists per account/run; cached successes are skipped next time.
-    for (const name of [...(archiveByUser.get(account.userId) || [])].filter((artist) => !known.has(normalize(artist))).slice(0, 50)) {
-      await new Promise((resolve) => setTimeout(resolve, 250));
-      const result = await spotify(`/search?type=artist&limit=5&q=${encodeURIComponent(name)}`, token.access_token);
-      const match = exactArtist(result.artists?.items || [], name);
-      if (match) artwork.push({ normalizedArtist: normalize(name), spotifyId: match.id, name: match.name, imageUrl: match.images[0].url });
+    try {
+      // shortcut: backfill at most 50 missing archive artists per account/run; cached successes are skipped next time.
+      for (const name of [...(archiveByUser.get(account.userId) || [])].filter((artist) => !known.has(normalize(artist))).slice(0, 50)) {
+        await new Promise((resolve) => setTimeout(resolve, 250));
+        const result = await spotify(`/search?type=artist&limit=5&q=${encodeURIComponent(name)}`, token.access_token);
+        const match = exactArtist(result.artists?.items || [], name);
+        if (match) artwork.push({ normalizedArtist: normalize(name), spotifyId: match.id, name: match.name, imageUrl: match.images[0].url });
+      }
+      await rpc("upsert_spotify_artist_images", { target_user: account.userId, payload: artwork });
+    } catch {
+      process.stderr.write("Warning: optional Spotify artwork deferred until the next sync.\n");
     }
-    await rpc("complete_spotify_background_sync", { target_user: account.userId, payload: topArtists, rotated_refresh_token: token.refresh_token || null });
-    await rpc("upsert_spotify_artist_images", { target_user: account.userId, payload: artwork });
     for (const artist of [...topArtists, ...artwork]) if (artist.imageUrl) cachedArtists.add(normalize(artist.name));
-    synced += 1;
   } catch (error) {
     process.stderr.write(`Warning: Spotify user ${account.userId} was not synced. ${error.message}\n`);
   }

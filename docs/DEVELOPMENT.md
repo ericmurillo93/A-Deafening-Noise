@@ -322,7 +322,41 @@ Only use `dev:network` on a trusted network. The legacy JSON fallback save endpo
 
 The quality suites are intentionally local and manual: none run in GitHub Actions. Playwright and Axe start an isolated Vite server with Supabase disabled and use synthetic `tests/fixtures/archive.mjs` data; they never authenticate against or mutate production. They refuse to reuse an existing development server. Local function calls are disabled in quality mode unless a test explicitly mocks them. Lighthouse creates an isolated production build with the same fallback boundary, audits archive and calendar, and fails below the checked-in category thresholds. Visual snapshots cover representative pages in desktop, phone portrait, and phone landscape, including Home in both themes, and are stored in Git; use `test:visual:update` only after reviewing and intentionally accepting the new images. After Lighthouse, run a normal `npm run build` before inspecting or deploying `dist`.
 
-Additional manually invoked checks:
+### Browser support and release checks
+
+Treat current Chrome, Firefox, Microsoft Edge and Safari, including iOS Safari,
+as supported targets in both Default and Poster. Layout, typography, focus,
+dropdowns, modal scrolling and touch controls must not depend on one engine.
+Keep pinch zoom enabled; touch-device text fields use at least 16px to avoid
+Safari's automatic focus zoom, including phone landscape and profile/search fields.
+
+`npm run test:browsers` runs the focused compatibility suite on Chromium,
+Firefox and WebKit at desktop, portrait and landscape sizes. It covers nine core
+pages and modal borders, viewport gutters, sticky headers, scroll locking,
+Escape and keyboard search in both themes. It captures WebKit screenshots under
+ignored `test-results/` for visual inspection; these are not automatically
+approved golden images. Firefox uses a narrow/touch desktop viewport because
+Playwright does not provide Firefox mobile emulation.
+
+All checks use the existing isolated demo server; no Supabase login, external
+emails or database writes are involved. They remain manual, not per-feature or
+GitHub Actions jobs. Chrome and Edge can additionally be tested through their
+actual installed stable binaries:
+
+```bash
+ADN_BRANDED_BROWSERS=1 npm run test:browsers -- --project=chrome --project=msedge
+```
+
+This command deliberately fails if those browsers are absent; it never silently
+substitutes Chromium or installs/overwrites system browsers. Install them only
+with the machine owner's approval. Chromium covers their shared rendering engine,
+not their complete product behavior. Likewise, Linux WebKit is **not** real Safari:
+before a public release, smoke-test Safari on a Mac and an iPhone/iPad, especially
+software-keyboard focus, portrait/landscape rotation, dynamic browser bars, modal
+scrolling/Back, file selection and calendar downloads. Do not claim a physical-device
+check unless it was actually performed. See [Playwright browser coverage](https://playwright.dev/docs/browsers).
+
+### Other manually invoked checks
 
 ```bash
 npx playwright install --with-deps webkit # Linux libraries require sudo
@@ -480,6 +514,71 @@ and retention descriptions aligned with the deployed workflow.
 
 Migration `20261104120000_persistent_spotify_artwork.sql` adds a service-only cache of public Spotify artist metadata, with no user identifiers or credentials. Publishing a suggestion catalog or saving Spotify artwork retains validated Spotify CDN image URLs independently of suggestion decisions and catalog expiration. The migration backfills existing images; authenticated snapshots return only artwork relevant to the caller's archive, listening artists or bucket list. Save/review responses also carry these images, so a decision never clears them. Calendar, Home and Timeline use the same map, including historical concert details. Promoter posters are not accepted as artist photos. Daily Spotify sync backfills up to 50 missing archive artists per connected account per run (past and future), skipping already cached artists; unresolved artists may remain without a photo. The suggestion enrichment stage reuses this cache before making Spotify searches. Apply the migration before deploying the updated scripts. No extra key is needed.
 
+### Reliability update — production rollout, 5 November 2026
+
+The two `20261105` migrations were tested on staging (`olqtafovoprkesxdbndp`),
+then rehearsed with rollback and applied atomically to production after Eric's
+release approval. The matching application and workflows belong to this release.
+
+- Account deletion now records a durable request and blocks access immediately.
+  The browser signs out; `scripts/process-account-deletions.mjs` removes the user's
+  `concert-memories` and `avatars` objects through Storage before deleting Auth.
+  Failed cleanup retains the request for retry; no browser connection is needed.
+  Canonical concert records remain, without the deleted person's participation.
+  A blocked user cannot upload another avatar with an existing session token.
+  Staging snapshot restores clear pending deletion jobs along with delivery queues;
+  they never copy deletion requests from production into staging.
+- `.github/workflows/account-maintenance.yml` runs hourly at minute 11, independently
+  of scraping, and supports manual dispatch. It processes at most 10 deletion
+  requests and 500 activity messages per run using existing GitHub Supabase/Resend
+  secrets. No new key, paid service, data commit or Netlify deployment is required.
+  Scheduling is best-effort, not instant. Keep its concurrency group enabled.
+- Activity recipients are filtered for current preferences, confirmed email and
+  account status **before** selecting each batch. Delivery claims freeze the body
+  and recipient, use a 10-minute lease and validate completion. Resend's existing
+  `notification/<notification-id>` key is preserved. Up to five attempts are allowed
+  within 23 hours; expired or ambiguous deliveries enter `review` rather than being
+  blindly resent. Legacy pending rows that already had attempts also require review.
+  Inspect Resend before resolving `review` rows; never reset their IDs or retry window
+  automatically. Changed recipient addresses also require review.
+- Suggestions and all activity-email variants now follow the profile's English or
+  Spanish preference; the frozen language/body remains unchanged across retries.
+  Weekly reminders already use that preference. Auth/SMTP templates are unchanged.
+- Spotify login no longer searches optional archive artwork. Daily sync saves
+  rotated refresh tokens immediately and essential artists before optional image
+  requests. Archive and artwork reads paginate rather than truncating at 1,000 rows.
+  Artwork failures defer photos but do not discard the successful listening sync.
+- Provider totals read all main-branch workflows and paginate sent emails. History
+  is bounded at 1,000 rows/provider, labelled partial if capped, and unavailable on
+  request failure. GitHub elapsed runtime is explicitly estimated, not billed usage;
+  Resend events are latest known statuses, not webhook delivery guarantees.
+
+Deployment order: create a private affected-data checkpoint, apply both migrations,
+then deploy this code and the new maintenance workflow together. Do not run the old
+activity sender against the new completion RPC signature. During local staging
+review no scheduled worker exists yet: deletion requests remain queued until a
+maintainer runs `node scripts/process-account-deletions.mjs` with **staging-only**
+`SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`. Do not test deletion with the only
+administrator account. Activity delivery additionally needs Resend credentials and
+must not be run with real recipients without explicit approval.
+
+Both migrations were first rehearsed with rollback, then applied on staging.
+`tests/database/account-maintenance.sql`, `security-and-recovery.sql` and
+`weekly-ticket-reminders.sql` passed with rollback and synthetic users. The private
+checkpoints under `~/adn-backups/staging-before-20261105-maintenance-*` and
+`~/adn-backups/production-before-20261105-maintenance-*` contain
+affected profile/outbox rows, functions and schema metadata with a verified checksum;
+it is **not** a complete Auth/Storage/Vault backup. No real email or account deletion
+was performed during validation.
+
+Production verification checks migration records, service-only worker access,
+unchanged account/concert/participation counts and a read-only authenticated
+archive snapshot. The new hourly workflow uses the existing GitHub secrets;
+no SMTP, Netlify environment or user-preference changes are needed. The browser
+compatibility pass completed 36 checks across Chromium, Firefox and WebKit,
+both themes and desktop/portrait/landscape layouts. This is not a physical
+Mac/iPhone Safari or installed Chrome/Edge certification.
+
 ### Manual email previews
 
 Use **GitHub Actions → Test email → Run workflow → main**, then select the email type. This manually sends exactly one test to the active administrator profile with username `eric`; the recipient is not configurable. The choices cover suggestions, weekly ticket reminders, all activity-email variants and the eight checked-in authentication templates. The workflow reuses the existing GitHub Supabase/Resend secrets, never exposes them locally and has no automatic trigger.
@@ -490,7 +589,7 @@ Use **GitHub Actions → Test email → Run workflow → main**, then select the
 
 Migration `20261104130000_weekly_ticket_reminders.sql` and `.github/workflows/weekly-ticket-reminders.yml` add one weekly digest per active user with confirmed email and **Profile → Notifications → Weekly ticket reminder → Email** enabled. This is a separate, email-only opt-in (`notificationPreferences.ticketReminders.email`), disabled by default and independent of ticket-availability emails. Missing preferences mean opted out; the setting is saved through the existing profile RPC and validated in the database. It lists their visible, confirmed, today/future concerts with `bought=false`, excludes cancelled events, sorts by date, and sends nothing for an empty list. The email follows the profile's English/Spanish language and includes ticket links when available.
 
-The workflow runs on Mondays at 06:00 and 07:00 UTC. A Europe/Madrid local-time guard and unique per-user/week delivery record make this 08:00 peninsular Spanish time across daylight-saving changes, without a second digest. GitHub schedules are best-effort and can run late. The sender reuses `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `RESEND_API_KEY` and `RESEND_FROM_EMAIL` from existing GitHub secrets; no Netlify runtime or data commits are involved. Manual dispatch defaults to a read-only dry run. `node scripts/send-weekly-ticket-reminders.mjs --dry-run` checks recipients without claiming deliveries or sending emails; do not use production mail credentials in local tests.
+The updated workflow runs hourly on Mondays from 06:00 through 18:00 UTC. A Europe/Madrid guard starts delivery at 08:00 peninsular Spanish time across daylight-saving changes; later runs recover transient failures. The unique per-user/week record prevents a second digest. GitHub schedules are best-effort and can run late. The sender reuses `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `RESEND_API_KEY` and `RESEND_FROM_EMAIL` from existing GitHub secrets; no Netlify runtime or data commits are involved. Manual dispatch defaults to a read-only dry run. `node scripts/send-weekly-ticket-reminders.mjs --dry-run` checks recipients without claiming deliveries or sending emails; do not use production mail credentials in local tests.
 
 Messages are frozen on the first claim, leased and sent with Resend idempotency keys. Sent weeks cannot resend. Failed attempts may retry up to five times within the provider's safe window; ambiguous outcomes older than 23 hours require review in Resend, never a blind reset. The receipt table cascades on account deletion and is excluded from staging copies, like the existing email outboxes. On 4 November 2026 staging was restored from its paused state, both migrations and the rolled-back `tests/database/persistent-spotify-artwork.sql` / `tests/database/weekly-ticket-reminders.sql` checks passed, and both migrations were applied atomically to production. The existing Spotify artwork was backfilled without changing concerts, attendees or notification preferences. No real emails were sent during validation. A private checkpoint of replaced function definitions and estimated table counts is stored outside Git under `~/adn-backups/production-before-20261104-artwork-reminders-*`; it is not a full database backup.
 

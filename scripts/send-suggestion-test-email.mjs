@@ -13,14 +13,14 @@ if (!suggestion) throw new Error(`${artist} is not in data/suggestions.json`);
 
 const supabaseUrl = required("SUPABASE_URL");
 const serviceKey = required("SUPABASE_SERVICE_ROLE_KEY");
-const profileResponse = await fetch(`${supabaseUrl}/rest/v1/profiles?select=email,display_name&role=eq.admin&account_status=eq.active&limit=1`, {
+const profileResponse = await fetch(`${supabaseUrl}/rest/v1/profiles?select=email,display_name,language&role=eq.admin&account_status=eq.active&limit=1`, {
   headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}` },
 });
 if (!profileResponse.ok) throw new Error(`Could not load the administrator (${profileResponse.status})`);
 const [administrator] = await profileResponse.json();
 if (!administrator?.email) throw new Error("No active administrator was found");
 
-const message = renderSuggestionDigest(administrator.display_name, [suggestion]);
+const message = renderSuggestionDigest(administrator.display_name, [suggestion], administrator.language);
 const emailResponse = await fetch("https://api.resend.com/emails", {
   method: "POST",
   headers: {
